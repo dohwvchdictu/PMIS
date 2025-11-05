@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class NtfBidSchedule extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
-        'procID',
+        'mop_group_ref',
         'uid',
         'ib_number',
         'pre_proc_conference',
@@ -29,8 +30,15 @@ class NtfBidSchedule extends Model
         'date_returned_of_canvass',
         'abstract_of_canvass_date',
     ];
+
+    // ✅ Relationships
     public function procurement()
     {
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
+    }
+
+    public function mop()
+    {
+        return $this->belongsTo(Mop::class, 'uid', 'uid');
     }
 }

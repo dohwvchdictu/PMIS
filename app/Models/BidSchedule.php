@@ -11,7 +11,7 @@ class BidSchedule extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'procID',
+        'mop_group_ref',
         'uid',
         'modeproc',
         'ib_number',
@@ -30,4 +30,10 @@ class BidSchedule extends Model
     {
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
     }
+
+    public function mop()
+    {
+        return $this->belongsTo(Mop::class, 'mop_id');
+    }
+
 }

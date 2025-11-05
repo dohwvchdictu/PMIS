@@ -2,6 +2,7 @@
 
 namespace App\Livewire\ModeOfProcurement;
 
+use App\Models\Mop;
 use App\Models\MopGroup;
 use App\Models\PrItem;
 use Illuminate\Database\Eloquent\Model;
@@ -123,7 +124,7 @@ class ModeOfProcurementCreatePage extends Component
                 : $mopGroup->prItems->first();
 
             if ($firstItem && $firstItem->mops->isNotEmpty()) {
-                $this->form['modes'] = $firstItem->mops->sortBy('mode_order')->map(function ($mop) {
+                $this->form['modes'] = $firstItem->mops->sortByDesc('mode_order')->map(function ($mop) {
                     $loadedSchedulesData = [];
                     $modeId = $mop->mode_of_procurement_id;
 
@@ -181,10 +182,31 @@ class ModeOfProcurementCreatePage extends Component
             $index = explode('.', $key)[0] ?? null;
 
             if (is_numeric($index) && isset($this->form['modes'][$index])) {
-                foreach ($this->form['modes'][$index]['bid_schedules'] ?? [] as &$schedule) {
-                    // ✅ Regenerate unique temp UID
-                    $schedule['uid'] = 'TEMP-' . uniqid();
-                }
+
+                // ✅ RESET the bid schedule when the mode changes
+                // This clears out all old data from the previous mode
+                $this->form['modes'][$index]['bid_schedules'] = [
+                    [
+                        'uid' => 'TEMP-' . uniqid(), // Add a new UID
+                        'bidding_number' => 1,
+                        'ib_number' => '',
+                        'pre_proc_conference' => null,
+                        'ads_post_ib' => null,
+                        'pre_bid_conf' => null,
+                        'eligibility_check' => null,
+                        'sub_open_bids' => null,
+                        'bidding_date' => null,
+                        'bidding_result' => '',
+                        'ntf_no' => '',
+                        'ntf_bidding_date' => null,
+                        'ntf_bidding_result' => '',
+                        'rfq_no' => '',
+                        'canvass_date' => null,
+                        'date_returned_of_canvass' => null,
+                        'abstract_of_canvass_date' => null,
+                        'resolution_number' => '',
+                    ]
+                ];
             }
         }
     }
@@ -200,6 +222,7 @@ class ModeOfProcurementCreatePage extends Component
                 $mode['bid_schedules'] = [
                     [
                         'uid' => 'TEMP-' . uniqid(),
+                        'bidding_number' => 1,
                         'ib_number' => '',
                         'bidding_date' => null,
                         'bidding_result' => '',
@@ -488,6 +511,7 @@ class ModeOfProcurementCreatePage extends Component
                     ->where('ref_number', 'like', "MOP-$year-%")
                     ->orderByDesc('id')
                     ->value('ref_number');
+
                 $nextNumber = 1;
                 if ($lastNumber) {
                     $lastNum = (int) Str::afterLast($lastNumber, '-');
@@ -502,38 +526,60 @@ class ModeOfProcurementCreatePage extends Component
                     'procurable_type' => $this->procurementType,
                 ]);
 
+                // Separate by type
                 $lotIDs = collect($this->selectedProcurements)
                     ->filter(fn($proc) => empty($proc['items']))
-                    ->pluck('procID'); // Correct key
+                    ->pluck('procID');
 
                 $itemIDs = collect($this->selectedProcurements)
                     ->filter(fn($proc) => !empty($proc['items']))
-                    ->pluck('items.*.prItemID') // Correct key
+                    ->pluck('items.*.prItemID')
                     ->flatten();
 
+                $uidBase = $mopGroup->ref_number;
+
+                // Attach lots
                 if ($lotIDs->isNotEmpty()) {
                     $mopGroup->procurements()->attach($lotIDs);
+
                     $attachedLots = Procurement::whereIn('procID', $lotIDs)->get();
                     foreach ($attachedLots as $lot) {
-                        $lot->mops()->create([
-                            'mode_of_procurement_id' => 1,
-                            'mode_order' => 0,
-                            'uid' => 'MOP-1-0'
-                        ]);
+                        $existingMop = $lot->mops()->first();
+                        if (!$existingMop) {
+                            $uid = "{$uidBase}-1-1";
+                            $lot->mops()->create([
+                                'mop_group_ref' => $refNumber,
+                                'mode_of_procurement_id' => 1,
+                                'original_mode_of_procurement_id' => 1,
+                                'current_mode_of_procurement_id' => 1,
+                                'mode_order' => 1,
+                                'uid' => $uid,
+                            ]);
+                        }
                     }
                 }
 
+                // Attach items
                 if ($itemIDs->isNotEmpty()) {
                     $mopGroup->prItems()->attach($itemIDs);
+
                     $attachedItems = PrItem::whereIn('prItemID', $itemIDs)->get();
                     foreach ($attachedItems as $item) {
-                        $item->mops()->create([
-                            'mode_of_procurement_id' => 1,
-                            'mode_order' => 0,
-                            'uid' => 'MOP-1-0'
-                        ]);
+                        $existingMop = $item->mops()->first();
+                        if (!$existingMop) {
+                            // 👇 Generate proper UID (Option B pattern)
+                            $uid = "{$uidBase}-1-1";
+                            $item->mops()->create([
+                                'mode_of_procurement_id' => 1,
+                                'original_mode_of_procurement_id' => 1,
+                                'current_mode_of_procurement_id' => 1,
+                                'mode_order' => 1,
+                                'uid' => $uid,
+                            ]);
+                        }
                     }
                 }
+
                 return $mopGroup;
             });
 
@@ -545,11 +591,11 @@ class ModeOfProcurementCreatePage extends Component
 
             return redirect()->route('mode-of-procurement.update', [
                 'ref_number' => $group->ref_number,
-                'tab' => 2
+                'tab' => 2,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error saving MOP Details selections: ' . $e->getMessage());
+
             LivewireAlert::title('Error Saving Selections')
                 ->error()
                 ->text('An error occurred: ' . $e->getMessage())
@@ -557,124 +603,62 @@ class ModeOfProcurementCreatePage extends Component
         }
     }
 
-    private function syncMopFor(Model $model, array $modeData, $existingMops): void
+
+    private function syncMopFor($item, $modeData)
     {
-        $submittedModeId = $modeData['mode_of_procurement_id'];
-        $submittedUid = $modeData['uid'] ?? null;
-        $submittedOrder = $modeData['mode_order'] ?? null;
+        $modeId = $modeData['mode_of_procurement_id'] ?? null;
+        $modeOrder = $modeData['mode_order'] ?? 1;
 
-        $savedMop = $existingMops->firstWhere('uid', $submittedUid);
+        $existingMops = $item->mops()->get();
+        $mop = $existingMops->firstWhere('mode_order', $modeOrder);
 
-        $isNewModeViaButton = Str::startsWith($submittedUid ?? '', 'TEMP-');
-        $isTransitionFromMode1 = false;
-        $newModeOrder = $submittedOrder;
-
-        if ($savedMop && $savedMop->mode_of_procurement_id == 1 && $submittedModeId != 1) {
-            $isTransitionFromMode1 = true;
-            // Determine the next mode order by finding the maximum existing order and adding 1.
-            $newModeOrder = ($existingMops->max('mode_order') ?? -1) + 1;
-
-            // **NEW LOGIC: If the existing order is 0, explicitly set the new order to 1**
-            if ($savedMop->mode_of_procurement_id == 1 && $savedMop->mode_order == 0) {
-                $newModeOrder = 1;
-            }
-        }
-
-        if ($isNewModeViaButton || $isTransitionFromMode1) {
-            // Generate the new Mode Order if it's a completely new entry
-            if ($isNewModeViaButton && $newModeOrder === null) {
-                $newModeOrder = ($existingMops->max('mode_order') ?? -1) + 1;
-            }
-
-            // 🎯 IMPLEMENTING THE NEW UID FORMAT: MOP-<mode_id>-<mode_order>
-            $newUid = 'MOP-' . $submittedModeId . '-' . $newModeOrder;
-
-            $mop = $model->mops()->create([
-                'mode_of_procurement_id' => $submittedModeId,
-                'mode_order' => $newModeOrder,
-                'uid' => $newUid, // Storing the new formatted UID
+        if (!$mop) {
+            // Create new MOP (original = current)
+            $item->mops()->create([
+                'original_mode_of_procurement_id' => $modeId,
+                'current_mode_of_procurement_id' => $modeId,
+                'mode_order' => $modeOrder,
+                'mop_group_id' => $this->mopGroupId,
             ]);
-
-            // Update the form state with the permanent UID and Order
-            foreach ($this->form['modes'] as $index => $formMode) {
-                if (($formMode['uid'] ?? null) === $submittedUid) {
-                    $this->form['modes'][$index]['uid'] = $newUid;
-                    $this->form['modes'][$index]['mode_order'] = $newModeOrder;
-                    break;
-                }
-            }
-        } else {
-            // Existing MOP update logic (no change to UID generation here, only updating fields)
-            $mop = $model->mops()->updateOrCreate(
-                ['uid' => $submittedUid],
-                [
-                    'mode_of_procurement_id' => $submittedModeId,
-                    'mode_order' => $submittedOrder ?? $savedMop?->mode_order ?? 0,
-                ]
-            );
+            return;
         }
 
-        // --- (The rest of the Bid Schedule logic remains unchanged) ---
-
-        $mop->bidSchedules()->delete();
-        $mop->ntfBidSchedules()->delete();
-        $mop->svpDetails()->delete();
-
-        if (!empty($modeData['bid_schedules'])) {
-            $modeId = $mop->mode_of_procurement_id;
-
-            foreach ($modeData['bid_schedules'] as $scheduleIndex => $scheduleData) {
-                $cleanScheduleData = collect($scheduleData)->filter(fn($value) => $value !== null)->all();
-                try {
-                    switch ($modeId) {
-                        case 5:
-                            $mop->svpDetails()->create($cleanScheduleData);
-                            break;
-                        case 4:
-                            $mop->ntfBidSchedules()->create($cleanScheduleData);
-                            break;
-                        default:
-                            $mop->bidSchedules()->create($cleanScheduleData);
-                            break;
-                    }
-                } catch (\Exception $e) {
-                    Log::error("Error saving schedule for Mop ID {$mop->id}: " . $e->getMessage(), $cleanScheduleData);
-                    throw $e;
-                }
-            }
+        // If existing MOP, check if the mode changed
+        if ($mop->current_mode_of_procurement_id !== $modeId) {
+            $mop->update([
+                'current_mode_of_procurement_id' => $modeId,
+            ]);
         }
     }
 
     public function saveTab2()
     {
         if (!$this->mopGroupId) {
-            LivewireAlert::title('Error')->error()->text('Cannot save. Group ID not found. Please re-select procurements.')->toast()->position('top-end')->show();
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Cannot save. Group ID not found. Please re-select procurements.')
+                ->toast()->position('top-end')->show();
             return;
         }
 
         try {
-            // Basic validation for the modes array structure
             $this->validate([
                 'form.modes' => 'required|array|min:1',
                 'form.modes.*.mode_of_procurement_id' => 'required|exists:mode_of_procurements,id',
             ]);
-
-            // Additional validation for Mode 5 (Small Value Procurement) requirements
-            $this->validateData(); // This private method handles the specific validation for modes like SVP
-
         } catch (ValidationException $e) {
-            // Log the validation error for debugging
             Log::error('Validation error in saveTab2: ' . $e->getMessage(), $e->errors());
-
             LivewireAlert::title('Validation Error')
                 ->error()
                 ->text('Please ensure all required fields in the Mode of Procurement section are correctly filled.')
                 ->toast()->position('top-end')->show();
-
             throw $e;
         }
 
         try {
+
+            $schedulesWereSaved = false;
+
             DB::transaction(function () {
                 $mopGroup = MopGroup::with(['procurements.mops', 'prItems.mops'])
                     ->findOrFail($this->mopGroupId);
@@ -683,46 +667,233 @@ class ModeOfProcurementCreatePage extends Component
                     ? $mopGroup->procurements
                     : $mopGroup->prItems;
 
-                // Ensure modes are sorted by order before syncing
-                $sortedModes = collect($this->form['modes'])->sortBy('mode_order')->values()->all();
+                $sortedModes = collect($this->form['modes'])
+                    ->sortBy('mode_order')
+                    ->values()
+                    ->all();
 
                 foreach ($itemsToUpdate as $item) {
                     $existingMops = $item->mops()->get();
-                    $submittedUids = collect($sortedModes)->pluck('uid')->filter()->all();
+                    $existingOrders = $existingMops->pluck('mode_order')->toArray();
+                    $submittedOrders = collect($sortedModes)->pluck('mode_order')->toArray();
 
-                    // 1. Delete MOPs that are no longer in the form
-                    $existingMops->whereNotIn('uid', $submittedUids)->each(function ($mopToDelete) {
-                        $mopToDelete->bidSchedules()->delete();
-                        $mopToDelete->ntfBidSchedules()->delete();
-                        $mopToDelete->svpDetails()->delete();
-                        $mopToDelete->delete();
-                    });
+                    // Delete modes not in form
+                    $ordersToDelete = array_diff($existingOrders, $submittedOrders);
+                    $existingMops->whereIn('mode_order', $ordersToDelete)->each->delete();
 
-                    // 2. Sync remaining/new MOPs
                     foreach ($sortedModes as $modeData) {
-                        // This method contains the logic for the new UID and mode_order increment.
-                        $this->syncMopFor($item, $modeData, $existingMops);
+                        $modeId = $modeData['mode_of_procurement_id'];
+                        $modeOrder = $modeData['mode_order'];
+                        $bidSchedules = $modeData['bid_schedules'] ?? [];
+
+                        $mop = $existingMops->firstWhere('mode_order', $modeOrder);
+
+                        if (!$mop) {
+                            $uid = "{$mopGroup->ref_number}-{$modeId}-{$modeOrder}";
+                            $mop = $item->mops()->create([
+                                'uid' => $uid,
+                                'mode_of_procurement_id' => $modeId,
+                                'original_mode_of_procurement_id' => $modeId,
+                                'current_mode_of_procurement_id' => $modeId,
+                                'mode_order' => $modeOrder,
+                                'mop_group_id' => $this->mopGroupId,
+                                'mop_group_ref' => $mopGroup->ref_number,
+                            ]);
+                        } else {
+                            $mop->update([
+                                'mode_of_procurement_id' => $modeId,
+                                'current_mode_of_procurement_id' => $modeId,
+                                'mop_group_ref' => $mopGroup->ref_number,
+                            ]);
+                        }
+
+                        // Save schedules
+                        foreach ($bidSchedules as $schedule) {
+                            // Skip completely empty rows
+                            $allDataFields = [
+                                'ib_number',
+                                'pre_proc_conference',
+                                'ads_post_ib',
+                                'pre_bid_conf',
+                                'eligibility_check',
+                                'sub_open_bids',
+                                'bidding_date',
+                                'bidding_result',
+                                'ntf_no',
+                                'ntf_bidding_date',
+                                'ntf_bidding_result',
+                                'rfq_no',
+                                'canvass_date',
+                                'date_returned_of_canvass',
+                                'abstract_of_canvass_date',
+                                'resolution_number',
+                            ];
+
+                            // Check if *any* data field has been filled in
+                            $hasAnyData = false;
+                            foreach ($allDataFields as $field) {
+                                if (isset($schedule[$field]) && !is_null($schedule[$field]) && $schedule[$field] !== '') {
+                                    $hasAnyData = true;
+                                    break;
+                                }
+                            }
+
+                            // If no data fields are filled, it's a placeholder created
+                            // by updatedFormModes. Skip it entirely.
+                            if (!$hasAnyData) {
+                                continue;
+                            }
+
+                            $schedulesWereSaved = true;
+
+                            // SVP requires all fields
+                            if ($modeId == 5) {
+                                $requiredFields = [
+                                    'rfq_no' => 'RFQ No.',
+                                    'resolution_number' => 'Resolution Number',
+                                    'canvass_date' => 'Canvass Date',
+                                    'date_returned_of_canvass' => 'Returned of Canvass',
+                                    'abstract_of_canvass_date' => 'Abstract of Canvass',
+                                ];
+                                $missing = collect($requiredFields)
+                                    ->filter(fn($label, $field) => empty($schedule[$field]))
+                                    ->values()
+                                    ->all();
+
+                                if (!empty($missing)) {
+                                    throw ValidationException::withMessages([
+                                        'svp_fields' => 'Missing required field(s): ' . implode(', ', $missing),
+                                    ]);
+                                }
+                            } else {
+                                $otherDataFields = [
+                                    'pre_proc_conference',
+                                    'ads_post_ib',
+                                    'pre_bid_conf',
+                                    'eligibility_check',
+                                    'sub_open_bids',
+                                    'bidding_date',
+                                    'bidding_result',
+                                    'ntf_no',
+                                    'ntf_bidding_date',
+                                    'ntf_bidding_result',
+                                    'rfq_no',
+                                    'canvass_date',
+                                    'date_returned_of_canvass',
+                                    'abstract_of_canvass_date',
+                                    'resolution_number',
+                                ];
+
+                                $hasOtherValues = false;
+                                foreach ($otherDataFields as $field) {
+                                    if (isset($schedule[$field]) && !is_null($schedule[$field]) && $schedule[$field] !== '') {
+                                        $hasOtherValues = true;
+                                        break;
+                                    }
+                                }
+
+                                // If other data exists, but ib_number is missing, throw error.
+                                if ($hasOtherValues && empty($schedule['ib_number'])) {
+                                    throw ValidationException::withMessages([
+                                        'required_field' => 'IB Number is required',
+                                    ]);
+                                }
+                            }
+
+                            // Generate UID including bidding number if exists
+                            $scheduleUid = $mop->uid;
+                            if (!empty($schedule['bidding_number'])) {
+                                $scheduleUid .= '-' . $schedule['bidding_number'];
+                            }
+
+                            switch ($modeId) {
+                                case 2: // Competitive Bidding
+                                    $mop->bidSchedules()->updateOrCreate(
+                                        ['ib_number' => $schedule['ib_number']],
+                                        [
+                                            'mop_group_ref' => $mopGroup->ref_number,
+                                            'uid' => $scheduleUid,
+                                            'modeproc' => $mop->current_mode_of_procurement_id,
+                                            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
+                                            'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+                                            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
+                                            'eligibility_check' => $schedule['eligibility_check'] ?? null,
+                                            'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+                                            'bidding_number' => $schedule['bidding_number'] ?? null,
+                                            'bidding_date' => $schedule['bidding_date'] ?? null,
+                                            'bidding_result' => $schedule['bidding_result'] ?? null,
+                                        ]
+                                    );
+                                    break;
+
+                                case 4: // Negotiated/NTF
+                                    $mop->ntfBidSchedules()->updateOrCreate(
+                                        ['ntf_no' => $schedule['ntf_no']],
+                                        [
+                                            'mop_group_ref' => $mopGroup->ref_number,
+                                            'uid' => $scheduleUid,
+                                            'modeproc' => $mop->current_mode_of_procurement_id,
+                                            'ib_number' => $schedule['ib_number'] ?? null,
+                                            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
+                                            'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+                                            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
+                                            'eligibility_check' => $schedule['eligibility_check'] ?? null,
+                                            'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+                                            'bidding_number' => $schedule['bidding_number'] ?? null,
+                                            'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
+                                            'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
+                                            'rfq_no' => $schedule['rfq_no'] ?? null,
+                                            'canvass_date' => $schedule['canvass_date'] ?? null,
+                                            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
+                                            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
+                                        ]
+                                    );
+                                    break;
+
+                                case 5: // SVP
+                                    $mop->svpDetails()->updateOrCreate(
+                                        ['rfq_no' => $schedule['rfq_no']],
+                                        [
+                                            'mop_group_ref' => $mopGroup->ref_number,
+                                            'uid' => $mop->uid,
+                                            'modeproc' => $mop->current_mode_of_procurement_id,
+                                            'resolution_number' => $schedule['resolution_number'],
+                                            'canvass_date' => $schedule['canvass_date'],
+                                            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'],
+                                            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'],
+                                        ]
+                                    );
+                                    break;
+                            }
+                        }
                     }
                 }
             });
 
-            LivewireAlert::title('Modes Saved!')
-                ->success()
-                ->text('The Modes of Procurement and their schedules have been saved.')
-                ->toast()->position('top-end')->show();
+            if ($schedulesWereSaved) {
+                LivewireAlert::title('Modes Saved!')
+                    ->success()
+                    ->text('The Modes of Procurement and their schedules have been saved successfully.')
+                    ->toast()->position('top-end')->show();
+            } else {
+                LivewireAlert::title('Mode Saved!')
+                    ->success()
+                    ->text('The Mode of Procurement has been saved successfully.')
+                    ->toast()->position('top-end')->show();
+            }
 
-            // Re-fetch the data to ensure the view reflects the saved state (including new UIDs/Orders)
             $this->mount($this->ref_number);
             $this->setStep(2);
 
         } catch (\Exception $e) {
-            Log::error('Error saving/updating MOP Details: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            Log::error('Error saving MOP tab 2: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             LivewireAlert::title('Error Saving MOP')
                 ->error()
                 ->text('An error occurred while saving: ' . $e->getMessage())
                 ->toast()->position('top-end')->show();
         }
     }
+
 
     public function resetForm(): void
     {
@@ -736,7 +907,7 @@ class ModeOfProcurementCreatePage extends Component
     public function render()
     {
         $modes = ModeOfProcurement::where('is_active', true)
-            ->orderBy('modeofprocurements')
+            ->orderBy('id')
             ->get();
 
         $existingLotIds = [];

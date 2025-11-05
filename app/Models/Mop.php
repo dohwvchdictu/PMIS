@@ -13,58 +13,108 @@ class Mop extends Model
     use HasFactory;
 
     protected $fillable = [
-        'procurable_type', // Automatically set by Laravel (e.g., App\Models\Procurement)
-        'procurable_id',   // Automatically set by Laravel (e.g., Procurement->procID or PrItem->prItemID)
+        'mop_group_ref',
+        'procurable_type',
+        'procurable_id',
         'mode_of_procurement_id',
+        'original_mode_of_procurement_id',
+        'current_mode_of_procurement_id',
         'mode_order',
-        'uid', // Unique identifier for this specific MOP instance
+        'uid',
     ];
 
-    /**
-     * Get the parent procurable model (Procurement or PrItem).
-     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($mop) {
+            // Step 1: Default original_mode_of_procurement_id
+            if (is_null($mop->original_mode_of_procurement_id)) {
+                $mop->original_mode_of_procurement_id = $mop->mode_of_procurement_id
+                    ?? $mop->current_mode_of_procurement_id;
+            }
+
+            // Step 2: Default current_mode_of_procurement_id
+            if (is_null($mop->current_mode_of_procurement_id)) {
+                $mop->current_mode_of_procurement_id = $mop->mode_of_procurement_id
+                    ?? $mop->original_mode_of_procurement_id;
+            }
+
+            // Step 3: Generate stable UID (Option B)
+            if (empty($mop->uid)) {
+                $modeId = $mop->original_mode_of_procurement_id ?? '0';
+                $order = $mop->mode_order ?? (static::count() + 1);
+                $mop->uid = sprintf('MOP-%s-%s', $modeId, $order);
+            }
+        });
+
+        static::updating(function ($mop) {
+            // Detect mode change
+            if ($mop->isDirty('current_mode_of_procurement_id')) {
+                $old = $mop->getOriginal('current_mode_of_procurement_id');
+                $new = $mop->current_mode_of_procurement_id;
+
+                // Optional: Log to mode change table
+                if (class_exists(MopModeChange::class)) {
+                    MopModeChange::create([
+                        'mop_id' => $mop->id,
+                        'old_mode_id' => $old,
+                        'new_mode_id' => $new,
+                        'changed_by' => auth()->id(),
+                    ]);
+                }
+            }
+        });
+    }
+    protected $casts = [
+        'mode_order' => 'integer',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    // Polymorphic link to Procurement or PrItem
     public function procurable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    /**
-     * Get the details of the Mode of Procurement (e.g., Bidding, SVP).
-     */
+    // Mode details
     public function modeDetails(): BelongsTo
     {
         return $this->belongsTo(ModeOfProcurement::class, 'mode_of_procurement_id');
     }
 
-    /**
-     * Get the bid schedules associated with this MOP instance (for Bidding, etc.).
-     * NOTE: Assumes bid_schedules table has a 'mop_id' foreign key. Add migration if needed.
-     */
+    // Original mode
+    public function originalMode(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfProcurement::class, 'original_mode_of_procurement_id');
+    }
+
+    // Current mode
+    public function currentMode(): BelongsTo
+    {
+        return $this->belongsTo(ModeOfProcurement::class, 'current_mode_of_procurement_id');
+    }
+
+    // ✅ Relationships now use 'uid' instead of 'mop_id'
     public function bidSchedules(): HasMany
     {
-        // Adjust foreign key if necessary
-        return $this->hasMany(BidSchedule::class, 'mop_id');
+        return $this->hasMany(BidSchedule::class, 'uid', 'uid');
     }
 
-    /**
-     * Get the NTF bid schedules associated with this MOP instance (for Negotiated Procurement).
-     * NOTE: Assumes ntf_bid_schedules table has a 'mop_id' foreign key. Add migration if needed.
-     */
     public function ntfBidSchedules(): HasMany
     {
-        // Adjust foreign key if necessary
-        return $this->hasMany(NtfBidSchedule::class, 'mop_id');
+        return $this->hasMany(NtfBidSchedule::class, 'uid', 'uid');
     }
 
-    /**
-     * Get the SVP details associated with this MOP instance (for SVP).
-     * NOTE: Assumes pr_svps table has a 'mop_id' foreign key. Add migration if needed.
-     */
-    public function svpDetails(): HasMany // Should likely be HasOne if only one SVP entry per Mop
+    public function svpDetails(): HasMany
     {
-        // Adjust foreign key if necessary
-        return $this->hasMany(PrSvp::class, 'mop_id');
+        return $this->hasMany(PrSvp::class, 'uid', 'uid');
     }
 
-    // Add similar relationships for other schedule types if needed
+
 }

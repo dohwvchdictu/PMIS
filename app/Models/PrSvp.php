@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PrSvp extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
-        'procID',
+        'mop_group_ref',
         'uid',
         'resolution_number',
         'rfq_no',
@@ -18,8 +19,15 @@ class PrSvp extends Model
         'date_returned_of_canvass',
         'abstract_of_canvass_date',
     ];
+
+    // ✅ Relationships
     public function procurement()
     {
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
+    }
+
+    public function mop()
+    {
+        return $this->belongsTo(Mop::class, 'uid', 'uid');
     }
 }
