@@ -147,20 +147,15 @@
                             {{-- ** UPDATED: Mode of Procurement ** --}}
                             <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
                                 @php
-                                    // Get the collection of items (whichever one is not empty)
                                     $items = $mode->prItems->isNotEmpty() ? $mode->prItems : $mode->procurements;
 
-                                    // Get the first item from that collection
                                     $firstItem = $items->first();
 
-                                    // Get that item's MOPs (which are already eager-loaded)
-// Find the one with the highest mode_order
-$currentMop = $firstItem?->mops->sortByDesc('mode_order')->first();
+                                    $currentMop = $firstItem?->mops->sortByDesc('mode_order')->first();
 
-                                    // Get the name
                                     $currentModeName = $currentMop?->modeDetails?->modeofprocurements;
                                 @endphp
-                                {{-- Display the name, or 'Pending' if it's the default (mode_order 0) --}}
+
                                 {{ $currentModeName ?? 'Pending' }}
                             </td>
                         </tr>

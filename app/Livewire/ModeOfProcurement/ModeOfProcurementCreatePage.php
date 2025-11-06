@@ -655,11 +655,10 @@ class ModeOfProcurementCreatePage extends Component
             throw $e;
         }
 
+        $schedulesWereSaved = false;
+
         try {
-
-            $schedulesWereSaved = false;
-
-            DB::transaction(function () {
+            DB::transaction(function () use (&$schedulesWereSaved) {
                 $mopGroup = MopGroup::with(['procurements.mops', 'prItems.mops'])
                     ->findOrFail($this->mopGroupId);
 
@@ -686,6 +685,7 @@ class ModeOfProcurementCreatePage extends Component
                         $modeOrder = $modeData['mode_order'];
                         $bidSchedules = $modeData['bid_schedules'] ?? [];
 
+                        // find or create mop for this item+modeOrder
                         $mop = $existingMops->firstWhere('mode_order', $modeOrder);
 
                         if (!$mop) {
@@ -707,9 +707,9 @@ class ModeOfProcurementCreatePage extends Component
                             ]);
                         }
 
-                        // Save schedules
+                        // Save schedules (explicit upsert logic)
                         foreach ($bidSchedules as $schedule) {
-                            // Skip completely empty rows
+                            // fields to check for "empty placeholder"
                             $allDataFields = [
                                 'ib_number',
                                 'pre_proc_conference',
@@ -729,7 +729,6 @@ class ModeOfProcurementCreatePage extends Component
                                 'resolution_number',
                             ];
 
-                            // Check if *any* data field has been filled in
                             $hasAnyData = false;
                             foreach ($allDataFields as $field) {
                                 if (isset($schedule[$field]) && !is_null($schedule[$field]) && $schedule[$field] !== '') {
@@ -738,15 +737,15 @@ class ModeOfProcurementCreatePage extends Component
                                 }
                             }
 
-                            // If no data fields are filled, it's a placeholder created
-                            // by updatedFormModes. Skip it entirely.
+                            // skip placeholder rows with no data
                             if (!$hasAnyData) {
                                 continue;
                             }
 
+                            // Mark that we saved something (will be committed later)
                             $schedulesWereSaved = true;
 
-                            // SVP requires all fields
+                            // SVP validation (unchanged)
                             if ($modeId == 5) {
                                 $requiredFields = [
                                     'rfq_no' => 'RFQ No.',
@@ -792,7 +791,6 @@ class ModeOfProcurementCreatePage extends Component
                                     }
                                 }
 
-                                // If other data exists, but ib_number is missing, throw error.
                                 if ($hasOtherValues && empty($schedule['ib_number'])) {
                                     throw ValidationException::withMessages([
                                         'required_field' => 'IB Number is required',
@@ -800,76 +798,105 @@ class ModeOfProcurementCreatePage extends Component
                                 }
                             }
 
-                            // Generate UID including bidding number if exists
+                            // build schedule UID key (mop.uid + optional bidding_number)
                             $scheduleUid = $mop->uid;
                             if (!empty($schedule['bidding_number'])) {
                                 $scheduleUid .= '-' . $schedule['bidding_number'];
                             }
 
-                            switch ($modeId) {
-                                case 2: // Competitive Bidding
-                                    $mop->bidSchedules()->updateOrCreate(
-                                        ['ib_number' => $schedule['ib_number']],
-                                        [
-                                            'mop_group_ref' => $mopGroup->ref_number,
-                                            'uid' => $scheduleUid,
-                                            'modeproc' => $mop->current_mode_of_procurement_id,
-                                            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
-                                            'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
-                                            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
-                                            'eligibility_check' => $schedule['eligibility_check'] ?? null,
-                                            'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
-                                            'bidding_number' => $schedule['bidding_number'] ?? null,
-                                            'bidding_date' => $schedule['bidding_date'] ?? null,
-                                            'bidding_result' => $schedule['bidding_result'] ?? null,
-                                        ]
-                                    );
-                                    break;
-
-                                case 4: // Negotiated/NTF
-                                    $mop->ntfBidSchedules()->updateOrCreate(
-                                        ['ntf_no' => $schedule['ntf_no']],
-                                        [
-                                            'mop_group_ref' => $mopGroup->ref_number,
-                                            'uid' => $scheduleUid,
-                                            'modeproc' => $mop->current_mode_of_procurement_id,
-                                            'ib_number' => $schedule['ib_number'] ?? null,
-                                            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
-                                            'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
-                                            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
-                                            'eligibility_check' => $schedule['eligibility_check'] ?? null,
-                                            'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
-                                            'bidding_number' => $schedule['bidding_number'] ?? null,
-                                            'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
-                                            'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
-                                            'rfq_no' => $schedule['rfq_no'] ?? null,
-                                            'canvass_date' => $schedule['canvass_date'] ?? null,
-                                            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
-                                            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-                                        ]
-                                    );
-                                    break;
-
-                                case 5: // SVP
-                                    $mop->svpDetails()->updateOrCreate(
-                                        ['rfq_no' => $schedule['rfq_no']],
-                                        [
-                                            'mop_group_ref' => $mopGroup->ref_number,
-                                            'uid' => $mop->uid,
-                                            'modeproc' => $mop->current_mode_of_procurement_id,
-                                            'resolution_number' => $schedule['resolution_number'],
-                                            'canvass_date' => $schedule['canvass_date'],
-                                            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'],
-                                            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'],
-                                        ]
-                                    );
-                                    break;
+                            // Decide Model & relation
+                            if ($modeId == 4) {
+                                // Negotiated/NTF
+                                $ScheduleModel = NtfBidSchedule::class;
+                                $relation = $mop->ntfBidSchedules();
+                            } elseif ($modeId == 5) {
+                                $ScheduleModel = PrSvp::class;
+                                $relation = $mop->svpDetails();
+                            } else {
+                                // default -> competitive bidding
+                                $ScheduleModel = BidSchedule::class;
+                                $relation = $mop->bidSchedules();
                             }
-                        }
-                    }
-                }
-            });
 
+                            // Try to find existing record using UID (preferred) OR id fallback OR bidding_number
+                            $existing = null;
+
+                            if (!empty($schedule['uid'])) {
+                                $existing = $ScheduleModel::where('uid', $schedule['uid'])->first();
+                            }
+
+                            // fallback: if id present try id
+                            if (!$existing && !empty($schedule['id'])) {
+                                $existing = $ScheduleModel::find($schedule['id']);
+                            }
+
+                            // fallback: scoped to mop uid + bidding_number (if provided)
+                            if (!$existing && !empty($schedule['bidding_number'])) {
+                                $existing = $ScheduleModel::where('uid', $mop->uid)
+                                    ->where('bidding_number', $schedule['bidding_number'])
+                                    ->first();
+                            }
+
+                            // final fallback (for NTF where ntf_no uniquely identifies)
+                            if (!$existing && $modeId == 4 && !empty($schedule['ntf_no'])) {
+                                $existing = $ScheduleModel::where('ntf_no', $schedule['ntf_no'])->first();
+                            }
+
+                            // Update existing
+                            if ($existing) {
+                                $existing->update([
+                                    'mop_group_ref' => $mopGroup->ref_number,
+                                    'uid' => $schedule['uid'] ?? $scheduleUid,
+                                    'modeproc' => $mop->current_mode_of_procurement_id,
+                                    'ib_number' => $schedule['ib_number'] ?? null,
+                                    'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
+                                    'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+                                    'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
+                                    'eligibility_check' => $schedule['eligibility_check'] ?? null,
+                                    'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+                                    'bidding_number' => $schedule['bidding_number'] ?? null,
+                                    'bidding_date' => $schedule['bidding_date'] ?? null,
+                                    'bidding_result' => $schedule['bidding_result'] ?? null,
+                                    'ntf_no' => $schedule['ntf_no'] ?? null,
+                                    'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
+                                    'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
+                                    'rfq_no' => $schedule['rfq_no'] ?? null,
+                                    'canvass_date' => $schedule['canvass_date'] ?? null,
+                                    'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
+                                    'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
+                                    'resolution_number' => $schedule['resolution_number'] ?? null,
+                                ]);
+                            } elseif (!empty($schedule['ib_number']) || (!empty($schedule['ntf_no']) && $modeId == 4) || $modeId == 5) {
+                                // Create new only when IB/NTF/RFQ required data exists (ib_number or ntf_no or SVP fields)
+                                $relation->create([
+                                    'mop_group_ref' => $mopGroup->ref_number,
+                                    'uid' => $schedule['uid'] ?? $scheduleUid,
+                                    'modeproc' => $mop->current_mode_of_procurement_id,
+                                    'ib_number' => $schedule['ib_number'] ?? null,
+                                    'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
+                                    'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+                                    'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
+                                    'eligibility_check' => $schedule['eligibility_check'] ?? null,
+                                    'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+                                    'bidding_number' => $schedule['bidding_number'] ?? null,
+                                    'bidding_date' => $schedule['bidding_date'] ?? null,
+                                    'bidding_result' => $schedule['bidding_result'] ?? null,
+                                    'ntf_no' => $schedule['ntf_no'] ?? null,
+                                    'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
+                                    'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
+                                    'rfq_no' => $schedule['rfq_no'] ?? null,
+                                    'canvass_date' => $schedule['canvass_date'] ?? null,
+                                    'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
+                                    'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
+                                    'resolution_number' => $schedule['resolution_number'] ?? null,
+                                ]);
+                            }
+                        } // end schedules loop
+                    } // end modes loop
+                } // end items loop
+            }); // end transaction
+
+            // Alerts
             if ($schedulesWereSaved) {
                 LivewireAlert::title('Modes Saved!')
                     ->success()
@@ -882,6 +909,7 @@ class ModeOfProcurementCreatePage extends Component
                     ->toast()->position('top-end')->show();
             }
 
+            // reload and set step
             $this->mount($this->ref_number);
             $this->setStep(2);
 
@@ -891,9 +919,10 @@ class ModeOfProcurementCreatePage extends Component
                 ->error()
                 ->text('An error occurred while saving: ' . $e->getMessage())
                 ->toast()->position('top-end')->show();
+            // rethrow if you want higher-level catching
+            // throw $e;
         }
     }
-
 
     public function resetForm(): void
     {
