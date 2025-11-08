@@ -7,7 +7,7 @@
 
         <div class="space-y-8 p-4 pt-5">
 
-            <div class="grid grid-cols-7 md:grid-cols-10 gap-4">
+            <div class="grid grid-cols-7 md:grid-cols-9 gap-4">
 
                 <x-forms.input id="ib_number" label="IB Number" model="form.ib_number" :form="$form" :required="true"
                     colspan="col-span-1" />
@@ -19,15 +19,25 @@
                     :required="true" colspan="col-span-full" :rows="1" />
 
                 <x-forms.yes-no-toggle id="is_framework" label="Framework" model="form.is_framework" :form="$form"
-                    colspan="col-span-1" />
+                    colspan="col-span-2" />
 
-                {{-- This is the original "col-span-5" spacer from your edit page --}}
-                <div class="col-span-5"></div>
 
-                {{-- This is the original "Current:" link block from your edit page --}}
-                <div class="col-span-1">
-                    <div class="flex items-end-safe gap-x-2">
-                        <span class="font-medium text-gray-700 dark:text-gray-200">Current:</span>
+                <x-forms.select id="status_id" label="Bidding Status" model="form.status_id" :form="$form"
+                    :options="$biddingStatus" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
+
+                <x-forms.select id="action_taken" label="Action Taken" model="form.action_taken" :form="$form"
+                    :options="$ActionTakenOptions" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
+
+                <x-forms.date id="next_bidding_schedule" label="Next Bid Schedule" model="form.next_bidding_schedule"
+                    :form="$form" colspan="col-span-1" />
+
+                <div class="col-span-4">
+                    <x-forms.input id="document_url" type="text" label="Google Drive Link" model="form.filepath"
+                        placeholder="http://example.com/path/to/document.pdf" :required="true" />
+
+                    {{-- Current link aligned below the input --}}
+                    <div class="mt-1 flex items-center gap-x-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Current:</span>
 
                         <a href="{{ $form['filepath'] }}" target="_blank" rel="noopener noreferrer"
                             class="text-emerald-600 hover:text-emerald-700 focus:outline-none" title="View Document">
@@ -41,19 +51,6 @@
                         </a>
                     </div>
                 </div>
-
-                <x-forms.select id="status_id" label="Bidding Status" model="form.status_id" :form="$form"
-                    :options="$biddingStatus" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
-
-                <x-forms.select id="action_taken" label="Action Taken" model="form.action_taken" :form="$form"
-                    :options="$ActionTakenOptions" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
-
-                <x-forms.date id="next_bidding_schedule" label="Next Bid Schedule" model="form.next_bidding_schedule"
-                    :form="$form" colspan="col-span-1" />
-
-                <x-forms.input id="document_url" type="text" label="Google Drive Link" model="form.filepath"
-                    placeholder="http://example.com/path/to/document.pdf" :required="true" colspan="col-span-4" />
-
 
             </div>
 

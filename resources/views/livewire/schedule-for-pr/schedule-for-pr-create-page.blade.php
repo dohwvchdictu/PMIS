@@ -7,7 +7,7 @@
 
         <div class="space-y-8 p-4 pt-5">
 
-            <div class="grid grid-cols-7 md:grid-cols-10 gap-4">
+            <div class="grid grid-cols-7 md:grid-cols-9 gap-4">
 
                 <x-forms.input id="ib_number" label="IB Number" model="form.ib_number" :form="$form" :required="true"
                     colspan="col-span-1" />
@@ -19,9 +19,7 @@
                     :required="true" colspan="col-span-full" :rows="1" />
 
                 <x-forms.yes-no-toggle id="is_framework" label="Framework" model="form.is_framework" :form="$form"
-                    colspan="col-span-1" />
-
-                <div class="col-span-6"></div>
+                    colspan="col-span-2" />
 
                 <x-forms.select id="status_id" label="Bidding Status" model="form.status_id" :form="$form"
                     :options="$biddingStatus" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
