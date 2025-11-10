@@ -7,7 +7,7 @@
 
         <div class="space-y-8 p-4 pt-5">
 
-            <div class="grid grid-cols-7 md:grid-cols-10 gap-4">
+            <div class="grid grid-cols-7 gap-4">
 
                 <x-forms.input id="ib_number" label="IB Number" model="form.ib_number" :form="$form" :required="true"
                     colspan="col-span-1" />
@@ -19,9 +19,9 @@
                     :required="true" colspan="col-span-full" :rows="1" />
 
                 <x-forms.yes-no-toggle id="is_framework" label="Framework" model="form.is_framework" :form="$form"
-                    colspan="col-span-1" />
+                    colspan="col-span-2" />
 
-                <div class="col-span-6"></div>
+                <div class="col-span-2"></div>
 
                 <x-forms.select id="status_id" label="Bidding Status" model="form.status_id" :form="$form"
                     :options="$biddingStatus" optionValue="id" optionLabel="name" :required="false" colspan="col-span-1" />
@@ -76,11 +76,11 @@
         @if (!empty($selectedProcurements))
             <div class="mt-2 space-y-6">
                 <div
-                    class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700">
+                    class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-700 dark:border-neutral-700">
 
                     {{-- Dynamic Header Title --}}
                     <h3
-                        class="text-sm font-semibold text-gray-800 dark:text-white bg-white dark:bg-neutral-800 p-2 border-b border-gray-200 dark:border-neutral-700">
+                        class="text-sm font-semibold text-gray-800 dark:text-white bg-white dark:bg-neutral-700 p-2 border-b border-gray-200 dark:border-neutral-700">
                         @if ($procurementType === 'perLot')
                             Selected PR
                         @else
@@ -91,7 +91,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs">
 
-                            <thead class="sticky bg-gray-200 dark:bg-neutral-900">
+                            <thead class="sticky bg-gray-200 dark:bg-neutral-800">
                                 <tr>
                                     <th
                                         class="px-2 py-1 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
@@ -112,7 +112,7 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
+                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
                                 @foreach ($this->SelectedPR as $pr)
                                     <tr wire:key="selected-pr-{{ $pr['id'] }}">
                                         <td class="px-2 py-1 text-gray-900 dark:text-gray-100 whitespace-nowrap">

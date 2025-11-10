@@ -275,15 +275,15 @@ class ScheduleForPrEditPage extends Component
     public function save()
     {
         // --- 1. Validation ---
-        if (empty($this->selectedProcurements)) {
-            LivewireAlert::title('ERROR!')
-                ->error()
-                ->text('Please select at least one PR Lot or Item.')
-                ->toast()
-                ->position('top-end')
-                ->show();
-            return;
-        }
+        // if (empty($this->selectedProcurements)) {
+        //     LivewireAlert::title('ERROR!')
+        //         ->error()
+        //         ->text('Please select at least one PR Lot or Item.')
+        //         ->toast()
+        //         ->position('top-end')
+        //         ->show();
+        //     return;
+        // }
 
         $this->form['is_framework'] = (bool) ($this->form['is_framework'] ?? false);
 
