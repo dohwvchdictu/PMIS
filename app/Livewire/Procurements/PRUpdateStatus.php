@@ -29,7 +29,14 @@ class PRUpdateStatus extends Component
 
     public function mount(Procurement $procurement)
     {
-        $this->procurement = $procurement->load('pr_items.prstage.stage', 'currentPrStage.procurementStage', 'division');
+        $this->procurement = $procurement->load([
+            'pr_items.prstage.stage',
+            'pr_items.currentItemRemark.remark',
+            'currentPrStage.procurementStage',
+            'currentLotRemark.remark',
+            'division'
+        ]);
+
         $this->stages = ProcurementStage::where('is_active', true)->orderBy('procurementstage')->get();
         $this->divisions = Division::all();
         $this->remarks = Remarks::where('is_active', true)->orderBy('remarks')->get();
@@ -43,15 +50,27 @@ class PRUpdateStatus extends Component
             'items' => $this->procurement->pr_items->toArray(),
         ];
 
-        // Pre-select current stage for perLot
-        if ($this->procurement->procurement_type === 'perLot' && $this->procurement->currentPrStage) {
-            $this->selectedStageId = $this->procurement->currentPrStage->pr_stage_id;
+        // Pre-select current stage and remark for perLot
+        if ($this->procurement->procurement_type === 'perLot') {
+            if ($this->procurement->currentPrStage) {
+                $this->selectedStageId = $this->procurement->currentPrStage->pr_stage_id;
+            }
+
+            if ($this->procurement->currentLotRemark) {
+                $this->remarksId = $this->procurement->currentLotRemark->remarks_id;
+            }
         }
 
-        // Initialize item stages with current values
+        // Initialize item stages and remarks with current values
         foreach ($this->procurement->pr_items as $item) {
+            // Set current stage
             if ($item->prstage && $item->prstage->pr_stage_id) {
                 $this->itemStages[$item->prItemID] = $item->prstage->pr_stage_id;
+            }
+
+            // Set current remark
+            if ($item->currentItemRemark && $item->currentItemRemark->remarks_id) {
+                $this->itemRemarks[$item->prItemID] = $item->currentItemRemark->remarks_id;
             }
         }
     }
@@ -83,7 +102,6 @@ class PRUpdateStatus extends Component
                 ]);
             }
 
-
             session()->flash('alert', [
                 'type' => 'success',
                 'title' => 'Saved!',
@@ -106,7 +124,7 @@ class PRUpdateStatus extends Component
                     // Create new stage record if changed
                     if ($this->itemStages[$itemId] != $currentStageId) {
                         PrItemPrstage::create([
-                            'procID' => $this->procurement->procID, // Added this line
+                            'procID' => $this->procurement->procID,
                             'prItemID' => $itemId,
                             'pr_stage_id' => $this->itemStages[$itemId],
                             'stage_history' => now(),
@@ -127,7 +145,6 @@ class PRUpdateStatus extends Component
             }
 
             if ($updatedCount > 0) {
-
                 session()->flash('alert', [
                     'type' => 'success',
                     'title' => 'Saved!',
