@@ -5,16 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PrLotPrstage extends Model
+class PrLotRemark extends Model
 {
     use HasFactory;
 
-    protected $table = 'pr_lot_prstage';
+    protected $table = 'pr_lot_remark';
 
     protected $fillable = [
         'procID',
-        'pr_stage_id',
-        'stage_history',
+        'remarks_id',
+        'remark_history',
+    ];
+
+    protected $casts = [
+        'remark_history' => 'datetime',
     ];
 
     public function procurement()
@@ -22,9 +26,8 @@ class PrLotPrstage extends Model
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
     }
 
-    // Change this to SINGULAR to match your blade
-    public function procurementStage()
+    public function remark()
     {
-        return $this->belongsTo(ProcurementStage::class, 'pr_stage_id', 'id');
+        return $this->belongsTo(Remarks::class, 'remarks_id', 'id');
     }
 }

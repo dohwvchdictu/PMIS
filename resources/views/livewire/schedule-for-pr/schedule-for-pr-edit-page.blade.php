@@ -146,7 +146,7 @@
                                             <span>{{ number_format($pr['amount'] ?? ($pr['abc'] ?? 0), 2) }}</span>
                                         </td>
                                         <td class="px-2 py-1 text-center">
-                                            <button wire:click.prevent="removeSelectedPR({{ $pr['id'] }})"
+                                            <button wire:click.prevent="removeSelectedPR('{{ $pr['unique_key'] }}')"
                                                 class="font-medium text-red-500 hover:text-red-700 text-base">×</button>
                                         </td>
                                     </tr>

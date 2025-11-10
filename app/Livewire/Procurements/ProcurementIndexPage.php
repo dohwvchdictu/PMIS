@@ -13,6 +13,8 @@ class ProcurementIndexPage extends Component
 
     // Pagination
     public $perPage = 10;
+    public $itemsPerPage = 10; // Add this for items pagination
+
     protected $queryString = [
         'search' => ['except' => ''],
         'perPage' => ['except' => 10],
@@ -30,6 +32,9 @@ class ProcurementIndexPage extends Component
     public $showEarlyPrompt = false;
     public $early = null;
 
+    // Collapsible functionality
+    public $expandedProcurementId = null;
+
     // Form / Reference Data
     public $form = [];
     public $categories = [];
@@ -39,19 +44,36 @@ class ProcurementIndexPage extends Component
     public $venueProvinces = [];
     public $endUsers = [];
     public $fundSources = [];
+
     public function mount()
     {
         if (session('alert')) {
             $alert = session('alert');
 
             LivewireAlert::title($alert['title'])
-                ->{$alert['type']}() // dynamic call: success(), error(), etc.
+                ->{$alert['type']}()
                     ->text($alert['message'])
                     ->toast()
                     ->position('top-end')
                     ->show();
         }
     }
+
+    /**
+     * Toggle expanded/collapsed state for procurement items
+     */
+    public function toggle($property, $value)
+    {
+        // Convert to string for consistent comparison
+        $value = (string) $value;
+
+        if ($this->$property === $value) {
+            $this->$property = null;
+        } else {
+            $this->$property = $value;
+        }
+    }
+
     /**
      * Show the early procurement prompt modal.
      */
@@ -79,7 +101,6 @@ class ProcurementIndexPage extends Component
         $this->selectedProcurement = Procurement::find($procurementId);
         $this->showModal = false;
 
-        // Optional: Populate $form with selected procurement details
         $this->form = $this->selectedProcurement->toArray();
     }
 
@@ -90,6 +111,7 @@ class ProcurementIndexPage extends Component
     {
         $this->resetPage();
     }
+
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -100,9 +122,18 @@ class ProcurementIndexPage extends Component
         $url = asset('storage/' . $filepath);
         $this->dispatch('show-pdf-modal', url: $url);
     }
+
     public function render()
     {
-        $query = Procurement::query()->latest();
+        $query = Procurement::query()
+            ->with([
+                'currentPrStage.procurementStage',
+                'pr_items' => function ($query) {
+                    // Don't paginate here, we'll handle it in the blade
+                    $query->with('prstage.stage');
+                }
+            ])
+            ->latest();
 
         if (!empty($this->search)) {
             $searchTerm = '%' . $this->search . '%';
