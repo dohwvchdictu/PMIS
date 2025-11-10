@@ -21,7 +21,7 @@ return new class extends Migration {
                 $table->foreignId('original_mode_of_procurement_id')
                     ->nullable()
                     ->after('mode_of_procurement_id')
-                    ->constrained('modes_of_procurements')
+                    ->constrained('mode_of_procurements')
                     ->nullOnDelete();
             }
 
@@ -29,7 +29,7 @@ return new class extends Migration {
                 $table->foreignId('current_mode_of_procurement_id')
                     ->nullable()
                     ->after('original_mode_of_procurement_id')
-                    ->constrained('modes_of_procurements')
+                    ->constrained('mode_of_procurements')
                     ->nullOnDelete();
             }
         });
