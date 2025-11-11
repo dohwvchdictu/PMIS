@@ -113,6 +113,7 @@ class PRUpdateStatus extends Component
         } else {
             // Update for perItem - process all items
             $updatedCount = 0;
+            $remarksCount = 0;
 
             foreach ($this->form['items'] as $item) {
                 $itemId = $item['prItemID'];
@@ -141,21 +142,33 @@ class PRUpdateStatus extends Component
                         'remarks_id' => $this->itemRemarks[$itemId],
                         'remark_history' => now(),
                     ]);
+                    $remarksCount++;
                 }
             }
 
-            if ($updatedCount > 0) {
+            // Check if any changes were made (stages OR remarks)
+            if ($updatedCount > 0 || $remarksCount > 0) {
+                $messages = [];
+
+                if ($updatedCount > 0) {
+                    $messages[] = $updatedCount . ' item(s) status updated';
+                }
+
+                if ($remarksCount > 0) {
+                    $messages[] = $remarksCount . ' remark(s) added';
+                }
+
                 session()->flash('alert', [
                     'type' => 'success',
                     'title' => 'Saved!',
-                    'message' => $updatedCount . ' item(s) status updated successfully.',
+                    'message' => implode(' and ', $messages) . ' successfully.',
                 ]);
 
                 return redirect()->route('procurements.index');
             } else {
                 LivewireAlert::info()
                     ->title('No Changes')
-                    ->text('No stage changes were made.')
+                    ->text('No stage or remark changes were made.')
                     ->toast()
                     ->position('top-end')
                     ->show();
