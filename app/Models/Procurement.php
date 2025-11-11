@@ -167,7 +167,10 @@ class Procurement extends Model
     {
         return $this->hasMany(MopItem::class, 'procID', 'procID');
     }
-
+    public function currentPrStage()
+    {
+        return $this->hasOne(PrLotPrstage::class, 'procID', 'procID')->latest();
+    }
     public function prLotPrstages()
     {
         return $this->hasMany(PrLotPrstage::class, 'procID', 'procID');
@@ -201,4 +204,14 @@ class Procurement extends Model
     {
         return $this->morphMany(ScheduleForProcurementItems::class, 'itemable', 'itemable_type', 'itemable_id', 'procID');
     }
+
+    // In Procurement model
+    public function currentLotRemark()
+    {
+        return $this->hasOne(PrLotRemark::class, 'procID', 'procID')
+            ->latest('remark_history');
+    }
+
+    // In PrItem model
+
 }

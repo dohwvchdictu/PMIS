@@ -10,6 +10,7 @@ use App\Livewire\ModeOfProcurement\ModeOfProcurementIndexPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
+use App\Livewire\Procurements\PRUpdateStatus;
 use App\Livewire\ScheduleForPr\ScheduleForPrCreatePage;
 use App\Livewire\ScheduleForPr\ScheduleForPrEditPage;
 use App\Livewire\ScheduleForPr\ScheduleForPrIndexPage;
@@ -39,7 +40,11 @@ Route::middleware(['jwt'])->group(function () {
 
         Route::get('/{procurement}/edit', ProcurementEditPage::class)
             ->name('edit')
-            ->middleware('can:edit_procurement');
+            ->middleware('can:update_procurement');
+
+        Route::get('/{procurement}/update_status', PRUpdateStatus::class)
+            ->name('update_status')
+            ->middleware('can:update_procurement');
     });
 
     Route::prefix('bac-approved-pr')->name('bac-approved-pr.')->group(function () {

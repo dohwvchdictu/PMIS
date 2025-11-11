@@ -32,7 +32,8 @@ class PrItem extends Model
 
     public function prstage()
     {
-        return $this->hasOne(PrItemPrstage::class, 'prItemID', 'prItemID');
+        return $this->hasOne(PrItemPrstage::class, 'prItemID', 'prItemID')
+            ->latest('stage_history'); // Get the most recent stage
     }
 
     public function getStageNameAttribute()
@@ -57,6 +58,11 @@ class PrItem extends Model
     public function scheduleItems()
     {
         return $this->morphMany(ScheduleForProcurementItems::class, 'itemable', 'itemable_type', 'itemable_id', 'prItemID');
+    }
+    public function currentItemRemark()
+    {
+        return $this->hasOne(PrItemRemark::class, 'prItemID', 'prItemID')
+            ->latest('remark_history');
     }
 }
 

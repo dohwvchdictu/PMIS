@@ -11,6 +11,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles()
 
+    <!-- Dark Mode Initialization (must be in head to prevent flash) -->
+    <script>
+        // Initialize dark mode immediately before page renders
+        if (localStorage.getItem('darkMode') === 'dark' ||
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
 
 <body class="bg-gray-50 dark:bg-neutral-900">
@@ -29,8 +37,32 @@
     @livewire('partials.footer')
 
     @livewireScripts()
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     @livewireAlert()
-</body>
+    @stack('scripts')
 
+    <!-- Dark Mode Toggle Function -->
+    <script>
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('darkMode', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('darkMode', 'dark');
+            }
+
+            // Reinitialize Preline components
+            setTimeout(() => {
+                if (window.HSStaticMethods) {
+                    window.HSStaticMethods.autoInit();
+                }
+            }, 50);
+        }
+    </script>
+</body>
 
 </html>
