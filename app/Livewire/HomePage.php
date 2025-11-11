@@ -3,8 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Procurement;
+use App\Models\Division;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 
 class HomePage extends Component
 {
@@ -12,15 +14,23 @@ class HomePage extends Component
 
     protected string $paginationTheme = 'tailwind';
 
+    public $selectedDivision = 'all';
+    public $timeRange = 'month';
     public $search = '';
     public $selectedProcurement = null;
     public $expandedProcurementId = null;
+    public int $perPage = 10;
+    public $selectedDivisionId = null;
+    public $selectedDivisionName = '';
+
     public $form = [
         'items' => [],
     ];
-    public int $perPage = 10;
+
     protected $queryString = [
         'search' => ['except' => ''],
+        'selectedDivision' => ['except' => 'all'],
+        'timeRange' => ['except' => 'month'],
         'perPage' => ['except' => 10],
     ];
 
@@ -28,6 +38,17 @@ class HomePage extends Component
     {
         $this->resetPage();
     }
+
+    public function updatingSelectedDivision()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTimeRange()
+    {
+        $this->resetPage();
+    }
+
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -45,24 +66,374 @@ class HomePage extends Component
         }
     }
 
-    public function render()
+    private function getDateFilter()
     {
-        $procurements = Procurement::with([
-            'division',
-            'procurementStage',
-            'prLotPrstages.procurementStage',   // perLot PR stages
-            'pr_items.prstage.stage',           // perItem PR stage (singular)
-        ])
+        return match ($this->timeRange) {
+            'week' => now()->subWeek(),
+            'month' => now()->subMonth(),
+            'quarter' => now()->subQuarter(),
+            'year' => now()->subYear(),
+            default => now()->subMonth(),
+        };
+    }
 
-            ->when($this->search, function ($query) {
-                $query->where('pr_number', 'like', "%{$this->search}%")
-                    ->orWhere('procurement_program_project', 'like', "%{$this->search}%");
-            })
+    private function getDivisionFilter($query)
+    {
+        if ($this->selectedDivision !== 'all') {
+            $query->where('divisions_id', $this->selectedDivision);
+        }
+        return $query;
+    }
+
+    public function getSummaryStatsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        $total = (clone $baseQuery)->count();
+
+        // Get completed procurements
+
+        $totalAbc = (clone $baseQuery)->sum('abc') ?? 0;
+
+        // Get BAC categories breakdown with ABC totals
+        $bacCategories = (clone $baseQuery)
+            ->join('bac_types', 'procurements.bac_type_id', '=', 'bac_types.id')
+            ->select(
+                'bac_types.abbreviation',
+                'bac_types.name',
+                DB::raw('count(*) as count'),
+                DB::raw('SUM(procurements.abc) as total_abc')
+            )
+            ->groupBy('bac_types.id', 'bac_types.abbreviation', 'bac_types.name')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->abbreviation,
+                    'fullName' => $item->name,
+                    'count' => $item->count,
+                    'totalAbc' => number_format($item->total_abc ?? 0, 2),
+                ];
+            });
+
+        // Get Division ABC breakdown
+        $divisionAbc = (clone $baseQuery)
+            ->join('divisions', 'procurements.divisions_id', '=', 'divisions.id')
+            ->select(
+                'divisions.abbreviation',
+                'divisions.divisions',
+                DB::raw('SUM(procurements.abc) as total_abc')
+            )
+            ->groupBy('divisions.id', 'divisions.abbreviation', 'divisions.divisions')
+            ->orderByDesc('total_abc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'abbreviation' => $item->abbreviation,
+                    'fullName' => $item->divisions,
+                    'totalAbc' => number_format($item->total_abc ?? 0, 2),
+                ];
+            });
+
+        return [
+            'total' => $total,
+            'totalAbc' => number_format($totalAbc, 2),
+            'bacCategories' => $bacCategories,
+            'divisionAbc' => $divisionAbc,
+        ];
+    }
+
+    public function getProcurementByBacTypeProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('bac_types', 'procurements.bac_type_id', '=', 'bac_types.id')
+            ->select('bac_types.name', DB::raw('count(*) as count'))
+            ->groupBy('bac_types.id', 'bac_types.abbreviation')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'value' => $item->count,
+                ];
+            });
+    }
+
+
+    public function getDivisionCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('divisions', 'procurements.divisions_id', '=', 'divisions.id')
+            ->select('divisions.id', 'divisions.abbreviation', 'divisions.divisions', DB::raw('count(*) as count'))
+            ->groupBy('divisions.id', 'divisions.abbreviation', 'divisions.divisions')
+            ->orderBy('divisions.id', 'asc') // Changed from orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'division' => $item->abbreviation,
+                    'name' => $item->divisions,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
+
+
+    public function getRecentProcurementsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->with(['division', 'prLotPrstages.procurementStage'])
+            ->where('created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return $baseQuery
             ->orderByDesc('created_at')
-            ->paginate($this->perPage);
+            ->take(10)
+            ->get();
+    }
 
-        return view('livewire.home-page', [
-            'procurements' => $procurements,
+
+    public function selectDivision($divisionId)
+    {
+        // Toggle: if clicking the same division, close it
+        if ($this->selectedDivisionId === $divisionId) {
+            $this->selectedDivisionId = null;
+            $this->selectedDivisionName = '';
+            return;
+        }
+
+        // Otherwise, open the selected division
+        $this->selectedDivisionId = $divisionId;
+        $division = Division::find($divisionId);
+        $this->selectedDivisionName = $division->divisions ?? '';
+    }
+
+    public function getClusterCommitteeCountsProperty()
+    {
+        if (!$this->selectedDivisionId) {
+            return collect();
+        }
+
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter())
+            ->where('procurements.divisions_id', $this->selectedDivisionId);
+
+        return $baseQuery
+            ->join('cluster_committees', 'procurements.cluster_committees_id', '=', 'cluster_committees.id')
+            ->select(
+                'cluster_committees.clustercommittee as name',
+                DB::raw('count(*) as count'),
+                DB::raw('SUM(procurements.abc) as total_abc')
+            )
+            ->groupBy('cluster_committees.id', 'cluster_committees.clustercommittee')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                    'totalAbc' => number_format($item->total_abc ?? 0, 2),
+                ];
+            });
+    }
+
+    public function getCategoryCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        $result = (clone $baseQuery)
+            ->join('categories', 'procurements.category_id', '=', 'categories.id')
+            ->select('categories.category as name', DB::raw('count(*) as count'))
+            ->groupBy('categories.id', 'categories.category')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+
+        // Debug: Log the data
+        \Log::info('Category Counts:', [
+            'count' => $result->count(),
+            'data' => $result->toArray()
+        ]);
+
+        return $result;
+    }
+
+    // Also add this method to check the raw SQL queries
+    public function debugQueries()
+    {
+        // Enable query log
+        DB::enableQueryLog();
+
+        // Call the properties
+        $categories = $this->categoryCounts;
+        $clusters = $this->clusterCommitteeCounts;
+
+        // Get the queries
+        $queries = DB::getQueryLog();
+
+        // Log them
+        \Log::info('SQL Queries:', $queries);
+
+        // You can also dd() to see immediately
+        dd([
+            'categories' => $categories,
+            'clusters' => $clusters,
+            'queries' => $queries
         ]);
     }
+
+    public function getCategoryTypeCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter())
+            ->whereNotNull('procurements.category_type_id'); // Add this line
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('category_types', 'procurements.category_type_id', '=', 'category_types.id')
+            ->select('category_types.category_type as name', DB::raw('count(*) as count'))
+            ->groupBy('category_types.id', 'category_types.category_type')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
+    public function getVenueSpecificCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter())
+            ->whereNotNull('procurements.venue_specific_id');
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('venue_specifics', 'procurements.venue_specific_id', '=', 'venue_specifics.id')
+            ->select('venue_specifics.name', DB::raw('count(*) as count'))
+            ->groupBy('venue_specifics.id', 'venue_specifics.name')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
+    public function getVenueProvinceHucCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter())
+            ->whereNotNull('procurements.venue_province_huc_id');
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('province_hucs', 'procurements.venue_province_huc_id', '=', 'province_hucs.id')
+            ->select('province_hucs.province_huc as name', DB::raw('count(*) as count'))
+            ->groupBy('province_hucs.id', 'province_hucs.province_huc')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
+    public function getProcurementStageCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('pr_lot_prstage', 'procurements.procID', '=', 'pr_lot_prstage.procID')
+            ->join('procurement_stages', 'pr_lot_prstage.pr_stage_id', '=', 'procurement_stages.id')
+            ->select(
+                'procurement_stages.procurementstage as name',
+                DB::raw('count(DISTINCT procurements.id) as count')
+            )
+            ->groupBy('procurement_stages.id', 'procurement_stages.procurementstage')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
+    public function getRemarksCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('pr_lot_remark', 'procurements.procID', '=', 'pr_lot_remark.procID')
+            ->join('remarks', 'pr_lot_remark.remarks_id', '=', 'remarks.id')
+            ->select(
+                'remarks.remarks as name',
+                DB::raw('count(DISTINCT procurements.id) as count')
+            )
+            ->groupBy('remarks.id', 'remarks.remarks')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+    public function render()
+    {
+        return view('livewire.home-page', [
+            'summaryStats' => $this->summaryStats,
+            'procurementByType' => $this->procurementByBacType,
+            'divisionCounts' => $this->divisionCounts,
+            'clusterCommitteeCounts' => $this->clusterCommitteeCounts,
+            'categoryCounts' => $this->categoryCounts,
+            'categoryTypeCounts' => $this->categoryTypeCounts,
+            'venueSpecificCounts' => $this->venueSpecificCounts,
+            'venueProvinceHucCounts' => $this->venueProvinceHucCounts,
+            'procurementStageCounts' => $this->procurementStageCounts,
+            'remarksCounts' => $this->remarksCounts,
+            'divisions' => Division::where('is_active', true)->get(),
+        ]);
+    }
+
 }

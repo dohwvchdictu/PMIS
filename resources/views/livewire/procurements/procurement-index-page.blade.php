@@ -47,14 +47,14 @@
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-40">
                         Stage
                     </th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-48">
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-20">
                         Remarks
                     </th>
                     <th class="px-1 py-1 text-center text-xs  font-medium text-black dark:text-white w-28">
                         Date Receipt</th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-28">
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
                         BAC Category</th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-28">
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-20">
                         Division</th>
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-32">
                         Cluster / Committee</th>
@@ -197,13 +197,23 @@
                                 <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
                             @endif
                         </td>
+                        @php
+                            $remarks = $procurement->currentLotRemark->remark->remarks ?? '';
 
+                            $remarksColor = match (true) {
+                                str_contains($remarks, 'Ongoing') => 'bg-yellow-400 text-black',
+                                str_contains($remarks, 'Awarded') => 'bg-green-600 text-white',
+                                str_contains($remarks, 'Cancelled') => 'bg-black text-white',
+                                default => 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white',
+                            };
+                        @endphp
                         <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
                             @if ($procurement->procurement_type === 'perLot')
                                 {{-- Show remark for perLot --}}
                                 @if ($procurement->currentLotRemark && $procurement->currentLotRemark->remark)
-                                    <span class="text-xs">
-                                        {{ $procurement->currentLotRemark->remark->remarks }}
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold {{ $remarksColor }}">
+                                        {{ $remarks }}
                                     </span>
                                 @else
                                     <span class="text-gray-400 dark:text-gray-500 text-xs">No Remark</span>
@@ -212,6 +222,7 @@
                                 {{-- For perItem, show in expanded rows --}}
                                 <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
                             @endif
+
                         </td>
 
                         <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
@@ -307,11 +318,26 @@
                                                                 Stage</span>
                                                         @endif
                                                     </td>
+                                                    @php
+                                                        $remarks = $item->currentItemRemark->remark->remarks ?? '';
+
+                                                        $remarksColor = match (true) {
+                                                            str_contains($remarks, 'Ongoing')
+                                                                => 'bg-yellow-400 text-black',
+                                                            str_contains($remarks, 'Awarded')
+                                                                => 'bg-green-600 text-white',
+                                                            str_contains($remarks, 'Cancelled')
+                                                                => 'bg-black text-white',
+                                                            default
+                                                                => 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white',
+                                                        };
+                                                    @endphp
                                                     <td
                                                         class="px-1 py-1 text-center text-sm text-black dark:text-white">
                                                         @if ($item->currentItemRemark && $item->currentItemRemark->remark)
-                                                            <span class="text-xs">
-                                                                {{ $item->currentItemRemark->remark->remarks }}
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold {{ $remarksColor }}">
+                                                                {{ $remarks }}
                                                             </span>
                                                         @else
                                                             <span class="text-gray-400 dark:text-gray-500 text-xs">No

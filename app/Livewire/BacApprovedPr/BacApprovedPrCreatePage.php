@@ -17,7 +17,7 @@ class BacApprovedPrCreatePage extends Component
     public $textareaRows = 1;
     // public $document_file; // REMOVED
     public $procID;
-
+    protected $layout = 'components.layouts.app';
     public function mount()
     {
         $this->resetForm();

@@ -1,3 +1,4 @@
-@import "tailwindcss"; /* ✅ Valid Tailwind import */
-@import "../../node_modules/preline/variants.css"; /* ✅ Valid if you're using Preline variants */
+@import "tailwindcss";
+@import "../../node_modules/preline/variants.css";
 
+@variant dark (&:where(.dark, .dark *));
