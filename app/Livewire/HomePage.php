@@ -370,7 +370,7 @@ class HomePage extends Component
             });
     }
 
-    public function getProcurementStageCountsProperty()
+    public function getProcurementStagePerLotCountsProperty()
     {
         $baseQuery = Procurement::query()
             ->where('procurements.created_at', '>=', $this->getDateFilter());
@@ -382,20 +382,33 @@ class HomePage extends Component
             ->join('procurement_stages', 'pr_lot_prstage.pr_stage_id', '=', 'procurement_stages.id')
             ->select(
                 'procurement_stages.procurementstage as name',
-                DB::raw('count(DISTINCT procurements.id) as count')
+                DB::raw('COUNT(DISTINCT procurements.procID) as count')
             )
             ->groupBy('procurement_stages.id', 'procurement_stages.procurementstage')
             ->orderByDesc('count')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->name,
-                    'count' => $item->count,
-                ];
-            });
+            ->get();
     }
 
-    public function getRemarksCountsProperty()
+    public function getProcurementStagePerItemCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('pr_item_prstage', 'procurements.procID', '=', 'pr_item_prstage.procID')
+            ->join('procurement_stages', 'pr_item_prstage.pr_stage_id', '=', 'procurement_stages.id')
+            ->select(
+                'procurement_stages.procurementstage as name',
+                DB::raw('COUNT(DISTINCT pr_item_prstage.prItemID) as count')
+            )
+            ->groupBy('procurement_stages.id', 'procurement_stages.procurementstage')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    public function getRemarksPerLotCountsProperty()
     {
         $baseQuery = Procurement::query()
             ->where('procurements.created_at', '>=', $this->getDateFilter());
@@ -407,17 +420,30 @@ class HomePage extends Component
             ->join('remarks', 'pr_lot_remark.remarks_id', '=', 'remarks.id')
             ->select(
                 'remarks.remarks as name',
-                DB::raw('count(DISTINCT procurements.id) as count')
+                DB::raw('COUNT(DISTINCT procurements.procID) as count')
             )
             ->groupBy('remarks.id', 'remarks.remarks')
             ->orderByDesc('count')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->name,
-                    'count' => $item->count,
-                ];
-            });
+            ->get();
+    }
+
+    public function getRemarksPerItemCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->where('procurements.created_at', '>=', $this->getDateFilter());
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('pr_item_remark', 'procurements.procID', '=', 'pr_item_remark.procID')
+            ->join('remarks', 'pr_item_remark.remarks_id', '=', 'remarks.id')
+            ->select(
+                'remarks.remarks as name',
+                DB::raw('COUNT(DISTINCT pr_item_remark.prItemID) as count')
+            )
+            ->groupBy('remarks.id', 'remarks.remarks')
+            ->orderByDesc('count')
+            ->get();
     }
     public function render()
     {
@@ -430,8 +456,10 @@ class HomePage extends Component
             'categoryTypeCounts' => $this->categoryTypeCounts,
             'venueSpecificCounts' => $this->venueSpecificCounts,
             'venueProvinceHucCounts' => $this->venueProvinceHucCounts,
-            'procurementStageCounts' => $this->procurementStageCounts,
-            'remarksCounts' => $this->remarksCounts,
+            'procurementStagePerLotCounts' => $this->procurementStagePerLotCounts,
+            'procurementStagePerItemCounts' => $this->procurementStagePerItemCounts,
+            'remarksPerLotCounts' => $this->remarksPerLotCounts,
+            'remarksPerItemCounts' => $this->remarksPerItemCounts,
             'divisions' => Division::where('is_active', true)->get(),
         ]);
     }

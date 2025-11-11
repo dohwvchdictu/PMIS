@@ -4,21 +4,21 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-4">
         <!-- Total Procurements & ABC Value Combined -->
         <div
-            class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
+            class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-4 sm:p-6 hover:shadow-lg transition-shadow">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="bg-emerald-600 p-3 rounded-lg">
+                    <div class="bg-emerald-600 p-2 sm:p-3 rounded-lg">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <h3 class="text-gray-700 dark:text-gray-300 text-sm font-medium">
+                    <h3 class="text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium">
                         Total Procurements
                     </h3>
                 </div>
                 <p
-                    class="text-5xl font-bold bg-emerald-600 dark:bg-emerald-600 text-white font-bold  px-4 py-1 rounded-lg">
+                    class="text-2xl sm:text-3xl md:text-4xl font-bold bg-emerald-600 text-white px-3 sm:px-4 py-1 rounded-lg whitespace-nowrap">
                     {{ $summaryStats['total'] }}
                 </p>
             </div>
@@ -26,48 +26,57 @@
             <div class="flex flex-col items-center justify-center mt-4">
                 <span class="text-xs text-gray-500 dark:text-gray-400 mb-2">Total ABC</span>
                 <p
-                    class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-emerald-600 dark:text-emerald-400 break-all text-center">
+                    class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-emerald-600 dark:text-emerald-400 break-words text-center w-full">
                     ₱{{ $summaryStats['totalAbc'] }}
                 </p>
             </div>
-
-        </div>
-        <!-- Division ABC Breakdown -->
-
-        <div class="space-y-2 max-h-full overflow-y-auto">
-            @foreach ($summaryStats['divisionAbc'] as $div)
-                <div
-                    class="flex items-center justify-between text-sm bg-gray-50 dark:bg-neutral-700 rounded-lg px-3 py-2">
-                    <span class="text-gray-700 dark:text-gray-300 font-medium">{{ $div['abbreviation'] }}</span>
-                    <span
-                        class="text-sm text-emerald-600 dark:text-emerald-600 font-bold">₱{{ $div['totalAbc'] }}</span>
-                </div>
-            @endforeach
         </div>
 
         <!-- BAC Categories with ABC Values -->
+        <div
+            class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-4 sm:p-6 hover:shadow-lg transition-shadow">
 
+            <div class="space-y-2 sm:space-y-3 max-h-64 sm:max-h-96 overflow-y-auto">
+                @foreach ($summaryStats['bacCategories'] as $bac)
+                    <div
+                        class="bg-gray-50 dark:bg-neutral-600 rounded-lg p-6 sm:p-8 hover:bg-gray-100 dark:hover:bg-neutral-500 transition-colors mt-2">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <span
+                                class="text-gray-900 dark:text-white font-semibold text-sm sm:text-base truncate max-w-full sm:max-w-[40%]">{{ $bac['fullName'] }}</span>
 
-        <div class="flex-1 overflow-y-auto space-y-3">
-            @foreach ($summaryStats['bacCategories'] as $bac)
-                <div
-                    class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-8 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="text-gray-900 dark:text-white font-semibold text-base">{{ $bac['fullName'] }}</span>
-
-                        <div
-                            class="bg-emerald-600 dark:bg-emerald-600 text-white font-bold text-xl px-4 py-1 rounded-lg">
-                            {{ $bac['count'] }}
+                            <div
+                                class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                                <div
+                                    class="bg-emerald-600 text-white font-bold text-base sm:text-lg px-2 sm:px-3 py-1 rounded-lg">
+                                    {{ $bac['count'] }}
+                                </div>
+                                <p
+                                    class="text-base sm:text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                    ₱{{ $bac['totalAbc'] }}
+                                </p>
+                            </div>
                         </div>
-                        <p class="text-3xl text-center font-bold text-emerald-600 dark:text-emerald-400">
-                            ₱{{ $bac['totalAbc'] }}</p>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
 
+        <!-- Division ABC Breakdown -->
+        <div
+            class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-4 sm:p-6 hover:shadow-lg transition-shadow">
 
+            <div class="space-y-2 max-h-64 sm:max-h-96 overflow-y-auto">
+                @foreach ($summaryStats['divisionAbc'] as $div)
+                    <div
+                        class="flex items-center justify-between text-sm bg-gray-50 dark:bg-neutral-600 rounded-lg px-2 sm:px-3 py-2">
+                        <span
+                            class="text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base truncate max-w-[50%]">{{ $div['abbreviation'] }}</span>
+                        <span
+                            class="text-sm sm:text-base text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">₱{{ $div['totalAbc'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     </div>
 
     <!-- Per Division Count - 5 Column Layout -->
@@ -180,13 +189,12 @@
                 </div>
             @endif
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" wire:ignore>
-            <!-- Procurement Stage Chart -->
             <div
                 class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Stage</h3>
-                @if ($procurementStageCounts->isNotEmpty())
+
+                @if ($procurementStagePerLotCounts->isNotEmpty() || $procurementStagePerItemCounts->isNotEmpty())
                     <div class="h-64">
                         <canvas id="procurementStageChart"></canvas>
                     </div>
@@ -197,12 +205,12 @@
                 @endif
             </div>
 
-
             <!-- Remarks Chart -->
             <div
                 class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Remarks</h3>
-                @if ($remarksCounts->isNotEmpty())
+
+                @if ($remarksPerLotCounts->isNotEmpty() || $remarksPerItemCounts->isNotEmpty())
                     <div class="h-64">
                         <canvas id="remarksChart"></canvas>
                     </div>
@@ -212,7 +220,6 @@
                     </div>
                 @endif
             </div>
-
         </div>
         <!-- Venue Specific Chart -->
         <div class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
@@ -275,6 +282,95 @@
             if (venueSpecificChart) venueSpecificChart.destroy();
             if (venueProvinceHucChart) venueProvinceHucChart.destroy();
 
+            // Color palettes
+            const blueShades = ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#1E40AF', '#2563EB', '#1D4ED8', '#1E3A8A'];
+            const greenShades = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#059669', '#047857', '#065F46', '#064E3B'];
+            const purpleShades = ['#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE', '#7C3AED', '#6D28D9', '#5B21B6', '#4C1D95'];
+            const orangeShades = ['#F59E0B', '#FBBF24', '#FCD34D', '#FDE68A', '#D97706', '#B45309', '#92400E', '#78350F'];
+
+            // Helper function to create combined doughnut chart
+            function createCombinedDoughnutChart(canvasId, perLotData, perItemData, lotColors, itemColors) {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return null;
+
+                // Combine data
+                const combinedLabels = [];
+                const combinedData = [];
+                const combinedColors = [];
+
+                // Add Per Lot data
+                if (perLotData && perLotData.length > 0) {
+                    perLotData.forEach((item, index) => {
+                        combinedLabels.push(`${item.name} (Lot)`);
+                        combinedData.push(item.count);
+                        combinedColors.push(lotColors[index % lotColors.length]);
+                    });
+                }
+
+                // Add Per Item data
+                if (perItemData && perItemData.length > 0) {
+                    perItemData.forEach((item, index) => {
+                        combinedLabels.push(`${item.name} (Item)`);
+                        combinedData.push(item.count);
+                        combinedColors.push(itemColors[index % itemColors.length]);
+                    });
+                }
+
+                if (combinedData.length === 0) return null;
+
+                return new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: combinedLabels,
+                        datasets: [{
+                            data: combinedData,
+                            backgroundColor: combinedColors,
+                            borderColor: isDarkMode ? '#374151' : '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: isDarkMode ? '#E5E7EB' : '#374151',
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    },
+                                    boxWidth: 15,
+                                    generateLabels: function(chart) {
+                                        const data = chart.data;
+                                        return data.labels.map((label, i) => ({
+                                            text: `${label}: ${data.datasets[0].data[i]}`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        }));
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+
             // -------- Category Doughnut Chart ----------
             const categoryData = @json($categoryCounts);
             if (categoryData && categoryData.length > 0) {
@@ -317,97 +413,29 @@
                 }
             }
 
-            // -------- Procurement Stage Doughnut Chart ----------
-            const procurementStageData = @json($procurementStageCounts);
-            if (procurementStageData && procurementStageData.length > 0) {
-                const procurementStageCtx = document.getElementById('procurementStageChart');
-                if (procurementStageCtx) {
-                    procurementStageChart = new Chart(procurementStageCtx.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: procurementStageData.map(item => item.name),
-                            datasets: [{
-                                data: procurementStageData.map(item => item.count),
-                                backgroundColor: [
-                                    '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-                                    '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
-                                    '#F97316', '#14B8A6', '#F43F5E', '#6366F1'
-                                ],
-                                borderWidth: 2,
-                                borderColor: isDarkMode ? '#3f3f46' : '#fff'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        padding: 10,
-                                        font: {
-                                            size: 10
-                                        },
-                                        boxWidth: 12,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
+            // -------- Combined Procurement Stage Chart ----------
+            const procurementStagePerLotData = @json($procurementStagePerLotCounts ?? []);
+            const procurementStagePerItemData = @json($procurementStagePerItemCounts ?? []);
 
-            // -------- Remarks Bar Chart ----------
-            const remarksData = @json($remarksCounts);
-            if (remarksData && remarksData.length > 0) {
-                const remarksCtx = document.getElementById('remarksChart');
-                if (remarksCtx) {
-                    remarksChart = new Chart(remarksCtx.getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: remarksData.map(item => item.name),
-                            datasets: [{
-                                label: 'Count',
-                                data: remarksData.map(item => item.count),
-                                backgroundColor: '#8B5CF6',
-                                borderRadius: 8,
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        maxRotation: 45,
-                                        minRotation: 45,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
-                                    },
-                                    grid: {
-                                        color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
-                                    },
-                                    grid: {
-                                        color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
+            procurementStageChart = createCombinedDoughnutChart(
+                'procurementStageChart',
+                procurementStagePerLotData,
+                procurementStagePerItemData,
+                blueShades,
+                greenShades
+            );
+
+            // -------- Combined Remarks Chart ----------
+            const remarksPerLotData = @json($remarksPerLotCounts ?? []);
+            const remarksPerItemData = @json($remarksPerItemCounts ?? []);
+
+            remarksChart = createCombinedDoughnutChart(
+                'remarksChart',
+                remarksPerLotData,
+                remarksPerItemData,
+                purpleShades,
+                orangeShades
+            );
 
             // -------- Venue Specific Bar Chart ----------
             const venueSpecificData = @json($venueSpecificCounts);
