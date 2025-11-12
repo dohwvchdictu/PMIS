@@ -175,38 +175,43 @@ class ModeOfProcurementCreatePage extends Component
 
         $this->ensureDefaultBidSchedules();
     }
+
     public function updatedFormModes($value, $key)
     {
-        // Example: key = "0.mode_of_procurement_id"
         if (str_ends_with($key, 'mode_of_procurement_id')) {
             $index = explode('.', $key)[0] ?? null;
 
             if (is_numeric($index) && isset($this->form['modes'][$index])) {
+                $newModeId = $this->form['modes'][$index]['mode_of_procurement_id'];
 
-                // ✅ RESET the bid schedule when the mode changes
-                // This clears out all old data from the previous mode
-                $this->form['modes'][$index]['bid_schedules'] = [
-                    [
-                        'uid' => 'TEMP-' . uniqid(), // Add a new UID
-                        'bidding_number' => 1,
-                        'ib_number' => '',
-                        'pre_proc_conference' => null,
-                        'ads_post_ib' => null,
-                        'pre_bid_conf' => null,
-                        'eligibility_check' => null,
-                        'sub_open_bids' => null,
-                        'bidding_date' => null,
-                        'bidding_result' => '',
-                        'ntf_no' => '',
-                        'ntf_bidding_date' => null,
-                        'ntf_bidding_result' => '',
-                        'rfq_no' => '',
-                        'canvass_date' => null,
-                        'date_returned_of_canvass' => null,
-                        'abstract_of_canvass_date' => null,
-                        'resolution_number' => '',
-                    ]
-                ];
+                // ✅ If changing TO a non-default mode (not Mode 1), create one empty schedule
+                if ($newModeId && $newModeId != 1) {
+                    $this->form['modes'][$index]['bid_schedules'] = [
+                        [
+                            'uid' => 'TEMP-' . uniqid(),
+                            'bidding_number' => 1, // ✅ Set to 1
+                            'ib_number' => '',
+                            'pre_proc_conference' => null,
+                            'ads_post_ib' => null,
+                            'pre_bid_conf' => null,
+                            'eligibility_check' => null,
+                            'sub_open_bids' => null,
+                            'bidding_date' => null,
+                            'bidding_result' => '',
+                            'ntf_no' => '',
+                            'ntf_bidding_date' => null,
+                            'ntf_bidding_result' => '',
+                            'rfq_no' => '',
+                            'canvass_date' => null,
+                            'date_returned_of_canvass' => null,
+                            'abstract_of_canvass_date' => null,
+                            'resolution_number' => '',
+                        ]
+                    ];
+                } else {
+                    // ✅ If changing back to Mode 1 or null, clear schedules
+                    $this->form['modes'][$index]['bid_schedules'] = [];
+                }
             }
         }
     }
@@ -218,7 +223,9 @@ class ModeOfProcurementCreatePage extends Component
         }
 
         foreach ($this->form['modes'] as &$mode) {
-            if (empty($mode['bid_schedules']) || !is_array($mode['bid_schedules'])) {
+            // ✅ Only add default schedule if it's completely missing or null
+            // Don't add if it's an empty array (which means user cleared it)
+            if (!isset($mode['bid_schedules'])) {
                 $mode['bid_schedules'] = [
                     [
                         'uid' => 'TEMP-' . uniqid(),
@@ -652,15 +659,62 @@ class ModeOfProcurementCreatePage extends Component
     public function saveTab2()
     {
         try {
-            // Ensure Mode 5 always has at least one schedule before validating
+            // ✅ Check if there's anything to save BEFORE modifying $this->form
+            $hasNonEmptySchedules = false;
+            $hasNonDefaultMode = false;
+            $hasEmptySchedulesInNonDefaultMode = false;
+
             foreach ($this->form['modes'] as $modeIndex => $mode) {
-                if (
-                    isset($mode['mode_of_procurement_id']) &&
-                    $mode['mode_of_procurement_id'] == 5 &&
-                    (empty($mode['bid_schedules']) || !is_array($mode['bid_schedules']))
-                ) {
-                    $this->addBidSchedule($modeIndex);
+                $modeId = $mode['mode_of_procurement_id'] ?? null;
+
+                // ✅ Check if there are non-default modes
+                if ($modeId && $modeId != 1) {
+                    $hasNonDefaultMode = true;
+
+                    // Check if this non-default mode has schedules
+                    if (!empty($mode['bid_schedules'])) {
+                        $hasSchedulesInMode = false;
+                        foreach ($mode['bid_schedules'] as $schedule) {
+                            // Check if schedule has any data
+                            if (!$this->isScheduleEmpty($schedule, $modeId)) {
+                                $hasNonEmptySchedules = true;
+                                $hasSchedulesInMode = true;
+                                break;
+                            }
+                        }
+
+                        // If mode has schedules but they're all empty, flag it
+                        if (!$hasSchedulesInMode && !empty($mode['bid_schedules'])) {
+                            $hasEmptySchedulesInNonDefaultMode = true;
+                        }
+                    }
+                } else if ($modeId == 1 && !empty($mode['bid_schedules'])) {
+                    // Check Mode 1 schedules
+                    foreach ($mode['bid_schedules'] as $schedule) {
+                        if (!$this->isScheduleEmpty($schedule, $modeId)) {
+                            $hasNonEmptySchedules = true;
+                            break;
+                        }
+                    }
                 }
+            }
+
+            // ✅ If only Mode 1 exists and no schedules are filled, show info message
+            if (!$hasNonDefaultMode && !$hasNonEmptySchedules) {
+                LivewireAlert::title('No Changes to Save')
+                    ->info()
+                    ->text('For BAC Decision is already set as default.')
+                    ->toast()->position('top-end')->show();
+                return;
+            }
+
+            // ✅ Only warn if user has empty schedules (not just empty schedule array)
+            if ($hasEmptySchedulesInNonDefaultMode) {
+                LivewireAlert::title('No Changes to Save')
+                    ->warning()
+                    ->text('Please fill in at least the IB Number or other required fields before saving.')
+                    ->toast()->position('top-end')->show();
+                return;
             }
 
             $this->validateTab2();
@@ -670,6 +724,38 @@ class ModeOfProcurementCreatePage extends Component
             foreach ($modesForProcessing as $modeIndex => $mode) {
                 $this->processMode($mode, $modeIndex);
             }
+
+            // ✅ After saving, ensure non-default modes have at least one schedule for display
+            foreach ($this->form['modes'] as $modeIndex => &$mode) {
+                $modeId = $mode['mode_of_procurement_id'] ?? null;
+
+                // If it's a non-default mode and has no schedules, add one
+                if ($modeId && $modeId != 1 && empty($mode['bid_schedules'])) {
+                    $mode['bid_schedules'] = [
+                        [
+                            'uid' => 'TEMP-' . uniqid(),
+                            'bidding_number' => 1,
+                            'ib_number' => '',
+                            'pre_proc_conference' => null,
+                            'ads_post_ib' => null,
+                            'pre_bid_conf' => null,
+                            'eligibility_check' => null,
+                            'sub_open_bids' => null,
+                            'bidding_date' => null,
+                            'bidding_result' => '',
+                            'ntf_no' => '',
+                            'ntf_bidding_date' => null,
+                            'ntf_bidding_result' => '',
+                            'rfq_no' => '',
+                            'canvass_date' => null,
+                            'date_returned_of_canvass' => null,
+                            'abstract_of_canvass_date' => null,
+                            'resolution_number' => '',
+                        ]
+                    ];
+                }
+            }
+            unset($mode); // Clear reference
 
             LivewireAlert::title('Saved Successfully!')
                 ->success()->toast()->position('top-end')->show();
@@ -690,6 +776,22 @@ class ModeOfProcurementCreatePage extends Component
                 ->error()->text($e->getMessage())->toast()->position('top-end')->show();
         }
     }
+    private function isScheduleEmpty(array $schedule, int $modeId): bool
+    {
+        if ($modeId == 5) {
+            // For Mode 5 (SVP), different rules apply
+            return empty($schedule['resolution_number'])
+                && empty($schedule['rfq_no'])
+                && empty($schedule['canvass_date'])
+                && empty($schedule['date_returned_of_canvass'])
+                && empty($schedule['abstract_of_canvass_date']);
+        }
+
+        // ✅ For ALL other modes: IB Number is MANDATORY
+        // No IB Number = empty schedule (won't save anything)
+        return empty($schedule['ib_number']);
+    }
+
     private function validateTab2()
     {
         // Base rules for all modes and shared fields
@@ -744,6 +846,34 @@ class ModeOfProcurementCreatePage extends Component
                         ]);
                     }
                 }
+            }
+        }
+
+        foreach ($this->form['modes'] as $modeIndex => $mode) {
+            if (empty($mode['bid_schedules'])) {
+                continue;
+            }
+
+            $combinations = [];
+            foreach ($mode['bid_schedules'] as $bidIndex => $schedule) {
+                $biddingNumber = $schedule['bidding_number'] ?? null;
+                $ibNumber = $schedule['ib_number'] ?? null;
+
+                // Skip if either is empty
+                if (empty($biddingNumber) || empty($ibNumber)) {
+                    continue;
+                }
+
+                $key = "{$biddingNumber}|{$ibNumber}";
+
+                if (isset($combinations[$key])) {
+                    throw ValidationException::withMessages([
+                        "form.modes.$modeIndex.bid_schedules.$bidIndex.ib_number" =>
+                            "This combination of Bidding Number ({$biddingNumber}) and IB Number ({$ibNumber}) already exists in this mode.",
+                    ]);
+                }
+
+                $combinations[$key] = true;
             }
         }
     }
@@ -916,7 +1046,16 @@ class ModeOfProcurementCreatePage extends Component
         $reorderedSchedules = array_reverse($schedules);
 
         foreach ($reorderedSchedules as $i => $schedule) {
-            $biddingNumber = $i + 1;
+            // ✅ Skip empty schedules during processing
+            if ($this->isScheduleEmpty($schedule, $modeId)) {
+                continue;
+            }
+
+            // Use existing bidding_number if available, otherwise calculate
+            $biddingNumber = !empty($schedule['bidding_number'])
+                ? $schedule['bidding_number']
+                : ($i + 1);
+
             $scheduleUid = "{$uid}-{$biddingNumber}";
 
             \Log::info("Processing Schedule for UID: {$scheduleUid}", $schedule);
@@ -962,12 +1101,19 @@ class ModeOfProcurementCreatePage extends Component
             }
         }
     }
+
     private function processPrSvp(array $schedules, string $uid)
     {
         $schedule = $schedules[0] ?? null;
 
-        if (!$schedule)
+        if (!$schedule) {
             return;
+        }
+
+        // ✅ Skip if SVP schedule is empty
+        if ($this->isScheduleEmpty($schedule, 5)) {
+            return;
+        }
 
         PrSvp::updateOrCreate(
             ['mop_group_ref' => $this->ref_number, 'uid' => $uid],
@@ -980,6 +1126,7 @@ class ModeOfProcurementCreatePage extends Component
             ]
         );
     }
+
     private function syncModeUidToForm($mode, $uid, $modeOrder)
     {
         foreach ($this->form['modes'] as &$formMode) {

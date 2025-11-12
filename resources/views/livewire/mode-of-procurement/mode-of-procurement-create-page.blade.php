@@ -257,14 +257,31 @@
                                 !$hasMissingBiddingResult &&
                                 $bidCount > 0 &&
                                 ($mode['mode_of_procurement_id'] != 2 || $bidCount < 2);
+
+                            // ✅ Get bid schedules
                             $bidSchedules = $mode['bid_schedules'] ?? [];
+
+                            // ✅ If empty and non-default mode, create display placeholder
                             if (empty($bidSchedules)) {
                                 $bidSchedules = [
                                     [
-                                        'bidding_number' => '',
+                                        'bidding_number' => 1,
                                         'ib_number' => '',
+                                        'pre_proc_conference' => null,
+                                        'ads_post_ib' => null,
+                                        'pre_bid_conf' => null,
+                                        'eligibility_check' => null,
+                                        'sub_open_bids' => null,
+                                        'bidding_date' => null,
                                         'bidding_result' => '',
+                                        'ntf_no' => '',
+                                        'ntf_bidding_date' => null,
                                         'ntf_bidding_result' => '',
+                                        'rfq_no' => '',
+                                        'canvass_date' => null,
+                                        'date_returned_of_canvass' => null,
+                                        'abstract_of_canvass_date' => null,
+                                        'resolution_number' => '',
                                     ],
                                 ];
                             }
