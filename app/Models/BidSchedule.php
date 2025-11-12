@@ -12,6 +12,7 @@ class BidSchedule extends Model
 
     protected $fillable = [
         'mop_group_ref',
+        'mop_uid',
         'uid',
         'modeproc',
         'ib_number',
@@ -31,9 +32,5 @@ class BidSchedule extends Model
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
     }
 
-    public function mop()
-    {
-        return $this->belongsTo(Mop::class, 'mop_id');
-    }
 
 }

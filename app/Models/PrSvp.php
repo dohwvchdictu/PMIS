@@ -12,6 +12,7 @@ class PrSvp extends Model
 
     protected $fillable = [
         'mop_group_ref',
+        'mop_uid',
         'uid',
         'resolution_number',
         'rfq_no',
@@ -26,8 +27,5 @@ class PrSvp extends Model
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
     }
 
-    public function mop()
-    {
-        return $this->belongsTo(Mop::class, 'uid', 'uid');
-    }
+
 }

@@ -203,7 +203,7 @@
                 });
             @endphp
 
-            @if (!$viewOnlyTab2 && !$hasDefaultMode && !$hasPendingOrEmptySchedule)
+            @if (!$viewOnlyTab2 && $this->showAddModeButton)
                 <div class="flex justify-center p-2">
                     <button type="button" wire:click.prevent="addMode"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-medium shadow">

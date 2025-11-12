@@ -100,20 +100,19 @@ class Mop extends Model
         return $this->belongsTo(ModeOfProcurement::class, 'current_mode_of_procurement_id');
     }
 
-    // ✅ Relationships now use 'uid' instead of 'mop_id'
     public function bidSchedules(): HasMany
     {
-        return $this->hasMany(BidSchedule::class, 'uid', 'uid');
+        return $this->hasMany(BidSchedule::class, 'mop_uid', 'uid');
     }
 
     public function ntfBidSchedules(): HasMany
     {
-        return $this->hasMany(NtfBidSchedule::class, 'uid', 'uid');
+        return $this->hasMany(NtfBidSchedule::class, 'mop_uid', 'uid');
     }
 
     public function svpDetails(): HasMany
     {
-        return $this->hasMany(PrSvp::class, 'uid', 'uid');
+        return $this->hasMany(PrSvp::class, 'mop_uid', 'uid');
     }
 
 

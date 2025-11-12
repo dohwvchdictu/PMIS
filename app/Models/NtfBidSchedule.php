@@ -12,6 +12,7 @@ class NtfBidSchedule extends Model
 
     protected $fillable = [
         'mop_group_ref',
+        'mop_uid',
         'uid',
         'ib_number',
         'pre_proc_conference',
@@ -37,8 +38,5 @@ class NtfBidSchedule extends Model
         return $this->belongsTo(Procurement::class, 'procID', 'procID');
     }
 
-    public function mop()
-    {
-        return $this->belongsTo(Mop::class, 'uid', 'uid');
-    }
+
 }
