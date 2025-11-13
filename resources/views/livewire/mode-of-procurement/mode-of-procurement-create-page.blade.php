@@ -309,13 +309,13 @@
                                     class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mb-6">
                                     <div class="grid grid-cols-9 gap-4">
                                         @if ($mode['mode_of_procurement_id'] != 5)
-                                            <div class="w-full md:w-16">
+                                            <div class="w-full md:w-24">
                                                 <x-forms.input
                                                     id="bidding_number_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Bidding #"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.bidding_number"
                                                     :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" textAlign="right"
-                                                    maxlength="2" />
+                                                    maxlength="2" :required="true" />
                                             </div>
 
                                             <x-forms.input id="ib_number_{{ $modeIndex }}_{{ $bidIndex }}"
