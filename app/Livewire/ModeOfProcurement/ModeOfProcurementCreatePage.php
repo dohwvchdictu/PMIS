@@ -416,10 +416,22 @@ class ModeOfProcurementCreatePage extends Component
             'modes' => $modes->toArray(),
         ]);
 
-        // Don't show if default mode exists
+        // ✅ If there are multiple modes, exclude Mode 1 from the check
+        if ($modes->count() > 1) {
+            $modes = $modes->reject(fn($mode) => ($mode['mode_of_procurement_id'] ?? null) == 1);
+            \Log::info('After filtering out Mode 1', ['modes' => $modes->toArray()]);
+        }
+
+        // ✅ If only Mode 1 exists after filtering, don't show button
+        if ($modes->isEmpty()) {
+            \Log::info('No modes after filtering, returning false');
+            return false;
+        }
+
+        // Only check for default mode in the filtered list
         $hasDefaultMode = $modes->contains('mode_of_procurement_id', 1);
         if ($hasDefaultMode) {
-            \Log::info('Has default mode, returning false');
+            \Log::info('Has default mode in filtered list, returning false');
             return false;
         }
 
@@ -492,18 +504,18 @@ class ModeOfProcurementCreatePage extends Component
         ];
 
         // ✅ Calculate the next mode_order from existing modes in form
-    $maxModeOrder = collect($this->form['modes'] ?? [])->max('mode_order') ?? 0;
-    $newModeOrder = $maxModeOrder + 1;
+        $maxModeOrder = collect($this->form['modes'] ?? [])->max('mode_order') ?? 0;
+        $newModeOrder = $maxModeOrder + 1;
 
-    $newMode = [
-        'uid' => 'TEMP-' . uniqid(),
-        'mode_of_procurement_id' => '',
-        'mode_order' => $newModeOrder, // ✅ Use calculated order
-        'bid_schedules' => [$emptyBidSchedule],
-    ];
+        $newMode = [
+            'uid' => 'TEMP-' . uniqid(),
+            'mode_of_procurement_id' => '',
+            'mode_order' => $newModeOrder, // ✅ Use calculated order
+            'bid_schedules' => [$emptyBidSchedule],
+        ];
 
-    // Add the new mode to the beginning of the array
-    array_unshift($this->form['modes'], $newMode);
+        // Add the new mode to the beginning of the array
+        array_unshift($this->form['modes'], $newMode);
     }
 
     public function addBidSchedule($modeIndex)
@@ -979,66 +991,66 @@ class ModeOfProcurementCreatePage extends Component
         }
     }
     private function processMode(array $mode, int $modeIndex)
-{
-    Log::info("Processing Mode {$modeIndex}:", $mode);
-    $modeId = $mode['mode_of_procurement_id'];
-    
-    // ✅ Use the mode_order from the mode itself, not the index
-    $modeOrder = $mode['mode_order'] ?? ($modeIndex + 1);
+    {
+        Log::info("Processing Mode {$modeIndex}:", $mode);
+        $modeId = $mode['mode_of_procurement_id'];
 
-    $this->preventDuplicateMode($modeId, $mode);
+        // ✅ Use the mode_order from the mode itself, not the index
+        $modeOrder = $mode['mode_order'] ?? ($modeIndex + 1);
 
-    // Get the MopGroup to access its related procurements/items
-    $mopGroup = MopGroup::where('ref_number', $this->ref_number)->first();
+        $this->preventDuplicateMode($modeId, $mode);
 
-    if (!$mopGroup) {
-        throw new \Exception("MopGroup not found for ref: {$this->ref_number}");
-    }
+        // Get the MopGroup to access its related procurements/items
+        $mopGroup = MopGroup::where('ref_number', $this->ref_number)->first();
 
-    // Process for each procurement or item
-    if ($this->procurementType === 'perLot') {
-        foreach ($mopGroup->procurements as $procurement) {
-            $existingMode = $this->updateOrCreateBidModeForProcurable(
-                $mode,
-                $modeId,
-                $modeOrder, // ✅ Pass the correct mode_order
-                $procurement->procID,
-                'App\Models\Procurement'
-            );
+        if (!$mopGroup) {
+            throw new \Exception("MopGroup not found for ref: {$this->ref_number}");
+        }
 
-            if (!empty($mode['bid_schedules'])) {
-                if ($modeId == 5) {
-                    $this->processPrSvp($mode['bid_schedules'], $existingMode->uid);
-                } else {
-                    $this->processSchedules($mode['bid_schedules'], $existingMode->uid, $modeId);
+        // Process for each procurement or item
+        if ($this->procurementType === 'perLot') {
+            foreach ($mopGroup->procurements as $procurement) {
+                $existingMode = $this->updateOrCreateBidModeForProcurable(
+                    $mode,
+                    $modeId,
+                    $modeOrder, // ✅ Pass the correct mode_order
+                    $procurement->procID,
+                    'App\Models\Procurement'
+                );
+
+                if (!empty($mode['bid_schedules'])) {
+                    if ($modeId == 5) {
+                        $this->processPrSvp($mode['bid_schedules'], $existingMode->uid);
+                    } else {
+                        $this->processSchedules($mode['bid_schedules'], $existingMode->uid, $modeId);
+                    }
+                }
+            }
+        } else {
+            foreach ($mopGroup->prItems as $item) {
+                $existingMode = $this->updateOrCreateBidModeForProcurable(
+                    $mode,
+                    $modeId,
+                    $modeOrder, // ✅ Pass the correct mode_order
+                    $item->prItemID,
+                    'App\Models\PrItem'
+                );
+
+                if (!empty($mode['bid_schedules'])) {
+                    if ($modeId == 5) {
+                        $this->processPrSvp($mode['bid_schedules'], $existingMode->uid);
+                    } else {
+                        $this->processSchedules($mode['bid_schedules'], $existingMode->uid, $modeId);
+                    }
                 }
             }
         }
-    } else {
-        foreach ($mopGroup->prItems as $item) {
-            $existingMode = $this->updateOrCreateBidModeForProcurable(
-                $mode,
-                $modeId,
-                $modeOrder, // ✅ Pass the correct mode_order
-                $item->prItemID,
-                'App\Models\PrItem'
-            );
 
-            if (!empty($mode['bid_schedules'])) {
-                if ($modeId == 5) {
-                    $this->processPrSvp($mode['bid_schedules'], $existingMode->uid);
-                } else {
-                    $this->processSchedules($mode['bid_schedules'], $existingMode->uid, $modeId);
-                }
-            }
+        // Sync UID back to form (use the last created mode's UID)
+        if (isset($existingMode)) {
+            $this->syncModeUidToForm($mode, $existingMode->uid, $modeOrder);
         }
     }
-
-    // Sync UID back to form (use the last created mode's UID)
-    if (isset($existingMode)) {
-        $this->syncModeUidToForm($mode, $existingMode->uid, $modeOrder);
-    }
-}
     private function updateOrCreateBidModeForProcurable($mode, $modeId, $modeOrder, $procurableId, $procurableType)
     {
         // Try to find existing mode by UID if it's not temporary
