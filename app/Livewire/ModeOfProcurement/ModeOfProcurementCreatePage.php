@@ -4,7 +4,11 @@ namespace App\Livewire\ModeOfProcurement;
 
 use App\Models\Mop;
 use App\Models\MopGroup;
+use App\Models\PostProcurement;
 use App\Models\PrItem;
+use App\Models\ProcurementStage;
+use App\Models\Remarks;
+use App\Models\Supplier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +47,8 @@ class ModeOfProcurementCreatePage extends Component
     public bool $viewOnlyTab2 = false;
     public bool $justAddedNewMode = false;
     public bool $justAddedNewSchedule = false;
+    public bool $changesMade = false;
+
     public bool $viewOnlyTab3 = false;
 
     public function mount($ref_number = null)
@@ -68,7 +74,6 @@ class ModeOfProcurementCreatePage extends Component
         if ($this->ref_number) {
             session()->forget(['selected_procurements', 'form_state']);
             $this->resetForm();
-            // $this->activeTab = 2; // Removed: Default is now 1
 
             $mopGroup = MopGroup::with([
                 'procurements.mops.modeDetails',
@@ -127,7 +132,7 @@ class ModeOfProcurementCreatePage extends Component
 
             if ($firstItem && $firstItem->mops->isNotEmpty()) {
                 $this->form['modes'] = $firstItem->mops
-                    ->sortByDesc('mode_order') // ✅ This is already correct - latest mode on top
+                    ->sortByDesc('mode_order')
                     ->map(function ($mop) {
                         $loadedSchedulesData = [];
                         $modeId = $mop->mode_of_procurement_id;
@@ -149,49 +154,47 @@ class ModeOfProcurementCreatePage extends Component
                         } elseif ($modeId == 4) {
                             $ntfSchedulesCollection = $mop->ntfBidSchedules;
                             if ($ntfSchedulesCollection && $ntfSchedulesCollection->isNotEmpty()) {
-                                // ✅ Change from sortBy to sortByDesc
                                 $loadedSchedulesData = $ntfSchedulesCollection
-                                    ->sortByDesc('bidding_number') // ✅ Latest bidding on top
+                                    ->sortByDesc('bidding_number')
                                     ->map(function ($schedule) {
-                                    return [
-                                        'uid' => $schedule->uid ?? null,
-                                        'bidding_number' => $schedule->bidding_number ?? 1,
-                                        'ib_number' => $schedule->ib_number ?? '',
-                                        'pre_proc_conference' => $schedule->pre_proc_conference ?? null,
-                                        'ads_post_ib' => $schedule->ads_post_ib ?? null,
-                                        'pre_bid_conf' => $schedule->pre_bid_conf ?? null,
-                                        'eligibility_check' => $schedule->eligibility_check ?? null,
-                                        'sub_open_bids' => $schedule->sub_open_bids ?? null,
-                                        'ntf_no' => $schedule->ntf_no ?? '',
-                                        'ntf_bidding_date' => $schedule->ntf_bidding_date ?? null,
-                                        'ntf_bidding_result' => $schedule->ntf_bidding_result ?? '',
-                                        'rfq_no' => $schedule->rfq_no ?? '',
-                                        'canvass_date' => $schedule->canvass_date ?? null,
-                                        'date_returned_of_canvass' => $schedule->date_returned_of_canvass ?? null,
-                                        'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date ?? null,
-                                    ];
-                                })->values()->all();
+                                        return [
+                                            'uid' => $schedule->uid ?? null,
+                                            'bidding_number' => $schedule->bidding_number ?? 1,
+                                            'ib_number' => $schedule->ib_number ?? '',
+                                            'pre_proc_conference' => $schedule->pre_proc_conference ?? null,
+                                            'ads_post_ib' => $schedule->ads_post_ib ?? null,
+                                            'pre_bid_conf' => $schedule->pre_bid_conf ?? null,
+                                            'eligibility_check' => $schedule->eligibility_check ?? null,
+                                            'sub_open_bids' => $schedule->sub_open_bids ?? null,
+                                            'ntf_no' => $schedule->ntf_no ?? '',
+                                            'ntf_bidding_date' => $schedule->ntf_bidding_date ?? null,
+                                            'ntf_bidding_result' => $schedule->ntf_bidding_result ?? '',
+                                            'rfq_no' => $schedule->rfq_no ?? '',
+                                            'canvass_date' => $schedule->canvass_date ?? null,
+                                            'date_returned_of_canvass' => $schedule->date_returned_of_canvass ?? null,
+                                            'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date ?? null,
+                                        ];
+                                    })->values()->all();
                             }
                         } else {
                             $bidSchedulesCollection = $mop->bidSchedules;
                             if ($bidSchedulesCollection && $bidSchedulesCollection->isNotEmpty()) {
-                                // ✅ Change from sortBy to sortByDesc
                                 $loadedSchedulesData = $bidSchedulesCollection
-                                    ->sortByDesc('bidding_number') // ✅ Latest bidding on top
+                                    ->sortByDesc('bidding_number')
                                     ->map(function ($schedule) {
-                                    return [
-                                        'uid' => $schedule->uid ?? null,
-                                        'bidding_number' => $schedule->bidding_number ?? 1,
-                                        'ib_number' => $schedule->ib_number ?? '',
-                                        'pre_proc_conference' => $schedule->pre_proc_conference ?? null,
-                                        'ads_post_ib' => $schedule->ads_post_ib ?? null,
-                                        'pre_bid_conf' => $schedule->pre_bid_conf ?? null,
-                                        'eligibility_check' => $schedule->eligibility_check ?? null,
-                                        'sub_open_bids' => $schedule->sub_open_bids ?? null,
-                                        'bidding_date' => $schedule->bidding_date ?? null,
-                                        'bidding_result' => $schedule->bidding_result ?? '',
-                                    ];
-                                })->values()->all();
+                                        return [
+                                            'uid' => $schedule->uid ?? null,
+                                            'bidding_number' => $schedule->bidding_number ?? 1,
+                                            'ib_number' => $schedule->ib_number ?? '',
+                                            'pre_proc_conference' => $schedule->pre_proc_conference ?? null,
+                                            'ads_post_ib' => $schedule->ads_post_ib ?? null,
+                                            'pre_bid_conf' => $schedule->pre_bid_conf ?? null,
+                                            'eligibility_check' => $schedule->eligibility_check ?? null,
+                                            'sub_open_bids' => $schedule->sub_open_bids ?? null,
+                                            'bidding_date' => $schedule->bidding_date ?? null,
+                                            'bidding_result' => $schedule->bidding_result ?? '',
+                                        ];
+                                    })->values()->all();
                             }
                         }
 
@@ -205,21 +208,37 @@ class ModeOfProcurementCreatePage extends Component
                     })->values()->all();
             } else {
                 Log::warning("No initial MOP found for MopGroup ref: {$this->ref_number}, loading default.");
-                $this->form['modes'] = []; // Ensure it's empty or load default if needed
+                $this->form['modes'] = [];
+            }
+
+            // Load Tab 3 data (Post Procurement)
+            $postProcurement = PostProcurement::where('mop_group_ref', $this->ref_number)->first();
+
+            if ($postProcurement) {
+                $this->form['bidEvaluationDate'] = $postProcurement->bid_evaluation_date;
+                $this->form['postQualDate'] = $postProcurement->post_qual_date;
+                $this->form['resolutionNumber'] = $postProcurement->resolution_number;
+                $this->form['recommendingForAward'] = $postProcurement->recommending_for_award;
+                $this->form['noticeOfAward'] = $postProcurement->notice_of_award;
+                $this->form['awardedAmount'] = $postProcurement->awarded_amount;
+                $this->form['dateOfPostingOfAwardOnPhilGEPS'] = $postProcurement->date_of_posting_of_award_on_philgeps;
+                $this->form['philgepsReferenceNo'] = $postProcurement->philgeps_reference_no;
+                $this->form['awardNoticeNumber'] = $postProcurement->award_notice_no;
+                $this->form['supplier_id'] = $postProcurement->supplier_id;
             }
 
         } else {
-            $this->activeTab = 1; // Explicitly set for create mode
+            $this->activeTab = 1;
             $this->procurementType = request()->query('type', 'perLot');
 
             if (session()->has('selected_procurements')) {
                 $this->selectedProcurements = session('selected_procurements');
             }
             if (session()->has('form_state')) {
-                $this->form = session('form_state', ['modes' => []]); // Ensure modes exists
+                $this->form = session('form_state', ['modes' => []]);
                 session()->forget('form_state');
             } else {
-                $this->resetForm(); // Ensure clean state on create
+                $this->resetForm();
             }
         }
 
@@ -424,74 +443,162 @@ class ModeOfProcurementCreatePage extends Component
 
     public function getShowAddModeButtonProperty()
     {
-        $modes = collect($this->form['modes'] ?? []);
-
-        \Log::info('Add Mode Button Check', [
-            'modes_count' => $modes->count(),
-            'modes' => $modes->toArray(),
-        ]);
-
-        // ✅ If there are multiple modes, exclude Mode 1 from the check
-        if ($modes->count() > 1) {
-            $modes = $modes->reject(fn($mode) => ($mode['mode_of_procurement_id'] ?? null) == 1);
-            \Log::info('After filtering out Mode 1', ['modes' => $modes->toArray()]);
-        }
-
-        // ✅ If only Mode 1 exists after filtering, don't show button
-        if ($modes->isEmpty()) {
-            \Log::info('No modes after filtering, returning false');
+        // Check database state instead of form state
+        if (empty($this->ref_number)) {
             return false;
         }
 
-        // Only check for default mode in the filtered list
-        $hasDefaultMode = $modes->contains('mode_of_procurement_id', 1);
-        if ($hasDefaultMode) {
-            \Log::info('Has default mode in filtered list, returning false');
+        // Get the latest mode from the database
+        $latestModeFromDb = Mop::where('mop_group_ref', $this->ref_number)
+            ->orderByDesc('mode_order')
+            ->first();
+
+        if (!$latestModeFromDb) {
             return false;
         }
 
-        // Get the latest mode (highest mode_order)
-        $latestMode = $modes->sortByDesc('mode_order')->first();
+        $modeId = $latestModeFromDb->mode_of_procurement_id;
 
-        \Log::info('Latest Mode', ['latest_mode' => $latestMode]);
-
-        if (!$latestMode) {
-            \Log::info('No latest mode, returning true');
-            return true;
-        }
-
-        $schedules = collect($latestMode['bid_schedules'] ?? []);
-        $modeId = $latestMode['mode_of_procurement_id'] ?? null;
-
-        \Log::info('Schedules Check', [
-            'mode_id' => $modeId,
-            'schedules_count' => $schedules->count(),
-            'schedules' => $schedules->toArray(),
-        ]);
-
-        if ($schedules->isEmpty()) {
-            \Log::info('No schedules, returning false');
+        // Don't show button if latest mode is Mode 1
+        if ($modeId == 1) {
             return false;
         }
 
-        // Check based on mode type
+        // Check if schedules exist AND have bidding results in the database
         if ($modeId == 4) {
-            $result = $schedules->every(fn($s) => !empty($s['ntf_bidding_result']));
-            \Log::info('Mode 4 check result', ['result' => $result]);
-            return $result;
+            // For NTF mode, check if schedules exist AND all have ntf_bidding_result
+            $schedulesExist = NtfBidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $latestModeFromDb->uid)
+                ->exists();
+
+            if (!$schedulesExist) {
+                return false; // No schedules saved yet
+            }
+
+            $hasUnfinishedSchedule = NtfBidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $latestModeFromDb->uid)
+                ->where(function ($query) {
+                    $query->whereNull('ntf_bidding_result')
+                        ->orWhere('ntf_bidding_result', '');
+                })
+                ->exists();
+
+            return !$hasUnfinishedSchedule;
         } elseif ($modeId == 5) {
-            $result = $schedules->every(
-                fn($s) =>
-                !empty($s['resolution_number']) &&
-                !empty($s['rfq_no']) &&
-                !empty($s['canvass_date'])
-            );
-            \Log::info('Mode 5 check result', ['result' => $result]);
-            return $result;
+            // For SVP mode, check if schedule exists AND has required fields
+            $scheduleExists = PrSvp::where('mop_group_ref', $this->ref_number)
+                ->where('uid', $latestModeFromDb->uid)
+                ->exists();
+
+            if (!$scheduleExists) {
+                return false; // No schedule saved yet
+            }
+
+            $hasUnfinishedSchedule = PrSvp::where('mop_group_ref', $this->ref_number)
+                ->where('uid', $latestModeFromDb->uid)
+                ->where(function ($query) {
+                    $query->whereNull('resolution_number')
+                        ->orWhere('resolution_number', '')
+                        ->orWhereNull('rfq_no')
+                        ->orWhere('rfq_no', '')
+                        ->orWhereNull('canvass_date');
+                })
+                ->exists();
+
+            return !$hasUnfinishedSchedule;
         } else {
-            $result = $schedules->every(fn($s) => !empty($s['bidding_result']));
-            \Log::info('Regular mode check result', ['result' => $result, 'checking_field' => 'bidding_result']);
-            return $result;
+            // For regular modes, check if schedules exist AND all have bidding_result
+            $schedulesExist = BidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $latestModeFromDb->uid)
+                ->exists();
+
+            if (!$schedulesExist) {
+                return false; // No schedules saved yet
+            }
+
+            $hasUnfinishedSchedule = BidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $latestModeFromDb->uid)
+                ->where(function ($query) {
+                    $query->whereNull('bidding_result')
+                        ->orWhere('bidding_result', '');
+                })
+                ->exists();
+
+            return !$hasUnfinishedSchedule;
+        }
+    }
+
+    public function canShowAddBidButton($modeUid, $modeId)
+    {
+        if (empty($this->ref_number) || empty($modeUid)) {
+            return false;
+        }
+
+        // Don't show button if the mode UID is temporary (not yet saved)
+        if (str_starts_with($modeUid, 'TEMP-')) {
+            return false;
+        }
+
+        // Get the latest mode from database
+        $latestModeFromDb = Mop::where('mop_group_ref', $this->ref_number)
+            ->orderByDesc('mode_order')
+            ->first();
+
+        if (!$latestModeFromDb || $latestModeFromDb->uid !== $modeUid) {
+            return false; // Only show Add Bid for the latest mode
+        }
+
+        // Mode 2 can only have max 2 bids
+        if ($modeId == 2) {
+            $bidCount = BidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $modeUid)
+                ->count();
+
+            if ($bidCount >= 2) {
+                return false;
+            }
+        }
+
+        // Check if schedules exist AND have bidding results in the database
+        if ($modeId == 4) {
+            $schedulesExist = NtfBidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $modeUid)
+                ->exists();
+
+            if (!$schedulesExist) {
+                return false;
+            }
+
+            $hasUnfinishedSchedule = NtfBidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $modeUid)
+                ->where(function ($query) {
+                    $query->whereNull('ntf_bidding_result')
+                        ->orWhere('ntf_bidding_result', '');
+                })
+                ->exists();
+
+            return !$hasUnfinishedSchedule;
+        } elseif ($modeId == 5) {
+            // SVP mode doesn't support multiple bids
+            return false;
+        } else {
+            $schedulesExist = BidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $modeUid)
+                ->exists();
+
+            if (!$schedulesExist) {
+                return false;
+            }
+
+            $hasUnfinishedSchedule = BidSchedule::where('mop_group_ref', $this->ref_number)
+                ->where('mop_uid', $modeUid)
+                ->where(function ($query) {
+                    $query->whereNull('bidding_result')
+                        ->orWhere('bidding_result', '');
+                })
+                ->exists();
+
+            return !$hasUnfinishedSchedule;
         }
     }
 
@@ -646,6 +753,8 @@ class ModeOfProcurementCreatePage extends Component
             $this->saveTab1();
         } elseif ($this->activeTab === 2) {
             $this->saveTab2();
+        } elseif ($this->activeTab === 3) {
+            $this->saveTab3();
         }
     }
 
@@ -751,6 +860,7 @@ class ModeOfProcurementCreatePage extends Component
                 'ref_number' => $group->ref_number,
                 'tab' => 2,
             ]);
+
         } catch (\Exception $e) {
             Log::error('Error saving MOP Details selections: ' . $e->getMessage());
 
@@ -788,16 +898,87 @@ class ModeOfProcurementCreatePage extends Component
             ]);
         }
     }
+    private function isDirtyArray(array $original, array $updated): bool
+    {
+        foreach ($updated as $key => $value) {
+            $origValue = array_key_exists($key, $original) ? $original[$key] : null;
+
+            if ($origValue instanceof \DateTimeInterface) {
+                $origValue = $origValue->format('Y-m-d H:i:s');
+            }
+
+            // loose compare to avoid trivial type mismatches blocking updates
+            if ($origValue != $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function modelDataChanged($model, array $data): bool
+    {
+        // $model is an Eloquent model
+        // compare only keys present in $data
+        return $this->isDirtyArray($model->getAttributes(), $data);
+    }
+    private function upsertBidScheduleIfChanged(string $scheduleUid, int $modeId, array $data): bool
+    {
+        $modelClass = ($modeId === 4) ? NtfBidSchedule::class : BidSchedule::class;
+
+        $existing = $modelClass::where('mop_group_ref', $this->ref_number)
+            ->where('uid', $scheduleUid)
+            ->first();
+
+        if ($existing) {
+            if ($this->modelDataChanged($existing, $data)) {
+                $existing->update($data);
+                return true;
+            }
+            return false;
+        }
+
+        // create
+        $modelClass::create(array_merge(['mop_group_ref' => $this->ref_number, 'uid' => $scheduleUid], $data));
+        return true;
+    }
+
+
+    private function upsertPrSvpIfChanged(string $uid, array $data): bool
+    {
+        $existing = PrSvp::where('mop_group_ref', $this->ref_number)
+            ->where('uid', $uid)
+            ->first();
+
+        if ($existing) {
+            if ($this->modelDataChanged($existing, $data)) {
+                $existing->update($data);
+                return true;
+            }
+            return false;
+        }
+
+        PrSvp::create(array_merge(['mop_group_ref' => $this->ref_number, 'uid' => $uid], $data));
+        return true;
+    }
+    private function syncModeUidToForm(array &$mode, string $uid, int $modeOrder): void
+    {
+        $mode['uid'] = $uid;
+        $mode['mode_order'] = $modeOrder;
+    }
+
     public function saveTab2()
     {
         try {
             $this->justAddedNewMode = false;
             $this->justAddedNewSchedule = false;
+            $this->changesMade = false;
             $hasModesToSave = false;
             $hasSchedulesToSave = false;
             $hasNonDefaultMode = false;
+            $hasNewSchedule = false;
 
-            // 1. Check state (using complex isScheduleEmpty)
+            // 1. Check state (using isScheduleEmpty)
             foreach ($this->form['modes'] as $modeIndex => $mode) {
                 $modeId = $mode['mode_of_procurement_id'] ?? null;
                 if (empty($modeId)) {
@@ -811,7 +992,11 @@ class ModeOfProcurementCreatePage extends Component
 
                 if (!empty($mode['bid_schedules'])) {
                     foreach ($mode['bid_schedules'] as $schedule) {
-                        if (!$this->isScheduleEmpty($schedule, $modeId)) { // This uses the complex function
+                        if (empty($schedule['uid']) || (isset($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-'))) {
+                            $hasNewSchedule = true;
+                        }
+
+                        if (!$this->isScheduleEmpty($schedule, $modeId)) {
                             $hasSchedulesToSave = true;
                             break 2;
                         }
@@ -819,7 +1004,12 @@ class ModeOfProcurementCreatePage extends Component
                 }
             }
 
-            // 2. Check for "No Changes"
+            if ($hasNewSchedule) {
+                $hasSchedulesToSave = true;
+                $this->validateTab2();
+            }
+
+            // 2. Quick UX checks
             if (!$hasNonDefaultMode && !$hasSchedulesToSave) {
                 LivewireAlert::title('No Changes to Save')
                     ->info()->text('For BAC Decision is already set as default.')
@@ -834,52 +1024,41 @@ class ModeOfProcurementCreatePage extends Component
                 return;
             }
 
-            // 3. Run validation ONLY if schedules are being saved.
-            // This allows Save 1 (adding a mode) to pass.
-            if ($hasSchedulesToSave) {
+            if ($hasSchedulesToSave && !$hasNewSchedule) {
                 $this->validateTab2();
             }
 
-            // 4. Process the modes (This will set $this->justAddedNewMode)
-            $modesForProcessing = $this->prepareModes();
-            foreach ($modesForProcessing as $modeIndex => $mode) {
-                if (empty($mode['mode_of_procurement_id'])) {
-                    continue;
+            // 3. Process everything inside a transaction
+            DB::transaction(function () use ($hasSchedulesToSave) {
+                $modesForProcessing = $this->prepareModes();
+
+                foreach ($modesForProcessing as $modeIndex => $mode) {
+                    if (empty($mode['mode_of_procurement_id'])) {
+                        continue;
+                    }
+                    $this->processMode($mode, $modeIndex);
                 }
-                $this->processMode($mode, $modeIndex);
-            }
 
-            // 5. [!!! THIS IS THE FIX !!!]
-            // Now, check for the "Save 2" bug.
-            // If we did NOT just add a new mode (Save 2)
-            // AND we are on a non-default mode
-            // AND we didn't save any schedules (i.e., placeholder is empty)
-            // THEN we must fail validation.
-            if (!$this->justAddedNewMode && $hasNonDefaultMode && !$hasSchedulesToSave) {
-                foreach ($this->form['modes'] as $modeIndex => $mode) {
-                    $modeId = $mode['mode_of_procurement_id'] ?? null;
-                    if ($modeId && $modeId != 1 && $modeId != 5) { // Check non-default, non-SVP modes
-
-                        // We must re-check if schedules are empty, in case the placeholder
-                        // was just added by the `updatedFormModes` hook.
-                        $allSchedulesAreEmpty = true;
-                        if (!empty($mode['bid_schedules'])) {
-                            $allSchedulesAreEmpty = collect($mode['bid_schedules'])->every(fn($s) => $this->isScheduleEmpty($s, $modeId));
-                        }
-
-                        if ($allSchedulesAreEmpty) {
-                            $firstScheduleKey = "form.modes.$modeIndex.bid_schedules.0.ib_number";
-                            throw ValidationException::withMessages([
-                                $firstScheduleKey => 'The IB No. is required for this mode.',
-                            ]);
+                if (!$this->justAddedNewMode && $hasSchedulesToSave === false) {
+                    foreach ($this->form['modes'] as $modeIndex => $mode) {
+                        $modeId = $mode['mode_of_procurement_id'] ?? null;
+                        if ($modeId && $modeId != 1 && $modeId != 5) {
+                            $allSchedulesAreEmpty = true;
+                            if (!empty($mode['bid_schedules'])) {
+                                $allSchedulesAreEmpty = collect($mode['bid_schedules'])->every(fn($s) => $this->isScheduleEmpty($s, $modeId));
+                            }
+                            if ($allSchedulesAreEmpty) {
+                                $firstScheduleKey = "form.modes.$modeIndex.bid_schedules.0.ib_number";
+                                throw ValidationException::withMessages([
+                                    $firstScheduleKey => 'The IB No. is required for this mode.',
+                                ]);
+                            }
                         }
                     }
                 }
-            }
-            // [!!! END FIX !!!]
+            });
 
-
-            // 6. Repopulate placeholder (this is correct)
+            // 4. Repopulate placeholder
             foreach ($this->form['modes'] as $modeIndex => &$mode) {
                 $modeId = $mode['mode_of_procurement_id'] ?? null;
                 if ($modeId && $modeId != 1 && empty($mode['bid_schedules'])) {
@@ -897,7 +1076,7 @@ class ModeOfProcurementCreatePage extends Component
                             'bidding_result' => '',
                             'ntf_no' => '',
                             'ntf_bidding_date' => null,
-                            'ntf_bidding_result' => '',
+                            'ntf_bidding_result' => null,
                             'rfq_no' => '',
                             'canvass_date' => null,
                             'date_returned_of_canvass' => null,
@@ -907,18 +1086,24 @@ class ModeOfProcurementCreatePage extends Component
                     ];
                 }
             }
-            unset($mode); // Unset the reference
+            unset($mode);
 
-            // 7. Show toast (this logic is correct)
-            if ($this->justAddedNewMode) {
+            // 5. Show toast based on result
+            if ($this->justAddedNewMode && $this->justAddedNewSchedule) {
+                LivewireAlert::title('Mode and Bid Schedule Added Successfully!')
+                    ->success()->toast()->position('top-end')->show();
+            } elseif ($this->justAddedNewMode) {
                 LivewireAlert::title('Mode Added Successfully!')
                     ->success()->toast()->position('top-end')->show();
             } elseif ($this->justAddedNewSchedule) {
-                LivewireAlert::title('Bid Schedule Added!')
+                LivewireAlert::title('Bid Schedule Added Successfully!')
+                    ->success()->toast()->position('top-end')->show();
+            } elseif ($this->changesMade) {
+                LivewireAlert::title('Updated Successfully!')
                     ->success()->toast()->position('top-end')->show();
             } else {
-                LivewireAlert::title('Saved Successfully!')
-                    ->success()->toast()->position('top-end')->show();
+                LivewireAlert::title('No changes — nothing to save.')
+                    ->info()->toast()->position('top-end')->show();
             }
 
             $this->checkSuccessfulBidOrNtf();
@@ -937,10 +1122,13 @@ class ModeOfProcurementCreatePage extends Component
         }
     }
 
+
     private function isScheduleEmpty(array $schedule, int $modeId): bool
     {
+
+
         if ($modeId == 5) {
-            // Mode 5 (SVP) logic is correct.
+            // Mode 5 (SVP)
             return empty($schedule['resolution_number'])
                 && empty($schedule['rfq_no'])
                 && empty($schedule['canvass_date'])
@@ -948,8 +1136,7 @@ class ModeOfProcurementCreatePage extends Component
                 && empty($schedule['abstract_of_canvass_date']);
         }
 
-        // For all other modes, it's empty if ALL user-fillable fields are empty.
-        // We ignore 'bidding_number' as it can be auto-filled.
+        // For all other modes
         return empty($schedule['ib_number'])
             && empty($schedule['pre_proc_conference'])
             && empty($schedule['ads_post_ib'])
@@ -958,14 +1145,15 @@ class ModeOfProcurementCreatePage extends Component
             && empty($schedule['sub_open_bids'])
             && empty($schedule['bidding_date'])
             && empty($schedule['bidding_result'])
-            && empty($schedule['ntf_no']) // For Mode 4
-            && empty($schedule['ntf_bidding_date']) // For Mode 4
-            && empty($schedule['ntf_bidding_result']) // For Mode 4
-            && empty($schedule['rfq_no']) // For Mode 4
-            && empty($schedule['canvass_date']) // For Mode 4
-            && empty($schedule['date_returned_of_canvass']) // For Mode 4
-            && empty($schedule['abstract_of_canvass_date']); // For Mode 4
+            && empty($schedule['ntf_no'])
+            && empty($schedule['ntf_bidding_date'])
+            && empty($schedule['ntf_bidding_result'])
+            && empty($schedule['rfq_no'])
+            && empty($schedule['canvass_date'])
+            && empty($schedule['date_returned_of_canvass'])
+            && empty($schedule['abstract_of_canvass_date']);
     }
+
     private function validateTab2()
     {
         // Base rules (unchanged)
@@ -996,18 +1184,34 @@ class ModeOfProcurementCreatePage extends Component
 
             foreach ($mode['bid_schedules'] as $bidIndex => $schedule) {
                 // Check if the schedule is NOT empty (i.e., user tried to fill it)
-                if (!$this->isScheduleEmpty($schedule, $modeId)) {
+                $isTemp = !empty($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-');
+
+                if (!$this->isScheduleEmpty($schedule, $modeId) || $isTemp) {
 
                     // If it's not empty, validate it based on its type.
                     if ($modeId == 5) {
                         // Mode 5 (SVP) Validation
-                        $this->validate([
-                            "form.modes.$modeIndex.bid_schedules.$bidIndex.resolution_number" => 'required|string|max:255',
-                            "form.modes.$modeIndex.bid_schedules.$bidIndex.rfq_no" => 'required|string|max:255',
-                            "form.modes.$modeIndex.bid_schedules.$bidIndex.canvass_date" => 'required|date',
-                            "form.modes.$modeIndex.bid_schedules.$bidIndex.date_returned_of_canvass" => 'required|date',
-                            "form.modes.$modeIndex.bid_schedules.$bidIndex.abstract_of_canvass_date" => 'required|date',
-                        ]);
+                        $this->validate(
+                            [
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.resolution_number" => 'required|string|max:255',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.rfq_no" => 'required|string|max:255',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.canvass_date" => 'required|date',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.date_returned_of_canvass" => 'required|date',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.abstract_of_canvass_date" => 'required|date',
+                            ],
+                            [
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.resolution_number.required" =>
+                                    'The Resolution Number is required.',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.rfq_no.required" =>
+                                    'The RFQ Number is required.',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.canvass_date.required" =>
+                                    'The Canvass Date is required.',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.date_returned_of_canvass.required" =>
+                                    'The Returned of Canvass is required.',
+                                "form.modes.$modeIndex.bid_schedules.$bidIndex.abstract_of_canvass_date.required" =>
+                                    'The  Abstract of Canvass is required.',
+                            ]
+                        );
                     } else {
                         // [!!! THE FIX IS HERE !!!]
                         // All other modes: IB Number AND Bidding Number are required
@@ -1059,25 +1263,21 @@ class ModeOfProcurementCreatePage extends Component
     {
         Log::info("Processing Mode {$modeIndex}:", $mode);
         $modeId = $mode['mode_of_procurement_id'];
-
-        // ✅ Use the mode_order from the mode itself
         $modeOrder = $mode['mode_order'] ?? 1;
 
         $this->preventDuplicateMode($modeId, $mode);
 
-        // Get the MopGroup to access its related procurements/items
         $mopGroup = MopGroup::where('ref_number', $this->ref_number)->first();
 
         if (!$mopGroup) {
             throw new \Exception("MopGroup not found for ref: {$this->ref_number}");
         }
 
-        $createdMode = null; // This will store the Mop model from the *last* item
+        $createdMode = null;
+        $originalUid = $mode['uid'] ?? null;
 
         if ($this->procurementType === 'perLot') {
             foreach ($mopGroup->procurements as $procurement) {
-                // [!!! THIS IS THE FIX !!!]
-                // We must pass all the arguments, not (...)
                 $createdMode = $this->updateOrCreateBidModeForProcurable(
                     $mode,
                     $modeId,
@@ -1088,8 +1288,6 @@ class ModeOfProcurementCreatePage extends Component
             }
         } else {
             foreach ($mopGroup->prItems as $item) {
-                // [!!! THIS IS THE FIX !!!]
-                // We must pass all the arguments, not (...)
                 $createdMode = $this->updateOrCreateBidModeForProcurable(
                     $mode,
                     $modeId,
@@ -1100,24 +1298,38 @@ class ModeOfProcurementCreatePage extends Component
             }
         }
 
-        // [!!! REFACTOR IS HERE !!!]
-        // Now this refactored logic will work, because $createdMode is a Mop object
+        // Process schedules
         if ($createdMode && !empty($mode['bid_schedules'])) {
             if ($modeId == 5) {
-                $this->processPrSvp($mode['bid_schedules'], $createdMode->uid);
+                $madeChange = $this->processPrSvp($mode['bid_schedules'], $createdMode->uid);
+                if ($madeChange)
+                    $this->changesMade = true;
             } else {
-                $this->processSchedules($mode['bid_schedules'], $createdMode->uid, $modeId);
+                $madeChangeCount = $this->processSchedules($mode['bid_schedules'], $createdMode->uid, $modeId);
+                if ($madeChangeCount > 0) {
+                    $this->changesMade = true;
+                }
             }
+
+            // Update schedule UIDs in form after saving
+            $this->updateScheduleUidsInForm($mode['bid_schedules'], $createdMode->uid, $modeId, $originalUid);
         }
 
-        if ($createdMode) {
-            $this->syncModeUidToForm($mode, $createdMode->uid, $createdMode->mode_order);
+        // Update mode UID in form
+        if ($createdMode && $originalUid) {
+            foreach ($this->form['modes'] as $index => &$formMode) {
+                if (($formMode['uid'] ?? null) === $originalUid) {
+                    $formMode['uid'] = $createdMode->uid;
+                    $formMode['mode_order'] = $createdMode->mode_order;
+                    break;
+                }
+            }
+            unset($formMode);
         }
     }
 
     private function updateOrCreateBidModeForProcurable($mode, $modeId, $modeOrder, $procurableId, $procurableType)
     {
-        // Try to find existing mode by UID if it's not temporary
         $existingMode = !empty($mode['uid']) && !str_starts_with($mode['uid'], 'TEMP-')
             ? Mop::where('uid', $mode['uid'])
                 ->where('procurable_id', $procurableId)
@@ -1134,7 +1346,8 @@ class ModeOfProcurementCreatePage extends Component
 
             $uid = "{$this->ref_number}-{$modeId}-{$newOrder}";
 
-            $this->justAddedNewMode = true; // ✅ SET FLAG HERE
+            $this->justAddedNewMode = true;
+            $this->changesMade = true;
 
             return Mop::create([
                 'mop_group_ref' => $this->ref_number,
@@ -1148,12 +1361,16 @@ class ModeOfProcurementCreatePage extends Component
 
         // Standard update or create
         if ($existingMode) {
-            // This is an UPDATE, so do not set the flag
-            $existingMode->update([
+            $update = [
                 'mode_of_procurement_id' => $modeId,
-            ]);
+                'mode_order' => $modeOrder,
+            ];
+
+            if ($this->modelDataChanged($existingMode, $update)) {
+                $existingMode->update($update);
+                $this->changesMade = true;
+            }
         } else {
-            // This is a CREATE (from a TEMP- uid), so set the flag
             $actualMaxOrder = Mop::where('mop_group_ref', $this->ref_number)
                 ->where('procurable_id', $procurableId)
                 ->where('procurable_type', $procurableType)
@@ -1162,7 +1379,8 @@ class ModeOfProcurementCreatePage extends Component
             $newOrder = $actualMaxOrder + 1;
             $uid = "{$this->ref_number}-{$modeId}-{$newOrder}";
 
-            $this->justAddedNewMode = true; // ✅ SET FLAG HERE
+            $this->justAddedNewMode = true;
+            $this->changesMade = true;
 
             $existingMode = Mop::create([
                 'mop_group_ref' => $this->ref_number,
@@ -1233,26 +1451,29 @@ class ModeOfProcurementCreatePage extends Component
 
         return $existingMode;
     }
-    private function processSchedules(array $schedules, string $uid, int $modeId)
+    private function processSchedules(array $schedules, string $uid, int $modeId): int
     {
+        $changedCount = 0;
         $reorderedSchedules = array_reverse($schedules);
 
         foreach ($reorderedSchedules as $i => $schedule) {
-            if ($this->isScheduleEmpty($schedule, $modeId)) {
+            if ($this->isScheduleEmpty($schedule, $modeId) && !(isset($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-'))) {
                 continue;
             }
 
-            if (!empty($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-')) {
-                $this->justAddedNewSchedule = true;
-            }
-
-            $biddingNumber = !empty($schedule['bidding_number'])
-                ? $schedule['bidding_number']
-                : ($i + 1);
-
+            $biddingNumber = !empty($schedule['bidding_number']) ? $schedule['bidding_number'] : ($i + 1);
             $scheduleUid = "{$uid}-{$biddingNumber}";
 
-            \Log::info("Processing Schedule for UID: {$scheduleUid}", $schedule);
+            // Check if this schedule actually exists in the database
+            $modelClass = ($modeId === 4) ? NtfBidSchedule::class : BidSchedule::class;
+            $existsInDb = $modelClass::where('mop_group_ref', $this->ref_number)
+                ->where('uid', $scheduleUid)
+                ->exists();
+
+            // Only mark as "new" if it has TEMP uid AND doesn't exist in database
+            if (!empty($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-') && !$existsInDb) {
+                $this->justAddedNewSchedule = true;
+            }
 
             $baseData = [
                 'mop_group_ref' => $this->ref_number,
@@ -1278,77 +1499,83 @@ class ModeOfProcurementCreatePage extends Component
                     'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
                 ]);
 
-                NtfBidSchedule::updateOrCreate(
-                    ['mop_group_ref' => $this->ref_number, 'uid' => $scheduleUid],
-                    $ntfData
-                );
-
+                if ($this->upsertBidScheduleIfChanged($scheduleUid, $modeId, $ntfData)) {
+                    $changedCount++;
+                }
             } else {
                 $bidData = array_merge($baseData, [
                     'bidding_date' => $schedule['bidding_date'] ?? null,
                     'bidding_result' => $schedule['bidding_result'] ?? null,
                 ]);
 
-                BidSchedule::updateOrCreate(
-                    ['mop_group_ref' => $this->ref_number, 'uid' => $scheduleUid],
-                    $bidData
-                );
+                if ($this->upsertBidScheduleIfChanged($scheduleUid, $modeId, $bidData)) {
+                    $changedCount++;
+                }
             }
         }
+
+        return $changedCount;
     }
 
-    private function processPrSvp(array $schedules, string $uid)
+    private function processPrSvp(array $schedules, string $uid): bool
     {
         $schedule = $schedules[0] ?? null;
-
         if (!$schedule) {
-            return;
+            return false;
         }
 
-        if ($this->isScheduleEmpty($schedule, 5)) {
-            return;
+        if ($this->isScheduleEmpty($schedule, 5) && !(isset($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-'))) {
+            return false;
         }
 
-        if (!empty($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-')) {
+        // Check if this SVP schedule actually exists in the database
+        $existsInDb = PrSvp::where('mop_group_ref', $this->ref_number)
+            ->where('uid', $uid)
+            ->exists();
+
+        // Only mark as "new" if it has TEMP uid AND doesn't exist in database
+        if (!empty($schedule['uid']) && str_starts_with($schedule['uid'], 'TEMP-') && !$existsInDb) {
             $this->justAddedNewSchedule = true;
         }
 
-        PrSvp::updateOrCreate(
-            ['mop_group_ref' => $this->ref_number, 'uid' => $uid],
-            [
-                'mop_uid' => $uid,
-                'resolution_number' => $schedule['resolution_number'] ?? null,
-                'rfq_no' => $schedule['rfq_no'] ?? null,
-                'canvass_date' => $schedule['canvass_date'] ?? null,
-                'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
-                'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-            ]
-        );
+        $data = [
+            'mop_uid' => $uid,
+            'resolution_number' => $schedule['resolution_number'] ?? null,
+            'rfq_no' => $schedule['rfq_no'] ?? null,
+            'canvass_date' => $schedule['canvass_date'] ?? null,
+            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
+            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
+        ];
+
+        return $this->upsertPrSvpIfChanged($uid, $data);
     }
-
-
-    private function syncModeUidToForm($mode, $uid, $actualModeOrder)
+    private function updateScheduleUidsInForm(array $schedules, string $mopUid, int $modeId, ?string $modeUidInForm)
     {
-        // ✅ Extract the actual mode_order from the UID
-        // UID format: MOP-2025-0001-{modeId}-{modeOrder}
-        $uidParts = explode('-', $uid);
-        $extractedModeOrder = (int) end($uidParts);
-
-        foreach ($this->form['modes'] as &$formMode) {
-            // Match by UID or by temp UID pattern
-            if (
-                (!empty($formMode['uid']) && $formMode['uid'] === $mode['uid']) ||
-                (str_starts_with($formMode['uid'] ?? '', 'TEMP-') &&
-                    $formMode['mode_of_procurement_id'] === $mode['mode_of_procurement_id'] &&
-                    $formMode['mode_order'] === $mode['mode_order'])
-            ) {
-                $formMode['uid'] = $uid;
-                $formMode['mode_order'] = $extractedModeOrder;
-                break;
+        // Find the mode in the form that matches
+        foreach ($this->form['modes'] as $modeIndex => &$formMode) {
+            if (($formMode['uid'] ?? null) !== $modeUidInForm) {
+                continue;
             }
-        }
-    }
 
+            // Update each schedule's UID
+            foreach ($formMode['bid_schedules'] as $schedIndex => &$formSchedule) {
+                $originalScheduleUid = $formSchedule['uid'] ?? null;
+
+                // Only update if it's a TEMP uid
+                if ($originalScheduleUid && str_starts_with($originalScheduleUid, 'TEMP-')) {
+                    $biddingNumber = $formSchedule['bidding_number'] ?? ($schedIndex + 1);
+                    $realScheduleUid = "{$mopUid}-{$biddingNumber}";
+
+                    // Update the UID in the form
+                    $formSchedule['uid'] = $realScheduleUid;
+                }
+            }
+            unset($formSchedule);
+
+            break; // Found the mode, no need to continue
+        }
+        unset($formMode);
+    }
 
     public function checkSuccessfulBidOrNtf()
     {
@@ -1378,6 +1605,105 @@ class ModeOfProcurementCreatePage extends Component
             ->whereNotNull('date_returned_of_canvass')
             ->whereNotNull('abstract_of_canvass_date')
             ->exists();
+    }
+    public function saveTab3()
+    {
+        try {
+            // Validate input
+            $this->validate([
+                'form.bidEvaluationDate' => 'nullable|date',
+                'form.postQualDate' => 'nullable|date',
+                'form.resolutionNumber' => 'nullable|string|max:255',
+                'form.recommendingForAward' => 'nullable|date',
+                'form.noticeOfAward' => 'nullable|date',
+                'form.awardedAmount' => 'nullable|numeric|min:0',
+                'form.dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
+                'form.philgepsReferenceNo' => 'nullable|string|max:255',
+                'form.awardNoticeNumber' => 'nullable|string|max:255',
+                'form.supplier_id' => 'nullable|exists:suppliers,id',
+            ]);
+
+            // Normalize awardedAmount
+            if (!empty($this->form['awardedAmount'])) {
+                $this->form['awardedAmount'] = floatval(preg_replace('/[^0-9.]/', '', $this->form['awardedAmount']));
+            }
+
+            // Prepare data
+            $data = [
+                'bid_evaluation_date' => $this->form['bidEvaluationDate'] ?? null,
+                'post_qual_date' => $this->form['postQualDate'] ?? null,
+                'resolution_number' => $this->form['resolutionNumber'] ?? null,
+                'recommending_for_award' => $this->form['recommendingForAward'] ?? null,
+                'notice_of_award' => $this->form['noticeOfAward'] ?? null,
+                'awarded_amount' => $this->form['awardedAmount'] ?? null,
+                'date_of_posting_of_award_on_philgeps' => $this->form['dateOfPostingOfAwardOnPhilGEPS'] ?? null,
+                'philgeps_reference_no' => $this->form['philgepsReferenceNo'] ?? null,
+                'award_notice_no' => $this->form['awardNoticeNumber'] ?? null,
+                'supplier_id' => $this->form['supplier_id'] ?? null,
+            ];
+
+            // Check if there are any changes to save
+            $hasChanges = false;
+
+            DB::transaction(function () use ($data, &$hasChanges) {
+                if (empty($this->ref_number)) {
+                    throw new \Exception("Reference number is required.");
+                }
+
+                // Find existing PostProcurement record by mop_group_ref
+                $existingRecord = PostProcurement::where('mop_group_ref', $this->ref_number)->first();
+
+                if ($existingRecord) {
+                    // Check if data has changed
+                    if ($this->modelDataChanged($existingRecord, $data)) {
+                        $existingRecord->update($data);
+                        $hasChanges = 'updated';
+                    }
+                } else {
+                    // Create new record with mop_group_ref
+                    PostProcurement::create(array_merge(['mop_group_ref' => $this->ref_number], $data));
+                    $hasChanges = 'created';
+                }
+            });
+
+            // Show appropriate message
+            if ($hasChanges === 'created') {
+                LivewireAlert::title('Post Procurement Saved Successfully!')
+                    ->success()
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+            } elseif ($hasChanges === 'updated') {
+                LivewireAlert::title('Post Procurement Updated Successfully!')
+                    ->success()
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+            } else {
+                LivewireAlert::title('No changes to save')
+                    ->info()
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+            }
+
+        } catch (ValidationException $e) {
+            LivewireAlert::title('Validation Failed!')
+                ->error()
+                ->text($e->getMessage())
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            \Log::error('Error saving PostProcurement: ' . $e->getMessage());
+
+            LivewireAlert::title('Save Failed')
+                ->error()
+                ->text('An error occurred while saving: ' . $e->getMessage())
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
     }
     public function resetForm(): void
     {
@@ -1415,10 +1741,17 @@ class ModeOfProcurementCreatePage extends Component
             ->filter(fn($proc) => !empty($proc['items']))
             ->all();
 
+        $suppliers = Supplier::all();
+        $procurementStages = ProcurementStage::all();
+        $remarks = Remarks::all();
+
         return view('livewire.mode-of-procurement.mode-of-procurement-create-page', [
             'modeOfProcurements' => $modes,
             'existingLotIds' => $existingLotIds,
             'existingItemIds' => $existingItemIds,
+            'suppliers' => $suppliers,
+            'procurementStages' => $procurementStages,
+            'remarks' => $remarks,
         ]);
     }
 }

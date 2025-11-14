@@ -53,7 +53,7 @@
                         $wire.set('{{ $model }}', null);
                     }
                 "
-                class="mt-1 block w-full pl-8 pr-3 py-2 rounded-md text-sm text-right border
+                class="mt-1 block w-full pl-8 pr-3 py-2 rounded-md text-sm text-right border tex-black dark:text-white
                     @error($model) border-red-500 focus:ring-red-500 focus:border-red-500
                     @else border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 @enderror"
                 inputmode="decimal" {{ $required ? 'required' : '' }} />

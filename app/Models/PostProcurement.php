@@ -12,7 +12,7 @@ class PostProcurement extends Model
 
     use SoftDeletes;
     protected $fillable = [
-        'procID',
+        'mop_group_ref',
         'resolution_number',
         'bid_evaluation_date',
         'post_qual_date',
@@ -23,8 +23,6 @@ class PostProcurement extends Model
         'awarded_amount',
         'date_of_posting_of_award_on_philgeps',
         'supplier_id',
-        'procurement_stage_id',
-        'remarks_id',
     ];
     public function procurement()
     {
