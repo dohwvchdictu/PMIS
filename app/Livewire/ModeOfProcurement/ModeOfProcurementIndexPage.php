@@ -2,7 +2,9 @@
 
 namespace App\Livewire\ModeOfProcurement;
 
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use App\Models\MopGroup;
+use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\MopItem; // Unused, but kept for context
@@ -12,54 +14,107 @@ use Livewire\WithPagination;
 class ModeOfProcurementIndexPage extends Component
 {
     use WithPagination;
+
+    // Pagination
+    public $perPage = 10;
+    public $itemsPerPage = 10; // Add this for items pagination
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 10],
+    ];
     protected $paginationTheme = 'tailwind';
 
+    // Search
     public $search = '';
+
+    // Modal
+    public $showModal = false;
+    public $selectedProcurement;
+
+    // Early Procurement
+    public $showEarlyPrompt = false;
+    public $early = null;
+
+    // Collapsible functionality
+    public $expandedProcurementId = null;
+
+    // Form / Reference Data
+    public $form = [];
+    public $categories = [];
+    public $divisions = [];
+    public $clusterCommittees = [];
+    public $venueSpecifics = [];
+    public $venueProvinces = [];
+    public $endUsers = [];
+    public $fundSources = [];
+
+    public function mount()
+    {
+        if (session('alert')) {
+            $alert = session('alert');
+
+            LivewireAlert::title($alert['title'])
+                ->{$alert['type']}()
+                    ->text($alert['message'])
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+        }
+    }
+
+    /**
+     * Toggle expanded/collapsed state for procurement items
+     */
+    public function toggle($property, $value)
+    {
+        // Convert to string for consistent comparison
+        $value = (string) $value;
+
+        if ($this->$property === $value) {
+            $this->$property = null;
+        } else {
+            $this->$property = $value;
+        }
+    }
+
+    /**
+     * Reset pagination when search term changes.
+     */
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
-        $query = MopGroup::query()
+        $query = Procurement::query()
             ->with([
-                // **UPDATED: Load the nested relationships to get the true mode history**
-                'procurements.mops.modeDetails', // For 'perLot'
-                'prItems.mops.modeDetails',      // For 'perItem'
-            ]);
+                'currentPrStage.procurementStage',
+                'pr_items' => function ($query) {
+                    // Don't paginate here, we'll handle it in the blade
+                    $query->with('prstage.stage');
+                }
+            ])
+            ->latest();
 
-        // Update search logic
         if (!empty($this->search)) {
-            $query->where(function ($q) {
-                $q->where('ref_number', 'like', '%' . $this->search . '%')
-
-                    // **UPDATED: Search the true nested relationship for the mode name**
-                    ->orWhereHas('procurements.mops.modeDetails', function ($subQ) {
-                        $subQ->where('modeofprocurements', 'like', '%' . $this->search . '%');
-                    })
-                    ->orWhereHas('prItems.mops.modeDetails', function ($subQ) {
-                        $subQ->where('modeofprocurements', 'like', '%' . $this->search . '%');
-                    })
-
-                    // Corrected: Search 'perLot' PRs via 'procurements' relationship
-                    ->orWhereHas('procurements', function ($subQ) {
-                        // **NOTE:** Using 'procurement_program_project' to match your CreatePage logic
-                        $subQ->where('pr_number', 'like', '%' . $this->search . '%')
-                            ->orWhere('procurement_program_project', 'like', '%' . $this->search . '%');
-                    })
-
-                    // Corrected: Search 'perItem' via 'prItems' relationship
-                    ->orWhereHas('prItems', function ($subQ) {
-                        // **NOTE:** Using 'description' to match your CreatePage logic
-                        $subQ->where('description', 'like', '%' . $this . search . '%')
-                            ->orWhereHas('procurement', function ($subSubQ) { // Search 'perItem' PRs
-                            $subSubQ->where('pr_number', 'like', '%' . $this->search . '%');
-                        });
-                    });
+            $searchTerm = '%' . $this->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('pr_number', 'like', $searchTerm)
+                    ->orWhere('procurement_program_project', 'like', $searchTerm);
             });
         }
 
-        $modes = $query->latest('created_at')->paginate(10); // $modes is now a collection of MopGroup
+        $procurements = $query->paginate($this->perPage);
 
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
-            'modes' => $modes,
+            'procurements' => $procurements,
         ]);
     }
 }

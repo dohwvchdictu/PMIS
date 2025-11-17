@@ -7,6 +7,7 @@ use App\Livewire\BacApprovedPr\BacApprovedPrViewPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementCreatePage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementEditPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementIndexPage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementUpdatePage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
@@ -89,11 +90,11 @@ Route::middleware(['jwt'])->group(function () {
             ->name('create')
             ->middleware('can:create_mode::of::procurement');
 
-        Route::get('/{ref_number}/update', ModeOfProcurementCreatePage::class)
+        Route::get('/{procurement}/update', ModeOfProcurementUpdatePage::class)
             ->name('update')
             ->middleware('can:update_mode::of::procurement');
 
-        Route::get('/{ref_number}/edit', ModeOfProcurementEditPage::class)
+        Route::get('/{procurement}/edit', ModeOfProcurementEditPage::class)
             ->name('edit')
             ->middleware('can:edit_mode::of::procurement');
     });
