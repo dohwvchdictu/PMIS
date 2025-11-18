@@ -79,10 +79,10 @@ class ModeOfProcurementUpdatePage extends Component
             ->get()
             ->keyBy('prItemID');
 
-        // 2. Get all UIDs to fetch related schedules efficiently
+        // 2. Get all UIDs
         $uids = $mopItems->pluck('uid')->filter()->toArray();
 
-        // 3. Fetch Schedules keyed by the Parent UID ('mop_uid')
+        // 3. Fetch Schedules
         $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
@@ -93,10 +93,16 @@ class ModeOfProcurementUpdatePage extends Component
                 $mopItem = $mopItems->get($item->prItemID);
                 $uid = $mopItem?->uid;
 
-                // Find matching schedules for this specific row
+                // Find matching schedules
                 $bid = $uid ? $bidSchedules->get($uid) : null;
                 $ntf = $uid ? $ntfSchedules->get($uid) : null;
                 $svp = $uid ? $prSvps->get($uid) : null;
+
+                // --- DATA RESOLVER HELPER ---
+                // This checks all 3 models for a value.
+                // Priority: Bid -> NTF -> SVP (or whichever exists)
+                // This ensures if 'rfq_no' is saved in NTF table, we still find it.
+                $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
 
                 return [
                     'prItemID' => $item->prItemID,
@@ -107,28 +113,33 @@ class ModeOfProcurementUpdatePage extends Component
                     'uid' => $uid ?? 'row_' . $item->prItemID,
                     'mode_order' => $mopItem?->mode_order,
 
-                    // --- Map Bid Schedule Data ---
-                    'bidding_number' => $bid?->bidding_number,
-                    'ib_number' => $bid?->ib_number,
-                    'pre_proc_conference' => $bid?->pre_proc_conference,
-                    'ads_post_ib' => $bid?->ads_post_ib,
-                    'pre_bid_conf' => $bid?->pre_bid_conf,
-                    'eligibility_check' => $bid?->eligibility_check,
-                    'sub_open_bids' => $bid?->sub_open_bids,
-                    'bidding_date' => $bid?->bidding_date,
-                    'bidding_result' => $bid?->bidding_result,
+                    // --- SHARED FIELDS (Check ALL models) ---
+                    'ib_number' => $getVal('ib_number'),
+                    'pre_proc_conference' => $getVal('pre_proc_conference'),
+                    'ads_post_ib' => $getVal('ads_post_ib'),
+                    'pre_bid_conf' => $getVal('pre_bid_conf'),
+                    'eligibility_check' => $getVal('eligibility_check'),
+                    'sub_open_bids' => $getVal('sub_open_bids'),
 
-                    // --- Map NTF Data ---
+                    // --- BIDDING SPECIFIC (Check Bid OR NTF) ---
+                    // NtfBidSchedule model has 'bidding_number', so we must check $ntf too
+                    'bidding_number' => $bid?->bidding_number ?? $ntf?->bidding_number ?? null,
+                    'bidding_date' => $bid?->bidding_date ?? $ntf?->bidding_date ?? null,
+                    'bidding_result' => $bid?->bidding_result ?? $ntf?->bidding_result ?? null,
+
+                    // --- NTF SPECIFIC (Check NTF only) ---
+                    'ntf_no' => $ntf?->ntf_no,
                     'ntf_bidding_date' => $ntf?->ntf_bidding_date,
                     'ntf_bidding_result' => $ntf?->ntf_bidding_result,
-                    'ntf_no' => $ntf?->ntf_no,
 
-                    // --- Map PR SVP Data ---
-                    'rfq_no' => $svp?->rfq_no,
-                    'canvass_date' => $svp?->canvass_date,
-                    'date_returned_of_canvass' => $svp?->date_returned_of_canvass,
-                    'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date,
-                    'resolution_number' => $svp?->resolution_number,
+                    // --- SVP SPECIFIC (Check SVP OR NTF) ---
+                    // NtfBidSchedule model has 'rfq_no' etc, so we must check $ntf too
+                    'rfq_no' => $svp?->rfq_no ?? $ntf?->rfq_no ?? null,
+                    'canvass_date' => $svp?->canvass_date ?? $ntf?->canvass_date ?? null,
+                    'date_returned_of_canvass' => $svp?->date_returned_of_canvass ?? $ntf?->date_returned_of_canvass ?? null,
+                    'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date ?? $ntf?->abstract_of_canvass_date ?? null,
+                    // Resolution is usually unique to SVP, but if NTF has it, add $ntf?->resolution_number
+                    'resolution_number' => $svp?->resolution_number ?? null,
                 ];
             })
             ->values()
@@ -150,7 +161,7 @@ class ModeOfProcurementUpdatePage extends Component
         // 2. Get all UIDs
         $uids = $mopLots->pluck('uid')->filter()->toArray();
 
-        // 3. Fetch Schedules keyed by the Parent UID ('mop_uid')
+        // 3. Fetch Schedules
         $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
@@ -158,10 +169,12 @@ class ModeOfProcurementUpdatePage extends Component
         $this->form['items'] = $mopLots->map(function ($mopLot, $index) use ($bidSchedules, $ntfSchedules, $prSvps) {
             $uid = $mopLot->uid;
 
-            // Find matching schedules
             $bid = $uid ? $bidSchedules->get($uid) : null;
             $ntf = $uid ? $ntfSchedules->get($uid) : null;
             $svp = $uid ? $prSvps->get($uid) : null;
+
+            // Helper to resolve value from any model
+            $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
 
             return [
                 'id' => $mopLot->id ?? null,
@@ -169,28 +182,30 @@ class ModeOfProcurementUpdatePage extends Component
                 'mode_of_procurement_id' => $mopLot->mode_of_procurement_id,
                 'mode_order' => $mopLot->mode_order ?? ($index + 1),
 
-                // --- Map Bid Schedule Data ---
-                'bidding_number' => $bid?->bidding_number,
-                'ib_number' => $bid?->ib_number,
-                'pre_proc_conference' => $bid?->pre_proc_conference,
-                'ads_post_ib' => $bid?->ads_post_ib,
-                'pre_bid_conf' => $bid?->pre_bid_conf,
-                'eligibility_check' => $bid?->eligibility_check,
-                'sub_open_bids' => $bid?->sub_open_bids,
-                'bidding_date' => $bid?->bidding_date,
-                'bidding_result' => $bid?->bidding_result,
+                // --- SHARED FIELDS (Check ALL) ---
+                'ib_number' => $getVal('ib_number'),
+                'pre_proc_conference' => $getVal('pre_proc_conference'),
+                'ads_post_ib' => $getVal('ads_post_ib'),
+                'pre_bid_conf' => $getVal('pre_bid_conf'),
+                'eligibility_check' => $getVal('eligibility_check'),
+                'sub_open_bids' => $getVal('sub_open_bids'),
 
-                // --- Map NTF Data ---
+                // --- BIDDING SPECIFIC (Check Bid OR NTF) ---
+                'bidding_number' => $bid?->bidding_number ?? $ntf?->bidding_number ?? null,
+                'bidding_date' => $bid?->bidding_date ?? $ntf?->bidding_date ?? null,
+                'bidding_result' => $bid?->bidding_result ?? $ntf?->bidding_result ?? null,
+
+                // --- NTF SPECIFIC ---
+                'ntf_no' => $ntf?->ntf_no,
                 'ntf_bidding_date' => $ntf?->ntf_bidding_date,
                 'ntf_bidding_result' => $ntf?->ntf_bidding_result,
-                'ntf_no' => $ntf?->ntf_no,
 
-                // --- Map PR SVP Data ---
-                'rfq_no' => $svp?->rfq_no,
-                'canvass_date' => $svp?->canvass_date,
-                'date_returned_of_canvass' => $svp?->date_returned_of_canvass,
-                'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date,
-                'resolution_number' => $svp?->resolution_number,
+                // --- SVP SPECIFIC (Check SVP OR NTF) ---
+                'rfq_no' => $svp?->rfq_no ?? $ntf?->rfq_no ?? null,
+                'canvass_date' => $svp?->canvass_date ?? $ntf?->canvass_date ?? null,
+                'date_returned_of_canvass' => $svp?->date_returned_of_canvass ?? $ntf?->date_returned_of_canvass ?? null,
+                'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date ?? $ntf?->abstract_of_canvass_date ?? null,
+                'resolution_number' => $svp?->resolution_number ?? null,
             ];
         })->toArray();
 
@@ -318,16 +333,40 @@ class ModeOfProcurementUpdatePage extends Component
             if (!$modeId)
                 continue;
 
-            // *** VALIDATION FOR MODE ID 5 (Small Value Procurement) ***
+            // -------------------------------------------------------
+            // [NEW] VALIDATION FOR MODE ID 4 (NTF / Negotiated 2 Failed)
+            // -------------------------------------------------------
+            if ($modeId == 4) {
+                // Check if user started filling any NTF fields
+                $hasNtfData = !empty($item['ntf_no']) ||
+                    !empty($item['ntf_bidding_date']) ||
+                    !empty($item['ntf_bidding_result']) ||
+                    !empty($item['ib_number']); // IB might be required for NTF too
+
+                if ($hasNtfData) {
+                    $rules["form.items.{$index}.ntf_no"] = 'required|string';
+                    $rules["form.items.{$index}.ntf_bidding_date"] = 'required|date';
+                    $rules["form.items.{$index}.ntf_bidding_result"] = 'required|string';
+                    // $rules["form.items.{$index}.ib_number"]       = 'required|string'; // Uncomment if IB is strict for NTF
+
+                    // Friendly Names
+                    $attributes["form.items.{$index}.ntf_no"] = "NTF No.";
+                    $attributes["form.items.{$index}.ntf_bidding_date"] = "NTF Date";
+                    $attributes["form.items.{$index}.ntf_bidding_result"] = "NTF Result";
+                    $attributes["form.items.{$index}.ib_number"] = "IB No.";
+                }
+            }
+
+            // -------------------------------------------------------
+            // VALIDATION FOR MODE ID 5 (SVP / Small Value Procurement)
+            // -------------------------------------------------------
             if ($modeId == 5) {
-                // Check if user started filling ANY of the schedule fields
                 $hasSvpData = !empty($item['rfq_no']) ||
                     !empty($item['canvass_date']) ||
                     !empty($item['date_returned_of_canvass']) ||
                     !empty($item['abstract_of_canvass_date']) ||
                     !empty($item['resolution_number']);
 
-                // Only apply strict rules if they started typing data
                 if ($hasSvpData) {
                     $rules["form.items.{$index}.rfq_no"] = 'required|string';
                     $rules["form.items.{$index}.canvass_date"] = 'required|date';
@@ -345,53 +384,32 @@ class ModeOfProcurementUpdatePage extends Component
         }
 
         // ==========================================
-        // 2. THE GATEKEEPER
+        // 2. THE GATEKEEPER (Validation)
         // ==========================================
-        // If this fails, execution STOPS here.
-        // The DB Transaction below will NEVER run if there are errors.
         try {
-            // THE GATEKEEPER
             $this->validate($rules, [], $attributes);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
 
-            // --- FORMATTING THE ERROR MESSAGE ---
+            $errorMessages = $e->validator->errors()->all();
 
-            // 1. Get the list of failed field keys (e.g., ['form.items.1.rfq_no', ...])
-            $failedKeys = array_keys($e->errors());
+            $errorString = '<ul class="text-left list-disc pl-4 mt-2">';
+            foreach ($errorMessages as $msg) {
+                $errorString .= "<li>{$msg}</li>";
+            }
+            $errorString .= '</ul>';
 
-            // 2. Map them to human-readable names
-            $readableFields = array_map(function ($key) use ($attributes) {
-                // If we defined a friendly name in $attributes (e.g., "RFQ No."), use it.
-                if (isset($attributes[$key])) {
-                    return $attributes[$key];
-                }
-
-                // Fallback: Convert "form.items.1.some_field" -> "Some Field"
-                $parts = explode('.', $key);
-                $fieldName = end($parts);
-                return ucwords(str_replace('_', ' ', $fieldName));
-            }, $failedKeys);
-
-            // 3. Create the comma-separated string
-            $errorString = implode(', ', $readableFields);
-
-            // 4. Trigger Toaster
             LivewireAlert::title('Validation Failed')
-                ->error() // Red color
-                ->text('Please fill in the following required fields: ' . $errorString)
-                ->toast()->position('top-end')->show();
+                ->error()
+                ->html(true)
+                ->text('Please check the following errors:' . $errorString)
+                ->toast()->position('top-end')->timer(7000)->show();
 
-            // 5. Re-throw exception so Livewire stops execution (and highlights fields red)
             throw $e;
         }
 
-
         // ==========================================
-        // 3. SAVE TO DATABASE (Only runs if valid)
+        // 3. SAVE TO DATABASE
         // ==========================================
-
-        // Initialize Trackers
         $isMopAdded = false;
         $isMopUpdated = false;
         $isScheduleAdded = false;
@@ -407,10 +425,8 @@ class ModeOfProcurementUpdatePage extends Component
 
                 $modeId = $item['mode_of_procurement_id'];
 
-                // Check UI New
                 $isUiNew = isset($item['uid']) && (str_starts_with($item['uid'], 'new_') || str_starts_with($item['uid'], 'temp_'));
 
-                // Set UID & Order
                 if ($isUiNew) {
                     $modeOrder = ($this->form['procurement_type'] === 'perLot') ? ($index + 1) : 1;
                     $generatedUid = "MOP-{$modeId}-{$modeOrder}";
@@ -421,7 +437,7 @@ class ModeOfProcurementUpdatePage extends Component
 
                 $savedParentModel = null;
 
-                // Save MopItem OR MopLot
+                // Save Parent (MopItem/MopLot)
                 if ($this->form['procurement_type'] === 'perItem') {
                     $savedParentModel = MopItem::updateOrCreate(
                         ['procID' => $this->procID, 'prItemID' => $item['prItemID']],
@@ -433,7 +449,7 @@ class ModeOfProcurementUpdatePage extends Component
                     if ($isUiNew)
                         $matchCriteria['mode_order'] = $modeOrder;
                     else
-                        $matchCriteria['uid'] = $item['uid']; // Fallback to UID for existing
+                        $matchCriteria['uid'] = $item['uid'];
 
                     $savedParentModel = MopLot::updateOrCreate(
                         $matchCriteria,
@@ -442,14 +458,12 @@ class ModeOfProcurementUpdatePage extends Component
                     $processedIds[] = $savedParentModel->id;
                 }
 
-                // Check Parent Changes
                 if ($savedParentModel->wasRecentlyCreated) {
                     $isMopAdded = true;
                 } elseif ($savedParentModel->wasChanged()) {
                     $isMopUpdated = true;
                 }
 
-                // Save Schedules
                 if ($savedParentModel) {
                     $this->saveRelatedSchedules(
                         $savedParentModel,
@@ -461,7 +475,6 @@ class ModeOfProcurementUpdatePage extends Component
                 }
             }
 
-            // Cleanup
             $deletedCount = 0;
             if ($this->form['procurement_type'] === 'perItem') {
                 $deletedCount = MopItem::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
@@ -473,17 +486,12 @@ class ModeOfProcurementUpdatePage extends Component
                 $isDeleted = true;
         });
 
-        // ==========================================
-        // 4. SHOW TOASTERS
-        // ==========================================
         if ($isMopAdded) {
             LivewireAlert::title('Mode Added Successfully!')->success()->text('The mode of procurement has been added.')->toast()->position('top-end')->show();
         } elseif ($isScheduleAdded) {
             LivewireAlert::title('Schedule Added!')->success()->text('A new bidding schedule has been created.')->toast()->position('top-end')->show();
-        } elseif ($isMopUpdated) {
-            LivewireAlert::title('Updates Saved!')->success()->text('Changes in mode saved successfully.')->toast()->position('top-end')->show();
-        } elseif ($isScheduleUpdated) {
-            LivewireAlert::title('Updates Saved!')->success()->text('Changes in bidding schedule saved successfully.')->toast()->position('top-end')->show();
+        } elseif ($isMopUpdated || $isScheduleUpdated || $isDeleted) {
+            LivewireAlert::title('Updates Saved!')->success()->text('Changes have been saved successfully.')->toast()->position('top-end')->show();
         } else {
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
         }
@@ -500,17 +508,25 @@ class ModeOfProcurementUpdatePage extends Component
         $modeId = $itemData['mode_of_procurement_id'];
         $parentUid = $parentModel->uid;
 
+        // 1. Determine ref_id
         $refId = ($type === 'perLot') ? $this->procID : ($itemData['prItemID'] ?? $parentModel->prItemID);
+
+        // 2. Match Criteria
         $matchCriteria = ['ref_id' => $refId, 'mop_uid' => $parentUid];
 
+        // 3. Identity Helper (FIXED)
+        // We removed 'number' from the return. We only care about the UID.
         $getIdentity = function ($modelClass) use ($matchCriteria, $parentUid) {
             $existing = $modelClass::where($matchCriteria)->first();
+
             if ($existing) {
-                return ['uid' => $existing->uid, 'number' => $existing->bidding_number ?? 1];
+                // Return existing UID only
+                return ['uid' => $existing->uid];
             } else {
+                // Calculate new UID for new records
                 $count = $modelClass::where('mop_uid', $parentUid)->count();
                 $nextNum = $count + 1;
-                return ['uid' => $parentUid . '-' . $nextNum, 'number' => $nextNum];
+                return ['uid' => $parentUid . '-' . $nextNum];
             }
         };
 
@@ -522,17 +538,24 @@ class ModeOfProcurementUpdatePage extends Component
             }
         };
 
-        // --- 1. Bid Schedule (Standard Modes) ---
+        // =========================================================
+        // 1. BID SCHEDULE (Standard Modes)
+        // =========================================================
         if (!in_array($modeId, [1, 4, 5])) {
             if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
+
                 $identity = $getIdentity(BidSchedule::class);
+
                 $model = BidSchedule::updateOrCreate(
                     $matchCriteria,
                     [
                         'uid' => $identity['uid'],
-                        'bidding_number' => $identity['number'],
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
+
+                        // CRITICAL FIX: Use user input ($itemData), NOT database value
+                        'bidding_number' => $itemData['bidding_number'],
+
                         'ib_number' => $itemData['ib_number'],
                         'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
@@ -547,45 +570,51 @@ class ModeOfProcurementUpdatePage extends Component
             }
         }
 
-        // --- 2. NTF Bid Schedule (Mode 4) ---
+        // =========================================================
+        // 2. NTF BID SCHEDULE (Mode 4)
+        // =========================================================
         if ($modeId == 4) {
-            // FIX: Only save if NTF No. or at least one date is provided
-            $hasNtfData = !empty($itemData['ntf_no']) || !empty($itemData['ntf_bidding_date']);
+            // We trust the save() validation. Just check if main identifier exists.
+            if (!empty($itemData['ntf_no'])) {
 
-            if ($hasNtfData) {
                 $identity = $getIdentity(NtfBidSchedule::class);
+
                 $model = NtfBidSchedule::updateOrCreate(
                     $matchCriteria,
                     [
                         'uid' => $identity['uid'],
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
+
+                        // Ensure these match your Model $fillable exactly
                         'ib_number' => $itemData['ib_number'] ?? null,
                         'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
                         'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
                         'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
                         'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
-                        'ntf_no' => $itemData['ntf_no'] ?? null,
+                        'bidding_number' => $itemData['bidding_number'] ?? null,
+                        'ntf_no' => $itemData['ntf_no'],
                         'ntf_bidding_date' => $this->nullableDate($itemData['ntf_bidding_date'] ?? null),
                         'ntf_bidding_result' => $itemData['ntf_bidding_result'] ?? null,
+                        'rfq_no' => $itemData['rfq_no'],
+                        'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
+                        'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
+                        'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
                     ]
                 );
                 $checkStatus($model);
             }
         }
 
-        // --- 3. PR SVP (Mode 5) ---
+        // =========================================================
+        // 3. PR SVP (Mode 5)
+        // =========================================================
         if ($modeId == 5) {
+            // FIX: Removed the strict && check.
+            // If RFQ exists, we attempt to save whatever fields are present.
+            if (!empty($itemData['rfq_no'])) {
 
-            // STRICT CHECK: Only proceed if ALL 5 required fields are filled
-            $isSvpComplete = !empty($itemData['rfq_no']) &&
-                !empty($itemData['canvass_date']) &&
-                !empty($itemData['date_returned_of_canvass']) &&
-                !empty($itemData['abstract_of_canvass_date']) &&
-                !empty($itemData['resolution_number']);
-
-            if ($isSvpComplete) {
                 $identity = $getIdentity(PrSvp::class);
 
                 $model = PrSvp::updateOrCreate(
@@ -595,12 +624,11 @@ class ModeOfProcurementUpdatePage extends Component
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
 
-                        // All fields are saved here
                         'rfq_no' => $itemData['rfq_no'],
-                        'canvass_date' => $this->nullableDate($itemData['canvass_date']),
-                        'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass']),
-                        'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date']),
-                        'resolution_number' => $itemData['resolution_number'],
+                        'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
+                        'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
+                        'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
+                        'resolution_number' => $itemData['resolution_number'] ?? null,
                     ]
                 );
                 $checkStatus($model);

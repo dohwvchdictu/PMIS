@@ -179,13 +179,32 @@
                                             $form['procurement_type'] === 'perItem'
                                                 ? isset($item['prItemID'])
                                                 : isset($item['id']) && is_numeric($item['id']);
+
                                         $isHistory = !$loop->first;
 
-                                        $shouldDisable = $isHistory || ($isSavedRecord && $modeId == 1);
+                                        // Check if a schedule is saved
+                                        $hasSchedule =
+                                            !empty($item['bidding_number']) ||
+                                            !empty($item['ntf_no']) ||
+                                            !empty($item['ntf_bidding_date']) ||
+                                            !empty($item['rfq_no']) ||
+                                            !empty($item['canvass_date']);
+
+                                        // --- LOGIC UPDATES ---
+
+                                        // 1. SELECT DROPDOWN: Disable if:
+                                        //    a) History row
+                                        //    b) Schedule exists
+                                        //    c) It is specifically the initial Public Bidding record (MOP-1-1)
+                                        $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
+
+                                        // 2. INPUT FIELDS: Disable ONLY if History
+                                        $disableInputs = $isHistory;
 
                                         $showFields = $isSavedRecord;
                                         $isVisible = $loop->first || $showHistory;
                                     @endphp
+
 
                                     {{-- Apply the hidden class conditionally --}}
                                     <tr wire:key="row-{{ $rowUid }}"
@@ -282,7 +301,7 @@
                                             <select wire:key="select-mode-{{ $rowUid }}"
                                                 wire:model.live="form.items.{{ $itemIndex }}.mode_of_procurement_id"
                                                 class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                @disabled($shouldDisable)>
+                                                @disabled($disableSelect)>
 
                                                 <option value="">Select Mode...</option>
                                                 @foreach ($modeOfProcurements ?? [] as $modeOption)
@@ -299,7 +318,7 @@
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    maxlength="2" value="1" @disabled($shouldDisable)>
+                                                    maxlength="2" value="1" @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -311,42 +330,42 @@
                                                 <input type="text" wire:key="ib-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ib_number"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    placeholder="IB-2025-002" @disabled($shouldDisable)>
+                                                    placeholder="IB-2025-002" @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-proc-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ads-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-bid-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="elig-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="sub-open-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.sub_open_bids"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -363,14 +382,14 @@
                                                 <input type="date" wire:key="bid-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @elseif ($showFields && $modeId == 4)
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ntf-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_date"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -382,7 +401,7 @@
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -393,7 +412,7 @@
                                                 <select wire:key="ntf-res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_result"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -409,7 +428,7 @@
                                                 <input type="text" wire:key="ntf-no-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_no"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    placeholder="NTF-2025-001" @disabled($shouldDisable)>
+                                                    placeholder="NTF-2025-001" @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -425,7 +444,7 @@
                 {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                        placeholder="RFQ-2025-001" @disabled($shouldDisable)>
+                                                        placeholder="RFQ-2025-001" @disabled($disableInputs)>
 
                                                     {{-- Optional: Tooltip for error --}}
                                                     @error('form.items.' . $itemIndex . '.rfq_no')
@@ -449,7 +468,7 @@
             {{ $errors->has('form.items.' . $itemIndex . '.canvass_date')
                 ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -464,7 +483,7 @@
             {{ $errors->has('form.items.' . $itemIndex . '.date_returned_of_canvass')
                 ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -479,7 +498,7 @@
             {{ $errors->has('form.items.' . $itemIndex . '.abstract_of_canvass_date')
                 ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    @disabled($shouldDisable)>
+                                                    @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -494,7 +513,7 @@
             {{ $errors->has('form.items.' . $itemIndex . '.resolution_number')
                 ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    placeholder="RES-2025-001" @disabled($shouldDisable)>
+                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
