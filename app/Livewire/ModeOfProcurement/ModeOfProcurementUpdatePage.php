@@ -45,7 +45,7 @@ class ModeOfProcurementUpdatePage extends Component
         }
 
         // Load modes of procurement
-        $this->modeOfProcurements = ModeOfProcurement::orderBy('modeofprocurements')->get();
+        $this->modeOfProcurements = ModeOfProcurement::orderBy('id', 'asc')->get();
 
         // Load items based on procurement type
         if ($this->form['procurement_type'] === 'perItem') {
@@ -304,34 +304,113 @@ class ModeOfProcurementUpdatePage extends Component
 
     public function save()
     {
-        $this->validate([
+        // ==========================================
+        // 1. BUILD VALIDATION RULES DYNAMICALLY
+        // ==========================================
+        $rules = [
             'form.items.*.mode_of_procurement_id' => 'required|integer',
-        ]);
+        ];
 
-        // --- 1. Initialize State Trackers ---
-        $isMopAdded = false; // New MOP row added
-        $isMopUpdated = false; // Existing MOP row details changed
-        $isScheduleAdded = false; // New Date/Schedule added
-        $isScheduleUpdated = false; // Existing Date/Schedule changed
-        $isDeleted = false; // Row removed
+        $attributes = [];
+
+        foreach ($this->form['items'] as $index => $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            if (!$modeId)
+                continue;
+
+            // *** VALIDATION FOR MODE ID 5 (Small Value Procurement) ***
+            if ($modeId == 5) {
+                // Check if user started filling ANY of the schedule fields
+                $hasSvpData = !empty($item['rfq_no']) ||
+                    !empty($item['canvass_date']) ||
+                    !empty($item['date_returned_of_canvass']) ||
+                    !empty($item['abstract_of_canvass_date']) ||
+                    !empty($item['resolution_number']);
+
+                // Only apply strict rules if they started typing data
+                if ($hasSvpData) {
+                    $rules["form.items.{$index}.rfq_no"] = 'required|string';
+                    $rules["form.items.{$index}.canvass_date"] = 'required|date';
+                    $rules["form.items.{$index}.date_returned_of_canvass"] = 'required|date|after_or_equal:form.items.' . $index . '.canvass_date';
+                    $rules["form.items.{$index}.abstract_of_canvass_date"] = 'required|date|after_or_equal:form.items.' . $index . '.date_returned_of_canvass';
+                    $rules["form.items.{$index}.resolution_number"] = 'required|string';
+
+                    $attributes["form.items.{$index}.rfq_no"] = "RFQ No.";
+                    $attributes["form.items.{$index}.canvass_date"] = "Canvass Date";
+                    $attributes["form.items.{$index}.date_returned_of_canvass"] = "Return of Canvass";
+                    $attributes["form.items.{$index}.abstract_of_canvass_date"] = "Abstract Date";
+                    $attributes["form.items.{$index}.resolution_number"] = "Resolution No.";
+                }
+            }
+        }
+
+        // ==========================================
+        // 2. THE GATEKEEPER
+        // ==========================================
+        // If this fails, execution STOPS here.
+        // The DB Transaction below will NEVER run if there are errors.
+        try {
+            // THE GATEKEEPER
+            $this->validate($rules, [], $attributes);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+
+            // --- FORMATTING THE ERROR MESSAGE ---
+
+            // 1. Get the list of failed field keys (e.g., ['form.items.1.rfq_no', ...])
+            $failedKeys = array_keys($e->errors());
+
+            // 2. Map them to human-readable names
+            $readableFields = array_map(function ($key) use ($attributes) {
+                // If we defined a friendly name in $attributes (e.g., "RFQ No."), use it.
+                if (isset($attributes[$key])) {
+                    return $attributes[$key];
+                }
+
+                // Fallback: Convert "form.items.1.some_field" -> "Some Field"
+                $parts = explode('.', $key);
+                $fieldName = end($parts);
+                return ucwords(str_replace('_', ' ', $fieldName));
+            }, $failedKeys);
+
+            // 3. Create the comma-separated string
+            $errorString = implode(', ', $readableFields);
+
+            // 4. Trigger Toaster
+            LivewireAlert::title('Validation Failed')
+                ->error() // Red color
+                ->text('Please fill in the following required fields: ' . $errorString)
+                ->toast()->position('top-end')->show();
+
+            // 5. Re-throw exception so Livewire stops execution (and highlights fields red)
+            throw $e;
+        }
+
+
+        // ==========================================
+        // 3. SAVE TO DATABASE (Only runs if valid)
+        // ==========================================
+
+        // Initialize Trackers
+        $isMopAdded = false;
+        $isMopUpdated = false;
+        $isScheduleAdded = false;
+        $isScheduleUpdated = false;
+        $isDeleted = false;
 
         DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated, &$isDeleted) {
             $processedIds = [];
 
             foreach ($this->form['items'] as $index => $item) {
-                if (empty($item['mode_of_procurement_id'])) {
+                if (empty($item['mode_of_procurement_id']))
                     continue;
-                }
 
                 $modeId = $item['mode_of_procurement_id'];
 
-                // Check if this is a UI-added new row
-                $isUiNew = isset($item['uid']) && (
-                    str_starts_with($item['uid'], 'new_') ||
-                    str_starts_with($item['uid'], 'temp_')
-                );
+                // Check UI New
+                $isUiNew = isset($item['uid']) && (str_starts_with($item['uid'], 'new_') || str_starts_with($item['uid'], 'temp_'));
 
-                // Generate or Keep UID
+                // Set UID & Order
                 if ($isUiNew) {
                     $modeOrder = ($this->form['procurement_type'] === 'perLot') ? ($index + 1) : 1;
                     $generatedUid = "MOP-{$modeId}-{$modeOrder}";
@@ -342,7 +421,7 @@ class ModeOfProcurementUpdatePage extends Component
 
                 $savedParentModel = null;
 
-                // --- SAVE PARENT (MopItem / MopLot) ---
+                // Save MopItem OR MopLot
                 if ($this->form['procurement_type'] === 'perItem') {
                     $savedParentModel = MopItem::updateOrCreate(
                         ['procID' => $this->procID, 'prItemID' => $item['prItemID']],
@@ -351,15 +430,10 @@ class ModeOfProcurementUpdatePage extends Component
                     $processedIds[] = $savedParentModel->id;
                 } else {
                     $matchCriteria = ['procID' => $this->procID];
-                    if ($isUiNew) {
+                    if ($isUiNew)
                         $matchCriteria['mode_order'] = $modeOrder;
-                    } else {
-                        if (isset($item['id']) && is_numeric($item['id'])) {
-                            $matchCriteria['id'] = $item['id'];
-                        } else {
-                            $matchCriteria['uid'] = $item['uid'];
-                        }
-                    }
+                    else
+                        $matchCriteria['uid'] = $item['uid']; // Fallback to UID for existing
 
                     $savedParentModel = MopLot::updateOrCreate(
                         $matchCriteria,
@@ -368,27 +442,26 @@ class ModeOfProcurementUpdatePage extends Component
                     $processedIds[] = $savedParentModel->id;
                 }
 
-                // --- TRACK MOP PARENT CHANGES ---
+                // Check Parent Changes
                 if ($savedParentModel->wasRecentlyCreated) {
                     $isMopAdded = true;
                 } elseif ($savedParentModel->wasChanged()) {
                     $isMopUpdated = true;
                 }
 
-                // --- SAVE SCHEDULES (Children) ---
-                // We pass the tracker flags by reference (&) so the helper can update them
+                // Save Schedules
                 if ($savedParentModel) {
                     $this->saveRelatedSchedules(
                         $savedParentModel,
                         $item,
                         $this->form['procurement_type'],
-                        $isScheduleAdded,   // passed by reference
-                        $isScheduleUpdated  // passed by reference
+                        $isScheduleAdded,
+                        $isScheduleUpdated
                     );
                 }
             }
 
-            // --- CLEANUP (Deletions) ---
+            // Cleanup
             $deletedCount = 0;
             if ($this->form['procurement_type'] === 'perItem') {
                 $deletedCount = MopItem::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
@@ -396,59 +469,40 @@ class ModeOfProcurementUpdatePage extends Component
                 $deletedCount = MopLot::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
             }
 
-            if ($deletedCount > 0) {
+            if ($deletedCount > 0)
                 $isDeleted = true;
-            }
         });
 
-        // --- 2. GRANULAR TOASTER LOGIC ---
-        // Priority Order: New MOP > New Schedule > Updates > No Change
-
+        // ==========================================
+        // 4. SHOW TOASTERS
+        // ==========================================
         if ($isMopAdded) {
-            LivewireAlert::title('Mode Added Successfully!')
-                ->success()
-                ->text('The mode of procurement has been added.')
-                ->toast()->position('top-end')->show();
+            LivewireAlert::title('Mode Added Successfully!')->success()->text('The mode of procurement has been added.')->toast()->position('top-end')->show();
         } elseif ($isScheduleAdded) {
-            // SPECIFIC ALERT FOR ADDED SCHEDULE
-            LivewireAlert::title('Schedule Added!')
-                ->success()
-                ->text('A new bidding schedule has been created.')
-                ->toast()->position('top-end')->show();
-        } elseif ($isMopUpdated || $isScheduleUpdated || $isDeleted) {
-            // SPECIFIC ALERT FOR UPDATES
-            LivewireAlert::title('Updates Saved!')
-                ->success()
-                ->text('Changes to the mode or schedule have been saved.')
-                ->toast()->position('top-end')->show();
+            LivewireAlert::title('Schedule Added!')->success()->text('A new bidding schedule has been created.')->toast()->position('top-end')->show();
+        } elseif ($isMopUpdated) {
+            LivewireAlert::title('Updates Saved!')->success()->text('Changes in mode saved successfully.')->toast()->position('top-end')->show();
+        } elseif ($isScheduleUpdated) {
+            LivewireAlert::title('Updates Saved!')->success()->text('Changes in bidding schedule saved successfully.')->toast()->position('top-end')->show();
         } else {
-            LivewireAlert::title('No Changes')
-                ->info()
-                ->text('No changes were detected.')
-                ->toast()->position('top-end')->show();
+            LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
         }
 
         $this->mount($this->procurement);
     }
-
-
     protected function saveRelatedSchedules(
         $parentModel,
         array $itemData,
         string $type,
-        bool &$isScheduleAdded,   // Passed by reference
-        bool &$isScheduleUpdated  // Passed by reference
+        bool &$isScheduleAdded,
+        bool &$isScheduleUpdated
     ): void {
         $modeId = $itemData['mode_of_procurement_id'];
         $parentUid = $parentModel->uid;
 
-        // 1. Determine ref_id
         $refId = ($type === 'perLot') ? $this->procID : ($itemData['prItemID'] ?? $parentModel->prItemID);
-
-        // 2. Match Criteria
         $matchCriteria = ['ref_id' => $refId, 'mop_uid' => $parentUid];
 
-        // 3. Identity Helper
         $getIdentity = function ($modelClass) use ($matchCriteria, $parentUid) {
             $existing = $modelClass::where($matchCriteria)->first();
             if ($existing) {
@@ -460,7 +514,6 @@ class ModeOfProcurementUpdatePage extends Component
             }
         };
 
-        // --- Helper to Check Model Status ---
         $checkStatus = function ($model) use (&$isScheduleAdded, &$isScheduleUpdated) {
             if ($model->wasRecentlyCreated) {
                 $isScheduleAdded = true;
@@ -469,12 +522,10 @@ class ModeOfProcurementUpdatePage extends Component
             }
         };
 
-        // --- 1. Bid Schedule ---
-        if (!in_array($modeId, [5, 1])) {
-            // Only save if mandatory fields exist
+        // --- 1. Bid Schedule (Standard Modes) ---
+        if (!in_array($modeId, [1, 4, 5])) {
             if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
                 $identity = $getIdentity(BidSchedule::class);
-
                 $model = BidSchedule::updateOrCreate(
                     $matchCriteria,
                     [
@@ -492,45 +543,68 @@ class ModeOfProcurementUpdatePage extends Component
                         'bidding_result' => $itemData['bidding_result'] ?? null,
                     ]
                 );
-
                 $checkStatus($model);
             }
         }
 
-        // --- 2. NTF Bid Schedule ---
+        // --- 2. NTF Bid Schedule (Mode 4) ---
         if ($modeId == 4) {
-            $identity = $getIdentity(NtfBidSchedule::class);
-            $model = NtfBidSchedule::updateOrCreate(
-                $matchCriteria,
-                [
-                    'uid' => $identity['uid'],
-                    'ref_id' => $refId,
-                    'mop_uid' => $parentUid,
-                    'ntf_no' => $itemData['ntf_no'] ?? null,
-                    'ntf_bidding_date' => $this->nullableDate($itemData['ntf_bidding_date'] ?? null),
-                    'ntf_bidding_result' => $itemData['ntf_bidding_result'] ?? null,
-                ]
-            );
-            $checkStatus($model);
+            // FIX: Only save if NTF No. or at least one date is provided
+            $hasNtfData = !empty($itemData['ntf_no']) || !empty($itemData['ntf_bidding_date']);
+
+            if ($hasNtfData) {
+                $identity = $getIdentity(NtfBidSchedule::class);
+                $model = NtfBidSchedule::updateOrCreate(
+                    $matchCriteria,
+                    [
+                        'uid' => $identity['uid'],
+                        'ref_id' => $refId,
+                        'mop_uid' => $parentUid,
+                        'ib_number' => $itemData['ib_number'] ?? null,
+                        'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
+                        'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
+                        'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
+                        'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
+                        'ntf_no' => $itemData['ntf_no'] ?? null,
+                        'ntf_bidding_date' => $this->nullableDate($itemData['ntf_bidding_date'] ?? null),
+                        'ntf_bidding_result' => $itemData['ntf_bidding_result'] ?? null,
+                    ]
+                );
+                $checkStatus($model);
+            }
         }
 
-        // --- 3. PR SVP ---
-        if (in_array($modeId, [4, 5])) {
-            $identity = $getIdentity(PrSvp::class);
-            $model = PrSvp::updateOrCreate(
-                $matchCriteria,
-                [
-                    'uid' => $identity['uid'],
-                    'ref_id' => $refId,
-                    'mop_uid' => $parentUid,
-                    'rfq_no' => $itemData['rfq_no'] ?? null,
-                    'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
-                    'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
-                    'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
-                    'resolution_number' => $itemData['resolution_number'] ?? null,
-                ]
-            );
-            $checkStatus($model);
+        // --- 3. PR SVP (Mode 5) ---
+        if ($modeId == 5) {
+
+            // STRICT CHECK: Only proceed if ALL 5 required fields are filled
+            $isSvpComplete = !empty($itemData['rfq_no']) &&
+                !empty($itemData['canvass_date']) &&
+                !empty($itemData['date_returned_of_canvass']) &&
+                !empty($itemData['abstract_of_canvass_date']) &&
+                !empty($itemData['resolution_number']);
+
+            if ($isSvpComplete) {
+                $identity = $getIdentity(PrSvp::class);
+
+                $model = PrSvp::updateOrCreate(
+                    $matchCriteria,
+                    [
+                        'uid' => $identity['uid'],
+                        'ref_id' => $refId,
+                        'mop_uid' => $parentUid,
+
+                        // All fields are saved here
+                        'rfq_no' => $itemData['rfq_no'],
+                        'canvass_date' => $this->nullableDate($itemData['canvass_date']),
+                        'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass']),
+                        'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date']),
+                        'resolution_number' => $itemData['resolution_number'],
+                    ]
+                );
+                $checkStatus($model);
+            }
         }
     }
     private function nullableDate($value)

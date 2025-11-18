@@ -133,7 +133,7 @@
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Bidding Date / NTF Bidding Date</th>
+                                        Bidding Date</th>
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -196,46 +196,61 @@
                                             <div class="flex items-center justify-center gap-1">
 
                                                 @if ($loop->first)
-                                                    {{-- CURRENT ITEM: Show Toggle Button AND Add Button --}}
+                                                    {{-- CURRENT ITEM --}}
 
-                                                    {{-- 1. Toggle Button --}}
-                                                    <button type="button" wire:click="toggleHistory"
-                                                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
-                                                        title="{{ $showHistory ? 'Hide History' : 'Show History' }}">
-                                                        @if ($showHistory)
-                                                            {{-- Open (Down) --}}
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4 text-emerald-600" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor"
-                                                                stroke-width="2">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                                            </svg>
-                                                        @else
-                                                            {{-- Closed (Right) --}}
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4 text-emerald-600" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor"
-                                                                stroke-width="2">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                            </svg>
-                                                        @endif
-                                                    </button>
+                                                    {{-- 1. Toggle Button (History) --}}
+                                                    {{-- CONDITION: Hide if UID is specifically 'MOP-1-1' --}}
+                                                    @if ($rowUid !== 'MOP-1-1')
+                                                        <button type="button" wire:click="toggleHistory"
+                                                            class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
+                                                            title="{{ $showHistory ? 'Hide History' : 'Show History' }}">
+                                                            @if ($showHistory)
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 text-emerald-600" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor"
+                                                                    stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                                </svg>
+                                                            @else
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 text-emerald-600" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor"
+                                                                    stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                                </svg>
+                                                            @endif
+                                                        </button>
+                                                    @else
+                                                        {{-- Spacer to maintain layout alignment if button is hidden --}}
+                                                        <div class="w-7 h-7"></div>
+                                                    @endif
 
-                                                    {{-- 2. Add Button --}}
-                                                    <button wire:click.prevent="addItem"
-                                                        class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                                                        title="Add New Row Above">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24" stroke-width="2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M12 4.5v15m7.5-7.5h-15" />
-                                                        </svg>
-                                                    </button>
+                                                    {{-- 2. Add Button (Conditional) --}}
+                                                    @php
+                                                        $hasResult =
+                                                            !empty($item['bidding_result']) ||
+                                                            !empty($item['ntf_bidding_result']);
+                                                        $isPublicBidding = $modeId == 1;
+                                                        $canAddRebid = $hasResult || $isPublicBidding;
+                                                    @endphp
+
+                                                    @if ($canAddRebid)
+                                                        <button wire:click.prevent="addItem"
+                                                            class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                                            title="Add New Row">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 4.5v15m7.5-7.5h-15" />
+                                                            </svg>
+                                                        </button>
+                                                    @else
+                                                        <div class="w-7 h-7"></div>
+                                                    @endif
                                                 @else
-                                                    {{-- PREVIOUS (HISTORY) ITEMS: No Toggle, No Add, Just Lock Icon --}}
-
+                                                    {{-- HISTORY ITEMS: Lock Icon --}}
                                                     <span
                                                         class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
                                                         title="History Record">
@@ -403,10 +418,23 @@
                                         {{-- RFQ No. --}}
                                         @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
-                                                <input type="text" wire:key="rfq-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    placeholder="RFQ-2025-001" @disabled($shouldDisable)>
+                                                <div class="relative">
+                                                    <input type="text" wire:key="rfq-{{ $rowUid }}"
+                                                        wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
+                                                        class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white
+                {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                        placeholder="RFQ-2025-001" @disabled($shouldDisable)>
+
+                                                    {{-- Optional: Tooltip for error --}}
+                                                    @error('form.items.' . $itemIndex . '.rfq_no')
+                                                        <div
+                                                            class="absolute top-0 right-0 -mt-8 p-1 text-xs text-white bg-red-500 rounded shadow-lg z-50 whitespace-nowrap">
+                                                            {{ $message }}
+                                                        </div>
+                                                    @enderror
+                                                </div>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -417,7 +445,10 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="can-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.canvass_date')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($shouldDisable)>
                                             </td>
                                         @else
@@ -429,7 +460,10 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ret-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.date_returned_of_canvass"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.date_returned_of_canvass')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($shouldDisable)>
                                             </td>
                                         @else
@@ -441,7 +475,10 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="abs-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.abstract_of_canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.abstract_of_canvass_date')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($shouldDisable)>
                                             </td>
                                         @else
@@ -453,7 +490,10 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="res-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.resolution_number"
-                                                    class="w-full px-2 py-1 text-xs text-center border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.resolution_number')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="RES-2025-001" @disabled($shouldDisable)>
                                             </td>
                                         @else
