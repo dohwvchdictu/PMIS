@@ -2,8 +2,11 @@
 
 namespace App\Livewire\ModeOfProcurement;
 
+use App\Models\BidSchedule;
 use App\Models\Category;
 use App\Models\ModeOfProcurement;
+use App\Models\NtfBidSchedule;
+use App\Models\PrSvp;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use App\Models\Procurement;
@@ -70,16 +73,30 @@ class ModeOfProcurementUpdatePage extends Component
 
     protected function loadPerItemData(Procurement $procurement)
     {
-        // Get mop_item records with their relationships
+        // 1. Get MOP Items
         $mopItems = $procurement->mopItems()
             ->with(['item', 'modeOfProcurement'])
             ->get()
             ->keyBy('prItemID');
 
+        // 2. Get all UIDs to fetch related schedules efficiently
+        $uids = $mopItems->pluck('uid')->filter()->toArray();
+
+        // 3. Fetch Schedules keyed by the Parent UID ('mop_uid')
+        $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+        $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+        $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+
         $this->form['items'] = $procurement->pr_items
             ->sortByDesc('id')
-            ->map(function ($item) use ($mopItems) {
+            ->map(function ($item) use ($mopItems, $bidSchedules, $ntfSchedules, $prSvps) {
                 $mopItem = $mopItems->get($item->prItemID);
+                $uid = $mopItem?->uid;
+
+                // Find matching schedules for this specific row
+                $bid = $uid ? $bidSchedules->get($uid) : null;
+                $ntf = $uid ? $ntfSchedules->get($uid) : null;
+                $svp = $uid ? $prSvps->get($uid) : null;
 
                 return [
                     'prItemID' => $item->prItemID,
@@ -87,26 +104,31 @@ class ModeOfProcurementUpdatePage extends Component
                     'description' => $item->description,
                     'amount' => number_format((float) $item->amount, 2, '.', ''),
                     'mode_of_procurement_id' => $mopItem?->mode_of_procurement_id,
-                    'uid' => $mopItem?->uid ?? 'row_' . $item->prItemID,
+                    'uid' => $uid ?? 'row_' . $item->prItemID,
                     'mode_order' => $mopItem?->mode_order,
-                    // Add other fields from bid_schedule or ntf_bid_schedule as needed
-                    'bidding_number' => null,
-                    'ib_number' => null,
-                    'pre_proc_conference' => null,
-                    'ads_post_ib' => null,
-                    'pre_bid_conf' => null,
-                    'eligibility_check' => null,
-                    'sub_open_bids' => null,
-                    'bidding_date' => null,
-                    'bidding_result' => null,
-                    'ntf_bidding_date' => null,
-                    'ntf_bidding_result' => null,
-                    'ntf_no' => null,
-                    'rfq_no' => null,
-                    'canvass_date' => null,
-                    'date_returned_of_canvass' => null,
-                    'abstract_of_canvass_date' => null,
-                    'resolution_number' => null,
+
+                    // --- Map Bid Schedule Data ---
+                    'bidding_number' => $bid?->bidding_number,
+                    'ib_number' => $bid?->ib_number,
+                    'pre_proc_conference' => $bid?->pre_proc_conference,
+                    'ads_post_ib' => $bid?->ads_post_ib,
+                    'pre_bid_conf' => $bid?->pre_bid_conf,
+                    'eligibility_check' => $bid?->eligibility_check,
+                    'sub_open_bids' => $bid?->sub_open_bids,
+                    'bidding_date' => $bid?->bidding_date,
+                    'bidding_result' => $bid?->bidding_result,
+
+                    // --- Map NTF Data ---
+                    'ntf_bidding_date' => $ntf?->ntf_bidding_date,
+                    'ntf_bidding_result' => $ntf?->ntf_bidding_result,
+                    'ntf_no' => $ntf?->ntf_no,
+
+                    // --- Map PR SVP Data ---
+                    'rfq_no' => $svp?->rfq_no,
+                    'canvass_date' => $svp?->canvass_date,
+                    'date_returned_of_canvass' => $svp?->date_returned_of_canvass,
+                    'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date,
+                    'resolution_number' => $svp?->resolution_number,
                 ];
             })
             ->values()
@@ -119,36 +141,56 @@ class ModeOfProcurementUpdatePage extends Component
 
     protected function loadPerLotData(Procurement $procurement)
     {
-        // Get mop_lot records
+        // 1. Get MOP Lots
         $mopLots = $procurement->mopLots()
             ->with('modeOfProcurement')
             ->orderBy('mode_order')
             ->get();
 
-        $this->form['items'] = $mopLots->map(function ($mopLot, $index) {
+        // 2. Get all UIDs
+        $uids = $mopLots->pluck('uid')->filter()->toArray();
+
+        // 3. Fetch Schedules keyed by the Parent UID ('mop_uid')
+        $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+        $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+        $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+
+        $this->form['items'] = $mopLots->map(function ($mopLot, $index) use ($bidSchedules, $ntfSchedules, $prSvps) {
+            $uid = $mopLot->uid;
+
+            // Find matching schedules
+            $bid = $uid ? $bidSchedules->get($uid) : null;
+            $ntf = $uid ? $ntfSchedules->get($uid) : null;
+            $svp = $uid ? $prSvps->get($uid) : null;
+
             return [
                 'id' => $mopLot->id ?? null,
-                'uid' => $mopLot->uid ?? 'temp_' . uniqid(),
+                'uid' => $uid ?? 'temp_' . uniqid(),
                 'mode_of_procurement_id' => $mopLot->mode_of_procurement_id,
                 'mode_order' => $mopLot->mode_order ?? ($index + 1),
-                // Add other fields from bid_schedule or ntf_bid_schedule as needed
-                'bidding_number' => null,
-                'ib_number' => null,
-                'pre_proc_conference' => null,
-                'ads_post_ib' => null,
-                'pre_bid_conf' => null,
-                'eligibility_check' => null,
-                'sub_open_bids' => null,
-                'bidding_date' => null,
-                'bidding_result' => null,
-                'ntf_bidding_date' => null,
-                'ntf_bidding_result' => null,
-                'ntf_no' => null,
-                'rfq_no' => null,
-                'canvass_date' => null,
-                'date_returned_of_canvass' => null,
-                'abstract_of_canvass_date' => null,
-                'resolution_number' => null,
+
+                // --- Map Bid Schedule Data ---
+                'bidding_number' => $bid?->bidding_number,
+                'ib_number' => $bid?->ib_number,
+                'pre_proc_conference' => $bid?->pre_proc_conference,
+                'ads_post_ib' => $bid?->ads_post_ib,
+                'pre_bid_conf' => $bid?->pre_bid_conf,
+                'eligibility_check' => $bid?->eligibility_check,
+                'sub_open_bids' => $bid?->sub_open_bids,
+                'bidding_date' => $bid?->bidding_date,
+                'bidding_result' => $bid?->bidding_result,
+
+                // --- Map NTF Data ---
+                'ntf_bidding_date' => $ntf?->ntf_bidding_date,
+                'ntf_bidding_result' => $ntf?->ntf_bidding_result,
+                'ntf_no' => $ntf?->ntf_no,
+
+                // --- Map PR SVP Data ---
+                'rfq_no' => $svp?->rfq_no,
+                'canvass_date' => $svp?->canvass_date,
+                'date_returned_of_canvass' => $svp?->date_returned_of_canvass,
+                'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date,
+                'resolution_number' => $svp?->resolution_number,
             ];
         })->toArray();
 
@@ -229,6 +271,7 @@ class ModeOfProcurementUpdatePage extends Component
     {
         $this->showHistory = !$this->showHistory;
     }
+
     public function removeItem($uid): void
     {
         // Filter purely by the UID
@@ -263,120 +306,236 @@ class ModeOfProcurementUpdatePage extends Component
     {
         $this->validate([
             'form.items.*.mode_of_procurement_id' => 'required|integer',
-            // Add other validations for dates/fields if needed
         ]);
 
-        $isNewRecord = false; // Flag to track if any new records were added
+        // --- 1. Initialize State Trackers ---
+        $isMopAdded = false; // New MOP row added
+        $isMopUpdated = false; // Existing MOP row details changed
+        $isScheduleAdded = false; // New Date/Schedule added
+        $isScheduleUpdated = false; // Existing Date/Schedule changed
+        $isDeleted = false; // Row removed
 
-        DB::transaction(function () use (&$isNewRecord) {
+        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated, &$isDeleted) {
             $processedIds = [];
 
             foreach ($this->form['items'] as $index => $item) {
-                // Skip rows where no mode is selected
                 if (empty($item['mode_of_procurement_id'])) {
                     continue;
                 }
 
                 $modeId = $item['mode_of_procurement_id'];
 
-                // Check if this is a new record by looking at the UID
-                $isNew = isset($item['uid']) && (
+                // Check if this is a UI-added new row
+                $isUiNew = isset($item['uid']) && (
                     str_starts_with($item['uid'], 'new_') ||
                     str_starts_with($item['uid'], 'temp_')
                 );
 
-                // Handle UID and mode_order based on whether it's new or existing
-                if ($isNew) {
-                    // For new records: generate new UID and determine mode_order
-                    $modeOrder = ($this->form['procurement_type'] === 'perLot')
-                        ? ($index + 1)
-                        : 1;
+                // Generate or Keep UID
+                if ($isUiNew) {
+                    $modeOrder = ($this->form['procurement_type'] === 'perLot') ? ($index + 1) : 1;
                     $generatedUid = "MOP-{$modeId}-{$modeOrder}";
-                    $isNewRecord = true;
                 } else {
-                    // For existing records: keep existing UID and mode_order
                     $generatedUid = $item['uid'];
-                    $modeOrder = $item['mode_order']; // Keep existing mode_order
+                    $modeOrder = $item['mode_order'];
                 }
 
+                $savedParentModel = null;
+
+                // --- SAVE PARENT (MopItem / MopLot) ---
                 if ($this->form['procurement_type'] === 'perItem') {
-                    // --- SAVE TO MOP_ITEM ---
-
-                    $mopItem = MopItem::updateOrCreate(
-                        [
-                            'procID' => $this->procID,
-                            'prItemID' => $item['prItemID'],
-                        ],
-                        [
-                            'uid' => $generatedUid,
-                            'mode_of_procurement_id' => $modeId,
-                            'mode_order' => $modeOrder,
-                        ]
+                    $savedParentModel = MopItem::updateOrCreate(
+                        ['procID' => $this->procID, 'prItemID' => $item['prItemID']],
+                        ['uid' => $generatedUid, 'mode_of_procurement_id' => $modeId, 'mode_order' => $modeOrder]
                     );
-
-                    $processedIds[] = $mopItem->id;
-
+                    $processedIds[] = $savedParentModel->id;
                 } else {
-                    // --- SAVE TO MOP_LOT ---
-
                     $matchCriteria = ['procID' => $this->procID];
-
-                    if ($isNew) {
+                    if ($isUiNew) {
                         $matchCriteria['mode_order'] = $modeOrder;
                     } else {
-                        // For existing records, match by ID if available
                         if (isset($item['id']) && is_numeric($item['id'])) {
                             $matchCriteria['id'] = $item['id'];
                         } else {
-                            // Fallback: match by UID if no ID
                             $matchCriteria['uid'] = $item['uid'];
                         }
                     }
 
-                    $mopLot = MopLot::updateOrCreate(
+                    $savedParentModel = MopLot::updateOrCreate(
                         $matchCriteria,
-                        [
-                            'uid' => $generatedUid,
-                            'mode_of_procurement_id' => $modeId,
-                            'mode_order' => $modeOrder,
-                        ]
+                        ['uid' => $generatedUid, 'mode_of_procurement_id' => $modeId, 'mode_order' => $modeOrder]
                     );
+                    $processedIds[] = $savedParentModel->id;
+                }
 
-                    $processedIds[] = $mopLot->id;
+                // --- TRACK MOP PARENT CHANGES ---
+                if ($savedParentModel->wasRecentlyCreated) {
+                    $isMopAdded = true;
+                } elseif ($savedParentModel->wasChanged()) {
+                    $isMopUpdated = true;
+                }
+
+                // --- SAVE SCHEDULES (Children) ---
+                // We pass the tracker flags by reference (&) so the helper can update them
+                if ($savedParentModel) {
+                    $this->saveRelatedSchedules(
+                        $savedParentModel,
+                        $item,
+                        $this->form['procurement_type'],
+                        $isScheduleAdded,   // passed by reference
+                        $isScheduleUpdated  // passed by reference
+                    );
                 }
             }
 
-            // --- CLEANUP: Delete removed records ---
+            // --- CLEANUP (Deletions) ---
+            $deletedCount = 0;
             if ($this->form['procurement_type'] === 'perItem') {
-                MopItem::where('procID', $this->procID)
-                    ->whereNotIn('id', $processedIds)
-                    ->delete();
+                $deletedCount = MopItem::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
             } else {
-                MopLot::where('procID', $this->procID)
-                    ->whereNotIn('id', $processedIds)
-                    ->delete();
+                $deletedCount = MopLot::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
+            }
+
+            if ($deletedCount > 0) {
+                $isDeleted = true;
             }
         });
 
-        // Show appropriate alert based on whether new records were added
-        if ($isNewRecord) {
+        // --- 2. GRANULAR TOASTER LOGIC ---
+        // Priority Order: New MOP > New Schedule > Updates > No Change
+
+        if ($isMopAdded) {
             LivewireAlert::title('Mode Added Successfully!')
                 ->success()
                 ->text('The mode of procurement has been added.')
-                ->toast()
-                ->position('top-end')
-                ->show();
-        } else {
-            LivewireAlert::title('Mode Updated Successfully!')
+                ->toast()->position('top-end')->show();
+        } elseif ($isScheduleAdded) {
+            // SPECIFIC ALERT FOR ADDED SCHEDULE
+            LivewireAlert::title('Schedule Added!')
                 ->success()
-                ->text('The mode of procurement has been updated.')
-                ->toast()
-                ->position('top-end')
-                ->show();
+                ->text('A new bidding schedule has been created.')
+                ->toast()->position('top-end')->show();
+        } elseif ($isMopUpdated || $isScheduleUpdated || $isDeleted) {
+            // SPECIFIC ALERT FOR UPDATES
+            LivewireAlert::title('Updates Saved!')
+                ->success()
+                ->text('Changes to the mode or schedule have been saved.')
+                ->toast()->position('top-end')->show();
+        } else {
+            LivewireAlert::title('No Changes')
+                ->info()
+                ->text('No changes were detected.')
+                ->toast()->position('top-end')->show();
         }
 
-        // Reload the procurement data to refresh the form with saved data
         $this->mount($this->procurement);
+    }
+
+
+    protected function saveRelatedSchedules(
+        $parentModel,
+        array $itemData,
+        string $type,
+        bool &$isScheduleAdded,   // Passed by reference
+        bool &$isScheduleUpdated  // Passed by reference
+    ): void {
+        $modeId = $itemData['mode_of_procurement_id'];
+        $parentUid = $parentModel->uid;
+
+        // 1. Determine ref_id
+        $refId = ($type === 'perLot') ? $this->procID : ($itemData['prItemID'] ?? $parentModel->prItemID);
+
+        // 2. Match Criteria
+        $matchCriteria = ['ref_id' => $refId, 'mop_uid' => $parentUid];
+
+        // 3. Identity Helper
+        $getIdentity = function ($modelClass) use ($matchCriteria, $parentUid) {
+            $existing = $modelClass::where($matchCriteria)->first();
+            if ($existing) {
+                return ['uid' => $existing->uid, 'number' => $existing->bidding_number ?? 1];
+            } else {
+                $count = $modelClass::where('mop_uid', $parentUid)->count();
+                $nextNum = $count + 1;
+                return ['uid' => $parentUid . '-' . $nextNum, 'number' => $nextNum];
+            }
+        };
+
+        // --- Helper to Check Model Status ---
+        $checkStatus = function ($model) use (&$isScheduleAdded, &$isScheduleUpdated) {
+            if ($model->wasRecentlyCreated) {
+                $isScheduleAdded = true;
+            } elseif ($model->wasChanged()) {
+                $isScheduleUpdated = true;
+            }
+        };
+
+        // --- 1. Bid Schedule ---
+        if (!in_array($modeId, [5, 1])) {
+            // Only save if mandatory fields exist
+            if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
+                $identity = $getIdentity(BidSchedule::class);
+
+                $model = BidSchedule::updateOrCreate(
+                    $matchCriteria,
+                    [
+                        'uid' => $identity['uid'],
+                        'bidding_number' => $identity['number'],
+                        'ref_id' => $refId,
+                        'mop_uid' => $parentUid,
+                        'ib_number' => $itemData['ib_number'],
+                        'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
+                        'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
+                        'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
+                        'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
+                        'bidding_date' => $this->nullableDate($itemData['bidding_date'] ?? null),
+                        'bidding_result' => $itemData['bidding_result'] ?? null,
+                    ]
+                );
+
+                $checkStatus($model);
+            }
+        }
+
+        // --- 2. NTF Bid Schedule ---
+        if ($modeId == 4) {
+            $identity = $getIdentity(NtfBidSchedule::class);
+            $model = NtfBidSchedule::updateOrCreate(
+                $matchCriteria,
+                [
+                    'uid' => $identity['uid'],
+                    'ref_id' => $refId,
+                    'mop_uid' => $parentUid,
+                    'ntf_no' => $itemData['ntf_no'] ?? null,
+                    'ntf_bidding_date' => $this->nullableDate($itemData['ntf_bidding_date'] ?? null),
+                    'ntf_bidding_result' => $itemData['ntf_bidding_result'] ?? null,
+                ]
+            );
+            $checkStatus($model);
+        }
+
+        // --- 3. PR SVP ---
+        if (in_array($modeId, [4, 5])) {
+            $identity = $getIdentity(PrSvp::class);
+            $model = PrSvp::updateOrCreate(
+                $matchCriteria,
+                [
+                    'uid' => $identity['uid'],
+                    'ref_id' => $refId,
+                    'mop_uid' => $parentUid,
+                    'rfq_no' => $itemData['rfq_no'] ?? null,
+                    'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
+                    'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
+                    'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
+                    'resolution_number' => $itemData['resolution_number'] ?? null,
+                ]
+            );
+            $checkStatus($model);
+        }
+    }
+    private function nullableDate($value)
+    {
+        return empty($value) ? null : $value;
     }
 
     public function render()

@@ -11,7 +11,7 @@ class PrSvp extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'mop_group_ref',
+        'ref_id',
         'mop_uid',
         'uid',
         'resolution_number',

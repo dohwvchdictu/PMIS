@@ -7,73 +7,47 @@
 
             <li class="flex items-center gap-x-2 flex-1 group"
                 data-hs-stepper-nav-item='{"index": 1, "isCompleted": {{ $activeTab > 1 ? 'true' : 'false' }} }'>
+
                 <button type="button" wire:click="setStep(1)"
-                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-       hover:scale-105
-       {{ $activeTab == 1
-           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
-           : ($activeTab > 1
-               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-               : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
+                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
+                {{ $activeTab == 1
+                    ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                    : ($activeTab > 1
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
                     1
                 </button>
-                <span class="text-sm font-medium text-black dark:text-white whitespace-nowrap">
+
+                <span
+                    class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 1 ? 'text-black dark:text-white' : 'text-gray-500' }}">
                     Details
                 </span>
-                <div
-                    class="h-px grow transition-colors duration-300
-            {{ $activeTab > 1 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
-                </div>
-            </li>
 
-            <li class="flex items-center gap-x-2 flex-1 group"
-                data-hs-stepper-nav-item='{"index": 2, "isCompleted": {{ $activeTab > 2 ? 'true' : 'false' }} }'>
-                <button type="button" wire:click="setStep(2)"
-                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-       hover:scale-105
-       {{ $activeTab == 2
-           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
-           : ($activeTab > 2
-               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-               : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
-                    2
-                </button>
-                <span
-                    class="text-sm font-medium whitespace-nowrap
-            {{ $activeTab > 2 ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
-                    Mode of Procurement
-                </span>
-
-                <!-- changed: include || $mopGroupId so this line behaves like the one after tab 1 -->
                 <div
-                    class="h-px grow transition-colors duration-300
-            {{ $activeTab > 2 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+                    class="h-px grow transition-colors duration-300 {{ $activeTab > 1 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
                 </div>
             </li>
 
             <li class="flex items-center gap-x-2 group"
-                data-hs-stepper-nav-item='{"index": 3, "isCompleted": {{ $activeTab > 3 ? 'true' : 'false' }} }'>
-                <button type="button" wire:click="setStep(3)"
-                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-       hover:scale-105
-       {{ $activeTab == 3
-           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
-           : ($activeTab > 3
-               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-               : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
-                    3
+                data-hs-stepper-nav-item='{"index": 2, "isCompleted": {{ $activeTab > 2 ? 'true' : 'false' }} }'>
+
+                <button type="button" wire:click="setStep(2)"
+                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
+                {{ $activeTab == 2
+                    ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                    : ($activeTab > 2
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
+                    2
                 </button>
+
                 <span
-                    class="text-sm font-medium whitespace-nowrap
-            {{ $activeTab > 3 ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
+                    class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 2 ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
                     Post
                 </span>
-
-                <!-- invisible spacer to keep spacing identical -->
-                <div class="h-px grow invisible"></div>
             </li>
-        </ul>
 
+        </ul>
     </div>
     {{-- <hr class=" border-gray-200 dark:border-neutral-600"> --}}
 
@@ -102,97 +76,188 @@
                 <div
                     class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mt-4">
 
-                    <div
-                        class="flex justify-between items-center px-4 py-2 border-b border-gray-200 dark:border-neutral-600 mb-2">
-                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                            History of Modes
-                        </h3>
-
-                        <button type="button" wire:click="toggleHistory"
-                            class="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors
-            {{ $showHistory
-                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-neutral-600 dark:text-gray-300'
-                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' }}">
-                            @if ($showHistory)
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21">
-                                    </path>
-                                </svg>
-                                Hide Previous
-                            @else
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                    </path>
-                                </svg>
-                                Show Previous ({{ count($form['items']) - 1 }})
-                            @endif
-                        </button>
-                    </div>
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
                             <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
 
+                                <tr>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
+                                    </th>
+
+                                    {{-- Show Item columns only for perItem type --}}
+
+                                    @if ($form['procurement_type'] === 'perItem')
+                                        <th
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
+                                            No.</th>
+
+                                        <th
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            Description</th>
+                                    @else
+                                    @endif
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Mode of Procurement</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
+                                        Bidding #</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        IB No.</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Pre-Proc Conference</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Ads/Post IB</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Pre-Bid Conference</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Eligibility Check</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Sub/Open of Bids</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Bidding Date / NTF Bidding Date</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Bidding Result</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        NTF No.</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        RFQ No.</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Canvass Date</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Returned of Canvass</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Abstract of Canvass</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Number</th>
+
+
+
+                                </tr>
+
+                            </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                {{-- Since you are using array_reverse, the NEWEST item is the FIRST iteration --}}
+
                                 @forelse (array_reverse($form['items'] ?? [], true) as $itemIndex => $item)
                                     @php
-                                        // ... existing setup code ...
                                         $modeId = $item['mode_of_procurement_id'] ?? null;
                                         $rowUid = $item['uid'] ?? 'temp_' . $itemIndex;
+
                                         $isSavedRecord =
                                             $form['procurement_type'] === 'perItem'
                                                 ? isset($item['prItemID'])
                                                 : isset($item['id']) && is_numeric($item['id']);
-                                        $shouldDisable = $isSavedRecord && $modeId == 1;
-                                        $showFields = $isSavedRecord;
+                                        $isHistory = !$loop->first;
 
-                                        // NEW LOGIC:
-                                        // $loop->first is the newest/top item (always visible).
-                                        // Anything else is hidden unless $showHistory is true.
+                                        $shouldDisable = $isHistory || ($isSavedRecord && $modeId == 1);
+
+                                        $showFields = $isSavedRecord;
                                         $isVisible = $loop->first || $showHistory;
                                     @endphp
 
                                     {{-- Apply the hidden class conditionally --}}
                                     <tr wire:key="row-{{ $rowUid }}"
-                                        class="{{ $isVisible ? '' : 'hidden' }} hover:bg-gray-50 dark:hover:bg-neutral-800">
+                                        class="{{ $isVisible ? '' : 'hidden' }} hover:bg-emerald-100 dark:hover:bg-neutral-800">
 
                                         {{-- Action Column --}}
-                                        <td class="px-2 py-2 text-center">
-                                            {{-- Only show Add button on the topmost (active) row --}}
-                                            @if ($loop->first)
-                                                <button wire:click.prevent="addItem"
-                                                    class="inline-flex items-center justify-center w-6 h-6 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors"
-                                                    title="Add New Row Above">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                </button>
-                                            @else
-                                                {{-- Optional: Add a Locked icon for history items --}}
-                                                <span class="text-gray-400">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                                        </path>
-                                                    </svg>
-                                                </span>
-                                            @endif
+                                        <td class="px-2 py-2 align-middle">
+                                            <div class="flex items-center justify-center gap-1">
+
+                                                @if ($loop->first)
+                                                    {{-- CURRENT ITEM: Show Toggle Button AND Add Button --}}
+
+                                                    {{-- 1. Toggle Button --}}
+                                                    <button type="button" wire:click="toggleHistory"
+                                                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
+                                                        title="{{ $showHistory ? 'Hide History' : 'Show History' }}">
+                                                        @if ($showHistory)
+                                                            {{-- Open (Down) --}}
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4 text-emerald-600" fill="none"
+                                                                viewBox="0 0 24 24" stroke="currentColor"
+                                                                stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                            </svg>
+                                                        @else
+                                                            {{-- Closed (Right) --}}
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4 text-emerald-600" fill="none"
+                                                                viewBox="0 0 24 24" stroke="currentColor"
+                                                                stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                            </svg>
+                                                        @endif
+                                                    </button>
+
+                                                    {{-- 2. Add Button --}}
+                                                    <button wire:click.prevent="addItem"
+                                                        class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                                        title="Add New Row Above">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M12 4.5v15m7.5-7.5h-15" />
+                                                        </svg>
+                                                    </button>
+                                                @else
+                                                    {{-- PREVIOUS (HISTORY) ITEMS: No Toggle, No Add, Just Lock Icon --}}
+
+                                                    <span
+                                                        class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
+                                                        title="History Record">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                        </svg>
+                                                    </span>
+                                                @endif
+
+                                            </div>
                                         </td>
 
                                         {{-- Show Item columns only for perItem type --}}
                                         @if ($form['procurement_type'] === 'perItem')
-                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap"
+                                                @disabled($shouldDisable)>
                                                 {{ $item['item_no'] }}
                                             </td>
-                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100">
+                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100"
+                                                @disabled($shouldDisable)>
                                                 {{ $item['description'] }}
                                             </td>
                                         @endif
@@ -218,11 +283,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    maxlength="2" value="1">
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    maxlength="2" value="1" @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- IB No. through Sub/Open of Bids --}}
@@ -230,46 +295,51 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="ib-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ib_number"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="IB-2025-002">
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="IB-2025-002" @disabled($shouldDisable)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-proc-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ads-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-bid-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="elig-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
 
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="sub-open-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.sub_open_bids"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Bidding Date / NTF Bidding Date --}}
@@ -277,16 +347,18 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="bid-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @elseif ($showFields && $modeId == 4)
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ntf-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Bidding Result / NTF Bidding Result --}}
@@ -294,7 +366,8 @@
                                             <td class="px-2 py-2">
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -304,14 +377,15 @@
                                             <td class="px-2 py-2">
                                                 <select wire:key="ntf-res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_result"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
                                                 </select>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- NTF No. --}}
@@ -319,11 +393,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="ntf-no-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="NTF-2025-001">
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="NTF-2025-001" @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- RFQ No. --}}
@@ -331,11 +405,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="RFQ-2025-001">
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="RFQ-2025-001" @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Canvass Date --}}
@@ -343,10 +417,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="can-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Returned of Canvass --}}
@@ -354,10 +429,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ret-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.date_returned_of_canvass"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Abstract of Canvass --}}
@@ -365,10 +441,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="abs-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.abstract_of_canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- Resolution Number --}}
@@ -376,11 +453,11 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="res-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.resolution_number"
-                                                    class="w-full px-2 py-1 text-xs text-center border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="RES-2025-001">
+                                                    class="w-full px-2 py-1 text-xs text-center border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="RES-2025-001" @disabled($shouldDisable)>
                                             </td>
                                         @else
-                                            <td class="px-2 py-2 bg-gray-50 dark:bg-neutral-900"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                     </tr>
@@ -441,10 +518,13 @@
     <div
         class="fixed bottom-5 right-0 left-0 lg:ml-[13.75rem] flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-49">
         <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-x-2">
-            <a href="{{ route('mode-of-procurement.index') }}" wire:navigate
+
+            {{-- REMOVED wire:navigate here to force a full reload and persist Dark Mode state --}}
+            <a href="{{ route('mode-of-procurement.index') }}"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-700">
                 Cancel
             </a>
+
             <button wire:click="save" wire:loading.attr="disabled"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
                 <div wire:loading wire:target="save"
