@@ -14,7 +14,7 @@
                     <circle cx="10" cy="10" r="7" />
                 </svg>
             </div>
-            @can('create_procurement')
+            {{-- @can('create_procurement')
                 <a href="{{ route('procurements.create') }}"
                     class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
                     <svg class="shrink-0 size-4" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -24,7 +24,7 @@
                     </svg>
                     Procurement
                 </a>
-            @endcan
+            @endcan --}}
 
         </div>
     </div>
@@ -68,7 +68,6 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
                 @foreach ($procurements as $procurement)
-
                     <!-- Main Row -->
                     <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                         <td
@@ -325,12 +324,10 @@
                                         </tbody>
                                     </table>
 
-                                    {{-- Items Pagination --}}
                                     @if ($totalItems > $itemsPerPage)
                                         <div
                                             class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full p-2 border-t border-gray-200 dark:border-neutral-700 gap-2 sm:gap-4 bg-white dark:bg-neutral-800">
 
-                                            {{-- Left: Per-page selector --}}
                                             <div class="flex items-center gap-x-2 sm:justify-start w-full sm:w-auto">
                                                 <label for="itemsPerPage_{{ $procurement->procID }}"
                                                     class="text-xs text-gray-600 dark:text-gray-300">Show</label>
@@ -344,7 +341,6 @@
                                                 </select>
                                             </div>
 
-                                            {{-- Center: Summary + Pagination --}}
                                             <div class="flex flex-col items-center justify-center w-full">
                                                 <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
                                                     Showing {{ $offset + 1 }} to
@@ -352,10 +348,9 @@
                                                     {{ $totalItems }} items
                                                 </div>
 
-                                                {{-- Pagination Links --}}
                                                 @if ($totalPages > 1)
                                                     <div class="flex justify-center gap-1 mt-2">
-                                                        {{-- Previous Button --}}
+
                                                         @if ($currentPage > 1)
                                                             <a href="?itemsPage_{{ $procurement->procID }}={{ $currentPage - 1 }}"
                                                                 class="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-white">
@@ -363,7 +358,6 @@
                                                             </a>
                                                         @endif
 
-                                                        {{-- Page Numbers --}}
                                                         @for ($i = 1; $i <= $totalPages; $i++)
                                                             <a href="?itemsPage_{{ $procurement->procID }}={{ $i }}"
                                                                 class="px-2 py-1 text-xs border rounded {{ $i == $currentPage ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-white' }}">
@@ -371,7 +365,6 @@
                                                             </a>
                                                         @endfor
 
-                                                        {{-- Next Button --}}
                                                         @if ($currentPage < $totalPages)
                                                             <a href="?itemsPage_{{ $procurement->procID }}={{ $currentPage + 1 }}"
                                                                 class="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:text-white">

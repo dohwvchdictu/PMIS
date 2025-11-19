@@ -5,16 +5,17 @@
         <ul class="flex items-center w-full max-w-7xl pt-2 p-2 bg-white dark:bg-neutral-700 dark:border-neutral-700 mx-auto"
             data-hs-stepper='{"isCompleted": true}'>
 
+            {{-- STEP 1: DETAILS --}}
             <li class="flex items-center gap-x-2 flex-1 group"
                 data-hs-stepper-nav-item='{"index": 1, "isCompleted": {{ $activeTab > 1 ? 'true' : 'false' }} }'>
 
                 <button type="button" wire:click="setStep(1)"
                     class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
-                {{ $activeTab == 1
-                    ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
-                    : ($activeTab > 1
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
+            {{ $activeTab == 1
+                ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                : ($activeTab > 1 || $this->isPostAvailable
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
                     1
                 </button>
 
@@ -23,26 +24,30 @@
                     Details
                 </span>
 
+                {{-- LINE 1-2 --}}
                 <div
-                    class="h-px grow transition-colors duration-300 {{ $activeTab > 1 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+                    class="h-px grow transition-colors duration-300
+            {{ $activeTab > 1 || $this->isPostAvailable ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
                 </div>
             </li>
 
+            {{-- STEP 2: POST --}}
             <li class="flex items-center gap-x-2 group"
                 data-hs-stepper-nav-item='{"index": 2, "isCompleted": {{ $activeTab > 2 ? 'true' : 'false' }} }'>
 
-                <button type="button" wire:click="setStep(2)"
+                <button type="button" @if (!$this->isPostAvailable && $activeTab < 2) disabled @else wire:click="setStep(2)" @endif
                     class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
-                {{ $activeTab == 2
-                    ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
-                    : ($activeTab > 2
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
+            {{ $activeTab == 2
+                ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                : ($activeTab > 2 || $this->isPostAvailable
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer'
+                    : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
                     2
                 </button>
 
                 <span
-                    class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 2 ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
+                    class="text-sm font-medium whitespace-nowrap
+            {{ $activeTab >= 2 || $this->isPostAvailable ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
                     Post
                 </span>
             </li>
@@ -248,11 +253,21 @@
 
                                                     {{-- 2. Add Button (Conditional) --}}
                                                     @php
+                                                        $modeId = $item['mode_of_procurement_id'] ?? null;
+                                                        $rowUid = $item['uid'] ?? 'temp_' . $itemIndex;
+                                                        // ... (keep your existing variable definitions for $isSavedRecord, etc.) ...
+
+                                                        // --- YOUR SPECIFIC LOGIC ---
                                                         $hasResult =
                                                             !empty($item['bidding_result']) ||
                                                             !empty($item['ntf_bidding_result']);
                                                         $isPublicBidding = $modeId == 1;
-                                                        $canAddRebid = $hasResult || $isPublicBidding;
+
+                                                        // Logic:
+                                                        // 1. Allow if (Has Result OR Is Public Bidding)
+                                                        // 2. AND ensure the "Post" tab is NOT active/available (meaning we haven't succeeded yet).
+                                                        $canAddRebid =
+                                                            ($hasResult || $isPublicBidding) && !$this->isPostAvailable;
                                                     @endphp
 
                                                     @if ($canAddRebid)
@@ -287,11 +302,11 @@
                                         {{-- Show Item columns only for perItem type --}}
                                         @if ($form['procurement_type'] === 'perItem')
                                             <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap"
-                                                @disabled($shouldDisable)>
+                                                @disabled($disableInputs)>
                                                 {{ $item['item_no'] }}
                                             </td>
                                             <td class="px-2 py-2 text-gray-900 dark:text-gray-100"
-                                                @disabled($shouldDisable)>
+                                                @disabled($disableInputs)>
                                                 {{ $item['description'] }}
                                             </td>
                                         @endif
@@ -538,37 +553,141 @@
         @endif
 
         @if ($activeTab == 2)
-            {{-- Loop through Modes --}}
-            <div class="flex flex-col items-center p-2">
+            <div class="flex flex-col gap-2 pt-2">
+                <div
+                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 ">
 
-                <div class="flex justify-center p-2">
-                    <div
-                        class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 inline-block dark:bg-neutral-700 dark:border-neutral-700">
+                    <div class="overflow-x-auto overflow-y-auto">
+                        <table class="w-full text-xs min-w-max">
+                            {{-- Table Headers --}}
+                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                                <tr>
+                                    {{-- Placeholder for alignment with the action column in Tab 1 --}}
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
+                                    </th>
 
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution #</th>
 
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 ">
+                                        Bid Evaluation Date</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Post Qual Date</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Recommending For Award</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Awarded Amount</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Reference #</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Award Notice #</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Posting of Award|PhilGEPS</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                        Supplier</th>
+                                </tr>
+
+                            </thead>
+                            {{-- Table Body (Input Fields using standard HTML) --}}
+                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                <tr>
+                                    {{-- Spacer Cell for Alignment --}}
+                                    <td class="px-2 py-2 align-top"></td>
+
+                                    {{-- Resolution Number --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="resolutionNumber"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="RES-YYYY-NNN">
+                                    </td>
+
+                                    {{-- Bid Evaluation Date --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="bidEvaluationDate"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- Post Qual Date --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="postQualDate"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- Reccomendin for Award --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="recommendingForAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- Notice of Award --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="noticeOfAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- Awarded Amount --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="number" step="0.01" wire:model.defer="awardedAmount"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- PhilGEPS Reference # --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="philgepsReferenceNo"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="PHL-YYYY-NNN">
+                                    </td>
+
+                                    {{-- Award Notice # --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="awardNoticeNumber"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="AN-YYYY-NNN">
+                                    </td>
+
+                                    {{-- Posting of Award|PhilGEPS --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="dateOfPostingOfAwardOnPhilGEPS"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    {{-- Supplier (Dropdown) --}}
+                                    <td class="px-2 py-2 align-top">
+                                        <select wire:model.defer="supplier_id"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="">Select Supplier...</option>
+                                            {{-- Loop through the suppliers collection passed from the Livewire component's render method --}}
+                                            @foreach ($suppliers as $supplier)
+                                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-
-            </div>
-        @endif
-
-        @if ($activeTab == 3)
-            <div class="flex flex-col items-center gap-6 p-6">
-
-                {{-- Award Information Block --}}
-                <div
-                    class="w-full max-w-7xl bg-white p-6 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-
-                </div>
-
-                {{-- PhilGEPS & Supplier Information Block --}}
-                <div
-                    class="w-full max-w-7xl bg-white p-6 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-
-                </div>
-
-
             </div>
         @endif
     </div>

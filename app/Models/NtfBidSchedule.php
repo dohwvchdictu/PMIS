@@ -35,7 +35,7 @@ class NtfBidSchedule extends Model
     // ✅ Relationships
     public function procurement()
     {
-        return $this->belongsTo(Procurement::class, 'procID', 'procID');
+        return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
 
 

@@ -29,7 +29,7 @@ class BidSchedule extends Model
     // If procID is related to the Procurement model (as foreign key), you can define a relationship:
     public function procurement()
     {
-        return $this->belongsTo(Procurement::class, 'procID', 'procID');
+        return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
 
 

@@ -12,7 +12,7 @@ class PostProcurement extends Model
 
     use SoftDeletes;
     protected $fillable = [
-        'mop_group_ref',
+        'ref_id',
         'resolution_number',
         'bid_evaluation_date',
         'post_qual_date',
@@ -26,7 +26,7 @@ class PostProcurement extends Model
     ];
     public function procurement()
     {
-        return $this->belongsTo(Procurement::class, 'procID');
+        return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
 
 }
