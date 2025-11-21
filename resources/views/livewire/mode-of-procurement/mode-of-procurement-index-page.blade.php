@@ -128,7 +128,7 @@
                                                 @endcan --}}
                                                 @can('update_mode::of::procurement')
                                                     <li>
-                                                        <a href="{{ route('mode-of-procurement.update', $procurement->procID) }}"
+                                                        <a href="{{ route('mode-of-procurement.' . ($procurement->procurement_type === 'perItem' ? 'update-per-item' : 'update-per-lot'), $procurement->procID) }}"
                                                             @click="open = false"
                                                             class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-400">
                                                             <x-heroicon-o-pencil class="w-4 h-4 text-amber-400" /> Update
