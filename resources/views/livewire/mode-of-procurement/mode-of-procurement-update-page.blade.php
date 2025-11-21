@@ -538,7 +538,7 @@
                                     {{-- HISTORY TABLE (shown below current row when expanded) --}}
                                     @if ($loop->first && $showHistory)
                                         <tr
-                                            class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-200 dark:border-emerald-900">
+                                            class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-500 dark:border-emerald-900">
                                             <td colspan="20" class="px-0 py-0">
                                                 <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
                                                     <table class="w-full text-xs min-w-max">
@@ -611,12 +611,8 @@
                                                             @forelse (array_reverse($form['items'] ?? [], true) as $historyIndex => $historyItem)
                                                                 @php
                                                                     // Only show history rows (not the first/current one)
-                                                                    if (
-                                                                        $historyIndex ===
-                                                                        array_key_last(
-                                                                            array_reverse($form['items'] ?? [], true),
-                                                                        )
-                                                                    ) {
+                                                                    // $loop->first is the first item in the reversed array (which is the current/latest item)
+                                                                    if ($loop->first) {
                                                                         continue;
                                                                     }
                                                                     $historyUid =

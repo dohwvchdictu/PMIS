@@ -605,13 +605,20 @@ class ModeOfProcurementUpdatePage extends Component
         ];
 
         // 3. Identity Helper
-        $getIdentity = function ($modelClass) use ($matchCriteria, $parentUid) {
+        $getIdentity = function ($modelClass) use ($matchCriteria, $parentUid, $refId) {
             $existing = $modelClass::where($matchCriteria)->first();
 
             if ($existing) {
                 return ['uid' => $existing->uid];
             } else {
-                $count = $modelClass::where('mop_uid', $parentUid)->count();
+                // Extract the mode prefix from parentUid (e.g., "MOP-2" from "MOP-2-2")
+                $mopParts = explode('-', $parentUid);
+                $modePrefix = $mopParts[0] . '-' . ($mopParts[1] ?? ''); // "MOP-2"
+
+                // Count schedules with the same mode prefix AND same ref_id
+                $count = $modelClass::where('ref_id', $refId)
+                    ->where('mop_uid', 'like', $modePrefix . '-%')
+                    ->count();
                 return ['uid' => $parentUid . '-' . ($count + 1)];
             }
         };
@@ -722,13 +729,13 @@ class ModeOfProcurementUpdatePage extends Component
         $rules = [
             'resolutionNumber' => 'required|string|max:255',
             'bidEvaluationDate' => 'nullable|date',
-            'postQualDate' => 'nullable|date|after_or_equal:bidEvaluationDate',
+            'postQualDate' => 'nullable|date',
             'recommendingForAward' => 'nullable|date',
             'noticeOfAward' => 'nullable|date',
             'awardedAmount' => 'nullable|numeric',
             'philgepsReferenceNo' => 'nullable|string|max:255',
             'awardNoticeNumber' => 'nullable|string|max:255',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date|after_or_equal:noticeOfAward',
+            'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ];
 
