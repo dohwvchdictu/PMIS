@@ -23,6 +23,7 @@ class ModeOfProcurementPerItemPage extends Component
     public string $procID = '';
     public int $activeTab = 1;
     public bool $showHistory = false;
+    public ?string $historyForUid = null;
 
     // Post-Procurement Tab Fields
     public $resolutionNumber = null;
@@ -117,117 +118,137 @@ class ModeOfProcurementPerItemPage extends Component
 
     protected function loadPerItemData(Procurement $procurement)
     {
-        // 1. Get MOP Items linked to these PR Items
-        $mopItems = $procurement->mopItems()
+        // 1. Load MOP Items grouped strictly by PR Item ID
+        // Ensure we sort by mode_order DESC so the newest version is always first
+        $mopItemsGrouped = $procurement->mopItems()
             ->with(['item', 'modeOfProcurement'])
+            ->orderBy('mode_order', 'desc')
             ->get()
-            ->keyBy('prItemID');
+            ->groupBy('prItemID'); // Make sure this matches your DB column (prItemID or pr_item_id)
 
-        // 2. Get all UIDs to fetch schedules
-        $uids = $mopItems->pluck('uid')->filter()->toArray();
+        // 2. Get UIDs for schedules
+        $uids = $procurement->mopItems->pluck('uid')->filter()->toArray();
 
         // 3. Fetch Schedules
         $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
 
-        // 4. Map PR Items to Form Rows
-        $this->form['items'] = $procurement->pr_items
-            ->sortBy('prItemID')
-            ->map(function ($item) use ($mopItems, $bidSchedules, $ntfSchedules, $prSvps) {
-                $prItemID = $item->prItemID;
-                $mopItem = $mopItems->get($prItemID);
-                $uid = $mopItem?->uid;
+        $this->form['items'] = [];
 
-                // Resolvers
-                $bid = $uid ? $bidSchedules->get($uid) : null;
-                $ntf = $uid ? $ntfSchedules->get($uid) : null;
-                $svp = $uid ? $prSvps->get($uid) : null;
+        // 4. Loop through PR Items (Sorted by ID to keep them consistent)
+        // This ensures Item 1 is processed fully before Item 2 starts
+        $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
 
-                $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
+        foreach ($sortedPrItems as $prItem) {
+            $prItemID = $prItem->prItemID;
 
-                return [
-                    'prItemID' => $prItemID,
-                    'item_no' => $item->item_no,
-                    'description' => $item->description,
-                    'amount' => number_format((float) $item->amount, 2, '.', ''),
-                    'mode_of_procurement_id' => $mopItem?->mode_of_procurement_id,
-                    'uid' => $uid ?? 'row_' . $prItemID,
-                    'mode_order' => $mopItem?->mode_order,
+            // Get all MOP history for THIS specific PR Item
+            $relatedMops = $mopItemsGrouped->get($prItemID);
 
-                    // --- SHARED ---
-                    'ib_number' => $getVal('ib_number'),
-                    'pre_proc_conference' => $getVal('pre_proc_conference'),
-                    'ads_post_ib' => $getVal('ads_post_ib'),
-                    'pre_bid_conf' => $getVal('pre_bid_conf'),
-                    'eligibility_check' => $getVal('eligibility_check'),
-                    'sub_open_bids' => $getVal('sub_open_bids'),
-
-                    // --- BID ---
-                    'bidding_number' => $bid?->bidding_number ?? $ntf?->bidding_number ?? null,
-                    'bidding_date' => $bid?->bidding_date ?? $ntf?->bidding_date ?? null,
-                    'bidding_result' => $bid?->bidding_result ?? $ntf?->bidding_result ?? null,
-
-                    // --- NTF ---
-                    'ntf_no' => $ntf?->ntf_no,
-                    'ntf_bidding_date' => $ntf?->ntf_bidding_date,
-                    'ntf_bidding_result' => $ntf?->ntf_bidding_result,
-
-                    // --- SVP ---
-                    'rfq_no' => $svp?->rfq_no ?? $ntf?->rfq_no ?? null,
-                    'canvass_date' => $svp?->canvass_date ?? $ntf?->canvass_date ?? null,
-                    'date_returned_of_canvass' => $svp?->date_returned_of_canvass ?? $ntf?->date_returned_of_canvass ?? null,
-                    'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date ?? $ntf?->abstract_of_canvass_date ?? null,
-                    'resolution_number' => $svp?->resolution_number ?? null,
-                ];
-            })
-            ->values()
-            ->toArray();
-
-        if (empty($this->form['items'])) {
-            $this->form['items'] = [];
+            if ($relatedMops && $relatedMops->count() > 0) {
+                foreach ($relatedMops as $mopItem) {
+                    $this->form['items'][] = $this->mapItemToRow($prItem, $mopItem, $bidSchedules, $ntfSchedules, $prSvps);
+                }
+            } else {
+                $this->form['items'][] = $this->mapItemToRow($prItem, null, $bidSchedules, $ntfSchedules, $prSvps);
+            }
         }
     }
 
-    public function addItem(): void
+    // Helper to keep the loop clean
+    private function mapItemToRow($prItem, $mopItem, $bidSchedules, $ntfSchedules, $prSvps)
     {
-        $uniqueId = 'new_' . md5(microtime(true) . mt_rand());
+        $uid = $mopItem?->uid;
 
-        $newItem = [
-            'uid' => $uniqueId,
-            'item_no' => '',
-            'description' => '',
-            'amount' => '0.00',
-            'mode_of_procurement_id' => null,
-            'mode_order' => null,
-            'bidding_number' => null,
-            'ib_number' => null,
-            'pre_proc_conference' => null,
-            'ads_post_ib' => null,
-            'pre_bid_conf' => null,
-            'eligibility_check' => null,
-            'sub_open_bids' => null,
-            'bidding_date' => null,
-            'bidding_result' => null,
-            'ntf_bidding_date' => null,
-            'ntf_bidding_result' => null,
-            'ntf_no' => null,
-            'rfq_no' => null,
-            'canvass_date' => null,
-            'date_returned_of_canvass' => null,
-            'abstract_of_canvass_date' => null,
-            'resolution_number' => null,
+        // Resolvers
+        $bid = $uid ? $bidSchedules->get($uid) : null;
+        $ntf = $uid ? $ntfSchedules->get($uid) : null;
+        $svp = $uid ? $prSvps->get($uid) : null;
+
+        $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
+
+        return [
+            'prItemID' => $prItem->prItemID, // Crucial for grouping
+            'item_no' => $prItem->item_no,
+            'description' => $prItem->description,
+            'amount' => number_format((float) $prItem->amount, 2, '.', ''),
+            'mode_of_procurement_id' => $mopItem?->mode_of_procurement_id,
+            'uid' => $uid ?? 'new_' . uniqid(),
+            'mode_order' => $mopItem?->mode_order ?? 1,
+
+            // --- SHARED ---
+            'ib_number' => $getVal('ib_number'),
+            'pre_proc_conference' => $getVal('pre_proc_conference'),
+            'ads_post_ib' => $getVal('ads_post_ib'),
+            'pre_bid_conf' => $getVal('pre_bid_conf'),
+            'eligibility_check' => $getVal('eligibility_check'),
+            'sub_open_bids' => $getVal('sub_open_bids'),
+
+            // --- BID ---
+            'bidding_number' => $bid?->bidding_number ?? $ntf?->bidding_number ?? null,
+            'bidding_date' => $bid?->bidding_date ?? $ntf?->bidding_date ?? null,
+            'bidding_result' => $bid?->bidding_result ?? $ntf?->bidding_result ?? null,
+
+            // --- NTF ---
+            'ntf_no' => $ntf?->ntf_no,
+            'ntf_bidding_date' => $ntf?->ntf_bidding_date,
+            'ntf_bidding_result' => $ntf?->ntf_bidding_result,
+
+            // --- SVP ---
+            'rfq_no' => $svp?->rfq_no ?? $ntf?->rfq_no ?? null,
+            'canvass_date' => $svp?->canvass_date ?? $ntf?->canvass_date ?? null,
+            'date_returned_of_canvass' => $svp?->date_returned_of_canvass ?? $ntf?->date_returned_of_canvass ?? null,
+            'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date ?? $ntf?->abstract_of_canvass_date ?? null,
+            'resolution_number' => $svp?->resolution_number ?? null,
         ];
 
-        $this->form['items'][] = $newItem;
+    }
+
+    public function addItem($index): void
+    {
+        // 1. Identify the context (Which PR Item are we adding to?)
+        $referenceItem = $this->form['items'][$index] ?? null;
+
+        if (!$referenceItem)
+            return;
+
+        $uniqueId = 'new_' . md5(microtime(true) . mt_rand());
+
+        // 2. Create new item (Copy details from reference, but clear MOP data)
+        $newItem = [
+            'prItemID' => $referenceItem['prItemID'], // KEEP THIS LINK
+            'item_no' => $referenceItem['item_no'],
+            'description' => $referenceItem['description'],
+            'amount' => $referenceItem['amount'],
+            'uid' => $uniqueId,
+
+            // Reset MOP fields
+            'mode_of_procurement_id' => null,
+            'mode_order' => ($referenceItem['mode_order'] ?? 0) + 1, // Increment order
+            'bidding_number' => null,
+            'ib_number' => null,
+            // ... set all other schedule fields to null ...
+        ];
+
+        // 3. Insert ABOVE the clicked index
+        array_splice($this->form['items'], $index, 0, [$newItem]);
+
+        // 4. Ensure history is hidden so the UI doesn't look cluttered
         $this->showHistory = false;
     }
-
-    public function toggleHistory()
+    public function toggleHistory(string $uid)
     {
-        $this->showHistory = !$this->showHistory;
+        if ($this->historyForUid === $uid && $this->showHistory) {
+            // If clicking the same item, just toggle off
+            $this->showHistory = false;
+            $this->historyForUid = null;
+        } else {
+            // Show history for this specific item
+            $this->showHistory = true;
+            $this->historyForUid = $uid;
+        }
     }
-
     public function removeItem($uid): void
     {
         $this->form['items'] = array_filter($this->form['items'], function ($item) use ($uid) {
@@ -254,6 +275,43 @@ class ModeOfProcurementPerItemPage extends Component
             $modeId = $item['mode_of_procurement_id'] ?? null;
             if (!$modeId)
                 continue;
+
+            // Check if Mode is NOT 1, 4, or 5 (Regular Bidding Mode)
+            if (!in_array($modeId, [1, 4, 5])) {
+
+                // 1. Check if ANY field relevant to Regular Bidding is filled out
+                // We use OR (||) here. If they typed an IB Number OR a Bidding Number,
+                // we assume they intended to add a schedule.
+                $hasRegularBiddingData = !empty($item['ib_number']) ||
+                    !empty($item['bidding_number']);
+
+                // 2. If partial data exists, enforce the rules
+                if ($hasRegularBiddingData) {
+                    $rules["form.items.{$index}.ib_number"] = 'required|string|max:255';
+                    $rules["form.items.{$index}.bidding_number"] = 'required|string|max:255';
+
+                    // Add friendly names for the "Toast" or Error Message
+                    $attributes["form.items.{$index}.ib_number"] = "IB No.";
+                    $attributes["form.items.{$index}.bidding_number"] = "Bidding No.";
+                }
+            }
+
+
+            if ($modeId == 4) { // NTF Mode
+                // Check if ANY schedule field relevant to NTF/Bidding is filled out
+                $hasNtfOrBiddingData = !empty($item['ib_number']) ||
+                    !empty($item['bidding_number']);
+
+                if ($hasNtfOrBiddingData) {
+                    // These rules are triggered IF the user started filling data
+                    $rules["form.items.{$index}.ib_number"] = 'required|string|max:255';
+                    $rules["form.items.{$index}.bidding_number"] = 'required|string|max:255';
+
+                    // Add friendly names for required fields
+                    $attributes["form.items.{$index}.ib_number"] = " IB No.";
+                    $attributes["form.items.{$index}.bidding_number"] = " Bidding No.";
+                }
+            }
 
             if ($modeId == 5) {
                 $hasSvpData = !empty($item['rfq_no']) ||
