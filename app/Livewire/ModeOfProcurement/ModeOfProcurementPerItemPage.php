@@ -169,6 +169,7 @@ class ModeOfProcurementPerItemPage extends Component
         $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
 
         return [
+            'id' => $mopItem?->id,
             'prItemID' => $prItem->prItemID, // Crucial for grouping
             'item_no' => $prItem->item_no,
             'description' => $prItem->description,
@@ -217,6 +218,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         // 2. Create new item (Copy details from reference, but clear MOP data)
         $newItem = [
+            'id' => null,  // ✅ ADD THIS - Must be null for new items
             'prItemID' => $referenceItem['prItemID'], // KEEP THIS LINK
             'item_no' => $referenceItem['item_no'],
             'description' => $referenceItem['description'],
@@ -226,9 +228,32 @@ class ModeOfProcurementPerItemPage extends Component
             // Reset MOP fields
             'mode_of_procurement_id' => null,
             'mode_order' => ($referenceItem['mode_order'] ?? 0) + 1, // Increment order
-            'bidding_number' => null,
+
+            // ✅ ADD ALL THESE FIELDS AS NULL
+            // --- SHARED ---
             'ib_number' => null,
-            // ... set all other schedule fields to null ...
+            'pre_proc_conference' => null,
+            'ads_post_ib' => null,
+            'pre_bid_conf' => null,
+            'eligibility_check' => null,
+            'sub_open_bids' => null,
+
+            // --- BID ---
+            'bidding_number' => null,
+            'bidding_date' => null,
+            'bidding_result' => null,
+
+            // --- NTF ---
+            'ntf_no' => null,
+            'ntf_bidding_date' => null,
+            'ntf_bidding_result' => null,
+
+            // --- SVP ---
+            'rfq_no' => null,
+            'canvass_date' => null,
+            'date_returned_of_canvass' => null,
+            'abstract_of_canvass_date' => null,
+            'resolution_number' => null,
         ];
 
         // 3. Insert ABOVE the clicked index
@@ -323,8 +348,8 @@ class ModeOfProcurementPerItemPage extends Component
                 if ($hasSvpData) {
                     $rules["form.items.{$index}.rfq_no"] = 'required|string';
                     $rules["form.items.{$index}.canvass_date"] = 'required|date';
-                    $rules["form.items.{$index}.date_returned_of_canvass"] = 'required|date:form.items.' . $index . '.canvass_date';
-                    $rules["form.items.{$index}.abstract_of_canvass_date"] = 'required|date:form.items.' . $index . '.date_returned_of_canvass';
+                    $rules["form.items.{$index}.date_returned_of_canvass"] = 'required|date';  // ✅ FIXED
+                    $rules["form.items.{$index}.abstract_of_canvass_date"] = 'required|date';  // ✅ FIXED
                     $rules["form.items.{$index}.resolution_number"] = 'required|string';
 
                     $attributes["form.items.{$index}.rfq_no"] = "RFQ No.";
@@ -367,18 +392,31 @@ class ModeOfProcurementPerItemPage extends Component
                     continue;
 
                 $modeId = $item['mode_of_procurement_id'];
-                $isUiNew = isset($item['uid']) && (str_starts_with($item['uid'], 'new_') || str_starts_with($item['uid'], 'temp_'));
+                $isUiNew = isset($item['uid']) && str_starts_with($item['uid'], 'new_');
 
                 if ($isUiNew) {
                     $generatedUid = "MOP-{$modeId}-1";
+                    $matchCriteria = [
+                        'procID' => $this->procID,
+                        'prItemID' => $item['prItemID'],
+                        'mode_order' => 1
+                    ];
                 } else {
                     $generatedUid = $item['uid'];
+                    $matchCriteria = ['uid' => $item['uid']];
                 }
 
                 $savedParentModel = MopItem::updateOrCreate(
-                    ['procID' => $this->procID, 'prItemID' => $item['prItemID']],
-                    ['uid' => $generatedUid, 'mode_of_procurement_id' => $modeId, 'mode_order' => 1]
+                    $matchCriteria,
+                    [
+                        'uid' => $generatedUid,
+                        'mode_of_procurement_id' => $modeId,
+                        'mode_order' => 1,
+                        'procID' => $this->procID,
+                        'prItemID' => $item['prItemID']
+                    ]
                 );
+
                 $processedIds[] = $savedParentModel->id;
 
                 if ($savedParentModel->wasRecentlyCreated) {
@@ -397,9 +435,6 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            $deletedCount = MopItem::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
-            if ($deletedCount > 0)
-                $isDeleted = true;
         });
 
         if ($isMopAdded) {

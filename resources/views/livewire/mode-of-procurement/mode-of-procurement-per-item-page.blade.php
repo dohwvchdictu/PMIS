@@ -140,8 +140,6 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
 
-                                <!-- REPLACE THIS SECTION IN YOUR CODE -->
-
                                 @forelse ($form['items'] ?? [] as $itemIndex => $item)
                                     @php
                                         $modeId = $item['mode_of_procurement_id'] ?? null;
@@ -150,54 +148,55 @@
                                         $prevPrID = $form['items'][$itemIndex - 1]['prItemID'] ?? null;
                                         $isHead = $itemIndex === 0 || $currentPrID !== $prevPrID;
                                         $isHistoryRow = !$isHead;
+                                        $historyTargetUid = $rowUid;
+                                        if ($isHistoryRow) {
+                                            $headItem = collect($form['items'])->firstWhere('prItemID', $currentPrID);
+                                            $historyTargetUid = $headItem['uid'] ?? null; // This is the UID set by the Head row
+                                        }
+                                        $isSavedRecord = isset($item['id']) && is_numeric($item['id']);
 
-                                        // FIXED: Only show history rows if this specific history is NOT expanded
-                                        $nextPrID = $form['items'][$itemIndex + 1]['prItemID'] ?? null;
-                                        $hasHistory = $nextPrID === $currentPrID;
-                                        $headRowUid = null;
+                                        $headItem = $isHead
+                                            ? $item
+                                            : collect($form['items'])->firstWhere('prItemID', $currentPrID);
+                                        $headRowUid = $headItem['uid'] ?? null;
 
-                                        // Find the head row's UID for this history group
-if ($isHistoryRow) {
-    for ($i = $itemIndex - 1; $i >= 0; $i--) {
-        if (($form['items'][$i]['prItemID'] ?? null) === $currentPrID) {
-            $headRowUid = $form['items'][$i]['uid'] ?? 'temp_' . $i;
-            break;
-        }
-    }
-}
+                                        $nextItemPrID = $form['items'][$itemIndex + 1]['prItemID'] ?? null;
+                                        $hasHistory = $isHead && $nextItemPrID === $currentPrID;
 
-// Hide history rows if their head row's history is expanded
-                                        $shouldHideHistoryRow =
-                                            $isHistoryRow && $this->showHistory && $this->historyForUid === $headRowUid;
-                                        $isVisible = !$shouldHideHistoryRow && ($isHead || $this->showHistory);
-
-                                        $disableInputs = $isHistoryRow;
                                         $hasSchedule =
                                             !empty($item['bidding_number']) ||
                                             !empty($item['ntf_no']) ||
                                             !empty($item['rfq_no']);
-                                        $disableSelect = $isHistoryRow || $hasSchedule;
-                                        $showFields = isset($item['prItemID']);
+
+                                        $showFields = !empty($modeId) && $isSavedRecord;
+                                        $disableInputs = $isHistoryRow || ($isHead && $modeId && !$isSavedRecord);
+
+                                        $disableSelect =
+                                            $isHistoryRow ||
+                                            $hasSchedule ||
+                                            ($isHead && $isSavedRecord) || // Lock saved heads
+                                            ($isHead && $modeId && !$isSavedRecord);
+
+                                        $isVisible =
+                                            $isHead ||
+                                            ($isHistoryRow &&
+                                                $this->showHistory &&
+                                                $this->historyForUid === $historyTargetUid);
                                     @endphp
 
                                     <tr wire:key="row-{{ $rowUid }}"
                                         class="{{ $isVisible ? '' : 'hidden' }} hover:bg-emerald-50 dark:hover:bg-neutral-800">
-                                        <!-- Rest of your row content stays the same -->
 
                                         <td class="px-2 py-2 align-middle">
                                             <div class="flex items-center justify-center gap-1">
                                                 @if ($isHead)
-                                                    @php
-                                                        $nextPrID = $form['items'][$itemIndex + 1]['prItemID'] ?? null;
-                                                        $hasHistory = $nextPrID === $currentPrID;
-                                                    @endphp
-
                                                     @if ($hasHistory)
                                                         <button type="button"
                                                             wire:click="toggleHistory('{{ $rowUid }}')"
                                                             class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
-                                                            title="{{ $showHistory && $historyForUid === $rowUid ? 'Hide History' : 'Show History' }}">
-                                                            @if ($showHistory && $historyForUid === $rowUid)
+                                                            title="{{ $this->showHistory && $this->historyForUid === $rowUid ? 'Hide History' : 'Show History' }}">
+                                                            @if ($this->showHistory && $this->historyForUid === $rowUid)
+                                                                {{-- Down Arrow (Hide) --}}
                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
@@ -206,6 +205,7 @@ if ($isHistoryRow) {
                                                                         d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                                                 </svg>
                                                             @else
+                                                                {{-- Right Arrow (Show) --}}
                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
@@ -266,8 +266,198 @@ if ($isHistoryRow) {
                                             </select>
                                         </td>
 
-                                        {{-- Continue with all your other columns (Bidding #, IB No., etc.) --}}
-                                        {{-- Keep all the same conditional column logic --}}
+                                        @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="bid-num-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.bidding_number')
+            ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="ib-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ib_number"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.ib_number')
+            ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="IB-2025-002" @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="pre-proc-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ads-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="pre-bid-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="elig-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="sub-open-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.sub_open_bids"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="bid-date-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @elseif ($showFields && $modeId == 4)
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ntf-date-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_date"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
+                                            <td class="px-2 py-2">
+                                                <select wire:key="res-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                                    <option value="">Select...</option>
+                                                    <option value="SUCCESSFUL">SUCCESSFUL</option>
+                                                    <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
+                                                </select>
+                                            </td>
+                                        @elseif ($showFields && $modeId == 4)
+                                            <td class="px-2 py-2">
+                                                <select wire:key="ntf-res-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_result"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                                    <option value="">Select...</option>
+                                                    <option value="SUCCESSFUL">SUCCESSFUL</option>
+                                                    <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
+                                                </select>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && $modeId == 4)
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="ntf-no-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_no"
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="NTF-2025-001" @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && in_array($modeId, [4, 5]))
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="rfq-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white
+                {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="RFQ-2025-001" @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && in_array($modeId, [4, 5]))
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="can-date-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.canvass_date"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.canvass_date')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && in_array($modeId, [4, 5]))
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ret-can-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.date_returned_of_canvass"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.date_returned_of_canvass')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && in_array($modeId, [4, 5]))
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="abs-can-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.abstract_of_canvass_date"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.abstract_of_canvass_date')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        @if ($showFields && $modeId == 5)
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="res-num-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.resolution_number"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+            {{ $errors->has('form.items.' . $itemIndex . '.resolution_number')
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
                                     </tr>
 
                                     @if ($isHead && $showHistory && $historyForUid === $rowUid)

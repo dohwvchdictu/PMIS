@@ -212,11 +212,9 @@
                                                         $hasResult =
                                                             !empty($item['bidding_result']) ||
                                                             !empty($item['ntf_bidding_result']);
-                                                        $isPublicBidding = $modeId == 1;
                                                         $canAddRebid =
-                                                            ($hasResult || $isPublicBidding) && !$this->isPostAvailable;
+                                                            ($hasResult || $modeId == 1) && !$this->isPostAvailable;
                                                     @endphp
-
                                                     @if ($canAddRebid)
                                                         <button wire:click.prevent="addItem"
                                                             class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
@@ -264,11 +262,13 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
-                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+                                                    maxlength="2"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
         {{ $errors->has('form.items.' . $itemIndex . '.bidding_number')
             ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
             : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
+
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -520,95 +520,97 @@
                                                         <tbody
                                                             class="divide-y divide-gray-200 dark:divide-neutral-800">
                                                             @forelse (array_reverse($form['items'] ?? [], true) as $historyIndex => $historyItem)
-                                                                @php
-                                                                    if ($loop->first) {
-                                                                        continue;
-                                                                    }
-                                                                    $historyUid =
-                                                                        $historyItem['uid'] ?? 'temp_' . $historyIndex;
-                                                                    $historyModeId =
-                                                                        $historyItem['mode_of_procurement_id'] ?? null;
-                                                                @endphp
+                                                                @if (!$loop->first)
+                                                                    @php
+                                                                        $historyModeId =
+                                                                            $historyItem['mode_of_procurement_id'] ??
+                                                                            null;
+                                                                    @endphp
 
-                                                                <tr
-                                                                    class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                    <td class="px-2 py-2 align-middle">
-                                                                        <span
-                                                                            class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
-                                                                            title="History Record">
-                                                                            <svg class="w-4 h-4" fill="none"
-                                                                                stroke="currentColor"
-                                                                                viewBox="0 0 24 24" stroke-width="2">
-                                                                                <path stroke-linecap="round"
-                                                                                    stroke-linejoin="round"
-                                                                                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                                                            </svg>
-                                                                        </span>
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        @php
-                                                                            $mode = $modeOfProcurements->firstWhere(
-                                                                                'id',
-                                                                                $historyModeId,
-                                                                            );
-                                                                        @endphp
-                                                                        {{ $mode?->modeofprocurements ?? 'N/A' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['bidding_number'] ?? '-' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['ib_number'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['pre_proc_conference'] ?? '-' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['ads_post_ib'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['pre_bid_conf'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['eligibility_check'] ?? '-' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['sub_open_bids'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['bidding_date'] ?? ($historyItem['ntf_bidding_date'] ?? '-') }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['bidding_result'] ?? ($historyItem['ntf_bidding_result'] ?? '-') }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['ntf_no'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['rfq_no'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['canvass_date'] ?? '-' }}</td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['date_returned_of_canvass'] ?? '-' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
-                                                                    </td>
-                                                                    <td
-                                                                        class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                        {{ $historyItem['resolution_number'] ?? '-' }}
-                                                                    </td>
-                                                                </tr>
+                                                                    <tr
+                                                                        class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
+                                                                        <td class="px-2 py-2 align-middle">
+                                                                            <span
+                                                                                class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
+                                                                                title="History Record">
+                                                                                <svg class="w-4 h-4" fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24"
+                                                                                    stroke-width="2">
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                                                </svg>
+                                                                            </span>
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            @php
+                                                                                $mode = (
+                                                                                    $modeOfProcurements ?? collect()
+                                                                                )->firstWhere('id', $historyModeId);
+                                                                            @endphp
+                                                                            {{ $mode?->modeofprocurements ?? 'N/A' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['bidding_number'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['ib_number'] ?? '-' }}</td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['pre_proc_conference'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['ads_post_ib'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['pre_bid_conf'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['eligibility_check'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['sub_open_bids'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['bidding_date'] ?? ($historyItem['ntf_bidding_date'] ?? '-') }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['bidding_result'] ?? ($historyItem['ntf_bidding_result'] ?? '-') }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['ntf_no'] ?? '-' }}</td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['rfq_no'] ?? '-' }}</td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['canvass_date'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['date_returned_of_canvass'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
+                                                                            {{ $historyItem['resolution_number'] ?? '-' }}
+                                                                        </td>
+                                                                    </tr>
+                                                                @endif
                                                             @empty
                                                             @endforelse
                                                         </tbody>
