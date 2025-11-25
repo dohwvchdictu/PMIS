@@ -400,7 +400,6 @@ class ModeOfProcurementPerLotPage extends Component
         $isDeleted = false;
 
         DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated, &$isDeleted) {
-            $processedIds = [];
 
             foreach ($this->form['items'] as $index => $item) {
                 if (empty($item['mode_of_procurement_id']))
@@ -425,9 +424,13 @@ class ModeOfProcurementPerLotPage extends Component
 
                 $savedParentModel = MopLot::updateOrCreate(
                     $matchCriteria,
-                    ['uid' => $generatedUid, 'mode_of_procurement_id' => $modeId, 'mode_order' => $modeOrder]
+                    [
+                        'uid' => $generatedUid,
+                        'mode_of_procurement_id' => $modeId,
+                        'mode_order' => $modeOrder
+                    ]
                 );
-                $processedIds[] = $savedParentModel->id;
+
 
                 if ($savedParentModel->wasRecentlyCreated) {
                     $isMopAdded = true;
@@ -445,9 +448,6 @@ class ModeOfProcurementPerLotPage extends Component
                 }
             }
 
-            $deletedCount = MopLot::where('procID', $this->procID)->whereNotIn('id', $processedIds)->delete();
-            if ($deletedCount > 0)
-                $isDeleted = true;
         });
 
         if ($isMopAdded) {

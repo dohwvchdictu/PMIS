@@ -149,43 +149,39 @@
                                         $isHead = $itemIndex === 0 || $currentPrID !== $prevPrID;
                                         $isHistoryRow = !$isHead;
                                         $historyTargetUid = $rowUid;
-                                        if ($isHistoryRow) {
-                                            $headItem = collect($form['items'])->firstWhere('prItemID', $currentPrID);
-                                            $historyTargetUid = $headItem['uid'] ?? null; // This is the UID set by the Head row
-                                        }
+
+                                    @endphp
+
+                                    @if ($isHistoryRow)
+                                        @continue
+                                    @endif
+
+                                    @php
+                                        $historyTargetUid = $rowUid;
                                         $isSavedRecord = isset($item['id']) && is_numeric($item['id']);
 
-                                        $headItem = $isHead
-                                            ? $item
-                                            : collect($form['items'])->firstWhere('prItemID', $currentPrID);
-                                        $headRowUid = $headItem['uid'] ?? null;
-
                                         $nextItemPrID = $form['items'][$itemIndex + 1]['prItemID'] ?? null;
-                                        $hasHistory = $isHead && $nextItemPrID === $currentPrID;
+                                        $hasHistory = $nextItemPrID === $currentPrID;
 
                                         $hasSchedule =
                                             !empty($item['bidding_number']) ||
                                             !empty($item['ntf_no']) ||
                                             !empty($item['rfq_no']);
 
+                                        $hasResult =
+                                            !empty($item['bidding_result']) || !empty($item['ntf_bidding_result']);
+                                        $canAddRebid = ($hasResult || $modeId == 1) && !$this->isPostAvailable;
+
                                         $showFields = !empty($modeId) && $isSavedRecord;
-                                        $disableInputs = $isHistoryRow || ($isHead && $modeId && !$isSavedRecord);
+                                        $disableInputs = false;
 
                                         $disableSelect =
-                                            $isHistoryRow ||
-                                            $hasSchedule ||
-                                            ($isHead && $isSavedRecord) || // Lock saved heads
-                                            ($isHead && $modeId && !$isSavedRecord);
+                                            $hasSchedule || ($isSavedRecord && $modeId) || $rowUid === 'MOP-1-1';
 
-                                        $isVisible =
-                                            $isHead ||
-                                            ($isHistoryRow &&
-                                                $this->showHistory &&
-                                                $this->historyForUid === $historyTargetUid);
                                     @endphp
 
                                     <tr wire:key="row-{{ $rowUid }}"
-                                        class="{{ $isVisible ? '' : 'hidden' }} hover:bg-emerald-50 dark:hover:bg-neutral-800">
+                                        class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
 
                                         <td class="px-2 py-2 align-middle">
                                             <div class="flex items-center justify-center gap-1">
@@ -219,14 +215,19 @@
                                                         <div class="w-7 h-7"></div>
                                                     @endif
 
-                                                    <button wire:click.prevent="addItem({{ $itemIndex }})"
-                                                        class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24" stroke-width="2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M12 4.5v15m7.5-7.5h-15" />
-                                                        </svg>
-                                                    </button>
+                                                    @if ($canAddRebid)
+                                                        <button wire:click.prevent="addItem({{ $itemIndex }})"
+                                                            class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                                            title="Add New Row">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 4.5v15m7.5-7.5h-15" />
+                                                            </svg>
+                                                        </button>
+                                                    @else
+                                                        <div class="w-7 h-7"></div>
+                                                    @endif
                                                 @else
                                                     <div class="w-7 h-7 flex items-center justify-center text-gray-300">
                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -270,7 +271,8 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
-                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+                                                    maxlength="2"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
         {{ $errors->has('form.items.' . $itemIndex . '.bidding_number')
             ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
             : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
@@ -579,7 +581,8 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ib_number'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ib_number'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['pre_proc_conference'] ?? '-' }}
@@ -610,10 +613,12 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ntf_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ntf_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['rfq_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['rfq_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['canvass_date'] ?? '-' }}
