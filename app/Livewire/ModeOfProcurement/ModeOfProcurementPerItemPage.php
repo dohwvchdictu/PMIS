@@ -8,6 +8,7 @@ use App\Models\NtfBidSchedule;
 use App\Models\PostProcurement;
 use App\Models\PrSvp;
 use App\Models\Supplier;
+use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use App\Models\Procurement;
@@ -17,80 +18,118 @@ use Illuminate\Support\Facades\DB;
 class ModeOfProcurementPerItemPage extends Component
 {
     public Procurement $procurement;
-    public $form = [];
-    public $modeOfProcurements = [];
-    public $textareaRows = 1;
+    public array $form = [];
+    public Collection $modeOfProcurements;
+    public int $textareaRows = 1;
     public string $procID = '';
     public int $activeTab = 1;
     public bool $showHistory = false;
     public ?string $historyForUid = null;
 
     // Post-Procurement Tab Fields
-    public $resolutionNumber = null;
-    public $bidEvaluationDate = null;
-    public $postQualDate = null;
-    public $noticeOfAward = null;
-    public $recommendingForAward = null;
-    public $awardedAmount = null;
-    public $philgepsReferenceNo = null;
-    public $awardNoticeNumber = null;
-    public $dateOfPostingOfAwardOnPhilGEPS = null;
-    public $supplier_id = null;
-    public $suppliers = [];
+    public array $postItems = [];
+    public ?string $resolutionNumber = null;
+    public ?string $bidEvaluationDate = null;
+    public ?string $postQualDate = null;
+    public ?string $noticeOfAward = null;
+    public ?string $recommendingForAward = null;
+    public ?float $awardedAmount = null;
+    public ?string $philgepsReferenceNo = null;
+    public ?string $awardNoticeNumber = null;
+    public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
+    public ?int $supplier_id = null;
+    public Collection $suppliers;
 
-    public function mount(Procurement $procurement)
+
+    public function mount(Procurement $procurement): void
     {
         $procurement->load('pr_items', 'mopItems.modeOfProcurement', 'mopItems.item');
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
 
-        $this->form = $procurement->toArray();
-        $this->form['approved_ppmp'] = (bool) ($this->form['approved_ppmp'] ?? false);
-        $this->form['app_updated'] = (bool) ($this->form['app_updated'] ?? false);
-        $this->form['early_procurement'] = (bool) ($this->form['early_procurement'] ?? false);
+        // Initialize form with typed structure
+        $this->form = [
+            'pr_number' => $procurement->pr_number ?? '',
+            'procurement_program_project' => $procurement->procurement_program_project ?? '',
+            'approved_ppmp' => (bool) ($procurement->approved_ppmp ?? false),
+            'app_updated' => (bool) ($procurement->app_updated ?? false),
+            'early_procurement' => (bool) ($procurement->early_procurement ?? false),
+            'items' => [],
+        ];
 
-        // Load post-procurement data if exists
-        $post = PostProcurement::where('ref_id', $this->procID)->first();
-        if ($post) {
-            $this->resolutionNumber = $post->resolution_number;
-            $this->bidEvaluationDate = $post->bid_evaluation_date;
-            $this->postQualDate = $post->post_qual_date;
-            $this->noticeOfAward = $post->notice_of_award;
-            $this->awardedAmount = $post->awarded_amount;
-            $this->philgepsReferenceNo = $post->philgeps_reference_no;
-            $this->awardNoticeNumber = $post->award_notice_no;
-            $this->dateOfPostingOfAwardOnPhilGEPS = $post->date_of_posting_of_award_on_philgeps;
-            $this->supplier_id = $post->supplier_id;
-        }
-
+        // Delegate to helper methods
+        $this->loadPostProcurementData($procurement);
         $this->modeOfProcurements = ModeOfProcurement::orderBy('id', 'asc')->get();
         $this->suppliers = Supplier::all();
-
         $this->loadPerItemData($procurement);
+        $this->loadPostProcurementData($procurement);
+        $this->calculateTextareaRows($procurement->procurement_program_project ?? '');
+    }
+    private function loadPostProcurementData(Procurement $procurement): void
+    {
+        // Initialize postItems array for each eligible item
+        $this->postItems = [];
 
-        // Handle procurement program project textarea
-        if ($procurement) {
-            $this->form['procurement_program_project'] = $procurement->procurement_program_project;
-            $this->procID = $procurement->procID;
+        foreach ($this->form['items'] as $index => $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $prItemID = $item['prItemID'] ?? null;
 
-            $text = trim($procurement->procurement_program_project ?? '');
-            $lineCount = substr_count($text, "\n") + 1;
-            $approxExtraLines = ceil(strlen($text) / 150);
-            $this->textareaRows = max($lineCount, $approxExtraLines, 1);
-        } else {
-            $this->form['procurement_program_project'] = '';
-            $this->procID = null;
-            $this->textareaRows = 1;
+            // Check if item is eligible for post-procurement
+            $isEligible = false;
+
+            if (in_array($modeId, [2, 3, 4])) {
+                $bidResult = $item['bidding_result'] ?? '';
+                $ntfResult = $item['ntf_bidding_result'] ?? '';
+
+                if ($bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL') {
+                    $isEligible = true;
+                }
+            }
+
+            if ($modeId == 5) {
+                if (
+                    !empty($item['rfq_no']) &&
+                    !empty($item['canvass_date']) &&
+                    !empty($item['date_returned_of_canvass']) &&
+                    !empty($item['abstract_of_canvass_date']) &&
+                    !empty($item['resolution_number'])
+                ) {
+                    $isEligible = true;
+                }
+            }
+
+            if ($isEligible && $prItemID) {
+                // Load post-procurement data for this prItemID (stored as ref_id)
+                $post = PostProcurement::where('ref_id', $prItemID)->first();
+
+                $this->postItems[$index] = [
+                    'resolutionNumber' => $post?->resolution_number ?? null,
+                    'bidEvaluationDate' => $post?->bid_evaluation_date ?? null,
+                    'postQualDate' => $post?->post_qual_date ?? null,
+                    'noticeOfAward' => $post?->notice_of_award ?? null,
+                    'recommendingForAward' => $post?->recommending_for_award ?? null,
+                    'awardedAmount' => $post?->awarded_amount ?? null,
+                    'philgepsReferenceNo' => $post?->philgeps_reference_no ?? null,
+                    'awardNoticeNumber' => $post?->award_notice_no ?? null,
+                    'dateOfPostingOfAwardOnPhilGEPS' => $post?->date_of_posting_of_award_on_philgeps ?? null,
+                    'supplier_id' => $post?->supplier_id ?? null,
+                ];
+            }
         }
     }
-
+    private function calculateTextareaRows(string $text): void
+    {
+        $text = trim($text);
+        $lineCount = substr_count($text, "\n") + 1;
+        $approxExtraLines = ceil(strlen($text) / 150);
+        $this->textareaRows = max($lineCount, $approxExtraLines, 1);
+    }
     public function getIsPostAvailableProperty(): bool
     {
         foreach ($this->form['items'] as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            // Check Bidding/NTF for "SUCCESSFUL" result
-            if (in_array($modeId, [1, 2, 3, 4])) {
+            if (in_array($modeId, [2, 3, 4])) {
                 $bidResult = $item['bidding_result'] ?? '';
                 $ntfResult = $item['ntf_bidding_result'] ?? '';
 
@@ -116,95 +155,137 @@ class ModeOfProcurementPerItemPage extends Component
         return false;
     }
 
-    protected function loadPerItemData(Procurement $procurement)
+    protected function loadPerItemData(Procurement $procurement): void
     {
-        // 1. Load MOP Items grouped strictly by PR Item ID
-        // Ensure we sort by mode_order DESC so the newest version is always first
+        // Load MOP Items grouped strictly by PR Item ID
         $mopItemsGrouped = $procurement->mopItems()
             ->with(['item', 'modeOfProcurement'])
             ->orderBy('mode_order', 'desc')
             ->get()
-            ->groupBy('prItemID'); // Make sure this matches your DB column (prItemID or pr_item_id)
+            ->groupBy('prItemID');
 
-        // 2. Get UIDs for schedules
+        // Get UIDs for schedules
         $uids = $procurement->mopItems->pluck('uid')->filter()->toArray();
 
-        // 3. Fetch Schedules
+        // Fetch Schedules
         $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
         $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
 
+        // Build unified schedule map
+        $scheduleMap = $this->buildScheduleMap($bidSchedules, $ntfSchedules, $prSvps);
+
         $this->form['items'] = [];
 
-        // 4. Loop through PR Items (Sorted by ID to keep them consistent)
-        // This ensures Item 1 is processed fully before Item 2 starts
+        // Loop through PR Items
         $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
 
         foreach ($sortedPrItems as $prItem) {
             $prItemID = $prItem->prItemID;
-
-            // Get all MOP history for THIS specific PR Item
             $relatedMops = $mopItemsGrouped->get($prItemID);
 
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
-                    $this->form['items'][] = $this->mapItemToRow($prItem, $mopItem, $bidSchedules, $ntfSchedules, $prSvps);
+                    $uid = $mopItem->uid;
+                    $schedule = $uid ? $scheduleMap->get($uid, []) : [];
+                    $this->form['items'][] = $this->mapItemToRow($prItem, $mopItem, $schedule);
                 }
             } else {
-                $this->form['items'][] = $this->mapItemToRow($prItem, null, $bidSchedules, $ntfSchedules, $prSvps);
+                $this->form['items'][] = $this->mapItemToRow($prItem, null, []);
             }
         }
     }
+    private function buildScheduleMap(
+        Collection $bidSchedules,
+        Collection $ntfSchedules,
+        Collection $prSvps
+    ): Collection {
+        $map = collect();
 
-    // Helper to keep the loop clean
-    private function mapItemToRow($prItem, $mopItem, $bidSchedules, $ntfSchedules, $prSvps)
+        // Merge BidSchedule data
+        foreach ($bidSchedules as $uid => $schedule) {
+            $map[$uid] = [
+                'ib_number' => $schedule->ib_number,
+                'pre_proc_conference' => $schedule->pre_proc_conference,
+                'ads_post_ib' => $schedule->ads_post_ib,
+                'pre_bid_conf' => $schedule->pre_bid_conf,
+                'eligibility_check' => $schedule->eligibility_check,
+                'sub_open_bids' => $schedule->sub_open_bids,
+                'bidding_number' => $schedule->bidding_number,
+                'bidding_date' => $schedule->bidding_date,
+                'bidding_result' => $schedule->bidding_result,
+            ];
+        }
+
+        // Merge NtfBidSchedule data
+        foreach ($ntfSchedules as $uid => $schedule) {
+            $existing = $map->get($uid, []);
+            $map[$uid] = array_merge($existing, [
+                'ib_number' => $schedule->ib_number ?? $existing['ib_number'] ?? null,
+                'pre_proc_conference' => $schedule->pre_proc_conference ?? $existing['pre_proc_conference'] ?? null,
+                'ads_post_ib' => $schedule->ads_post_ib ?? $existing['ads_post_ib'] ?? null,
+                'pre_bid_conf' => $schedule->pre_bid_conf ?? $existing['pre_bid_conf'] ?? null,
+                'eligibility_check' => $schedule->eligibility_check ?? $existing['eligibility_check'] ?? null,
+                'sub_open_bids' => $schedule->sub_open_bids ?? $existing['sub_open_bids'] ?? null,
+                'bidding_number' => $schedule->bidding_number ?? $existing['bidding_number'] ?? null,
+                'ntf_no' => $schedule->ntf_no,
+                'ntf_bidding_date' => $schedule->ntf_bidding_date,
+                'ntf_bidding_result' => $schedule->ntf_bidding_result,
+                'rfq_no' => $schedule->rfq_no,
+                'canvass_date' => $schedule->canvass_date,
+                'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
+                'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
+            ]);
+        }
+
+        // Merge PrSvp data
+        foreach ($prSvps as $uid => $schedule) {
+            $existing = $map->get($uid, []);
+            $map[$uid] = array_merge($existing, [
+                'rfq_no' => $schedule->rfq_no,
+                'canvass_date' => $schedule->canvass_date,
+                'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
+                'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
+                'resolution_number' => $schedule->resolution_number,
+            ]);
+        }
+
+        return $map;
+    }
+    private function mapItemToRow($prItem, $mopItem, array $schedule): array
     {
-        $uid = $mopItem?->uid;
-
-        // Resolvers
-        $bid = $uid ? $bidSchedules->get($uid) : null;
-        $ntf = $uid ? $ntfSchedules->get($uid) : null;
-        $svp = $uid ? $prSvps->get($uid) : null;
-
-        $getVal = fn($key) => $bid?->$key ?? $ntf?->$key ?? $svp?->$key ?? null;
-
         return [
             'id' => $mopItem?->id,
-            'prItemID' => $prItem->prItemID, // Crucial for grouping
+            'prItemID' => $prItem->prItemID,
             'item_no' => $prItem->item_no,
             'description' => $prItem->description,
             'amount' => number_format((float) $prItem->amount, 2, '.', ''),
             'mode_of_procurement_id' => $mopItem?->mode_of_procurement_id,
-            'uid' => $uid ?? 'new_' . uniqid(),
+            'uid' => $mopItem?->uid ?? 'new_' . uniqid(),
             'mode_order' => $mopItem?->mode_order ?? 1,
 
-            // --- SHARED ---
-            'ib_number' => $getVal('ib_number'),
-            'pre_proc_conference' => $getVal('pre_proc_conference'),
-            'ads_post_ib' => $getVal('ads_post_ib'),
-            'pre_bid_conf' => $getVal('pre_bid_conf'),
-            'eligibility_check' => $getVal('eligibility_check'),
-            'sub_open_bids' => $getVal('sub_open_bids'),
-
-            // --- BID ---
-            'bidding_number' => $bid?->bidding_number ?? $ntf?->bidding_number ?? null,
-            'bidding_date' => $bid?->bidding_date ?? $ntf?->bidding_date ?? null,
-            'bidding_result' => $bid?->bidding_result ?? $ntf?->bidding_result ?? null,
-
-            // --- NTF ---
-            'ntf_no' => $ntf?->ntf_no,
-            'ntf_bidding_date' => $ntf?->ntf_bidding_date,
-            'ntf_bidding_result' => $ntf?->ntf_bidding_result,
-
-            // --- SVP ---
-            'rfq_no' => $svp?->rfq_no ?? $ntf?->rfq_no ?? null,
-            'canvass_date' => $svp?->canvass_date ?? $ntf?->canvass_date ?? null,
-            'date_returned_of_canvass' => $svp?->date_returned_of_canvass ?? $ntf?->date_returned_of_canvass ?? null,
-            'abstract_of_canvass_date' => $svp?->abstract_of_canvass_date ?? $ntf?->abstract_of_canvass_date ?? null,
-            'resolution_number' => $svp?->resolution_number ?? null,
+            // All schedule fields from unified map
+            'ib_number' => $schedule['ib_number'] ?? null,
+            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
+            'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
+            'eligibility_check' => $schedule['eligibility_check'] ?? null,
+            'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bidding_number' => $schedule['bidding_number'] ?? null,
+            'bidding_date' => $schedule['bidding_date'] ?? null,
+            'bidding_result' => $schedule['bidding_result'] ?? null,
+            'ntf_no' => $schedule['ntf_no'] ?? null,
+            'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
+            'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
+            'rfq_no' => $schedule['rfq_no'] ?? null,
+            'canvass_date' => $schedule['canvass_date'] ?? null,
+            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
+            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
+            'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
-
     }
+
+
 
     public function addItem($index): void
     {
@@ -477,9 +558,6 @@ class ModeOfProcurementPerItemPage extends Component
 
         $this->mount($this->procurement);
 
-        if ($this->isPostAvailable) {
-            $this->activeTab = 2;
-        }
     }
 
     protected function saveRelatedSchedules(
@@ -613,31 +691,99 @@ class ModeOfProcurementPerItemPage extends Component
 
     public function savePost()
     {
-        $rules = [
-            'resolutionNumber' => 'required|string|max:255',
-            'bidEvaluationDate' => 'nullable|date',
-            'postQualDate' => 'nullable|date',
-            'recommendingForAward' => 'nullable|date',
-            'noticeOfAward' => 'nullable|date',
-            'awardedAmount' => 'nullable|numeric',
-            'philgepsReferenceNo' => 'nullable|string|max:255',
-            'awardNoticeNumber' => 'nullable|string|max:255',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
-            'supplier_id' => 'nullable|integer|exists:suppliers,id',
-        ];
+        // Filter items that meet post-procurement criteria
+        $postAvailableItems = array_filter($this->form['items'] ?? [], function ($item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
 
-        $attributes = [
-            'resolutionNumber' => 'Resolution #',
-            'bidEvaluationDate' => 'Bid Evaluation Date',
-            'postQualDate' => 'Post Qual Date',
-            'recommendingForAward' => 'Recommending For Award',
-            'noticeOfAward' => 'Notice of Award Date',
-            'awardedAmount' => 'Awarded Amount',
-            'philgepsReferenceNo' => 'PhilGEPS Reference #',
-            'awardNoticeNumber' => 'Award Notice #',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'Posting of Award Date',
-            'supplier_id' => 'Supplier',
-        ];
+            if (in_array($modeId, [2, 3, 4])) {
+                $bidResult = $item['bidding_result'] ?? '';
+                $ntfResult = $item['ntf_bidding_result'] ?? '';
+
+                if ($bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL') {
+                    return true;
+                }
+            }
+
+            if ($modeId == 5) {
+                if (
+                    !empty($item['rfq_no']) &&
+                    !empty($item['canvass_date']) &&
+                    !empty($item['date_returned_of_canvass']) &&
+                    !empty($item['abstract_of_canvass_date']) &&
+                    !empty($item['resolution_number'])
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (empty($postAvailableItems)) {
+            LivewireAlert::title('No Items Available')
+                ->info()
+                ->text('No items are eligible for post-procurement entry.')
+                ->toast()->position('top-end')->show();
+            return;
+        }
+
+        // Build validation rules - only validate non-empty items
+        $rules = [];
+        $attributes = [];
+
+        foreach ($this->postItems as $index => $postItem) {
+            $item = $this->form['items'][$index] ?? null;
+
+            if (!$item) {
+                continue;
+            }
+
+            // Check if this item has any data
+            $hasData = !empty($postItem['resolutionNumber']) ||
+                !empty($postItem['bidEvaluationDate']) ||
+                !empty($postItem['postQualDate']) ||
+                !empty($postItem['recommendingForAward']) ||
+                !empty($postItem['noticeOfAward']) ||
+                !empty($postItem['awardedAmount']) ||
+                !empty($postItem['philgepsReferenceNo']) ||
+                !empty($postItem['awardNoticeNumber']) ||
+                !empty($postItem['dateOfPostingOfAwardOnPhilGEPS']) ||
+                !empty($postItem['supplier_id']);
+
+            // Only validate if this item has data
+            if ($hasData) {
+                $rules["postItems.{$index}.resolutionNumber"] = 'required|string|max:255';
+                $rules["postItems.{$index}.bidEvaluationDate"] = 'nullable|date';
+                $rules["postItems.{$index}.postQualDate"] = 'nullable|date';
+                $rules["postItems.{$index}.recommendingForAward"] = 'nullable|date';
+                $rules["postItems.{$index}.noticeOfAward"] = 'nullable|date';
+                $rules["postItems.{$index}.awardedAmount"] = 'nullable|numeric';
+                $rules["postItems.{$index}.philgepsReferenceNo"] = 'nullable|string|max:255';
+                $rules["postItems.{$index}.awardNoticeNumber"] = 'nullable|string|max:255';
+                $rules["postItems.{$index}.dateOfPostingOfAwardOnPhilGEPS"] = 'nullable|date';
+                $rules["postItems.{$index}.supplier_id"] = 'nullable|integer|exists:suppliers,id';
+
+                $attributes["postItems.{$index}.resolutionNumber"] = "Item {$this->form['items'][$index]['item_no']} - Resolution #";
+                $attributes["postItems.{$index}.bidEvaluationDate"] = "Item {$this->form['items'][$index]['item_no']} - Bid Evaluation Date";
+                $attributes["postItems.{$index}.postQualDate"] = "Item {$this->form['items'][$index]['item_no']} - Post Qual Date";
+                $attributes["postItems.{$index}.recommendingForAward"] = "Item {$this->form['items'][$index]['item_no']} - Recommending For Award";
+                $attributes["postItems.{$index}.noticeOfAward"] = "Item {$this->form['items'][$index]['item_no']} - Notice of Award";
+                $attributes["postItems.{$index}.awardedAmount"] = "Item {$this->form['items'][$index]['item_no']} - Awarded Amount";
+                $attributes["postItems.{$index}.philgepsReferenceNo"] = "Item {$this->form['items'][$index]['item_no']} - PhilGEPS Reference #";
+                $attributes["postItems.{$index}.awardNoticeNumber"] = "Item {$this->form['items'][$index]['item_no']} - Award Notice #";
+                $attributes["postItems.{$index}.dateOfPostingOfAwardOnPhilGEPS"] = "Item {$this->form['items'][$index]['item_no']} - Posting of Award Date";
+                $attributes["postItems.{$index}.supplier_id"] = "Item {$this->form['items'][$index]['item_no']} - Supplier";
+            }
+        }
+
+        // If no rules were added, no data to save
+        if (empty($rules)) {
+            LivewireAlert::title('No Changes')
+                ->info()
+                ->text('No post-procurement data to save.')
+                ->toast()->position('top-end')->show();
+            return;
+        }
 
         try {
             $this->validate($rules, [], $attributes);
@@ -657,57 +803,95 @@ class ModeOfProcurementPerItemPage extends Component
         $isUpdated = false;
 
         DB::transaction(function () use (&$isAdded, &$isUpdated) {
-            $data = [
-                'ref_id' => $this->procID,
-                'resolution_number' => $this->resolutionNumber,
-                'bid_evaluation_date' => $this->nullableDate($this->bidEvaluationDate),
-                'post_qual_date' => $this->nullableDate($this->postQualDate),
-                'recommending_for_award' => $this->nullableDate($this->recommendingForAward),
-                'notice_of_award' => $this->nullableDate($this->noticeOfAward),
-                'awarded_amount' => $this->awardedAmount,
-                'philgeps_reference_no' => $this->philgepsReferenceNo,
-                'award_notice_no' => $this->awardNoticeNumber,
-                'date_of_posting_of_award_on_philgeps' => $this->nullableDate($this->dateOfPostingOfAwardOnPhilGEPS),
-                'supplier_id' => $this->supplier_id,
-            ];
+            foreach ($this->postItems as $index => $postItem) {
+                $item = $this->form['items'][$index] ?? null;
 
-            $postModel = PostProcurement::updateOrCreate(
-                ['ref_id' => $this->procID],
-                $data
-            );
+                // Skip if item doesn't exist or doesn't have a mode
+                if (!$item || empty($item['mode_of_procurement_id'])) {
+                    continue;
+                }
 
-            if ($postModel->wasRecentlyCreated) {
-                $isAdded = true;
-            } elseif ($postModel->wasChanged()) {
-                $isUpdated = true;
+                $prItemID = $item['prItemID'] ?? null;
+
+                // Skip if no prItemID
+                if (!$prItemID) {
+                    continue;
+                }
+
+                // Check if post item has any data
+                $hasData = !empty($postItem['resolutionNumber']) ||
+                    !empty($postItem['bidEvaluationDate']) ||
+                    !empty($postItem['postQualDate']) ||
+                    !empty($postItem['recommendingForAward']) ||
+                    !empty($postItem['noticeOfAward']) ||
+                    !empty($postItem['awardedAmount']) ||
+                    !empty($postItem['philgepsReferenceNo']) ||
+                    !empty($postItem['awardNoticeNumber']) ||
+                    !empty($postItem['dateOfPostingOfAwardOnPhilGEPS']) ||
+                    !empty($postItem['supplier_id']);
+
+                if (!$hasData) {
+                    continue;
+                }
+
+                $data = [
+                    'ref_id' => $prItemID,
+                    'resolution_number' => $postItem['resolutionNumber'],
+                    'bid_evaluation_date' => $this->nullableDate($postItem['bidEvaluationDate'] ?? null),
+                    'post_qual_date' => $this->nullableDate($postItem['postQualDate'] ?? null),
+                    'recommending_for_award' => $this->nullableDate($postItem['recommendingForAward'] ?? null),
+                    'notice_of_award' => $this->nullableDate($postItem['noticeOfAward'] ?? null),
+                    'awarded_amount' => $postItem['awardedAmount'] ?? null,
+                    'philgeps_reference_no' => $postItem['philgepsReferenceNo'] ?? null,
+                    'award_notice_no' => $postItem['awardNoticeNumber'] ?? null,
+                    'date_of_posting_of_award_on_philgeps' => $this->nullableDate($postItem['dateOfPostingOfAwardOnPhilGEPS'] ?? null),
+                    'supplier_id' => $postItem['supplier_id'] ?? null,
+                ];
+
+                // Use ref_id as prItemID (unique per item)
+                $postModel = PostProcurement::updateOrCreate(
+                    ['ref_id' => $prItemID],
+                    $data
+                );
+
+                if ($postModel->wasRecentlyCreated) {
+                    $isAdded = true;
+                } elseif ($postModel->wasChanged()) {
+                    $isUpdated = true;
+                }
             }
         });
 
         if ($isAdded) {
-            LivewireAlert::title('Post-Procurement Added!')->success()->text('The procurement award details have been saved.')->toast()->position('top-end')->show();
+            LivewireAlert::title('Post-Procurement Added!')
+                ->success()
+                ->text('The procurement award details have been saved.')
+                ->toast()->position('top-end')->show();
         } elseif ($isUpdated) {
-            LivewireAlert::title('Post-Procurement Updated!')->success()->text('The procurement award details have been updated.')->toast()->position('top-end')->show();
+            LivewireAlert::title('Post-Procurement Updated!')
+                ->success()
+                ->text('The procurement award details have been updated.')
+                ->toast()->position('top-end')->show();
         } else {
-            LivewireAlert::title('No Changes')->info()->text('Post-procurement details remain unchanged.')->toast()->position('top-end')->show();
+            LivewireAlert::title('No Changes')
+                ->info()
+                ->text('Post-procurement details remain unchanged.')
+                ->toast()->position('top-end')->show();
         }
     }
 
-    public function save()
+    public function save(): void
     {
         if ($this->activeTab == 2) {
             $this->savePost();
+            return;
         } else {
             $this->saveTab1();
-        }
-
-        $this->mount($this->procurement);
-
-        if ($this->isPostAvailable && $this->activeTab == 1) {
-            $this->activeTab = 2;
+            $this->mount($this->procurement);
         }
     }
 
-    private function nullableDate($value)
+    private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
     }
