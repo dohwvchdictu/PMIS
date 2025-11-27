@@ -24,7 +24,7 @@ class ModeOfProcurementPerItemPage extends Component
     public string $procID = '';
     public int $activeTab = 1;
     public bool $showHistory = false;
-    public ?string $historyForUid = null;
+    public ?string $historyForPrItemId = null;
 
     // Post-Procurement Tab Fields
     public array $postItems = [];
@@ -164,15 +164,15 @@ class ModeOfProcurementPerItemPage extends Component
             ->get()
             ->groupBy('prItemID');
 
-        // Get UIDs for schedules
-        $uids = $procurement->mopItems->pluck('uid')->filter()->toArray();
+        // Get prItemIDs for schedules
+        $prItemIds = $procurement->pr_items->pluck('prItemID')->filter()->toArray();
 
-        // Fetch Schedules
-        $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
-        $ntfSchedules = NtfBidSchedule::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
-        $prSvps = PrSvp::whereIn('mop_uid', $uids)->get()->keyBy('mop_uid');
+        // Fetch Schedules by ref_id (prItemID)
+        $bidSchedules = BidSchedule::whereIn('ref_id', $prItemIds)->get();
+        $ntfSchedules = NtfBidSchedule::whereIn('ref_id', $prItemIds)->get();
+        $prSvps = PrSvp::whereIn('ref_id', $prItemIds)->get();
 
-        // Build unified schedule map
+        // Build unified schedule map keyed by prItemID and mop_uid
         $scheduleMap = $this->buildScheduleMap($bidSchedules, $ntfSchedules, $prSvps);
 
         $this->form['items'] = [];
@@ -187,7 +187,8 @@ class ModeOfProcurementPerItemPage extends Component
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
                     $uid = $mopItem->uid;
-                    $schedule = $uid ? $scheduleMap->get($uid, []) : [];
+                    // Get schedule for THIS specific mode's uid within this prItemID
+                    $schedule = $uid ? $scheduleMap->get($prItemID, [])->get($uid, []) : [];
                     $this->form['items'][] = $this->mapItemToRow($prItem, $mopItem, $schedule);
                 }
             } else {
@@ -202,9 +203,14 @@ class ModeOfProcurementPerItemPage extends Component
     ): Collection {
         $map = collect();
 
-        // Merge BidSchedule data
-        foreach ($bidSchedules as $uid => $schedule) {
-            $map[$uid] = [
+        // Initialize map for all schedules
+        foreach ($bidSchedules as $schedule) {
+            $refId = $schedule->ref_id;
+            if (!$map->has($refId)) {
+                $map[$refId] = collect();
+            }
+            $map[$refId][$schedule->mop_uid] = [
+                'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
@@ -218,9 +224,16 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Merge NtfBidSchedule data
-        foreach ($ntfSchedules as $uid => $schedule) {
-            $existing = $map->get($uid, []);
-            $map[$uid] = array_merge($existing, [
+        foreach ($ntfSchedules as $schedule) {
+            $refId = $schedule->ref_id;
+            if (!$map->has($refId)) {
+                $map[$refId] = collect();
+            }
+            $mopUid = $schedule->mop_uid;
+            $existing = $map[$refId]->get($mopUid, []);
+
+            $map[$refId][$mopUid] = array_merge($existing, [
+                'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number ?? $existing['ib_number'] ?? null,
                 'pre_proc_conference' => $schedule->pre_proc_conference ?? $existing['pre_proc_conference'] ?? null,
                 'ads_post_ib' => $schedule->ads_post_ib ?? $existing['ads_post_ib'] ?? null,
@@ -239,9 +252,16 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Merge PrSvp data
-        foreach ($prSvps as $uid => $schedule) {
-            $existing = $map->get($uid, []);
-            $map[$uid] = array_merge($existing, [
+        foreach ($prSvps as $schedule) {
+            $refId = $schedule->ref_id;
+            if (!$map->has($refId)) {
+                $map[$refId] = collect();
+            }
+            $mopUid = $schedule->mop_uid;
+            $existing = $map[$refId]->get($mopUid, []);
+
+            $map[$refId][$mopUid] = array_merge($existing, [
+                'mop_uid' => $schedule->mop_uid,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
                 'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
@@ -284,8 +304,6 @@ class ModeOfProcurementPerItemPage extends Component
             'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
     }
-
-
 
     public function addItem($index): void
     {
@@ -343,16 +361,16 @@ class ModeOfProcurementPerItemPage extends Component
         // 4. Ensure history is hidden so the UI doesn't look cluttered
         $this->showHistory = false;
     }
-    public function toggleHistory(string $uid)
+    public function toggleHistory(string $prItemID)
     {
-        if ($this->historyForUid === $uid && $this->showHistory) {
+        if ($this->historyForPrItemId === $prItemID && $this->showHistory) {
             // If clicking the same item, just toggle off
             $this->showHistory = false;
-            $this->historyForUid = null;
+            $this->historyForPrItemId = null;
         } else {
-            // Show history for this specific item
+            // Show history for this specific PR Item (all its modes)
             $this->showHistory = true;
-            $this->historyForUid = $uid;
+            $this->historyForPrItemId = $prItemID;
         }
     }
     public function removeItem($uid): void
@@ -382,21 +400,16 @@ class ModeOfProcurementPerItemPage extends Component
             if (!$modeId)
                 continue;
 
-            // Check if Mode is NOT 1, 4, or 5 (Regular Bidding Mode)
+            // Check if Mode is NOT 1, or 5 (Regular Bidding Mode)
             if (!in_array($modeId, [1, 5])) {
 
-                // 1. Check if ANY field relevant to Regular Bidding is filled out
-                // We use OR (||) here. If they typed an IB Number OR a Bidding Number,
-                // we assume they intended to add a schedule.
                 $hasRegularBiddingData = !empty($item['ib_number']) ||
                     !empty($item['bidding_number']);
 
-                // 2. If partial data exists, enforce the rules
                 if ($hasRegularBiddingData) {
                     $rules["form.items.{$index}.ib_number"] = 'required|string|max:255';
                     $rules["form.items.{$index}.bidding_number"] = 'required|string|max:255';
 
-                    // Add friendly names for the "Toast" or Error Message
                     $attributes["form.items.{$index}.ib_number"] = "IB No.";
                     $attributes["form.items.{$index}.bidding_number"] = "Bidding No.";
                 }
@@ -606,8 +619,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         };
 
-        // BID SCHEDULE (Standard Modes: 2, 3, 6, 7, 8, etc. - NOT 1, 4, 5)
-        if (!in_array($modeId, [1, 4, 5])) {
+        if (!in_array($modeId, [1, 5])) {
             // Only save if both required fields are present
             if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
                 $identity = $getIdentity(BidSchedule::class);
@@ -636,7 +648,7 @@ class ModeOfProcurementPerItemPage extends Component
         // NTF BID SCHEDULE (Mode 4 - Negotiated Procurement)
         if ($modeId == 4) {
             // Only save if NTF number is present
-            if (!empty($itemData['ntf_no'])) {
+            if (!empty($itemData['bidding_number']) && !empty($itemData['ib_number'])) {
                 $identity = $getIdentity(NtfBidSchedule::class);
 
                 $model = NtfBidSchedule::updateOrCreate(
@@ -667,8 +679,13 @@ class ModeOfProcurementPerItemPage extends Component
 
         // PR SVP (Mode 5 - Shopping/Small Value Procurement)
         if ($modeId == 5) {
-            // Only save if RFQ number is present
-            if (!empty($itemData['rfq_no'])) {
+            if (
+                !empty($itemData['rfq_no']) &&
+                !empty($itemData['canvass_date']) &&
+                !empty($itemData['date_returned_of_canvass']) &&
+                !empty($itemData['abstract_of_canvass_date']) &&
+                !empty($itemData['resolution_number'])
+            ) {
                 $identity = $getIdentity(PrSvp::class);
 
                 $model = PrSvp::updateOrCreate(

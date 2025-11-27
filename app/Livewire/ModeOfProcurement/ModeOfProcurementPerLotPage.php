@@ -335,9 +335,6 @@ class ModeOfProcurementPerLotPage extends Component
             // Check if Mode is NOT 1, 4, or 5 (Regular Bidding Mode)
             if (!in_array($modeId, [1, 5])) {
 
-                // 1. Check if ANY field relevant to Regular Bidding is filled out
-                // We use OR (||) here. If they typed an IB Number OR a Bidding Number,
-                // we assume they intended to add a schedule.
                 $hasRegularBiddingData = !empty($item['ib_number']) ||
                     !empty($item['bidding_number']);
 
@@ -514,7 +511,7 @@ class ModeOfProcurementPerLotPage extends Component
         };
 
         // BID SCHEDULE (Standard Modes)
-        if (!in_array($modeId, [1, 4, 5])) {
+        if (!in_array($modeId, [1, 5])) {
             if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
                 $identity = $getIdentity(BidSchedule::class);
 
@@ -572,7 +569,13 @@ class ModeOfProcurementPerLotPage extends Component
 
         // PR SVP (Mode 5)
         if ($modeId == 5) {
-            if (!empty($itemData['rfq_no'])) {
+            if (
+                !empty($itemData['rfq_no']) &&
+                !empty($itemData['canvass_date']) &&
+                !empty($itemData['date_returned_of_canvass']) &&
+                !empty($itemData['abstract_of_canvass_date']) &&
+                !empty($itemData['resolution_number'])
+            ) {
                 $identity = $getIdentity(PrSvp::class);
 
                 $model = PrSvp::updateOrCreate(
