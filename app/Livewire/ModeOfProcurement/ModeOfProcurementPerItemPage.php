@@ -187,8 +187,12 @@ class ModeOfProcurementPerItemPage extends Component
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
                     $uid = $mopItem->uid;
-                    // Get schedule for THIS specific mode's uid within this prItemID
-                    $schedule = $uid ? $scheduleMap->get($prItemID, [])->get($uid, []) : [];
+                    // FIX: Check if prItemID exists in scheduleMap and get the schedule
+                    $schedule = [];
+                    if ($uid && $scheduleMap->has($prItemID)) {
+                        $prItemSchedules = $scheduleMap->get($prItemID);
+                        $schedule = $prItemSchedules->get($uid, []);
+                    }
                     $this->form['items'][] = $this->mapItemToRow($prItem, $mopItem, $schedule);
                 }
             } else {
