@@ -11,7 +11,8 @@ class PrSvp extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'mop_group_ref',
+        'ref_id',
+        'mop_uid',
         'uid',
         'resolution_number',
         'rfq_no',
@@ -23,11 +24,8 @@ class PrSvp extends Model
     // ✅ Relationships
     public function procurement()
     {
-        return $this->belongsTo(Procurement::class, 'procID', 'procID');
+        return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
 
-    public function mop()
-    {
-        return $this->belongsTo(Mop::class, 'uid', 'uid');
-    }
+
 }

@@ -87,8 +87,7 @@ class HomePage extends Component
 
     public function getSummaryStatsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -148,8 +147,7 @@ class HomePage extends Component
 
     public function getProcurementByBacTypeProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -169,8 +167,7 @@ class HomePage extends Component
 
     public function getDivisionCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -195,8 +192,7 @@ class HomePage extends Component
     public function getRecentProcurementsProperty()
     {
         $baseQuery = Procurement::query()
-            ->with(['division', 'prLotPrstages.procurementStage'])
-            ->where('created_at', '>=', $this->getDateFilter());
+            ->with(['division', 'prLotPrstages.procurementStage']);
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -229,7 +225,6 @@ class HomePage extends Component
         }
 
         $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter())
             ->where('procurements.divisions_id', $this->selectedDivisionId);
 
         return $baseQuery
@@ -253,8 +248,7 @@ class HomePage extends Component
 
     public function getCategoryCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -307,7 +301,6 @@ class HomePage extends Component
     public function getCategoryTypeCountsProperty()
     {
         $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter())
             ->whereNotNull('procurements.category_type_id'); // Add this line
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
@@ -329,7 +322,6 @@ class HomePage extends Component
     public function getVenueSpecificCountsProperty()
     {
         $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter())
             ->whereNotNull('procurements.venue_specific_id');
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
@@ -351,7 +343,6 @@ class HomePage extends Component
     public function getVenueProvinceHucCountsProperty()
     {
         $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter())
             ->whereNotNull('procurements.venue_province_huc_id');
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
@@ -372,8 +363,7 @@ class HomePage extends Component
 
     public function getProcurementStagePerLotCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -391,8 +381,7 @@ class HomePage extends Component
 
     public function getProcurementStagePerItemCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -410,8 +399,7 @@ class HomePage extends Component
 
     public function getRemarksPerLotCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 
@@ -429,8 +417,7 @@ class HomePage extends Component
 
     public function getRemarksPerItemCountsProperty()
     {
-        $baseQuery = Procurement::query()
-            ->where('procurements.created_at', '>=', $this->getDateFilter());
+        $baseQuery = Procurement::query();
 
         $baseQuery = $this->getDivisionFilter($baseQuery);
 

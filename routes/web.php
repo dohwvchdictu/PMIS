@@ -7,6 +7,9 @@ use App\Livewire\BacApprovedPr\BacApprovedPrViewPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementCreatePage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementEditPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementIndexPage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementUpdatePage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementPerItemPage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementPerLotPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
@@ -80,23 +83,31 @@ Route::middleware(['jwt'])->group(function () {
     });
 
     // Mode of procurement routes with Shield permissions
-    // Route::prefix('mode-of-procurement')->name('mode-of-procurement.')->group(function () {
-    //     Route::get('/', ModeOfProcurementIndexPage::class)
-    //         ->name('index')
-    //         ->middleware('can:view_any_mode::of::procurement');
+    Route::prefix('mode-of-procurement')->name('mode-of-procurement.')->group(function () {
+        Route::get('/', ModeOfProcurementIndexPage::class)
+            ->name('index')
+            ->middleware('can:view_any_mode::of::procurement');
 
-    //     Route::get('/create', ModeOfProcurementCreatePage::class)
-    //         ->name('create')
-    //         ->middleware('can:create_mode::of::procurement');
+        Route::get('/create', ModeOfProcurementCreatePage::class)
+            ->name('create')
+            ->middleware('can:create_mode::of::procurement');
 
-    //     Route::get('/{ref_number}/update', ModeOfProcurementCreatePage::class)
-    //         ->name('update')
-    //         ->middleware('can:update_mode::of::procurement');
+        Route::get('/{procurement}/update', ModeOfProcurementUpdatePage::class)
+            ->name('update')
+            ->middleware('can:update_mode::of::procurement');
 
-    //     Route::get('/{ref_number}/edit', ModeOfProcurementEditPage::class)
-    //         ->name('edit')
-    //         ->middleware('can:edit_mode::of::procurement');
-    // });
+        Route::get('/{procurement}/update-per-item', ModeOfProcurementPerItemPage::class)
+            ->name('update-per-item')
+            ->middleware('can:update_mode::of::procurement');
+
+        Route::get('/{procurement}/update-per-lot', ModeOfProcurementPerLotPage::class)
+            ->name('update-per-lot')
+            ->middleware('can:update_mode::of::procurement');
+
+        Route::get('/{procurement}/edit', ModeOfProcurementEditPage::class)
+            ->name('edit')
+            ->middleware('can:edit_mode::of::procurement');
+    });
 
     // Logout
     Route::post('/logout', function () {

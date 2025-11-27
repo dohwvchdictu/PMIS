@@ -13,7 +13,7 @@ class ClusterCommittee extends Model
 
     public function procurements()
     {
-        return $this->hasMany(Procurement::class);
+        return $this->hasMany(Procurement::class, 'cluster_committees_id');
     }
 
 }

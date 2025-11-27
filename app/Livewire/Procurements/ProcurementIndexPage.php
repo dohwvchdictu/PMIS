@@ -6,6 +6,10 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Procurement;
+use App\Models\Division;
+use App\Models\ClusterCommittee;
+use App\Models\EndUser;
+use App\Models\FundSource;
 
 class ProcurementIndexPage extends Component
 {
@@ -13,16 +17,26 @@ class ProcurementIndexPage extends Component
 
     // Pagination
     public $perPage = 10;
-    public $itemsPerPage = 10; // Add this for items pagination
+    public $itemsPerPage = 10;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'perPage' => ['except' => 10],
+        'divisionFilter' => ['except' => ''],
+        'clusterCommitteeFilter' => ['except' => ''],
+        'endUserFilter' => ['except' => ''],
+        'fundSourceFilter' => ['except' => ''],
     ];
     protected $paginationTheme = 'tailwind';
 
     // Search
     public $search = '';
+
+    // Filters
+    public $divisionFilter = '';
+    public $clusterCommitteeFilter = '';
+    public $endUserFilter = '';
+    public $fundSourceFilter = '';
 
     // Modal
     public $showModal = false;
@@ -47,6 +61,12 @@ class ProcurementIndexPage extends Component
 
     public function mount()
     {
+        // Load filter options
+        $this->divisions = Division::orderBy('abbreviation')->get();
+        $this->clusterCommittees = ClusterCommittee::orderBy('clustercommittee')->get();
+        $this->endUsers = EndUser::orderBy('endusers')->get();
+        $this->fundSources = FundSource::orderBy('fundsources')->get();
+
         if (session('alert')) {
             $alert = session('alert');
 
@@ -64,7 +84,6 @@ class ProcurementIndexPage extends Component
      */
     public function toggle($property, $value)
     {
-        // Convert to string for consistent comparison
         $value = (string) $value;
 
         if ($this->$property === $value) {
@@ -105,7 +124,7 @@ class ProcurementIndexPage extends Component
     }
 
     /**
-     * Reset pagination when search term changes.
+     * Reset pagination when search or filters change.
      */
     public function updatingSearch()
     {
@@ -114,6 +133,39 @@ class ProcurementIndexPage extends Component
 
     public function updatingPerPage()
     {
+        $this->resetPage();
+    }
+
+    public function updatingDivisionFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingClusterCommitteeFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEndUserFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFundSourceFilter()
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * Clear all filters
+     */
+    public function clearFilters()
+    {
+        $this->search = '';
+        $this->divisionFilter = '';
+        $this->clusterCommitteeFilter = '';
+        $this->endUserFilter = '';
+        $this->fundSourceFilter = '';
         $this->resetPage();
     }
 
@@ -128,19 +180,43 @@ class ProcurementIndexPage extends Component
         $query = Procurement::query()
             ->with([
                 'currentPrStage.procurementStage',
+                'division',
+                'clusterCommittee',
+                'endUser',
+                'fundSource',
                 'pr_items' => function ($query) {
-                    // Don't paginate here, we'll handle it in the blade
                     $query->with('prstage.stage');
                 }
             ])
             ->latest();
 
+        // Apply search filter
         if (!empty($this->search)) {
             $searchTerm = '%' . $this->search . '%';
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('pr_number', 'like', $searchTerm)
                     ->orWhere('procurement_program_project', 'like', $searchTerm);
             });
+        }
+
+        // Apply division filter
+        if (!empty($this->divisionFilter)) {
+            $query->where('divisions_id', $this->divisionFilter);
+        }
+
+        // Apply cluster/committee filter
+        if (!empty($this->clusterCommitteeFilter)) {
+            $query->where('cluster_committees_id', $this->clusterCommitteeFilter);
+        }
+
+        // Apply end user filter
+        if (!empty($this->endUserFilter)) {
+            $query->where('end_users_id', $this->endUserFilter);
+        }
+
+        // Apply fund source filter
+        if (!empty($this->fundSourceFilter)) {
+            $query->where('fund_source_id', $this->fundSourceFilter);
         }
 
         $procurements = $query->paginate($this->perPage);

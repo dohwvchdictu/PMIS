@@ -12,7 +12,12 @@
                 data-hs-stepper-nav-item='{"index": 1, "isCompleted": {{ $activeTab > 1 || $mopGroupId ? 'true' : 'false' }} }'>
                 <button type="button" wire:click="setStep(1)"
                     class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-                    {{ $activeTab == 1 ? 'bg-green-500 text-white border-2 border-emerald-700' : ($activeTab > 1 || $mopGroupId ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-800') }}">
+       hover:scale-105
+       {{ $activeTab == 1
+           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+           : ($activeTab > 1 || $mopGroupId
+               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+               : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
                     1
                 </button>
                 <span class="text-sm font-medium text-black dark:text-white whitespace-nowrap">
@@ -20,7 +25,7 @@
                 </span>
                 <div
                     class="h-px grow transition-colors duration-300
-                    {{ $activeTab > 1 || $mopGroupId ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+            {{ $activeTab > 1 || $mopGroupId ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
                 </div>
             </li>
 
@@ -28,32 +33,47 @@
                 data-hs-stepper-nav-item='{"index": 2, "isCompleted": {{ $activeTab > 2 || $mopGroupId ? 'true' : 'false' }} }'>
                 <button type="button" wire:click="setStep(2)" @if (!$mopGroupId) disabled @endif
                     class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-                    {{ $activeTab == 2 ? 'bg-green-500 text-white border-2 border-emerald-700' : ($activeTab > 2 || $mopGroupId ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
+       hover:scale-105
+       {{ $activeTab == 2
+           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+           : ($activeTab > 2 || $mopGroupId
+               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+               : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
                     2
                 </button>
                 <span
                     class="text-sm font-medium whitespace-nowrap
-                    {{ $activeTab > 2 || $mopGroupId ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
+            {{ $activeTab > 2 || $mopGroupId ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
                     Mode of Procurement
                 </span>
+
+                <!-- changed: include || $mopGroupId so this line behaves like the one after tab 1 -->
                 <div
                     class="h-px grow transition-colors duration-300
-                    {{ $activeTab > 2 ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+            {{ $activeTab > 2 || $mopGroupId ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
                 </div>
             </li>
 
             <li class="flex items-center gap-x-2 group"
-                data-hs-stepper-nav-item='{"index": 3, "isCompleted": {{ $activeTab > 3 ? 'true' : 'false' }} }'>
+                data-hs-stepper-nav-item='{"index": 3, "isCompleted": {{ $activeTab > 3 || $mopGroupId ? 'true' : 'false' }} }'>
                 <button type="button" wire:click="setStep(3)" @if (!$mopGroupId) disabled @endif
                     class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition
-                    {{ $activeTab == 3 ? 'bg-green-500 text-white border-2 border-emerald-700' : ($activeTab > 3 ? 'bg-emerald-600 text-white' : ($mopGroupId ? 'bg-gray-100 text-gray-800' : 'bg-gray-100 text-neutral-400 cursor-not-allowed')) }}">
+       hover:scale-105
+       {{ $activeTab == 3
+           ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+           : ($activeTab > 3 || $mopGroupId
+               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+               : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
                     3
                 </button>
                 <span
                     class="text-sm font-medium whitespace-nowrap
-                    {{ $activeTab > 3 || $mopGroupId ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
+            {{ $activeTab > 3 || $mopGroupId ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
                     Post
                 </span>
+
+                <!-- invisible spacer to keep spacing identical -->
+                <div class="h-px grow invisible"></div>
             </li>
         </ul>
 
@@ -203,7 +223,7 @@
                 });
             @endphp
 
-            @if (!$viewOnlyTab2 && !$hasDefaultMode && !$hasPendingOrEmptySchedule)
+            @if (!$viewOnlyTab2 && $this->showAddModeButton)
                 <div class="flex justify-center p-2">
                     <button type="button" wire:click.prevent="addMode"
                         class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-medium shadow">
@@ -225,55 +245,55 @@
                 @endphp
 
                 @foreach ($displayModes as $modeIndex => $mode)
-                    <div class="flex justify-center mb-2">
+                    <div class="flex justify-center p-2">
                         <div
                             class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 inline-block dark:bg-neutral-700 dark:border-neutral-700">
-                            @php
-                                $isModeLocked =
-                                    !$isEditing &&
-                                    collect($mode['bid_schedules'] ?? [])->contains(
-                                        fn($s) => !empty($s['bidding_result']) || !empty($s['ntf_bidding_result']),
-                                    );
-                            @endphp
 
                             <x-forms.select id="mode_of_procurement_{{ $modeIndex }}" label="Mode of Procurement"
                                 model="form.modes.{{ $modeIndex }}.mode_of_procurement_id" :form="$form"
                                 :options="$modeOfProcurements" optionValue="id" optionLabel="modeofprocurements" :required="false"
-                                :viewOnly="$viewOnlyTab2 || $isModeLocked" wireModifier="defer" />
+                                wireModifier="defer" />
                         </div>
                     </div>
 
                     @if (!in_array($mode['mode_of_procurement_id'], [null, '', 1]))
                         @php
-                            $latestModeOrder = collect($form['modes'])->max('mode_order');
-                            $isLatestMode = ($mode['mode_order'] ?? null) === $latestModeOrder;
-                            $hasMissingBiddingResult = collect($mode['bid_schedules'] ?? [])->contains(
-                                fn($s) => empty($s['bidding_result']) && empty($s['ntf_bidding_result']),
-                            );
-                            $bidCount = count($mode['bid_schedules'] ?? []);
-                            $showAddBid =
-                                !$viewOnlyTab2 &&
-                                $isLatestMode &&
-                                !$hasMissingBiddingResult &&
-                                $bidCount > 0 &&
-                                ($mode['mode_of_procurement_id'] != 2 || $bidCount < 2);
+                            // Get the mode UID - use database UID if available
+                            $modeUid = $mode['uid'] ?? null;
+
+                            // Get bid schedules
                             $bidSchedules = $mode['bid_schedules'] ?? [];
+
+                            // If empty and non-default mode, create display placeholder
                             if (empty($bidSchedules)) {
                                 $bidSchedules = [
                                     [
-                                        'bidding_number' => '',
+                                        'bidding_number' => 1,
                                         'ib_number' => '',
+                                        'pre_proc_conference' => null,
+                                        'ads_post_ib' => null,
+                                        'pre_bid_conf' => null,
+                                        'eligibility_check' => null,
+                                        'sub_open_bids' => null,
+                                        'bidding_date' => null,
                                         'bidding_result' => '',
+                                        'ntf_no' => '',
+                                        'ntf_bidding_date' => null,
                                         'ntf_bidding_result' => '',
+                                        'rfq_no' => '',
+                                        'canvass_date' => null,
+                                        'date_returned_of_canvass' => null,
+                                        'abstract_of_canvass_date' => null,
+                                        'resolution_number' => '',
                                     ],
                                 ];
                             }
                         @endphp
 
-                        @if ($showAddBid)
-                            <div class="flex justify-center mb-2">
+                        @if ($this->canShowAddBidButton($modeUid, $mode['mode_of_procurement_id']))
+                            <div class="flex justify-center p-2">
                                 <button type="button" wire:click.prevent="addBidSchedule({{ $modeIndex }})"
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-medium shadow">
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl font-medium shadow">
                                     + Bid
                                 </button>
                             </div>
@@ -281,65 +301,57 @@
 
                         <div class="space-y-6 mt-2">
                             @foreach ($bidSchedules as $bidIndex => $schedule)
-                                @php
-                                    $isScheduleLocked =
-                                        !$isEditing &&
-                                        (!empty($schedule['bidding_result']) ||
-                                            !empty($schedule['ntf_bidding_result']));
-                                @endphp
-
                                 <div
                                     class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mb-6">
                                     <div class="grid grid-cols-9 gap-4">
                                         @if ($mode['mode_of_procurement_id'] != 5)
-                                            <div class="w-full md:w-16">
+                                            <div class="w-full md:w-20">
                                                 <x-forms.input
                                                     id="bidding_number_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Bidding #"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.bidding_number"
-                                                    :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" textAlign="right"
-                                                    maxlength="2" />
+                                                    :form="$form" textAlign="right" maxlength="2"
+                                                    :required="true" :disabled="true" :readonly="true" />
                                             </div>
 
                                             <x-forms.input id="ib_number_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="IB No."
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.ib_number"
-                                                :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                textAlign="right" />
+                                                :form="$form" :required="true" textAlign="right" />
 
                                             <x-forms.date
                                                 id="pre_proc_conference_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Pre-Proc Conference"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.pre_proc_conference"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date id="ads_post_ib_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Ads/Post IB"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.ads_post_ib"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date id="pre_bid_conf_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Pre-Bid Conference"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.pre_bid_conf"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date
                                                 id="eligibility_check_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Eligibility Check"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.eligibility_check"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date id="sub_open_bids_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Sub/Open of Bids"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.sub_open_bids"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
                                         @endif
 
                                         @if (!in_array($mode['mode_of_procurement_id'], [4, 5]))
                                             <x-forms.date id="bidding_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Bidding Date"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.bidding_date"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.select
                                                 id="bidding_result_{{ $modeIndex }}_{{ $bidIndex }}"
@@ -348,7 +360,7 @@
                                                     'UNSUCCESSFUL' => 'UNSUCCESSFUL',
                                                 ]"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.bidding_result"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" wireModifier="defer" />
+                                                :form="$form" wireModifier="defer" />
                                         @endif
 
                                         @if ($mode['mode_of_procurement_id'] == 4)
@@ -356,7 +368,7 @@
                                                 id="ntf_bidding_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="NTF Bidding Date"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.ntf_bidding_date"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.select
                                                 id="ntf_bidding_result_{{ $modeIndex }}_{{ $bidIndex }}"
@@ -365,36 +377,36 @@
                                                     'UNSUCCESSFUL' => 'UNSUCCESSFUL',
                                                 ]"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.ntf_bidding_result"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" wireModifier="defer" />
+                                                :form="$form" wireModifier="defer" />
 
                                             <div class="col-span-2"></div>
 
                                             <x-forms.input id="ntf_no_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="NTF No."
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.ntf_no"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" textAlign="right" />
+                                                :form="$form" textAlign="right" />
 
                                             <x-forms.input id="rfq_no_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="RFQ No."
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.rfq_no"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" textAlign="right" />
+                                                :form="$form" textAlign="right" />
 
                                             <x-forms.date id="canvass_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Canvass Date"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.canvass_date"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date
                                                 id="date_returned_of_canvass_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Returned of Canvass"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.date_returned_of_canvass"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
 
                                             <x-forms.date
                                                 id="abstract_of_canvass_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                 label="Abstract of Canvass"
                                                 model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.abstract_of_canvass_date"
-                                                :form="$form" :viewOnly="$viewOnlyTab2 || $isScheduleLocked" />
+                                                :form="$form" />
                                         @endif
 
                                         @if ($mode['mode_of_procurement_id'] == 5)
@@ -403,35 +415,30 @@
                                                     id="resolution_number_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Resolution Number"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.resolution_number"
-                                                    :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                    textAlign="center" />
+                                                    :form="$form" :required="true" textAlign="center" />
 
                                                 <x-forms.input id="rfq_no_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="RFQ No."
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.rfq_no"
-                                                    :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                    textAlign="center" />
+                                                    :form="$form" :required="true" textAlign="center" />
 
                                                 <x-forms.date
                                                     id="canvass_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Canvass Date"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.canvass_date"
-                                                    :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                    class="text-center" />
+                                                    :form="$form" :required="true" class="text-center" />
 
                                                 <x-forms.date
                                                     id="date_returned_of_canvass_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Returned of Canvass"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.date_returned_of_canvass"
-                                                    :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                    class="text-center" />
+                                                    :form="$form" :required="true" class="text-center" />
 
                                                 <x-forms.date
                                                     id="abstract_of_canvass_date_{{ $modeIndex }}_{{ $bidIndex }}"
                                                     label="Abstract of Canvass"
                                                     model="form.modes.{{ $modeIndex }}.bid_schedules.{{ $bidIndex }}.abstract_of_canvass_date"
-                                                    :form="$form" :required="true" :viewOnly="$viewOnlyTab2 || $isScheduleLocked"
-                                                    class="text-center" />
+                                                    :form="$form" :required="true" class="text-center" />
                                             </div>
                                         @endif
 
@@ -446,11 +453,69 @@
         @endif
 
         @if ($activeTab == 3)
-            <div
-                class="bg-white p-4 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Awarding</h3>
-                <p class="text-gray-600 dark:text-gray-300 mt-2">Your form components for awarding will go here.
-                </p>
+            <div class="flex flex-col items-center gap-6 p-6">
+
+                {{-- Award Information Block --}}
+                <div
+                    class="w-full max-w-7xl bg-white p-6 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+
+                    <div class="grid grid-cols-6 gap-4">
+                        {{-- Resolution Number --}}
+                        <x-forms.input id="resolutionNumber" label="Resolution Number" model="form.resolutionNumber"
+                            :form="$form" :required="false" :viewOnly="$viewOnlyTab3" colspan="col-span-1" />
+
+                        {{-- Bid Evaluation Date --}}
+                        <x-forms.date id="bidEvaluationDate" label="Bid Evaluation Date"
+                            model="form.bidEvaluationDate" :form="$form" :viewOnly="$viewOnlyTab3" :required="false"
+                            colspan="col-span-1" />
+
+                        {{-- Post Qual Date --}}
+                        <x-forms.date id="postQualDate" label="Post Qual Date" model="form.postQualDate"
+                            :form="$form" :viewOnly="$viewOnlyTab3" :required="false" colspan="col-span-1" />
+
+                        {{-- Recommending for Award --}}
+                        <x-forms.date id="recommendingForAward" label="Recommending for Award"
+                            model="form.recommendingForAward" :form="$form" :viewOnly="$viewOnlyTab3" :required="false"
+                            colspan="col-span-1" />
+
+                        {{-- Notice of Award --}}
+                        <x-forms.date id="noticeOfAward" label="Notice of Award" model="form.noticeOfAward"
+                            :form="$form" :viewOnly="$viewOnlyTab3" :required="false" colspan="col-span-1" />
+
+                        {{-- Awarded Amount --}}
+                        <x-forms.currency-input id="awardedAmount" label="Awarded Amount" model="form.awardedAmount"
+                            :form="$form" :required="false" :viewOnly="$viewOnlyTab3" colspan="col-span-1" />
+                    </div>
+                </div>
+
+                {{-- PhilGEPS & Supplier Information Block --}}
+                <div
+                    class="w-full max-w-7xl bg-white p-6 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+
+                    <div class="grid grid-cols-6 gap-4">
+                        {{-- PhilGEPS Reference No --}}
+                        <x-forms.input id="philgepsReferenceNo" label="PhilGEPS Reference #"
+                            model="form.philgepsReferenceNo" :form="$form" :required="false" :viewOnly="$viewOnlyTab3"
+                            colspan="col-span-1" />
+
+                        {{-- Award Notice Number --}}
+                        <x-forms.input id="awardNoticeNumber" label="Award Notice Number"
+                            model="form.awardNoticeNumber" :form="$form" :required="false" :viewOnly="$viewOnlyTab3"
+                            colspan="col-span-1" />
+
+                        {{-- Posting of Award on PhilGEPS --}}
+                        <x-forms.date id="dateOfPostingOfAwardOnPhilGEPS" label="Posting of Award|PhilGEPS"
+                            model="form.dateOfPostingOfAwardOnPhilGEPS" :form="$form" :viewOnly="$viewOnlyTab3"
+                            :required="false" colspan="col-span-1" />
+
+                        {{-- Supplier --}}
+                        <x-forms.select id="supplier_id" label="Supplier" model="form.supplier_id" :form="$form"
+                            :options="$suppliers" optionValue="id" optionLabel="name" :required="false"
+                            :viewOnly="$viewOnlyTab3" colspan="col-span-3" />
+                    </div>
+                </div>
+
+
             </div>
         @endif
     </div>
