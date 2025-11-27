@@ -86,7 +86,7 @@
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
                                         No.</th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
                                         Description</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -271,7 +271,7 @@
                                         </td>
 
                                         {{-- Description --}}
-                                        <td class="px-2 py-2 text-gray-900 dark:text-gray-100"
+                                        <td class="px-2 py-2 text-gray-900 dark:text-gray-100 w-64 truncate"
                                             @disabled($disableInputs)>
                                             {{ $item['description'] }}
                                         </td>
@@ -507,18 +507,24 @@
                                             <td colspan="19" class="px-0 py-0">
                                                 <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
                                                     <table class="w-full text-xs min-w-max">
+                                                        {{-- HISTORY TABLE HEADER - Add empty column for alignment --}}
                                                         <thead
                                                             class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                                             <tr>
+                                                                {{-- Empty column for lock icon (aligns with main table's action buttons) --}}
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                                                 </th>
-                                                                {{-- <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
-                                                                    No.</th>
+
+                                                                {{-- Empty columns for Item No and Description (hidden in history) --}}
                                                                 <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Description</th> --}}
+                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
+                                                                </th>
+                                                                <th
+                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
+                                                                </th>
+
+                                                                {{-- Mode of Procurement (now aligned) --}}
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Mode of Procurement</th>
@@ -589,6 +595,7 @@
                                                                     @php $historyModeId = $historyItem['mode_of_procurement_id'] ?? null; @endphp
                                                                     <tr
                                                                         class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
+                                                                        {{-- Lock Icon Column (aligns with main table's action buttons) --}}
                                                                         <td class="px-1 py-1 align-middle">
                                                                             <span
                                                                                 class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
@@ -603,12 +610,12 @@
                                                                                 </svg>
                                                                             </span>
                                                                         </td>
-                                                                        {{-- <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200 whitespace-nowrap font-medium">
-                                                                            {{ $historyItem['item_no'] }}</td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['description'] }}</td> --}}
+
+                                                                        {{-- Empty columns for Item No and Description (aligns with main table) --}}
+                                                                        <td class="px-2 py-2"></td>
+                                                                        <td class="px-2 py-2"></td>
+
+                                                                        {{-- Mode of Procurement (now properly aligned) --}}
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             @php $mode = $modeOfProcurements->firstWhere('id', $historyModeId); @endphp
