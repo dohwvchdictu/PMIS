@@ -19,8 +19,10 @@ class PRUpdateStatus extends Component
     public Procurement $procurement;
     public $selectedStageId;
     public $remarksId;
+    public $lotNotes;
     public $itemStages = [];
     public $itemRemarks = [];
+    public $itemNotes = [];
     public $stages = [];
     public $divisions = [];
     public $remarks = [];
@@ -63,6 +65,7 @@ class PRUpdateStatus extends Component
 
             if ($this->procurement->currentLotRemark) {
                 $this->remarksId = $this->procurement->currentLotRemark->remarks_id;
+                $this->lotNotes = $this->procurement->currentLotRemark->notes; // Add this line
             }
         }
 
@@ -73,9 +76,16 @@ class PRUpdateStatus extends Component
                 $this->itemStages[$item->prItemID] = $item->prstage->pr_stage_id;
             }
 
-            // Set current remark
-            if ($item->currentItemRemark && $item->currentItemRemark->remarks_id) {
-                $this->itemRemarks[$item->prItemID] = $item->currentItemRemark->remarks_id;
+            // Set current remark and notes
+            if ($item->currentItemRemark) {
+                if ($item->currentItemRemark->remarks_id) {
+                    $this->itemRemarks[$item->prItemID] = $item->currentItemRemark->remarks_id;
+                }
+                // Add this line to load existing notes
+                $this->itemNotes[$item->prItemID] = $item->currentItemRemark->notes ?? '';
+            } else {
+                // Initialize empty notes if no remark exists
+                $this->itemNotes[$item->prItemID] = '';
             }
         }
     }
@@ -87,8 +97,10 @@ class PRUpdateStatus extends Component
             $this->validate([
                 'selectedStageId' => 'required|exists:procurement_stages,id',
                 'remarksId' => 'nullable|exists:remarks,id',
+                'lotNotes' => 'nullable|string|max:5000',
             ], [
                 'selectedStageId.required' => 'Please select a procurement stage.',
+                'lotNotes.max' => 'Notes cannot exceed 5000 characters.',
             ]);
 
             // Update stage for perLot
@@ -98,11 +110,12 @@ class PRUpdateStatus extends Component
                 'stage_history' => now(),
             ]);
 
-            // Create remark history if provided
-            if ($this->remarksId) {
+            // Create remark history if remark is provided OR if notes exist
+            if ($this->remarksId || !empty($this->lotNotes)) {
                 PrLotRemark::create([
                     'procID' => $this->procurement->procID,
-                    'remarks_id' => $this->remarksId,
+                    'remarks_id' => $this->remarksId ?: null, // Explicitly set to null if empty
+                    'notes' => $this->lotNotes,
                     'remark_history' => now(),
                 ]);
             }
@@ -113,7 +126,6 @@ class PRUpdateStatus extends Component
                 'message' => 'Procurement status updated successfully.',
             ]);
 
-            // 3. USE QUERY PARAMS IN REDIRECT
             return redirect()->route('procurements.index', $this->queryParams);
 
         } else {
@@ -140,19 +152,20 @@ class PRUpdateStatus extends Component
                     }
                 }
 
-                // Create item remark history if provided
-                if (!empty($this->itemRemarks[$itemId])) {
+                // Create item remark history if remark is provided OR if notes exist
+                if (!empty($this->itemRemarks[$itemId]) || !empty($this->itemNotes[$itemId])) {
                     PrItemRemark::create([
                         'procID' => $this->procurement->procID,
                         'prItemID' => $itemId,
-                        'remarks_id' => $this->itemRemarks[$itemId],
+                        'remarks_id' => !empty($this->itemRemarks[$itemId]) ? $this->itemRemarks[$itemId] : null,
+                        'notes' => $this->itemNotes[$itemId] ?? null,
                         'remark_history' => now(),
                     ]);
                     $remarksCount++;
                 }
             }
 
-            // Check if any changes were made (stages OR remarks)
+            // Check if any changes were made (stages OR remarks/notes)
             if ($updatedCount > 0 || $remarksCount > 0) {
                 $messages = [];
 
@@ -161,7 +174,7 @@ class PRUpdateStatus extends Component
                 }
 
                 if ($remarksCount > 0) {
-                    $messages[] = $remarksCount . ' remark(s) added';
+                    $messages[] = $remarksCount . ' note(s)/remark(s) added';
                 }
 
                 session()->flash('alert', [
@@ -170,12 +183,11 @@ class PRUpdateStatus extends Component
                     'message' => implode(' and ', $messages) . ' successfully.',
                 ]);
 
-                // 4. USE QUERY PARAMS IN REDIRECT
                 return redirect()->route('procurements.index', $this->queryParams);
             } else {
                 LivewireAlert::info()
                     ->title('No Changes')
-                    ->text('No stage or remark changes were made.')
+                    ->text('No stage, remark, or note changes were made.')
                     ->toast()
                     ->position('top-end')
                     ->show();

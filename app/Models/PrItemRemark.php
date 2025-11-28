@@ -15,6 +15,7 @@ class PrItemRemark extends Model
         'procID',
         'prItemID',
         'remarks_id',
+        'notes',
         'remark_history',
     ];
 

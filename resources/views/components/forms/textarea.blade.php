@@ -12,6 +12,7 @@
     'rows' => 4,
     'readonly' => false,
     'disabled' => false,
+    'autoResize' => false, // New prop for auto-resize feature
 ])
 
 @php
@@ -44,7 +45,16 @@
                 @error($model) border-red-500 focus:ring-red-500 focus:border-red-500
                 @else border-gray-300  focus:ring-indigo-500 focus:border-indigo-500 @enderror"
             {{ $maxlength ? "maxlength=$maxlength" : '' }} {{ $placeholder ? "placeholder=$placeholder" : '' }}
-            {{ $required ? 'required' : '' }} {{ $readonly ? 'readonly' : '' }} {{ $disabled ? 'disabled' : '' }}></textarea>
+            {{ $required ? 'required' : '' }} {{ $readonly ? 'readonly' : '' }} {{ $disabled ? 'disabled' : '' }}
+            style="resize: none; overflow: hidden;"
+            @if ($autoResize) x-data="{
+                    autoResize() {
+                        $el.style.height = 'auto';
+                        $el.style.height = $el.scrollHeight + 'px';
+                    }
+                }"
+                x-init="autoResize()"
+                @input="autoResize()" @endif></textarea>
 
         @error($model)
             <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
