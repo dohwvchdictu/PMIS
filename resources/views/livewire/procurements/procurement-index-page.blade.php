@@ -2,12 +2,13 @@
     class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col">
 
     <div
-        class="sticky top-0 z-20 bg-white px-6 py-4 grid gap-3 border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 w-full">
+        class="sticky top-0 z-20 bg-white px-6 py-4 border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 w-full">
 
         <div class="flex items-center gap-x-2 flex-wrap">
+            <!-- Search Input -->
             <div class="relative">
                 <input type="text" wire:model.live="search" placeholder="Search Procurements..."
-                    class="px-4 py-2 border border-gray-300 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700" />
+                    class="px-4 py-2 border border-gray-300 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700" />
                 <svg class="absolute right-3 top-2.5 text-gray-500 dark:text-white" width="20" height="20"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
@@ -29,52 +30,116 @@
             @endcan
 
             <!-- Division Filter -->
-            <select wire:model.live="divisionFilter"
-                class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
-                <option value="">Division</option>
-                @foreach ($divisions as $division)
-                    <option value="{{ $division->id }}">{{ $division->abbreviation }}</option>
-                @endforeach
-            </select>
+            <div class="relative group">
+                <select wire:model.live="divisionFilter"
+                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $divisionFilter ? 'bg-blue-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
+                    <option value="">Division</option>
+                    @foreach ($divisions as $division)
+                        <option value="{{ $division->id }}">{{ $division->abbreviation }}</option>
+                    @endforeach
+                </select>
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
+                    @if ($divisionFilter)
+                        <button wire:click="$set('divisionFilter', '')" type="button"
+                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                            onclick="event.stopPropagation();">
+                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    @endif
+                    <svg class="w-4 h-4 {{ $divisionFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
 
             <!-- Cluster/Committee Filter -->
-            <select wire:model.live="clusterCommitteeFilter"
-                class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
-                <option value="">Cluster</option>
-                @foreach ($clusterCommittees as $cluster)
-                    <option value="{{ $cluster->id }}">{{ $cluster->clustercommittee }}</option>
-                @endforeach
-            </select>
+            <div class="relative group">
+                <select wire:model.live="clusterCommitteeFilter"
+                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $clusterCommitteeFilter ? 'bg-blue-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
+                    <option value="">Cluster</option>
+                    @foreach ($clusterCommittees as $cluster)
+                        <option value="{{ $cluster->id }}">{{ $cluster->clustercommittee }}</option>
+                    @endforeach
+                </select>
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
+                    @if ($clusterCommitteeFilter)
+                        <button wire:click="$set('clusterCommitteeFilter', '')" type="button"
+                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                            onclick="event.stopPropagation();">
+                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    @endif
+                    <svg class="w-4 h-4 {{ $clusterCommitteeFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
 
-            <!-- PMO/End User Filter -->
-            <select wire:model.live="endUserFilter"
-                class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
-                <option value="">End User</option>
-                @foreach ($endUsers as $endUser)
-                    <option value="{{ $endUser->id }}">{{ $endUser->endusers }}</option>
-                @endforeach
-            </select>
+            <!-- End User Filter -->
+            <div class="relative group">
+                <select wire:model.live="endUserFilter"
+                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $endUserFilter ? 'bg-emerald-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
+                    <option value="">End User</option>
+                    @foreach ($endUsers as $endUser)
+                        <option value="{{ $endUser->id }}">{{ $endUser->endusers }}</option>
+                    @endforeach
+                </select>
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
+                    @if ($endUserFilter)
+                        <button wire:click="$set('endUserFilter', '')" type="button"
+                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                            onclick="event.stopPropagation();">
+                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    @endif
+                    <svg class="w-4 h-4 {{ $endUserFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
 
             <!-- Source of Fund Filter -->
-            <select wire:model.live="fundSourceFilter"
-                class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
-                <option value="">Fund</option>
-                @foreach ($fundSources as $fundSource)
-                    <option value="{{ $fundSource->id }}">{{ $fundSource->fundsources }}</option>
-                @endforeach
-            </select>
-
-            <!-- Clear Filters Button -->
-            @if ($search || $divisionFilter || $clusterCommitteeFilter || $endUserFilter || $fundSourceFilter)
-                <button wire:click="clearFilters" type="button" title="Clear all filters"
-                    class="px-3 py-2 inline-flex items-center gap-x-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
+            <div class="relative group">
+                <select wire:model.live="fundSourceFilter"
+                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $fundSourceFilter ? 'bg-emerald-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
+                    <option value="">Fund</option>
+                    @foreach ($fundSources as $fundSource)
+                        <option value="{{ $fundSource->id }}">{{ $fundSource->fundsources }}</option>
+                    @endforeach
+                </select>
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
+                    @if ($fundSourceFilter)
+                        <button wire:click="$set('fundSourceFilter', '')" type="button"
+                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                            onclick="event.stopPropagation();">
+                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    @endif
+                    <svg class="w-4 h-4 {{ $fundSourceFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
-                    Clear
-                </button>
-            @endif
+                </div>
+            </div>
 
         </div>
     </div>
