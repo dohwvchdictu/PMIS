@@ -15,7 +15,7 @@
                 </svg>
             </div>
             @can('create_b::a::c::approved::p::r')
-                <a href="{{ route('bac-approved-pr.create') }}" wire:navigate
+                <a href="{{ route('bac-approved-pr.create', request()->query()) }}" wire:navigate
                     class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
                     <svg class="shrink-0 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -91,7 +91,13 @@
                                             @endcan
                                             @can('edit_b::a::c::approved::p::r')
                                                 <li>
-                                                    <a href="{{ route('bac-approved-pr.edit', $pr->procID) }}"
+                                                    {{-- CHANGE THIS HREF --}}
+                                                    <a href="{{ route('bac-approved-pr.edit', [
+                                                        'bacapprovedpr' => $pr->procID,
+                                                        'search' => $search,
+                                                        'perPage' => $perPage,
+                                                        'page' => $approvedPrs->currentPage(),
+                                                    ]) }}"
                                                         @click="open = false"
                                                         class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
                                                         <x-heroicon-o-pencil class="w-4 h-4 text-amber-600" /> Edit

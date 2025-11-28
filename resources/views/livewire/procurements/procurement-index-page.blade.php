@@ -2,7 +2,7 @@
     class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col">
 
     <div
-        class="sticky top-0 z-20 bg-white px-6 py-4 border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 w-full">
+        class="sticky top-0 z-20 bg-white px-6 py-4 grid gap-3 md:flex md:justify-between md:items-center border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 w-full">
 
         <div class="flex items-center gap-x-2 flex-wrap">
             <!-- Search Input -->
@@ -17,131 +17,38 @@
                 </svg>
             </div>
 
-            @can('create_procurement')
-                <a href="{{ route('procurements.create') }}"
-                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
-                    <svg class="shrink-0 size-4" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                    </svg>
-                    Procurement
-                </a>
-            @endcan
 
-            <!-- Division Filter -->
-            <div class="relative group">
-                <select wire:model.live="divisionFilter"
-                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $divisionFilter ? 'bg-blue-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
-                    <option value="">Division</option>
-                    @foreach ($divisions as $division)
-                        <option value="{{ $division->id }}">{{ $division->abbreviation }}</option>
-                    @endforeach
-                </select>
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
-                    @if ($divisionFilter)
-                        <button wire:click="$set('divisionFilter', '')" type="button"
-                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                            onclick="event.stopPropagation();">
-                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    @endif
-                    <svg class="w-4 h-4 {{ $divisionFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+            <div class="relative group w-40">
+                <x-forms.searchable-select wire:model.live="divisionFilter" :options="$divisions" labelKey="abbreviation"
+                    valueKey="id" placeholder="Division" />
             </div>
 
-            <!-- Cluster/Committee Filter -->
-            <div class="relative group">
-                <select wire:model.live="clusterCommitteeFilter"
-                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $clusterCommitteeFilter ? 'bg-blue-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
-                    <option value="">Cluster</option>
-                    @foreach ($clusterCommittees as $cluster)
-                        <option value="{{ $cluster->id }}">{{ $cluster->clustercommittee }}</option>
-                    @endforeach
-                </select>
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
-                    @if ($clusterCommitteeFilter)
-                        <button wire:click="$set('clusterCommitteeFilter', '')" type="button"
-                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                            onclick="event.stopPropagation();">
-                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    @endif
-                    <svg class="w-4 h-4 {{ $clusterCommitteeFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+            <div class="relative group w-60">
+                <x-forms.searchable-select wire:model.live="clusterCommitteeFilter" :options="$clusterCommittees"
+                    labelKey="clustercommittee" valueKey="id" placeholder="Cluster" />
             </div>
 
-            <!-- End User Filter -->
-            <div class="relative group">
-                <select wire:model.live="endUserFilter"
-                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $endUserFilter ? 'bg-emerald-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
-                    <option value="">End User</option>
-                    @foreach ($endUsers as $endUser)
-                        <option value="{{ $endUser->id }}">{{ $endUser->endusers }}</option>
-                    @endforeach
-                </select>
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
-                    @if ($endUserFilter)
-                        <button wire:click="$set('endUserFilter', '')" type="button"
-                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                            onclick="event.stopPropagation();">
-                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    @endif
-                    <svg class="w-4 h-4 {{ $endUserFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+            <div class="relative group w-80">
+                <x-forms.searchable-select wire:model.live="endUserFilter" :options="$endUsers" labelKey="endusers"
+                    valueKey="id" placeholder="End User" />
             </div>
 
-            <!-- Source of Fund Filter -->
-            <div class="relative group">
-                <select wire:model.live="fundSourceFilter"
-                    class="pl-3 pr-12 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 appearance-none cursor-pointer hover:border-emerald-400 hover:shadow-sm dark:hover:border-emerald-500 transition-all duration-200 {{ $fundSourceFilter ? 'bg-emerald-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-white dark:bg-neutral-800' }}">
-                    <option value="">Fund</option>
-                    @foreach ($fundSources as $fundSource)
-                        <option value="{{ $fundSource->id }}">{{ $fundSource->fundsources }}</option>
-                    @endforeach
-                </select>
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 pointer-events-none">
-                    @if ($fundSourceFilter)
-                        <button wire:click="$set('fundSourceFilter', '')" type="button"
-                            class="pointer-events-auto p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                            onclick="event.stopPropagation();">
-                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    @endif
-                    <svg class="w-4 h-4 {{ $fundSourceFilter ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+            <div class="relative group w-48">
+                <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources" labelKey="fundsources"
+                    valueKey="id" placeholder="Fund Source" />
             </div>
-
         </div>
+        @can('create_procurement')
+            <a href="{{ route('procurements.create') }}"
+                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
+                <svg class="shrink-0 size-4" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                </svg>
+                Procurement
+            </a>
+        @endcan
     </div>
 
     <div class="overflow-auto flex-1">
@@ -263,7 +170,20 @@
                                                 @endcan
                                                 @can('edit_procurement')
                                                     <li>
-                                                        <a href="{{ route('procurements.edit', $procurement->procID) }}"
+                                                        <a href="{{ route(
+                                                            'procurements.edit',
+                                                            array_merge(
+                                                                ['procurement' => $procurement->procID],
+                                                                [
+                                                                    'page' => $procurements->currentPage(),
+                                                                    'search' => $search,
+                                                                    'divisionFilter' => $divisionFilter,
+                                                                    'clusterCommitteeFilter' => $clusterCommitteeFilter,
+                                                                    'endUserFilter' => $endUserFilter,
+                                                                    'fundSourceFilter' => $fundSourceFilter,
+                                                                ],
+                                                            ),
+                                                        ) }}"
                                                             @click="open = false"
                                                             class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
                                                             <x-heroicon-o-pencil class="w-4 h-4 text-amber-600" /> Edit
@@ -272,11 +192,25 @@
                                                 @endcan
                                                 @can('update_procurement')
                                                     <li>
-                                                        <a href="{{ route('procurements.update_status', $procurement->procID) }}"
+                                                        {{-- Pass all filter properties here --}}
+                                                        <a href="{{ route(
+                                                            'procurements.update_status',
+                                                            array_merge(
+                                                                ['procurement' => $procurement->procID],
+                                                                [
+                                                                    'page' => $procurements->currentPage(),
+                                                                    'search' => $search,
+                                                                    'divisionFilter' => $divisionFilter,
+                                                                    'clusterCommitteeFilter' => $clusterCommitteeFilter,
+                                                                    'endUserFilter' => $endUserFilter,
+                                                                    'fundSourceFilter' => $fundSourceFilter,
+                                                                ],
+                                                            ),
+                                                        ) }}"
                                                             @click="open = false"
                                                             class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-400">
-                                                            <x-heroicon-o-pencil class="w-4 h-4 text-amber-400" /> Update
-                                                            Status
+                                                            <x-heroicon-o-pencil class="w-4 h-4 text-amber-400" />
+                                                            Update Status
                                                         </a>
                                                     </li>
                                                 @endcan

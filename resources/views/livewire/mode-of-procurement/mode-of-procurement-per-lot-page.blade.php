@@ -765,18 +765,17 @@
 
     <div
         class="fixed bottom-5 right-0 left-0 lg:ml-[13.75rem] flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-49">
-        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-x-2">
-
-            <a href="{{ route('mode-of-procurement.index') }}"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-700">
+        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-3">
+            <button wire:click="cancel"
+                class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">
                 Cancel
-            </a>
-
-            <button wire:click="save" wire:loading.attr="disabled"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
-                <div wire:loading wire:target="save"
-                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white">
-                </div>
+            </button>
+            <button wire:click="save"
+                class="flex items-center gap-2 px-2 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 Save
             </button>
         </div>

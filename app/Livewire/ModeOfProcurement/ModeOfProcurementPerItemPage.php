@@ -68,8 +68,11 @@ class ModeOfProcurementPerItemPage extends Component
         'abstract_of_canvass_date' => null,
         'resolution_number' => null,
     ];
+    public $queryParams = [];
     public function mount(Procurement $procurement): void
     {
+        $this->queryParams = request()->query();
+
         $procurement->load('pr_items', 'mopItems.modeOfProcurement', 'mopItems.item');
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
@@ -1034,6 +1037,10 @@ class ModeOfProcurementPerItemPage extends Component
             ->success()
             ->text('Changes applied. Click SAVE to store in database.')
             ->toast()->position('top-end')->show();
+    }
+    public function cancel()
+    {
+        return redirect()->route('mode-of-procurement.index', $this->queryParams);
     }
     public function render()
     {

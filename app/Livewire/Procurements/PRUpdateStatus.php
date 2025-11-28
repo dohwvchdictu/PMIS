@@ -27,8 +27,13 @@ class PRUpdateStatus extends Component
     public $showTable = true;
     public $form = [];
 
+    // 1. ADD THIS PROPERTY to store page, search, filters, etc.
+    public $queryParams = [];
+
     public function mount(Procurement $procurement)
     {
+        $this->queryParams = request()->query();
+
         $this->procurement = $procurement->load([
             'pr_items.prstage.stage',
             'pr_items.currentItemRemark.remark',
@@ -108,7 +113,8 @@ class PRUpdateStatus extends Component
                 'message' => 'Procurement status updated successfully.',
             ]);
 
-            return redirect()->route('procurements.index');
+            // 3. USE QUERY PARAMS IN REDIRECT
+            return redirect()->route('procurements.index', $this->queryParams);
 
         } else {
             // Update for perItem - process all items
@@ -164,7 +170,8 @@ class PRUpdateStatus extends Component
                     'message' => implode(' and ', $messages) . ' successfully.',
                 ]);
 
-                return redirect()->route('procurements.index');
+                // 4. USE QUERY PARAMS IN REDIRECT
+                return redirect()->route('procurements.index', $this->queryParams);
             } else {
                 LivewireAlert::info()
                     ->title('No Changes')
@@ -178,7 +185,7 @@ class PRUpdateStatus extends Component
 
     public function cancel()
     {
-        return redirect()->route('procurements.index');
+        return redirect()->route('procurements.index', $this->queryParams);
     }
 
     public function render()
