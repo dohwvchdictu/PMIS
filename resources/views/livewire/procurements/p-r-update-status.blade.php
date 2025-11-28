@@ -15,7 +15,7 @@
             <!-- Procurement Program / Project -->
             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                 model="form.procurement_program_project" :form="$form" :required="true" :maxlength="1000"
-                :rows="1" colspan="col-span-9" :readonly="true" :disabled="true" />
+                :rows="1" colspan="col-span-9" :readonly="true" :disabled="true" :autoResize="true" />
         </div>
 
         <!-- Per Lot / Per Item Toggle + Table -->

@@ -13,7 +13,7 @@
 
             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                 model="form.procurement_program_project" :required="true" :rows="$textareaRows" colspan="col-span-9"
-                :readonly="true" />
+                :readonly="true" :autoResize="true" />
 
             <x-forms.input id="document_url" type="text" label="Approved PR Document URL" model="form.filepath"
                 placeholder="http://example.com/path/to/document.pdf" :required="true" colspan="col-span-5" />

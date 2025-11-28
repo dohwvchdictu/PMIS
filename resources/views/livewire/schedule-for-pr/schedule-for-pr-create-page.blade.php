@@ -16,7 +16,7 @@
                     :required="true" colspan="col-span-1" />
 
                 <x-forms.textarea id="project_name" label="Project Name" model="form.project_name" :form="$form"
-                    :required="true" colspan="col-span-full" :rows="1" />
+                    :required="true" colspan="col-span-full" :rows="1" :autoResize="true" />
 
                 <x-forms.yes-no-toggle id="is_framework" label="Framework" model="form.is_framework" :form="$form"
                     colspan="col-span-2" />

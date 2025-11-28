@@ -68,7 +68,7 @@
                         <div class="col-span-9">
                             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                                 model="form.procurement_program_project" :required="true" :readonly="true"
-                                :rows="$textareaRows" />
+                                :rows="$textareaRows" :autoResize="true" />
                         </div>
                     </div>
                 </div>

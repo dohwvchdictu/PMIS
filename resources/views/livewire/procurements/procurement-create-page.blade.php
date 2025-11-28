@@ -15,7 +15,7 @@
             <!-- Procurement Program / Project -->
             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                 model="form.procurement_program_project" :form="$form" :required="true" :maxlength="1000"
-                :rows="1" colspan="col-span-9" />
+                :rows="1" colspan="col-span-9" :autoResize="true" />
         </div>
 
         <!-- Per Lot / Per Item Toggle + Table -->
@@ -148,12 +148,12 @@
                 <div class="flex-1">
                     <x-forms.textarea id="immediate_date_needed" label="Immediate Date Needed"
                         model="form.immediate_date_needed" :form="$form" :maxlength="500" rows="4"
-                        :required="true" />
+                        :required="true" :autoResize="true" />
                 </div>
                 <!-- Date Needed -->
                 <div class="flex-1">
                     <x-forms.textarea id="date_needed" label="Date Needed" model="form.date_needed"
-                        :form="$form" :required="true" :maxlength="500" rows="4" />
+                        :form="$form" :required="true" :maxlength="500" rows="4" :autoResize="true" />
                 </div>
             </div>
 
