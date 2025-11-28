@@ -14,6 +14,7 @@ class PrLotRemark extends Model
     protected $fillable = [
         'procID',
         'remarks_id',
+        'notes',
         'remark_history',
     ];
 

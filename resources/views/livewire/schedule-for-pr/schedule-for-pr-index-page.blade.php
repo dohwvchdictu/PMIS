@@ -16,19 +16,20 @@
                         <circle cx="10" cy="10" r="7" />
                     </svg>
                 </div>
-                @can('create_schedule::for::procurement')
-                    <button type="button" @click="showTypeModal = true"
-                        class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700">
-                        <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path d="M5 12h14" />
-                            <path d="M12 5v14" />
-                        </svg>
-                        Schedule
-                    </button>
-                @endcan
+
             </div>
+            @can('create_schedule::for::procurement')
+                <button type="button" @click="showTypeModal = true"
+                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700">
+                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M5 12h14" />
+                        <path d="M12 5v14" />
+                    </svg>
+                    Schedule
+                </button>
+            @endcan
         </div>
 
         <div class="overflow-x-auto">
@@ -121,7 +122,12 @@
                                                 @endcan
                                                 @can('edit_schedule::for::procurement')
                                                     <li>
-                                                        <a href="{{ route('schedule-for-procurement.edit', $schedule->id) }}"
+                                                        <a href="{{ route('schedule-for-procurement.edit', [
+                                                            'id' => $schedule->id,
+                                                            'search' => $search,
+                                                            'perPage' => $perPage,
+                                                            'page' => $schedules->currentPage(),
+                                                        ]) }}"
                                                             @click="open = false"
                                                             class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
                                                             <x-heroicon-o-pencil class="w-4 h-4 text-amber-600" /> Edit

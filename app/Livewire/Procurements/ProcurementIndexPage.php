@@ -61,11 +61,8 @@ class ProcurementIndexPage extends Component
 
     public function mount()
     {
-        // Load filter options
-        $this->divisions = Division::orderBy('abbreviation')->get();
-        $this->clusterCommittees = ClusterCommittee::orderBy('clustercommittee')->get();
-        $this->endUsers = EndUser::orderBy('endusers')->get();
-        $this->fundSources = FundSource::orderBy('fundsources')->get();
+        // Load initial filter options
+        $this->loadFilterOptions();
 
         if (session('alert')) {
             $alert = session('alert');
@@ -77,6 +74,78 @@ class ProcurementIndexPage extends Component
                     ->position('top-end')
                     ->show();
         }
+    }
+
+    /**
+     * Load filter options based on current filter selections (cascading)
+     */
+    public function loadFilterOptions()
+    {
+        // If no filters applied, show all options
+        if (!$this->divisionFilter && !$this->clusterCommitteeFilter && !$this->endUserFilter && !$this->fundSourceFilter) {
+            $this->divisions = Division::orderBy('abbreviation')->get();
+            $this->clusterCommittees = ClusterCommittee::orderBy('clustercommittee')->get();
+            $this->endUsers = EndUser::orderBy('endusers')->get();
+            $this->fundSources = FundSource::orderBy('fundsources')->get();
+            return;
+        }
+
+        // Build separate queries for each filter option
+        // Division options - based on other filters (exclude divisionFilter)
+        $divisionQuery = Procurement::query();
+        if (!empty($this->clusterCommitteeFilter)) {
+            $divisionQuery->where('cluster_committees_id', $this->clusterCommitteeFilter);
+        }
+        if (!empty($this->endUserFilter)) {
+            $divisionQuery->where('end_users_id', $this->endUserFilter);
+        }
+        if (!empty($this->fundSourceFilter)) {
+            $divisionQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+        $divisionIds = $divisionQuery->distinct()->pluck('divisions_id')->filter();
+        $this->divisions = Division::whereIn('id', $divisionIds)->orderBy('abbreviation')->get();
+
+        // Cluster options - based on other filters (exclude clusterCommitteeFilter)
+        $clusterQuery = Procurement::query();
+        if (!empty($this->divisionFilter)) {
+            $clusterQuery->where('divisions_id', $this->divisionFilter);
+        }
+        if (!empty($this->endUserFilter)) {
+            $clusterQuery->where('end_users_id', $this->endUserFilter);
+        }
+        if (!empty($this->fundSourceFilter)) {
+            $clusterQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+        $clusterIds = $clusterQuery->distinct()->pluck('cluster_committees_id')->filter();
+        $this->clusterCommittees = ClusterCommittee::whereIn('id', $clusterIds)->orderBy('clustercommittee')->get();
+
+        // End User options - based on other filters (exclude endUserFilter)
+        $endUserQuery = Procurement::query();
+        if (!empty($this->divisionFilter)) {
+            $endUserQuery->where('divisions_id', $this->divisionFilter);
+        }
+        if (!empty($this->clusterCommitteeFilter)) {
+            $endUserQuery->where('cluster_committees_id', $this->clusterCommitteeFilter);
+        }
+        if (!empty($this->fundSourceFilter)) {
+            $endUserQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+        $endUserIds = $endUserQuery->distinct()->pluck('end_users_id')->filter();
+        $this->endUsers = EndUser::whereIn('id', $endUserIds)->orderBy('endusers')->get();
+
+        // Fund Source options - based on other filters (exclude fundSourceFilter)
+        $fundQuery = Procurement::query();
+        if (!empty($this->divisionFilter)) {
+            $fundQuery->where('divisions_id', $this->divisionFilter);
+        }
+        if (!empty($this->clusterCommitteeFilter)) {
+            $fundQuery->where('cluster_committees_id', $this->clusterCommitteeFilter);
+        }
+        if (!empty($this->endUserFilter)) {
+            $fundQuery->where('end_users_id', $this->endUserFilter);
+        }
+        $fundIds = $fundQuery->distinct()->pluck('fund_source_id')->filter();
+        $this->fundSources = FundSource::whereIn('id', $fundIds)->orderBy('fundsources')->get();
     }
 
     /**
@@ -136,24 +205,28 @@ class ProcurementIndexPage extends Component
         $this->resetPage();
     }
 
-    public function updatingDivisionFilter()
+    public function updatedDivisionFilter()
     {
         $this->resetPage();
+        $this->loadFilterOptions();
     }
 
-    public function updatingClusterCommitteeFilter()
+    public function updatedClusterCommitteeFilter()
     {
         $this->resetPage();
+        $this->loadFilterOptions();
     }
 
-    public function updatingEndUserFilter()
+    public function updatedEndUserFilter()
     {
         $this->resetPage();
+        $this->loadFilterOptions();
     }
 
-    public function updatingFundSourceFilter()
+    public function updatedFundSourceFilter()
     {
         $this->resetPage();
+        $this->loadFilterOptions();
     }
 
     /**
@@ -167,6 +240,7 @@ class ProcurementIndexPage extends Component
         $this->endUserFilter = '';
         $this->fundSourceFilter = '';
         $this->resetPage();
+        $this->loadFilterOptions(); // Reload all options
     }
 
     public function viewPdf(string $filepath): void

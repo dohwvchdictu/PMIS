@@ -37,9 +37,11 @@ class ScheduleForPrEditPage extends Component
     public string $thirtyPercent = '₱0.00';
 
     protected $listeners = ['procurementsSelected'];
-
+    public $queryParams = [];
     public function mount(int $id)
     {
+        $this->queryParams = request()->query();
+
         $this->schedule = ScheduleForProcurement::findOrFail($id);
 
         // Ensure first item exists before trying to access it
@@ -113,10 +115,6 @@ class ScheduleForPrEditPage extends Component
         }
     }
 
-    /**
-     * Updated calculateTotals to use cleaner flatMap logic.
-     * This updates the public properties for the readonly inputs.
-     */
     public function calculateTotals(): void
     {
         $this->totalAbc = collect($this->selectedProcurements)
@@ -155,11 +153,6 @@ class ScheduleForPrEditPage extends Component
         $this->selectedPRPage = 1; // Reset to first page
     }
 
-    // --- NEW PAGINATION METHODS (from Create Page) ---
-
-    /**
-     * Computed property to create a paginated, FLAT collection for the view.
-     */
     public function getSelectedPRProperty()
     {
         $items = collect($this->selectedProcurements)
@@ -185,9 +178,6 @@ class ScheduleForPrEditPage extends Component
         return $this->paginateCollection($items, $this->perPage, 'selectedPRPage');
     }
 
-    /**
-     * Reusable helper to paginate a collection.
-     */
     private function paginateCollection($collection, $perPage, $pageName)
     {
         $page = $this->$pageName ?? 1;
@@ -200,9 +190,6 @@ class ScheduleForPrEditPage extends Component
         );
     }
 
-    /**
-     * Generic "next page" method.
-     */
     public function nextCustomPage(string $pageName)
     {
         if (property_exists($this, $pageName)) {
@@ -210,9 +197,6 @@ class ScheduleForPrEditPage extends Component
         }
     }
 
-    /**
-     * Generic "previous page" method.
-     */
     public function previousCustomPage(string $pageName)
     {
         if (property_exists($this, $pageName) && $this->$pageName > 1) {
@@ -220,14 +204,6 @@ class ScheduleForPrEditPage extends Component
         }
     }
 
-    // --- END PAGINATION METHODS ---
-
-    // --- NEW UNIFIED REMOVAL METHOD ---
-
-    /**
-     * Removes an item or a lot from the $selectedProcurements array
-     * based on its unique key ('lot_ID' or 'item_ID').
-     */
     public function removeSelectedPR(string $uniqueKey): void
     {
         [$type, $id] = explode('_', $uniqueKey);
@@ -274,16 +250,6 @@ class ScheduleForPrEditPage extends Component
 
     public function save()
     {
-        // --- 1. Validation ---
-        // if (empty($this->selectedProcurements)) {
-        //     LivewireAlert::title('ERROR!')
-        //         ->error()
-        //         ->text('Please select at least one PR Lot or Item.')
-        //         ->toast()
-        //         ->position('top-end')
-        //         ->show();
-        //     return;
-        // }
 
         $this->form['is_framework'] = (bool) ($this->form['is_framework'] ?? false);
 
@@ -372,9 +338,12 @@ class ScheduleForPrEditPage extends Component
             'message' => 'The schedule has been updated successfully.',
         ]);
 
-        return redirect()->route('schedule-for-procurement.index');
+        return redirect()->route('schedule-for-procurement.index', $this->queryParams);
     }
-
+    public function cancel()
+    {
+        return redirect()->route('schedule-for-procurement.index', $this->queryParams);
+    }
     public function render()
     {
         // Get existing IDs for the modal
@@ -387,10 +356,6 @@ class ScheduleForPrEditPage extends Component
             ->filter(fn($proc) => !empty($proc['items']))
             ->flatMap(fn($proc) => collect($proc['items'])->pluck('id')) // pr_item.id
             ->toArray();
-
-        // --- REMOVED old property assignments ---
-        // $this->selectedLots = ...
-        // $this->selectedItemGroups = ...
 
         $ActionTakenOptions = [
             ['id' => 'Done', 'name' => 'Done'],

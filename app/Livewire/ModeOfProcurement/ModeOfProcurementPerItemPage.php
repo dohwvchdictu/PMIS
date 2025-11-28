@@ -9,6 +9,7 @@ use App\Models\PostProcurement;
 use App\Models\PrSvp;
 use App\Models\Supplier;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use App\Models\Procurement;
@@ -39,10 +40,39 @@ class ModeOfProcurementPerItemPage extends Component
     public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
     public ?int $supplier_id = null;
     public Collection $suppliers;
+    public string $search = '';
+    public array $selectedItems = [];
+    public bool $selectAll = false;
+    public bool $showBulkModal = false;
+    public array $bulkForm = [
+        'mode_of_procurement_id' => null,
+        'ib_number' => null,
+        'bidding_number' => null,
+        'bidding_date' => null,
+        'pre_proc_conference' => null,
+        'pre_bid_conf' => null,
+        'eligibility_check' => null,
+        'sub_open_bids' => null,
+        'ads_post_ib' => null,
+        'bidding_result' => null,
 
+        // --- NTF ---
+        'ntf_no' => null,
+        'ntf_bidding_date' => null,
+        'ntf_bidding_result' => null,
 
+        // --- SVP ---
+        'rfq_no' => null,
+        'canvass_date' => null,
+        'date_returned_of_canvass' => null,
+        'abstract_of_canvass_date' => null,
+        'resolution_number' => null,
+    ];
+    public $queryParams = [];
     public function mount(Procurement $procurement): void
     {
+        $this->queryParams = request()->query();
+
         $procurement->load('pr_items', 'mopItems.modeOfProcurement', 'mopItems.item');
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
@@ -175,10 +205,18 @@ class ModeOfProcurementPerItemPage extends Component
         // Build unified schedule map keyed by prItemID and mop_uid
         $scheduleMap = $this->buildScheduleMap($bidSchedules, $ntfSchedules, $prSvps);
 
-        $this->form['items'] = [];
 
         // Loop through PR Items
         $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
+
+        if (!empty($this->search)) {
+            $sortedPrItems = $sortedPrItems->filter(function ($item) {
+                return Str::contains(strtolower($item->description), strtolower($this->search)) ||
+                    Str::contains(strtolower($item->item_no), strtolower($this->search));
+            });
+        }
+
+        $this->form['items'] = [];
 
         foreach ($sortedPrItems as $prItem) {
             $prItemID = $prItem->prItemID;
@@ -199,7 +237,12 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->form['items'][] = $this->mapItemToRow($prItem, null, []);
             }
         }
+
+        $this->selectedItems = [];
+        $this->selectAll = false;
+
     }
+
     private function buildScheduleMap(
         Collection $bidSchedules,
         Collection $ntfSchedules,
@@ -916,7 +959,89 @@ class ModeOfProcurementPerItemPage extends Component
     {
         return empty($value) ? null : $value;
     }
+    public function updatedSearch()
+    {
+        $this->loadPerItemData($this->procurement);
+    }
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            // Select all current visible item indexes
+            $this->selectedItems = array_keys($this->form['items']);
+        } else {
+            $this->selectedItems = [];
+        }
+    }
+    public function openBulkEdit()
+    {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('Selection Required')->info()->text('Please select items to edit.')->toast()->show();
+            return;
+        }
 
+        // Reset form
+        $this->bulkForm = array_fill_keys(array_keys($this->bulkForm), null);
+        $this->showBulkModal = true;
+    }
+
+    public function applyBulkEdit()
+    {
+        $count = 0;
+        $newModeId = $this->bulkForm['mode_of_procurement_id'] ?? null;
+
+        foreach ($this->selectedItems as $index) {
+            if (!isset($this->form['items'][$index]))
+                continue;
+
+            // Reference to the item in the array
+            $item = &$this->form['items'][$index];
+
+            // A. Handle Mode Change
+            if (!empty($newModeId)) {
+                $item['mode_of_procurement_id'] = $newModeId;
+
+                // LOGIC REPLICATION: If this is a fresh unsaved item, it needs a 'new_' UID
+                // to trigger the CREATE logic in saveTab1.
+                $isSaved = isset($item['id']) && is_numeric($item['id']);
+                $hasNewUid = isset($item['uid']) && str_starts_with($item['uid'], 'new_');
+
+                if (!$isSaved && !$hasNewUid) {
+                    // Generate a generic new UID so saveTab1 picks it up
+                    $item['uid'] = 'new_bulk_' . uniqid() . '_' . $index;
+
+                    // Logic from addItem: Default mode_order
+                    $item['mode_order'] = 1;
+                }
+            }
+
+            // B. Handle Schedule Fields
+            // Loop through bulk form keys (excluding mode_id which we handled)
+            foreach ($this->bulkForm as $key => $value) {
+                if ($key === 'mode_of_procurement_id')
+                    continue;
+
+                // Only update if the user typed something in the bulk input
+                if (!empty($value)) {
+                    $item[$key] = $value;
+                }
+            }
+            $count++;
+        }
+
+        $this->showBulkModal = false;
+        $this->selectedItems = [];
+        $this->selectAll = false;
+        $this->bulkForm = array_fill_keys(array_keys($this->bulkForm), null);
+
+        LivewireAlert::title('Applied to ' . $count . ' items')
+            ->success()
+            ->text('Changes applied. Click SAVE to store in database.')
+            ->toast()->position('top-end')->show();
+    }
+    public function cancel()
+    {
+        return redirect()->route('mode-of-procurement.index', $this->queryParams);
+    }
     public function render()
     {
         return view('livewire.mode-of-procurement.mode-of-procurement-per-item-page', [

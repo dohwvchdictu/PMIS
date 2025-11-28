@@ -62,6 +62,10 @@
                                     class="px-3 py-2 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase w-32">
                                     Remarks
                                 </th>
+                                <th
+                                    class="px-3 py-2 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase w-64">
+                                    Notes
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-neutral-700 divide-y divide-gray-200 dark:divide-gray-200">
@@ -110,6 +114,19 @@
                                             @endforeach
                                         </select>
                                     </td>
+                                    <td class="px-3 py-2">
+                                        <textarea wire:model.defer="itemNotes.{{ $item['prItemID'] }}" rows="1" maxlength="5000"
+                                            placeholder="Add notes..."
+                                            class="block w-full px-2 py-1 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg
+                                       focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+                                       dark:bg-neutral-700 dark:text-white resize-none overflow-hidden"
+                                            style="resize: none; overflow: hidden;" x-data="{
+                                                autoResize() {
+                                                    $el.style.height = 'auto';
+                                                    $el.style.height = $el.scrollHeight + 'px';
+                                                }
+                                            }" x-init="autoResize()" @input="autoResize()"></textarea>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -131,7 +148,11 @@
 
                 <x-forms.select id="remarksId" label="Remark" model="remarksId" :form="[]" :options="$remarks"
                     optionValue="id" optionLabel="remarks" :required="false" colspan="col-span-1" :searchable="false" />
-            </div>
+
+                <x-forms.textarea id="lotNotes" label="Notes" model="lotNotes" :form="[]" :required="false"
+                    :maxlength="5000" :rows="1" colspan="col-span-5" placeholder="Notes here"
+                    :autoResize="true" />
+
         @endif
     </div>
 

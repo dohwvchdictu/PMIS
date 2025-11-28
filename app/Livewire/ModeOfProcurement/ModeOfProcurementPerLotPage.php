@@ -40,9 +40,11 @@ class ModeOfProcurementPerLotPage extends Component
     public ?int $supplier_id = null;
 
     public Collection $suppliers;
-
+    public $queryParams = [];
     public function mount(Procurement $procurement): void
     {
+        $this->queryParams = request()->query();
+
         $procurement->load('mopLots.modeOfProcurement');
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
@@ -696,7 +698,10 @@ class ModeOfProcurementPerLotPage extends Component
     {
         return empty($value) ? null : $value;
     }
-
+    public function cancel()
+    {
+        return redirect()->route('mode-of-procurement.index', $this->queryParams);
+    }
     public function render()
     {
         return view('livewire.mode-of-procurement.mode-of-procurement-per-lot-page', [

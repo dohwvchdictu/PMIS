@@ -114,18 +114,18 @@
                     <div class="p-2">
                         <input type="search" x-ref="searchInput" x-model.debounce.300ms="search"
                             placeholder="Search options..."
-                            class="block w-full rounded-md border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white">
+                            class="block w-full rounded-md border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white">
                     </div>
                     <ul class="max-h-40 overflow-y-auto">
                         {{-- A clickable "blank" option --}}
                         <li @click="selectOption(null)"
-                            class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-50 dark:text-white dark:hover:bg-indigo-700">
+                            class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-50 dark:text-white dark:hover:bg-emerald-700">
                             <span class="block truncate italic text-gray-500">Select</span>
                         </li>
                         <template x-for="option in filteredOptions" :key="option.value">
                             <li @click="selectOption(option)"
                                 :class="{ 'bg-indigo-100 dark:bg-indigo-900': value == option.value }"
-                                class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-50 dark:text-white dark:hover:bg-indigo-700">
+                                class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-50 dark:text-white dark:hover:bg-emerald-700">
                                 <span class="block truncate" :class="{ 'font-semibold': value == option.value }"
                                     x-text="option.label"></span>
                             </li>

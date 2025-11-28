@@ -28,9 +28,11 @@ class ProcurementEditPage extends Component
     public $page = 1;
     public $perPage = 10;
     public string $procID = '';
-
+    public $queryParams = [];
     public function mount(Procurement $procurement)
     {
+        $this->queryParams = request()->query();
+
         $procurement->load('pr_items');
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
@@ -401,7 +403,8 @@ class ProcurementEditPage extends Component
             'message' => 'Your Procurement has been updated successfully.',
         ]);
 
-        return redirect()->route('procurements.index');
+        return redirect()->route('procurements.index', $this->queryParams);
+
     }
 
     public function getPaginatedItemsProperty()
@@ -421,7 +424,10 @@ class ProcurementEditPage extends Component
             $this->page = $totalPages;
         }
     }
-
+    public function cancel()
+    {
+        return redirect()->route('procurements.index', $this->queryParams);
+    }
     public function render()
     {
         return view('livewire.procurements.procurement-edit-page', [

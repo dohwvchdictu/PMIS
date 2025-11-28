@@ -4,23 +4,20 @@ namespace App\Livewire\BacApprovedPr;
 
 use App\Models\BACApprovedPR;
 use App\Models\Procurement;
-// REMOVED: use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
-// REMOVED: use Livewire\WithFileUploads;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 class BacApprovedPrEditPage extends Component
 {
-    // REMOVED: use WithFileUploads;
-
     public BACApprovedPR $bacapprovedpr;
     public $form = [];
     public $textareaRows = 1;
-    // REMOVED: public $document_file;
     public $procurements = [];
-
+    public $queryParams = [];
     public function mount(BACApprovedPR $bacapprovedpr)
     {
+        $this->queryParams = request()->query();
+
         $this->bacapprovedpr = $bacapprovedpr;
         $procurement = Procurement::where('procID', $bacapprovedpr->procID)->first();
 
@@ -77,7 +74,7 @@ class BacApprovedPrEditPage extends Component
             'message' => 'BAC Approved Procurement has been updated successfully.',
         ]);
 
-        return redirect()->route('bac-approved-pr.index');
+        return redirect()->route('bac-approved-pr.index', $this->queryParams);
     }
 
     public function viewPdf()
@@ -101,7 +98,10 @@ class BacApprovedPrEditPage extends Component
             $this->dispatch('show-pdf-modal', url: $localUrl);
         }
     }
-
+    public function cancel()
+    {
+        return redirect()->route('bac-approved-pr.index', $this->queryParams);
+    }
     public function render()
     {
         return view('livewire.bac-approved-pr.bac-approved-pr-edit-page');
