@@ -15,7 +15,8 @@
             <!-- Procurement Program / Project -->
             <div class="col-span-9">
                 <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
-                    model="form.procurement_program_project" :required="true" :rows="$textareaRows" :readonly="true" />
+                    model="form.procurement_program_project" :required="true" :rows="$textareaRows" :readonly="true"
+                    :autoResize="true" />
             </div>
         </div>
 
@@ -150,14 +151,14 @@
                 <div class="flex-1">
                     <x-forms.textarea id="immediate_date_needed" label="Immediate Date Needed"
                         model="form.immediate_date_needed" :form="$form" :maxlength="500" rows="4"
-                        :required="true" />
+                        :required="true" :autoResize="true" />
 
                 </div>
 
                 <!-- Date Needed -->
                 <div class="flex-1">
                     <x-forms.textarea id="date_needed" label="Date Needed" model="form.date_needed"
-                        :form="$form" :required="true" :maxlength="500" rows="4" />
+                        :form="$form" :required="true" :maxlength="500" rows="4" :autoResize="true" />
                 </div>
             </div>
 

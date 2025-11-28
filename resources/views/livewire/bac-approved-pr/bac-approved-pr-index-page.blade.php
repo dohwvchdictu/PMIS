@@ -14,17 +14,17 @@
                     <circle cx="10" cy="10" r="7" />
                 </svg>
             </div>
-            @can('create_b::a::c::approved::p::r')
-                <a href="{{ route('bac-approved-pr.create', request()->query()) }}" wire:navigate
-                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
-                    <svg class="shrink-0 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                    </svg> PR Document
-                </a>
-            @endcan
         </div>
+        @can('create_b::a::c::approved::p::r')
+            <a href="{{ route('bac-approved-pr.create') }}"
+                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
+                <svg class="shrink-0 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                </svg> PR Document
+            </a>
+        @endcan
     </div>
     <div class="overflow-auto flex-1">
         <table class="table-fixed w-full min-w-[1100px] divide-y divide-gray-200 dark:divide-neutral-700">
