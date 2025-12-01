@@ -68,54 +68,17 @@
                         <div class="col-span-9">
                             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                                 model="form.procurement_program_project" :required="true" :readonly="true"
-                                :rows="$textareaRows" :autoResize="true" />
+                                :rows="$textareaRows" />
                         </div>
                     </div>
                 </div>
 
                 <div
                     class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mt-4">
-                    <div class="flex justify-between items-center mb-4 px-1">
-                        {{-- Search Input --}}
-                        <div class="w-1/3">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
-                                </div>
-                                <input type="text" wire:model.live.debounce.300ms="search"
-                                    class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="Search Item No or Description...">
-                            </div>
-                        </div>
-
-                        {{-- Bulk Edit Button --}}
-                        <div>
-                            @if (count($selectedItems) > 0)
-                                <button type="button" wire:click="openBulkEdit"
-                                    class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                        </path>
-                                    </svg>
-                                    Edit Selected ({{ count($selectedItems) }})
-                                </button>
-                            @endif
-                        </div>
-                    </div>
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
                             <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                 <tr>
-                                    <th
-                                        class="px-2 py-3 text-left w-10 border-b border-gray-300 dark:border-neutral-600">
-                                        <input type="checkbox" wire:model.live="selectAll"
-                                            class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:bg-neutral-700 dark:border-neutral-600">
-                                    </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                     </th>
@@ -187,7 +150,6 @@
                                         $isHistoryRow = !$isHead;
                                     @endphp
 
-                                    {{-- Skip rendering history rows in the main list --}}
                                     @if ($isHistoryRow)
                                         @continue
                                     @endif
@@ -195,6 +157,7 @@
                                     @php
                                         $historyTargetUid = $rowUid;
                                         $isSavedRecord = isset($item['id']) && is_numeric($item['id']);
+
                                         $nextItemPrID = $form['items'][$itemIndex + 1]['prItemID'] ?? null;
                                         $hasHistory = $nextItemPrID === $currentPrID;
 
@@ -202,91 +165,72 @@
                                             !empty($item['bidding_number']) ||
                                             !empty($item['ntf_no']) ||
                                             !empty($item['rfq_no']);
+
                                         $showFields = !empty($modeId) && $isSavedRecord;
                                         $disableInputs = false;
                                         $disableSelect = $hasSchedule || ($isSavedRecord && $modeId);
 
-                                        // --- [FIXED] RESTRICTION LOGIC ---
                                         $canAddNewMode = false;
 
                                         if ($isHead) {
                                             if (!empty($modeId)) {
-                                                // Modes 2, 3, 4 (Competitive Bidding / Negotiated)
                                                 if (in_array($modeId, [2, 3, 4])) {
                                                     $bidResult = $item['bidding_result'] ?? '';
                                                     $ntfResult = $item['ntf_bidding_result'] ?? '';
 
-                                                    // FIX: Use STRICT check. Only show if explicitly UNSUCCESSFUL.
-                                                    // This prevents showing the button on empty/new rows.
-                                                    if (
-                                                        $bidResult === 'UNSUCCESSFUL' ||
-                                                        $ntfResult === 'UNSUCCESSFUL'
-                                                    ) {
-                                                        $canAddNewMode = true;
+                                                    if ($bidResult !== 'SUCCESSFUL' && $ntfResult !== 'SUCCESSFUL') {
+                                                        $canAddNewMode = true; // SHOWN
                                                     }
                                                 }
 
-                                                // Mode 5 (SVP)
-                                                elseif ($modeId == 5) {
-                                                    // FIX: Only allow adding a NEW mode if the CURRENT mode is FINISHED (fields are filled).
-                                                    // We check if key fields are NOT empty.
+                                                // For SVP (Mode 5)
+                                                if ($modeId == 5) {
                                                     if (
-                                                        !empty($item['rfq_no']) &&
-                                                        !empty($item['canvass_date']) &&
-                                                        !empty($item['resolution_number'])
+                                                        empty($item['rfq_no']) ||
+                                                        empty($item['canvass_date']) ||
+                                                        empty($item['date_returned_of_canvass']) ||
+                                                        empty($item['abstract_of_canvass_date']) ||
+                                                        empty($item['resolution_number'])
                                                     ) {
-                                                        $canAddNewMode = true;
+                                                        $canAddNewMode = true; // SHOWN
                                                     }
                                                 }
 
-                                                // Mode 1 (Public Bidding)
-                                                elseif ($modeId == 1) {
-                                                    // Always allow adding subsequent modes from Mode 1
-                                                    $canAddNewMode = true;
+                                                if ($modeId == 1) {
+                                                    $canAddNewMode = true; // SHOWN
                                                 }
                                             }
                                         }
-                                        // --- END FIXED LOGIC ---
                                     @endphp
 
                                     <tr wire:key="row-{{ $currentPrID }}"
                                         class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
 
-                                        {{-- 1. CHECKBOX COLUMN --}}
-                                        <td class="px-2 py-2 align-middle">
-                                            @if ($isHead)
-                                                <input type="checkbox" value="{{ $itemIndex }}"
-                                                    wire:model.live="selectedItems"
-                                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:bg-neutral-700 dark:border-neutral-600">
-                                            @endif
-                                        </td>
-
-                                        {{-- 2. ACTION BUTTONS --}}
+                                        {{-- Action Buttons (History & Add) --}}
                                         <td class="px-2 py-2 align-middle">
                                             <div class="flex items-center justify-center gap-1">
                                                 @if ($isHead)
-                                                    {{-- History Toggle --}}
                                                     @if ($hasHistory)
                                                         <button type="button"
                                                             wire:click="toggleHistory('{{ $currentPrID }}')"
                                                             class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
                                                             title="{{ $this->showHistory && $this->historyForPrItemId === $currentPrID ? 'Hide History' : 'Show History' }}">
                                                             @if ($this->showHistory && $this->historyForPrItemId === $currentPrID)
+                                                                {{-- Down Arrow (Hide) --}}
                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
                                                                     stroke-width="2">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round"
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
                                                                         d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                                                 </svg>
                                                             @else
+                                                                {{-- Right Arrow (Show) --}}
                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
                                                                     stroke-width="2">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round"
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
                                                                         d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                                                 </svg>
                                                             @endif
@@ -295,7 +239,6 @@
                                                         <div class="w-7 h-7"></div>
                                                     @endif
 
-                                                    {{-- Add Button (Controlled by Logic) --}}
                                                     @if ($canAddNewMode)
                                                         <button wire:click.prevent="addItem({{ $itemIndex }})"
                                                             class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
@@ -310,25 +253,30 @@
                                                         <div class="w-7 h-7"></div>
                                                     @endif
                                                 @else
-                                                    <div
-                                                        class="w-7 h-7 flex items-center justify-center text-gray-300">
-                                                        -
+                                                    <div class="w-7 h-7 flex items-center justify-center text-gray-300">
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                            stroke="currentColor" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                        </svg>
                                                     </div>
                                                 @endif
                                             </div>
                                         </td>
 
-                                        {{-- 3. ITEM DETAILS & FORM INPUTS --}}
+                                        {{-- Item No --}}
                                         <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap w-16"
                                             @disabled($disableInputs)>
                                             {{ $item['item_no'] }}
                                         </td>
 
+                                        {{-- Description --}}
                                         <td class="px-2 py-2 text-gray-900 dark:text-gray-100 w-64 truncate"
                                             @disabled($disableInputs)>
                                             {{ $item['description'] }}
                                         </td>
 
+                                        {{-- Mode Select --}}
                                         <td class="px-2 py-2">
                                             <select wire:key="select-mode-{{ $rowUid }}"
                                                 wire:model.live="form.items.{{ $itemIndex }}.mode_of_procurement_id"
@@ -343,58 +291,67 @@
                                             </select>
                                         </td>
 
+                                        {{-- Bidding Number --}}
                                         @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
                                                     maxlength="2"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.bidding_number') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+    {{ $errors->has('form.items.' . $itemIndex . '.bidding_number')
+        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- IB Number --}}
                                         @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="ib-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ib_number"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.ib_number') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+    {{ $errors->has('form.items.' . $itemIndex . '.ib_number')
+        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="IB-2025-002" @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        <td class="px-2 py-2">
-                                            <input type="date" wire:key="pre-proc-{{ $rowUid }}"
-                                                wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
-                                                class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                @disabled($disableInputs)>
-                                        </td>
+                                            {{-- Pre-Proc Conference --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="pre-proc-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
 
-                                        <td class="px-2 py-2">
-                                            <input type="date" wire:key="ads-{{ $rowUid }}"
-                                                wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                @disabled($disableInputs)>
-                                        </td>
+                                            {{-- Ads/Post IB --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ads-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
 
-                                        <td class="px-2 py-2">
-                                            <input type="date" wire:key="pre-bid-{{ $rowUid }}"
-                                                wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
-                                                class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                @disabled($disableInputs)>
-                                        </td>
+                                            {{-- Pre-Bid Conference --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="pre-bid-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
 
-                                        <td class="px-2 py-2">
-                                            <input type="date" wire:key="elig-{{ $rowUid }}"
-                                                wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
-                                                class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                @disabled($disableInputs)>
-                                        </td>
+                                            {{-- Eligibility Check --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="elig-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
 
-                                        @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
+                                            {{-- Sub/Open of Bids --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="sub-open-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.sub_open_bids"
@@ -407,8 +364,10 @@
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Bidding Date or NTF Bidding Date --}}
                                         @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="bid-date-{{ $rowUid }}"
@@ -427,6 +386,7 @@
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Bidding Result or NTF Bidding Result --}}
                                         @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
                                             <td class="px-2 py-2">
                                                 <select wire:key="res-{{ $rowUid }}"
@@ -453,6 +413,7 @@
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- NTF No. --}}
                                         @if ($showFields && $modeId == 4)
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="ntf-no-{{ $rowUid }}"
@@ -464,55 +425,75 @@
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- RFQ No. --}}
                                         @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white {{ $errors->has('form.items.' . $itemIndex . '.rfq_no') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white
+    {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
+        ? 'border-red-500 focus:ring-red-500'
+        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="RFQ-2025-001" @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Canvass Date --}}
                                         @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="can-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.canvass_date') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.canvass_date')
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Date Returned of Canvass --}}
                                         @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ret-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.date_returned_of_canvass"
-                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.date_returned_of_canvass') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.date_returned_of_canvass')
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Abstract of Canvass Date --}}
                                         @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="abs-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.abstract_of_canvass_date"
-                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.abstract_of_canvass_date') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.abstract_of_canvass_date')
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
+                                        {{-- Resolution Number --}}
                                         @if ($showFields && $modeId == 5)
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="res-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.resolution_number"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed {{ $errors->has('form.items.' . $itemIndex . '.resolution_number') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+        {{ $errors->has('form.items.' . $itemIndex . '.resolution_number')
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="RES-2025-001" @disabled($disableInputs)>
                                             </td>
                                         @else
@@ -523,8 +504,7 @@
                                     @if ($isHead && $showHistory && $historyForPrItemId === $currentPrID)
                                         <tr
                                             class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-500 dark:border-emerald-900">
-                                            {{-- Update Colspan to 20 to account for new checkbox column --}}
-                                            <td colspan="20" class="px-0 py-0">
+                                            <td colspan="19" class="px-0 py-0">
                                                 <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
                                                     <table class="w-full text-xs min-w-max">
                                                         {{-- HISTORY TABLE HEADER - Add empty column for alignment --}}
@@ -535,6 +515,7 @@
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                                                 </th>
+
                                                                 {{-- Empty columns for Item No and Description (hidden in history) --}}
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
@@ -542,6 +523,7 @@
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
                                                                 </th>
+
                                                                 {{-- Mode of Procurement (now aligned) --}}
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -613,7 +595,7 @@
                                                                     @php $historyModeId = $historyItem['mode_of_procurement_id'] ?? null; @endphp
                                                                     <tr
                                                                         class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                        {{-- Lock Icon Column --}}
+                                                                        {{-- Lock Icon Column (aligns with main table's action buttons) --}}
                                                                         <td class="px-1 py-1 align-middle">
                                                                             <span
                                                                                 class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
@@ -628,8 +610,12 @@
                                                                                 </svg>
                                                                             </span>
                                                                         </td>
+
+                                                                        {{-- Empty columns for Item No and Description (aligns with main table) --}}
                                                                         <td class="px-2 py-2"></td>
                                                                         <td class="px-2 py-2"></td>
+
+                                                                        {{-- Mode of Procurement (now properly aligned) --}}
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             @php $mode = $modeOfProcurements->firstWhere('id', $historyModeId); @endphp
@@ -641,7 +627,8 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ib_number'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ib_number'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['pre_proc_conference'] ?? '-' }}
@@ -672,10 +659,12 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ntf_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ntf_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['rfq_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['rfq_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['canvass_date'] ?? '-' }}
@@ -711,12 +700,11 @@
 
                                 @empty
                                     <tr>
-                                        <td colspan="20" class="px-2 py-4 text-center text-gray-500">
+                                        <td colspan="19" class="px-2 py-4 text-center text-gray-500">
                                             No items available
                                         </td>
                                     </tr>
                                 @endforelse
-
                             </tbody>
                         </table>
                     </div>
@@ -902,91 +890,7 @@
             </div>
         @endif
     </div>
-    {{-- Bulk Edit Modal using your specific structure --}}
-    <div x-data="{ show: @entangle('showBulkModal') }" x-show="show" x-cloak
-        class="fixed inset-0 z-50 flex items-start justify-center bg-emerald-700/50 p-4">
 
-        <div class="bg-white shadow-xl w-full max-w-2xl rounded-2xl overflow-hidden dark:bg-neutral-800 my-8 flex flex-col max-h-[85vh]"
-            @click.away="show = false">
-
-            <div
-                class="flex justify-between items-center px-4 py-3 bg-emerald-600 text-white font-semibold dark:bg-neutral-900 dark:text-neutral-200">
-                <h2 class="text-lg font-semibold">Bulk Edit Items</h2>
-                <button @click="show = false"
-                    class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-red-500 hover:bg-gray-100 dark:bg-neutral-700 dark:text-red-500 dark:hover:bg-neutral-600 transition">
-                    ✕
-                </button>
-            </div>
-
-            <div class="p-6 overflow-y-auto space-y-4">
-                <div class="p-4 bg-yellow-50 text-yellow-800 rounded border border-yellow-200 text-sm">
-                    <strong>Note:</strong> Only filled fields will be updated. Leave fields blank to keep existing
-                    values.
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    {{-- Mode of Procurement --}}
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mode of
-                            Procurement</label>
-                        <select wire:model="bulkForm.mode_of_procurement_id"
-                            class="w-full text-sm border-gray-300 rounded-lg dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
-                            <option value="">-- No Change --</option>
-                            @foreach ($modeOfProcurements as $modeOption)
-                                <option value="{{ $modeOption->id }}">{{ $modeOption->modeofprocurements }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- IB Number --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">IB
-                            Number</label>
-                        <input type="text" wire:model="bulkForm.ib_number"
-                            placeholder="Leave blank to keep current"
-                            class="w-full text-sm border-gray-300 rounded-lg dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
-                    </div>
-
-                    {{-- Bidding Number --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bidding
-                            Number</label>
-                        <input type="text" wire:model="bulkForm.bidding_number"
-                            placeholder="Leave blank to keep current"
-                            class="w-full text-sm border-gray-300 rounded-lg dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
-                    </div>
-
-                    {{-- Bidding Date --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bidding
-                            Date</label>
-                        <input type="date" wire:model="bulkForm.bidding_date"
-                            class="w-full text-sm border-gray-300 rounded-lg dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
-                    </div>
-
-                    {{-- Pre-Proc Date --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pre-Proc
-                            Conference</label>
-                        <input type="date" wire:model="bulkForm.pre_proc_conference"
-                            class="w-full text-sm border-gray-300 rounded-lg dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
-                    </div>
-                </div>
-            </div>
-
-            <div
-                class="px-6 py-4 bg-gray-50 dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-700 flex justify-end gap-2">
-                <button @click="show = false"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button wire:click="applyBulkEdit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
-                    Apply Changes
-                </button>
-            </div>
-        </div>
-    </div>
 
     <div
         class="fixed bottom-5 right-0 left-0 lg:ml-[13.75rem] flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-49">
