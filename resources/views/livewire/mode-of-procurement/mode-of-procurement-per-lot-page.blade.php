@@ -209,11 +209,22 @@
                                                     @endif
 
                                                     @php
-                                                        $hasResult =
-                                                            !empty($item['bidding_result']) ||
-                                                            !empty($item['ntf_bidding_result']);
-                                                        $canAddRebid =
-                                                            ($hasResult || $modeId == 1) && !$this->isPostAvailable;
+                                                        if ($modeId == 5) {
+                                                            $canAddRebid = false;
+                                                        } else {
+                                                            $bidResult = $item['bidding_result'] ?? '';
+                                                            $ntfResult = $item['ntf_bidding_result'] ?? '';
+
+                                                            $hasBiddingData =
+                                                                !empty($item['ib_number']) &&
+                                                                !empty($item['bidding_number']);
+
+                                                            $canAddRebid =
+                                                                $hasBiddingData &&
+                                                                ($bidResult === 'UNSUCCESSFUL' ||
+                                                                    $ntfResult === 'UNSUCCESSFUL') &&
+                                                                !$this->isPostAvailable;
+                                                        }
                                                     @endphp
                                                     @if ($canAddRebid)
                                                         <button wire:click.prevent="addItem"

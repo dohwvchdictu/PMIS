@@ -173,32 +173,32 @@
                                         $canAddNewMode = false;
 
                                         if ($isHead) {
-                                            if (!empty($modeId)) {
-                                                if (in_array($modeId, [2, 3, 4])) {
-                                                    $bidResult = $item['bidding_result'] ?? '';
-                                                    $ntfResult = $item['ntf_bidding_result'] ?? '';
+                                            if ($modeId == 1) {
+                                                $canAddNewMode = true;
+                                            } elseif ($modeId == 5) {
+                                                $canAddNewMode = false;
+                                            } elseif (!empty($modeId)) {
+                                                $bidResult = $item['bidding_result'] ?? '';
+                                                $ntfResult = $item['ntf_bidding_result'] ?? '';
 
-                                                    if ($bidResult !== 'SUCCESSFUL' && $ntfResult !== 'SUCCESSFUL') {
-                                                        $canAddNewMode = true; // SHOWN
-                                                    }
-                                                }
+                                                $hasBiddingData =
+                                                    !empty($item['ib_number']) && !empty($item['bidding_number']);
 
-                                                // For SVP (Mode 5)
-                                                if ($modeId == 5) {
-                                                    if (
-                                                        empty($item['rfq_no']) ||
-                                                        empty($item['canvass_date']) ||
-                                                        empty($item['date_returned_of_canvass']) ||
-                                                        empty($item['abstract_of_canvass_date']) ||
-                                                        empty($item['resolution_number'])
-                                                    ) {
-                                                        $canAddNewMode = true; // SHOWN
-                                                    }
-                                                }
+                                                $hasSuccessfulResult =
+                                                    $bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL';
 
-                                                if ($modeId == 1) {
-                                                    $canAddNewMode = true; // SHOWN
-                                                }
+                                                $hasSvpComplete =
+                                                    !empty($item['rfq_no']) &&
+                                                    !empty($item['canvass_date']) &&
+                                                    !empty($item['date_returned_of_canvass']) &&
+                                                    !empty($item['abstract_of_canvass_date']) &&
+                                                    !empty($item['resolution_number']);
+
+                                                $canAddNewMode =
+                                                    $hasBiddingData &&
+                                                    ($bidResult === 'UNSUCCESSFUL' || $ntfResult === 'UNSUCCESSFUL') &&
+                                                    !$hasSuccessfulResult &&
+                                                    !$hasSvpComplete;
                                             }
                                         }
                                     @endphp

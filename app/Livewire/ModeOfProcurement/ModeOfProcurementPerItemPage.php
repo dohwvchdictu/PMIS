@@ -399,50 +399,6 @@ class ModeOfProcurementPerItemPage extends Component
 
         $attributes = [];
 
-        foreach ($this->form['items'] as $index => $item) {
-            $modeId = $item['mode_of_procurement_id'] ?? null;
-            if (!$modeId)
-                continue;
-
-            // Check if Mode is NOT 1, or 5 (Regular Bidding Mode)
-            if (!in_array($modeId, [1, 5])) {
-
-                $hasRegularBiddingData = !empty($item['ib_number']) ||
-                    !empty($item['bidding_number']);
-
-                if ($hasRegularBiddingData) {
-                    $rules["form.items.{$index}.ib_number"] = 'required|string|max:255';
-                    $rules["form.items.{$index}.bidding_number"] = 'required|string|max:255';
-
-                    $attributes["form.items.{$index}.ib_number"] = "IB No.";
-                    $attributes["form.items.{$index}.bidding_number"] = "Bidding No.";
-                }
-            }
-
-
-            if ($modeId == 5) {
-                $hasSvpData = !empty($item['rfq_no']) ||
-                    !empty($item['canvass_date']) ||
-                    !empty($item['date_returned_of_canvass']) ||
-                    !empty($item['abstract_of_canvass_date']) ||
-                    !empty($item['resolution_number']);
-
-                if ($hasSvpData) {
-                    $rules["form.items.{$index}.rfq_no"] = 'required|string';
-                    $rules["form.items.{$index}.canvass_date"] = 'required|date';
-                    $rules["form.items.{$index}.date_returned_of_canvass"] = 'required|date';
-                    $rules["form.items.{$index}.abstract_of_canvass_date"] = 'required|date';
-                    $rules["form.items.{$index}.resolution_number"] = 'required|string';
-
-                    $attributes["form.items.{$index}.rfq_no"] = "RFQ No.";
-                    $attributes["form.items.{$index}.canvass_date"] = "Canvass Date";
-                    $attributes["form.items.{$index}.date_returned_of_canvass"] = "Return of Canvass";
-                    $attributes["form.items.{$index}.abstract_of_canvass_date"] = "Abstract Date";
-                    $attributes["form.items.{$index}.resolution_number"] = "Resolution No.";
-                }
-            }
-        }
-
         try {
             $this->validate($rules, [], $attributes);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -597,20 +553,14 @@ class ModeOfProcurementPerItemPage extends Component
             if ($existing) {
                 return ['uid' => $existing->uid];
             } else {
-                // Find existing MopItems associated with the same PR Item ID ($refId)
-                // and the same Mode ID ($modeId).
                 $relatedMopUids = MopItem::where('prItemID', $refId)
                     ->where('mode_of_procurement_id', $modeId)
                     ->pluck('uid');
 
-                // Count existing schedules of this type ($modelClass) that belong to
-                // any of the MopItems identified above.
                 $count = $modelClass::where('ref_id', $refId)
                     ->whereIn('mop_uid', $relatedMopUids)
                     ->count();
 
-                // The new sequential number is based on the total count of schedules
-                // for this mode/prItem, plus one.
                 return ['uid' => $parentUid . '-' . ($count + 1)];
             }
         };
@@ -624,8 +574,17 @@ class ModeOfProcurementPerItemPage extends Component
         };
 
         if (!in_array($modeId, [1, 5])) {
-            // Only save if both required fields are present
-            if (!empty($itemData['ib_number']) && !empty($itemData['bidding_number'])) {
+            $hasBiddingData = !empty($itemData['ib_number']) ||
+                !empty($itemData['bidding_number']) ||
+                !empty($itemData['pre_proc_conference']) ||
+                !empty($itemData['ads_post_ib']) ||
+                !empty($itemData['pre_bid_conf']) ||
+                !empty($itemData['eligibility_check']) ||
+                !empty($itemData['sub_open_bids']) ||
+                !empty($itemData['bidding_date']) ||
+                !empty($itemData['bidding_result']);
+
+            if ($hasBiddingData) {
                 $identity = $getIdentity(BidSchedule::class);
 
                 $model = BidSchedule::updateOrCreate(
@@ -651,8 +610,22 @@ class ModeOfProcurementPerItemPage extends Component
 
         // NTF BID SCHEDULE (Mode 4 - Negotiated Procurement)
         if ($modeId == 4) {
-            // Only save if NTF number is present
-            if (!empty($itemData['bidding_number']) && !empty($itemData['ib_number'])) {
+            $hasNtfData = !empty($itemData['ib_number']) ||
+                !empty($itemData['bidding_number']) ||
+                !empty($itemData['pre_proc_conference']) ||
+                !empty($itemData['ads_post_ib']) ||
+                !empty($itemData['pre_bid_conf']) ||
+                !empty($itemData['eligibility_check']) ||
+                !empty($itemData['sub_open_bids']) ||
+                !empty($itemData['ntf_no']) ||
+                !empty($itemData['ntf_bidding_date']) ||
+                !empty($itemData['ntf_bidding_result']) ||
+                !empty($itemData['rfq_no']) ||
+                !empty($itemData['canvass_date']) ||
+                !empty($itemData['date_returned_of_canvass']) ||
+                !empty($itemData['abstract_of_canvass_date']);
+
+            if ($hasNtfData) {
                 $identity = $getIdentity(NtfBidSchedule::class);
 
                 $model = NtfBidSchedule::updateOrCreate(
@@ -681,15 +654,15 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        // PR SVP (Mode 5 - Shopping/Small Value Procurement)
+        // PR SVP (Mode 5) - Now accepts partial data like other modes
         if ($modeId == 5) {
-            if (
-                !empty($itemData['rfq_no']) &&
-                !empty($itemData['canvass_date']) &&
-                !empty($itemData['date_returned_of_canvass']) &&
-                !empty($itemData['abstract_of_canvass_date']) &&
-                !empty($itemData['resolution_number'])
-            ) {
+            $hasSvpData = !empty($itemData['rfq_no']) ||
+                !empty($itemData['canvass_date']) ||
+                !empty($itemData['date_returned_of_canvass']) ||
+                !empty($itemData['abstract_of_canvass_date']) ||
+                !empty($itemData['resolution_number']);
+
+            if ($hasSvpData) {
                 $identity = $getIdentity(PrSvp::class);
 
                 $model = PrSvp::updateOrCreate(
@@ -698,7 +671,7 @@ class ModeOfProcurementPerItemPage extends Component
                         'uid' => $identity['uid'],
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
-                        'rfq_no' => $itemData['rfq_no'],
+                        'rfq_no' => $itemData['rfq_no'] ?? null,
                         'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
                         'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
                         'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
