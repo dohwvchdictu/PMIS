@@ -363,6 +363,7 @@
                                             <td class="px-2 py-2">
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
+                                                    @if ($this->isPostAvailable) disabled @endif
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                                     <option value="">Select...</option>
@@ -374,6 +375,7 @@
                                             <td class="px-2 py-2">
                                                 <select wire:key="ntf-res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_result"
+                                                    @if ($this->isPostAvailable) disabled @endif
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                                     <option value="">Select...</option>
@@ -666,23 +668,23 @@
                             <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                 <tr>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                     </th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Resolution #</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 ">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bid Evaluation Date</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Post Qual Date</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Recommending For Award</th>
 
                                     <th
@@ -690,23 +692,23 @@
                                         Notice of Award</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Awarded Amount</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         PhilGEPS Reference #</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Award Notice #</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Posting of Award|PhilGEPS</th>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
                                         Supplier</th>
                                 </tr>
 
@@ -815,86 +817,86 @@
                         <thead class="sticky top-0 bg-gray-100 dark:bg-neutral-700 z-10">
                             <tr>
                                 <th
-                                    class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                     Mode of Procurement
                                 </th>
                                 @if ($editModeId && !in_array($editModeId, [5, 1]))
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600 w-20">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
                                         Bidding #
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         IB No.
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Pre-Proc Conference
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Ads/Post IB
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Pre-Bid Conference
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Eligibility Check
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Sub/Open of Bids
                                     </th>
                                 @endif
                                 @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Date
                                     </th>
                                 @elseif($editModeId == 4)
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Date
                                     </th>
                                 @endif
                                 @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Result
                                     </th>
                                 @elseif($editModeId == 4)
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Result
                                     </th>
                                 @endif
                                 @if ($editModeId == 4)
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         NTF No.
                                     </th>
                                 @endif
                                 @if ($editModeId && in_array($editModeId, [4, 5]))
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         RFQ No.
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Canvass Date
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Returned of Canvass
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Abstract of Canvass
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Resolution Number
                                     </th>
                                 @endif
@@ -902,7 +904,7 @@
                         </thead>
                         <tbody>
                             <tr class="bg-white dark:bg-neutral-800">
-                                <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                <td class="px-2 py-2 ">
                                     <select wire:model.live="editingItem.mode_of_procurement_id"
                                         class="w-full px-2 py-1 text-xs border-0 bg-gray-100 dark:bg-neutral-700 dark:text-white rounded cursor-not-allowed"
                                         disabled>
@@ -915,61 +917,63 @@
                                     </select>
                                 </td>
                                 @if ($editModeId && !in_array($editModeId, [5, 1]))
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600 w-20">
+                                    <td class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20">
                                         <input type="text" wire:model.defer="editingItem.bidding_number"
                                             maxlength="2"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.ib_number"
                                             placeholder="IB-2025-002"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.pre_proc_conference"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.ads_post_ib"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.pre_bid_conf"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.eligibility_check"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.sub_open_bids"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                 @endif
                                 @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.bidding_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                 @elseif($editModeId == 4)
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.ntf_bidding_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                 @endif
                                 @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <select wire:model.defer="editingItem.bidding_result"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white cursor-not-allowed"
+                                            disabled>
                                             <option value="">Select...</option>
                                             <option value="SUCCESSFUL">SUCCESSFUL</option>
                                             <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
                                         </select>
                                     </td>
                                 @elseif($editModeId == 4)
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <select wire:model.defer="editingItem.ntf_bidding_result"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white cursor-not-allowed"
+                                            disabled>
                                             <option value="">Select...</option>
                                             <option value="SUCCESSFUL">SUCCESSFUL</option>
                                             <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -977,31 +981,33 @@
                                     </td>
                                 @endif
                                 @if ($editModeId == 4)
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.ntf_no"
                                             placeholder="NTF-2025-001"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                 @endif
                                 @if ($editModeId && in_array($editModeId, [4, 5]))
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.rfq_no"
                                             placeholder="RFQ-2025-001"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.canvass_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.date_returned_of_canvass"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                    <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.abstract_of_canvass_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                    <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
+                                @endif
+                                @if ($editModeId == 5)
+                                    <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.resolution_number"
                                             placeholder="RES-2025-001"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
