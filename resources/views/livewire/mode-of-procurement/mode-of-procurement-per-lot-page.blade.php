@@ -1,8 +1,9 @@
 <div class="space-y-2">
 
-    <div class="relative bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+    <div
+        class="relative bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
 
-        <ul class="flex items-center w-full max-w-7xl pt-2 p-2 bg-white dark:bg-neutral-700 dark:border-neutral-700 mx-auto"
+        <ul class="flex items-center w-full max-w-7xl px-4 py-3 bg-white dark:bg-neutral-700 mx-auto"
             data-hs-stepper='{"isCompleted": true}'>
 
             {{-- STEP 1: DETAILS --}}
@@ -541,14 +542,23 @@
 
                                                                     <tr
                                                                         class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                        <td class="px-2 py-2 align-middle">
-                                                                            <button type="button"
-                                                                                wire:click="editHistoryItem({{ $historyIndex }})"
-                                                                                class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                                                                                title="Edit History Record">
-                                                                                <x-heroicon-o-pencil class="w-4 h-4" />
-                                                                            </button>
-                                                                        </td>
+                                                                        @can('edit_mode::of::procurement')
+                                                                            @if ($historyModeId == 1)
+                                                                                <td class="px-2 py-2 align-middle">
+
+                                                                                </td>
+                                                                            @else
+                                                                                <td class="px-2 py-2 align-middle">
+                                                                                    <button type="button"
+                                                                                        wire:click="editHistoryItem({{ $historyIndex }})"
+                                                                                        class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                                                                                        title="Edit History Record">
+                                                                                        <x-heroicon-o-pencil
+                                                                                            class="w-4 h-4" />
+                                                                                    </button>
+                                                                                </td>
+                                                                            @endif
+                                                                        @endcan
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             @php
@@ -564,7 +574,8 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ib_number'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ib_number'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['pre_proc_conference'] ?? '-' }}
@@ -595,10 +606,12 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ntf_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['ntf_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['rfq_no'] ?? '-' }}</td>
+                                                                            {{ $historyItem['rfq_no'] ?? '-' }}
+                                                                        </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['canvass_date'] ?? '-' }}
