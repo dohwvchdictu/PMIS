@@ -4,7 +4,7 @@
             transition-all duration-100 transform
             w-55 h-full
             hidden
-            fixed inset-y-0 start-0 z-40  /* fixed & above all layers */
+            fixed inset-y-0 start-0 z-40
             bg-white border-e border-white
             lg:block lg:translate-x-0 lg:end-auto lg:bottom-0
             dark:bg-neutral-800 dark:border-neutral-700"
@@ -12,7 +12,6 @@
 
     <div class="flex flex-col h-full">
         <!-- Logo -->
-        <!-- Sidebar Header / Logo -->
         <div class="bg-emerald-600 flex justify-center items-center text-center" style="height:124px;">
             <a href="#" aria-label="BACPMIS" class="block focus:outline-hidden focus:opacity-80">
                 <h1 class="text-white font-bold leading-snug text-center">
@@ -59,7 +58,7 @@
                     @can('view_any_procurement')
                         <li>
                             <a class="flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
-                        {{ request()->routeIs('procurements.index')
+                        {{ request()->routeIs('procurements.*')
                             ? 'bg-emerald-600 text-white font-semibold dark:bg-emerald-600 dark:text-white'
                             : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-emerald-600 dark:hover:text-white' }}"
                                 href="{{ route('procurements.index') }}">
@@ -76,7 +75,7 @@
                     @can('view_any_b::a::c::approved::p::r')
                         <li>
                             <a class="flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
-                        {{ request()->routeIs('bac-approved-pr.index')
+                        {{ request()->routeIs('bac-approved-pr.*')
                             ? 'bg-emerald-600 text-white font-semibold dark:bg-emerald-600 dark:text-white'
                             : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-emerald-600 dark:hover:text-white' }}"
                                 href="{{ route('bac-approved-pr.index') }}">
@@ -93,10 +92,11 @@
                             </a>
                         </li>
                     @endcan
+
                     @can('view_any_schedule::for::procurement')
                         <li>
                             <a class="flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
-                        {{ request()->routeIs('schedule-for-procurement.index')
+                        {{ request()->routeIs('schedule-for-procurement.*')
                             ? 'bg-emerald-600 text-white font-semibold dark:bg-emerald-600 dark:text-white'
                             : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-emerald-600 dark:hover:text-white' }}"
                                 href="{{ route('schedule-for-procurement.index') }}">
@@ -108,20 +108,19 @@
                                         d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z"
                                         clip-rule="evenodd" />
                                 </svg>
-
-
                                 Schedule for PR
                             </a>
                         </li>
                     @endcan
+
                     <!-- Mode of Procurement -->
                     @can('view_any_mode::of::procurement')
                         <li>
-                            <a
-                                class="w-full flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
-                            {{ request()->routeIs('mode-of-procurement.index')
+                            <a class="w-full flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
+                            {{ request()->routeIs('mode-of-procurement.*')
                                 ? 'bg-emerald-600 text-white font-semibold dark:bg-emerald-600 dark:text-white'
-                                : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-emerald-600 dark:hover:text-white' }}"href="{{ route('mode-of-procurement.index') }}">
+                                : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-emerald-600 dark:hover:text-white' }}"
+                                href="{{ route('mode-of-procurement.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-6">
                                     <path fill-rule="evenodd"
@@ -130,36 +129,13 @@
                                     <path
                                         d="M3 18.4v-2.796a4.3 4.3 0 0 0 .713.31A26.226 26.226 0 0 0 12 17.25c2.892 0 5.68-.468 8.287-1.335.252-.084.49-.189.713-.311V18.4c0 1.452-1.047 2.728-2.523 2.923-2.12.282-4.282.427-6.477.427a49.19 49.19 0 0 1-6.477-.427C4.047 21.128 3 19.852 3 18.4Z" />
                                 </svg>
-
-
                                 Mode of Procurement
                             </a>
                         </li>
                     @endcan
-                    <!-- Post Procurement -->
-                    {{-- <li>
-                        <a class="w-full flex items-center gap-x-2 py-2 px-2 text-sm rounded-lg
-                            {{ request()->routeIs('posts.index')
-                                ? 'bg-emerald-600 text-white font-semibold'
-                                : 'bg-gray-100 text-gray-800 font-semibold hover:bg-emerald-600 hover:text-white' }}
-                            focus:outline-hidden dark:bg-neutral-800 dark:hover:bg-emerald-300 dark:focus:bg-neutral-700 dark:text-neutral-200"
-                            href="{{ route('posts.index') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="size-5">
-                                <path
-                                    d="M7.5 3.375c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 0 1 3.75 3.75v1.875C13.5 8.161 14.34 9 15.375 9h1.875A3.75 3.75 0 0 1 21 12.75v3.375C21 17.16 20.16 18 19.125 18h-9.75A1.875 1.875 0 0 1 7.5 16.125V3.375Z" />
-                                <path
-                                    d="M15 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 17.25 7.5h-1.875A.375.375 0 0 1 15 7.125V5.25ZM4.875 6H6v10.125A3.375 3.375 0 0 0 9.375 19.5H16.5v1.125c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V7.875C3 6.839 3.84 6 4.875 6Z" />
-                            </svg>
-                            Post Procurement
-                        </a>
-                    </li> --}}
-
-
                 </ul>
             </nav>
         </div>
-
 
         <!-- Fixed Admin Button -->
         @can('view_any_administrator')
@@ -177,7 +153,5 @@
                 </a>
             </div>
         @endcan
-
-
     </div>
 </div>
