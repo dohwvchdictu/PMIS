@@ -880,8 +880,6 @@
                                         class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
                                         Abstract of Canvass
                                     </th>
-                                @endif
-                                @if ($editModeId == 5)
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-neutral-600">
                                         Resolution Number
@@ -990,8 +988,6 @@
                                         <input type="date" wire:model.defer="editingItem.abstract_of_canvass_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                @endif
-                                @if ($editModeId == 5)
                                     <td class="px-2 py-2 border border-gray-300 dark:border-neutral-600">
                                         <input type="text" wire:model.defer="editingItem.resolution_number"
                                             placeholder="RES-2025-001"
