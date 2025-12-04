@@ -41,6 +41,10 @@ class ModeOfProcurementPerLotPage extends Component
 
     public Collection $suppliers;
     public $queryParams = [];
+    public bool $showModal = false;
+    public ?array $editingItem = null;
+    public ?int $editingIndex = null;
+
     public function mount(Procurement $procurement): void
     {
         $this->queryParams = request()->query();
@@ -666,6 +670,59 @@ class ModeOfProcurementPerLotPage extends Component
         // }
     }
 
+    public function editHistoryItem($index): void
+    {
+        if (!isset($this->form['items'][$index])) {
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('History record not found.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Store the index and copy the item data for editing
+        $this->editingIndex = $index;
+        $this->editingItem = $this->form['items'][$index];
+        $this->showModal = true;  // Changed from showEditModal
+    }
+
+    public function updateHistoryItem(): void
+    {
+        if ($this->editingIndex === null || !isset($this->form['items'][$this->editingIndex])) {
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Unable to update record.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Update the item in the form array
+        $this->form['items'][$this->editingIndex] = $this->editingItem;
+
+        // Save to database
+        $this->saveTab1();
+
+        // Close modal
+        $this->closeEditModal();
+
+        LivewireAlert::title('History Updated')
+            ->success()
+            ->text('History record has been updated successfully.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeEditModal(): void
+    {
+        $this->showModal = false;  // Changed from showEditModal
+        $this->editingItem = null;
+        $this->editingIndex = null;
+    }
     private function nullableDate($value)
     {
         return empty($value) ? null : $value;
