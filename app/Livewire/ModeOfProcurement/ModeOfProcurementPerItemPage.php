@@ -124,10 +124,6 @@ class ModeOfProcurementPerItemPage extends Component
                 ];
             }
         }
-
-        // Load all prItemIDs that have post-procurement records (even if empty)
-        $prItemIds = collect($this->form['items'])->pluck('prItemID')->filter()->unique()->toArray();
-        $this->postProcurementExists = PostProcurement::whereIn('ref_id', $prItemIds)->pluck('ref_id')->toArray();
     }
     private function calculateTextareaRows(string $text): void
     {
@@ -1112,10 +1108,6 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
         });
-
-        $prItemIds = collect($this->form['items'])->pluck('prItemID')->filter()->unique()->toArray();
-        $this->postProcurementExists = PostProcurement::whereIn('ref_id', $prItemIds)->pluck('ref_id')->toArray();
-
 
         if ($isAdded) {
             LivewireAlert::title('Post-Procurement Added!')
