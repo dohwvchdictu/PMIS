@@ -4,11 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Filament\Resources\SupplierResource\RelationManagers;
-use App\Models\FundClass;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -34,28 +34,71 @@ class SupplierResource extends Resource
     {
         return $form
             ->schema([
-                Section::make([
-                    Grid::make()
-                        ->schema([
-                            TextInput::make('name')
-                                ->required()
-                                ->maxLength(255)
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(fn(string $operation, $state, Set $set) => $operation
-                                    === 'create' ? $set('slug', Str::slug($state)) : null),
+                Section::make('Basic Information')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn(string $operation, $state, Set $set) => $operation
+                                        === 'create' ? $set('slug', Str::slug($state)) : null),
 
-                            TextInput::make('slug')
-                                ->maxLength(255)
-                                ->disabled()
-                                ->required()
-                                ->dehydrated()
-                                ->unique(FundClass::class, 'slug', ignoreRecord: true)
-                        ]),
+                                TextInput::make('slug')
+                                    ->maxLength(255)
+                                    ->disabled()
+                                    ->required()
+                                    ->dehydrated()
+                                    ->unique(Supplier::class, 'slug', ignoreRecord: true), // Fixed: Changed from FundClass to Supplier
 
-                    Toggle::make('is_active')
-                        ->required()
-                        ->default(true)
-                ])
+                                TextInput::make('tin')
+                                    ->label('TIN')
+                                    ->maxLength(255)
+                                    ->placeholder('123-456-789-000'),
+
+                                Toggle::make('is_active')
+                                    ->required()
+                                    ->default(true)
+                            ]),
+                    ]),
+
+                Section::make('Contact Information')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('email')
+                                    ->email()
+                                    ->maxLength(255)
+                                    ->placeholder('supplier@example.com'),
+
+                                TextInput::make('contact_person')
+                                    ->maxLength(255)
+                                    ->placeholder('John Doe'),
+
+                                TextInput::make('mobile')
+                                    ->label('Mobile Number')
+                                    ->tel()
+                                    ->maxLength(255)
+                                    ->placeholder('+63 912 345 6789'),
+
+                                TextInput::make('telephone')
+                                    ->label('Telephone Number')
+                                    ->tel()
+                                    ->maxLength(255)
+                                    ->placeholder('(033) 123-4567'),
+                            ]),
+
+                        Textarea::make('address')
+                            ->maxLength(500)
+                            ->rows(3)
+                            ->placeholder('Complete address'),
+
+                        Textarea::make('remarks')
+                            ->maxLength(1000)
+                            ->rows(3)
+                            ->placeholder('Additional notes or remarks'),
+                    ]),
             ]);
     }
 
@@ -64,11 +107,22 @@ class SupplierResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('mobile')
+                    ->label('Mobile')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('contact_person')
+                    ->label('Contact Person')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
+                    ->boolean()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -85,7 +139,6 @@ class SupplierResource extends Resource
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),
-                    DeleteAction::make(),
                 ])
             ])
             ->bulkActions([
