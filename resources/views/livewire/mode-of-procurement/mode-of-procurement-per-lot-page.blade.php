@@ -220,14 +220,20 @@
                                                                 !empty($item['ib_number']) &&
                                                                 !empty($item['bidding_number']);
 
+                                                            // Check if Pre-Proc Conference is filled
+                                                            $hasPreProcConference =
+                                                                !empty($item['pre_proc_conference']) &&
+                                                                trim($item['pre_proc_conference']) !== '';
+
                                                             $canAddRebid =
                                                                 $modeId == 1 ||
-                                                                ($hasBiddingData &&
+                                                                (($hasBiddingData || $hasPreProcConference) &&
                                                                     ($bidResult === 'UNSUCCESSFUL' ||
                                                                         $ntfResult === 'UNSUCCESSFUL') &&
                                                                     !$this->isPostAvailable);
                                                         }
                                                     @endphp
+
                                                     @if ($canAddRebid)
                                                         <button wire:click.prevent="addItem"
                                                             class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"

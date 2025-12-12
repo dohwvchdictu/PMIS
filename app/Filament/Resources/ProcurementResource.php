@@ -375,7 +375,7 @@ class ProcurementResource extends Resource
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),
-                    DeleteAction::make(),
+                    // DeleteAction::make(),
                 ])
             ])
 

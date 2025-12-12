@@ -9,7 +9,18 @@ class Supplier extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'is_active'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'tin',
+        'address',
+        'mobile',
+        'telephone',
+        'email',
+        'contact_person',
+        'remarks',
+        'is_active',
+    ];
 
     public function procurements()
     {
