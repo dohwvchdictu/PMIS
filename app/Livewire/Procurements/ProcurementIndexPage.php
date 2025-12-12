@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Procurements;
 
+use App\Models\Remarks;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,6 +11,7 @@ use App\Models\Division;
 use App\Models\ClusterCommittee;
 use App\Models\EndUser;
 use App\Models\FundSource;
+use App\Models\Remark; // Add this import
 
 class ProcurementIndexPage extends Component
 {
@@ -26,6 +28,7 @@ class ProcurementIndexPage extends Component
         'clusterCommitteeFilter' => ['except' => ''],
         'endUserFilter' => ['except' => ''],
         'fundSourceFilter' => ['except' => ''],
+        'remarkFilter' => ['except' => ''], // Add this
     ];
     protected $paginationTheme = 'tailwind';
 
@@ -37,6 +40,7 @@ class ProcurementIndexPage extends Component
     public $clusterCommitteeFilter = '';
     public $endUserFilter = '';
     public $fundSourceFilter = '';
+    public $remarkFilter = ''; // Add this
 
     // Modal
     public $showModal = false;
@@ -58,6 +62,7 @@ class ProcurementIndexPage extends Component
     public $venueProvinces = [];
     public $endUsers = [];
     public $fundSources = [];
+    public $remarks = []; // Add this
 
     public function mount()
     {
@@ -82,11 +87,12 @@ class ProcurementIndexPage extends Component
     public function loadFilterOptions()
     {
         // If no filters applied, show all options
-        if (!$this->divisionFilter && !$this->clusterCommitteeFilter && !$this->endUserFilter && !$this->fundSourceFilter) {
+        if (!$this->divisionFilter && !$this->clusterCommitteeFilter && !$this->endUserFilter && !$this->fundSourceFilter && !$this->remarkFilter) {
             $this->divisions = Division::orderBy('abbreviation')->get();
             $this->clusterCommittees = ClusterCommittee::orderBy('clustercommittee')->get();
             $this->endUsers = EndUser::orderBy('endusers')->get();
             $this->fundSources = FundSource::orderBy('fundsources')->get();
+            $this->remarks = Remarks::orderBy('remarks')->get();
             return;
         }
 
@@ -102,6 +108,15 @@ class ProcurementIndexPage extends Component
         if (!empty($this->fundSourceFilter)) {
             $divisionQuery->where('fund_source_id', $this->fundSourceFilter);
         }
+        if (!empty($this->remarkFilter)) {
+            $divisionQuery->where(function ($q) {
+                $q->whereHas('currentLotRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                })->orWhereHas('pr_items.currentItemRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                });
+            });
+        }
         $divisionIds = $divisionQuery->distinct()->pluck('divisions_id')->filter();
         $this->divisions = Division::whereIn('id', $divisionIds)->orderBy('abbreviation')->get();
 
@@ -115,6 +130,15 @@ class ProcurementIndexPage extends Component
         }
         if (!empty($this->fundSourceFilter)) {
             $clusterQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+        if (!empty($this->remarkFilter)) {
+            $clusterQuery->where(function ($q) {
+                $q->whereHas('currentLotRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                })->orWhereHas('pr_items.currentItemRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                });
+            });
         }
         $clusterIds = $clusterQuery->distinct()->pluck('cluster_committees_id')->filter();
         $this->clusterCommittees = ClusterCommittee::whereIn('id', $clusterIds)->orderBy('clustercommittee')->get();
@@ -130,6 +154,15 @@ class ProcurementIndexPage extends Component
         if (!empty($this->fundSourceFilter)) {
             $endUserQuery->where('fund_source_id', $this->fundSourceFilter);
         }
+        if (!empty($this->remarkFilter)) {
+            $endUserQuery->where(function ($q) {
+                $q->whereHas('currentLotRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                })->orWhereHas('pr_items.currentItemRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                });
+            });
+        }
         $endUserIds = $endUserQuery->distinct()->pluck('end_users_id')->filter();
         $this->endUsers = EndUser::whereIn('id', $endUserIds)->orderBy('endusers')->get();
 
@@ -144,8 +177,52 @@ class ProcurementIndexPage extends Component
         if (!empty($this->endUserFilter)) {
             $fundQuery->where('end_users_id', $this->endUserFilter);
         }
+        if (!empty($this->remarkFilter)) {
+            $fundQuery->where(function ($q) {
+                $q->whereHas('currentLotRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                })->orWhereHas('pr_items.currentItemRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                });
+            });
+        }
         $fundIds = $fundQuery->distinct()->pluck('fund_source_id')->filter();
         $this->fundSources = FundSource::whereIn('id', $fundIds)->orderBy('fundsources')->get();
+
+        // Remark options - based on other filters (exclude remarkFilter)
+        $remarkQuery = Procurement::query();
+        if (!empty($this->divisionFilter)) {
+            $remarkQuery->where('divisions_id', $this->divisionFilter);
+        }
+        if (!empty($this->clusterCommitteeFilter)) {
+            $remarkQuery->where('cluster_committees_id', $this->clusterCommitteeFilter);
+        }
+        if (!empty($this->endUserFilter)) {
+            $remarkQuery->where('end_users_id', $this->endUserFilter);
+        }
+        if (!empty($this->fundSourceFilter)) {
+            $remarkQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+
+        // Get remark IDs from both lot and item remarks
+        $lotRemarkIds = $remarkQuery->clone()
+            ->whereHas('currentLotRemark')
+            ->with('currentLotRemark')
+            ->get()
+            ->pluck('currentLotRemark.remarks_id')
+            ->filter();
+
+        $itemRemarkIds = $remarkQuery->clone()
+            ->whereHas('pr_items.currentItemRemark')
+            ->with('pr_items.currentItemRemark')
+            ->get()
+            ->flatMap(function ($procurement) {
+                return $procurement->pr_items->pluck('currentItemRemark.remarks_id');
+            })
+            ->filter();
+
+        $remarkIds = $lotRemarkIds->merge($itemRemarkIds)->unique();
+        $this->remarks = Remarks::whereIn('id', $remarkIds)->orderBy('remarks')->get();
     }
 
     /**
@@ -229,6 +306,12 @@ class ProcurementIndexPage extends Component
         $this->loadFilterOptions();
     }
 
+    public function updatedRemarkFilter() // Add this method
+    {
+        $this->resetPage();
+        $this->loadFilterOptions();
+    }
+
     /**
      * Clear all filters
      */
@@ -239,6 +322,7 @@ class ProcurementIndexPage extends Component
         $this->clusterCommitteeFilter = '';
         $this->endUserFilter = '';
         $this->fundSourceFilter = '';
+        $this->remarkFilter = ''; // Add this
         $this->resetPage();
         $this->loadFilterOptions(); // Reload all options
     }
@@ -258,8 +342,9 @@ class ProcurementIndexPage extends Component
                 'clusterCommittee',
                 'endUser',
                 'fundSource',
+                'currentLotRemark.remark', // Add this
                 'pr_items' => function ($query) {
-                    $query->with('prstage.stage');
+                    $query->with(['prstage.stage', 'currentItemRemark.remark']); // Add currentItemRemark.remark
                 }
             ])
             ->latest();
@@ -291,6 +376,20 @@ class ProcurementIndexPage extends Component
         // Apply fund source filter
         if (!empty($this->fundSourceFilter)) {
             $query->where('fund_source_id', $this->fundSourceFilter);
+        }
+
+        // Apply remark filter
+        if (!empty($this->remarkFilter)) {
+            $query->where(function ($q) {
+                // Filter for perLot procurements
+                $q->whereHas('currentLotRemark', function ($subQ) {
+                    $subQ->where('remarks_id', $this->remarkFilter);
+                })
+                    // OR filter for perItem procurements
+                    ->orWhereHas('pr_items.currentItemRemark', function ($subQ) {
+                        $subQ->where('remarks_id', $this->remarkFilter);
+                    });
+            });
         }
 
         $procurements = $query->paginate($this->perPage);

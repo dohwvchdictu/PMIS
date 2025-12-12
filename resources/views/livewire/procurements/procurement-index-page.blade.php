@@ -37,6 +37,11 @@
                 <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources" labelKey="fundsources"
                     valueKey="id" placeholder="Fund Source" />
             </div>
+
+            <div class="relative group w-40">
+                <x-forms.searchable-select wire:model.live="remarkFilter" :options="$remarks" labelKey="remarks"
+                    valueKey="id" placeholder="Remarks" />
+            </div>
         </div>
         @can('create_procurement')
             <a href="{{ route('procurements.create') }}"
