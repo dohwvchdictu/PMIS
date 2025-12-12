@@ -491,21 +491,28 @@ class ModeOfProcurementPerLotPage extends Component
                 if (!is_null($biddingResult) && trim($biddingResult) !== '') {
                     $missingFields = [];
 
-                    if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
-                        $missingFields[] = 'Bidding #';
-                    }
-                    if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
-                        $missingFields[] = 'IB No.';
-                    }
-                    if (empty($item['bidding_date']) || trim($item['bidding_date']) === '') {
-                        $missingFields[] = 'Bidding Date';
-                    }
+                    // Check if Pre-Proc Conference is filled
+                    $hasPreProcConference = !empty($item['pre_proc_conference']) && trim($item['pre_proc_conference']) !== '';
 
-                    if (!empty($missingFields)) {
-                        $fieldsList = implode(', ', $missingFields);
-                        $this->scheduleValidationErrors[] = "Cannot set Bidding Result without {$fieldsList}.";
-                        $isValid = false;
+                    if (!$hasPreProcConference) {
+                        // If Pre-Proc Conference is not filled, require all three fields
+                        if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
+                            $missingFields[] = 'Bidding #';
+                        }
+                        if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
+                            $missingFields[] = 'IB No.';
+                        }
+                        if (empty($item['bidding_date']) || trim($item['bidding_date']) === '') {
+                            $missingFields[] = 'Bidding Date';
+                        }
+
+                        if (!empty($missingFields)) {
+                            $fieldsList = implode(', ', $missingFields);
+                            $this->scheduleValidationErrors[] = "Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                            $isValid = false;
+                        }
                     }
+                    // If Pre-Proc Conference is filled, allow bidding result (no validation errors)
                 }
             }
 
@@ -538,21 +545,28 @@ class ModeOfProcurementPerLotPage extends Component
                 if (!is_null($ntfBiddingResult) && trim($ntfBiddingResult) !== '') {
                     $missingNtfFields = [];
 
-                    if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
-                        $missingNtfFields[] = 'Bidding #';
-                    }
-                    if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
-                        $missingNtfFields[] = 'IB No.';
-                    }
-                    if (empty($item['ntf_bidding_date']) || trim($item['ntf_bidding_date']) === '') {
-                        $missingNtfFields[] = 'NTF Bidding Date';
-                    }
+                    // Check if Pre-Proc Conference is filled
+                    $hasPreProcConference = !empty($item['pre_proc_conference']) && trim($item['pre_proc_conference']) !== '';
 
-                    if (!empty($missingNtfFields)) {
-                        $fieldsList = implode(', ', $missingNtfFields);
-                        $this->scheduleValidationErrors[] = "Cannot set NTF Bidding Result without {$fieldsList}.";
-                        $isValid = false;
+                    if (!$hasPreProcConference) {
+                        // If Pre-Proc Conference is not filled, require all three fields
+                        if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
+                            $missingNtfFields[] = 'Bidding #';
+                        }
+                        if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
+                            $missingNtfFields[] = 'IB No.';
+                        }
+                        if (empty($item['ntf_bidding_date']) || trim($item['ntf_bidding_date']) === '') {
+                            $missingNtfFields[] = 'NTF Bidding Date';
+                        }
+
+                        if (!empty($missingNtfFields)) {
+                            $fieldsList = implode(', ', $missingNtfFields);
+                            $this->scheduleValidationErrors[] = "Cannot set NTF Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                            $isValid = false;
+                        }
                     }
+                    // If Pre-Proc Conference is filled, allow NTF bidding result (no validation errors)
                 }
             }
 
