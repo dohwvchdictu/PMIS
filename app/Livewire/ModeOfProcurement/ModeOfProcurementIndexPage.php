@@ -7,8 +7,11 @@ use App\Models\MopGroup;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use App\Models\MopItem; // Unused, but kept for context
-use App\Models\MopLot; // Unused, but kept for context
+use App\Models\MopItem;
+use App\Models\MopLot;
+use App\Models\BidSchedule;
+use App\Models\NtfBidSchedule;
+use App\Models\PrSvp;
 use Livewire\WithPagination;
 
 class ModeOfProcurementIndexPage extends Component
@@ -17,7 +20,7 @@ class ModeOfProcurementIndexPage extends Component
 
     // Pagination
     public $perPage = 10;
-    public $itemsPerPage = 10; // Add this for items pagination
+    public $itemsPerPage = 10;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -91,15 +94,149 @@ class ModeOfProcurementIndexPage extends Component
         $this->resetPage();
     }
 
+    /**
+     * Get the current mode and status for a per-item procurement
+     */
+    private function getItemModeAndStatus($item)
+    {
+        $prItemID = $item->prItemID;
+
+        // Get the latest MOP item for this PR item
+        $latestMop = MopItem::where('prItemID', $prItemID)
+            ->with('modeOfProcurement')
+            ->orderBy('mode_order', 'desc')
+            ->first();
+
+        if (!$latestMop) {
+            return ['mode' => null, 'status' => null];
+        }
+
+        $status = null;
+        $modeId = $latestMop->mode_of_procurement_id;
+
+        // Mode 1 - No bidding schedule needed
+        if ($modeId == 1) {
+            return [
+                'mode' => $latestMop->modeOfProcurement,
+                'status' => null
+            ];
+        }
+
+        // Check for bidding result based on mode (2, 3, 4)
+        if (in_array($modeId, [2, 3, 4])) {
+            $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+                ->where('ref_id', $prItemID)
+                ->first();
+
+            if ($bidSchedule && $bidSchedule->bidding_result) {
+                $status = $bidSchedule->bidding_result;
+            }
+        }
+
+        // Check NTF result for mode 4
+        if ($modeId == 4) {
+            $ntfSchedule = NtfBidSchedule::where('mop_uid', $latestMop->uid)
+                ->where('ref_id', $prItemID)
+                ->first();
+
+            if ($ntfSchedule && $ntfSchedule->ntf_bidding_result) {
+                $status = $ntfSchedule->ntf_bidding_result;
+            }
+        }
+
+        // Check SVP resolution for mode 5
+        if ($modeId == 5) {
+            $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
+                ->where('ref_id', $prItemID)
+                ->first();
+
+            if ($prSvp && $prSvp->resolution_number) {
+                $status = 'COMPLETED';
+            }
+        }
+
+        return [
+            'mode' => $latestMop->modeOfProcurement,
+            'status' => $status
+        ];
+    }
+
+    /**
+     * Get the current mode of procurement and status for a procurement
+     */
+    private function getCurrentModeAndStatus($procurement)
+    {
+        if ($procurement->procurement_type === 'perLot') {
+            // Get the latest MOP lot
+            $latestMop = $procurement->mopLots()
+                ->with('modeOfProcurement')
+                ->orderBy('mode_order', 'desc')
+                ->first();
+
+            if (!$latestMop) {
+                return ['mode' => null, 'status' => null];
+            }
+
+            $status = null;
+
+            // Mode 1 - No bidding schedule needed, just return the mode
+            if ($latestMop->mode_of_procurement_id == 1) {
+                return [
+                    'mode' => $latestMop->modeOfProcurement,
+                    'status' => null
+                ];
+            }
+
+            // Check for bidding result based on mode (2, 3, 4)
+            if (in_array($latestMop->mode_of_procurement_id, [2, 3, 4])) {
+                $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+                    ->where('ref_id', $procurement->procID)
+                    ->first();
+
+                if ($bidSchedule && $bidSchedule->bidding_result) {
+                    $status = $bidSchedule->bidding_result;
+                }
+            }
+
+            // Check NTF result for mode 4
+            if ($latestMop->mode_of_procurement_id == 4) {
+                $ntfSchedule = NtfBidSchedule::where('mop_uid', $latestMop->uid)
+                    ->where('ref_id', $procurement->procID)
+                    ->first();
+
+                if ($ntfSchedule && $ntfSchedule->ntf_bidding_result) {
+                    $status = $ntfSchedule->ntf_bidding_result;
+                }
+            }
+
+            // Check SVP resolution for mode 5
+            if ($latestMop->mode_of_procurement_id == 5) {
+                $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
+                    ->where('ref_id', $procurement->procID)
+                    ->first();
+
+                if ($prSvp && $prSvp->resolution_number) {
+                    $status = 'COMPLETED';
+                }
+            }
+
+            return [
+                'mode' => $latestMop->modeOfProcurement,
+                'status' => $status
+            ];
+        } else {
+            // For perItem, we can't determine a single mode
+            return ['mode' => null, 'status' => 'Multiple'];
+        }
+    }
+
     public function render()
     {
         $query = Procurement::query()
             ->with([
                 'currentPrStage.procurementStage',
-                'pr_items' => function ($query) {
-                    // Don't paginate here, we'll handle it in the blade
-                    $query->with('prstage.stage');
-                }
+                'mopLots.modeOfProcurement',
+                'pr_items'
             ])
             ->latest();
 
@@ -112,6 +249,22 @@ class ModeOfProcurementIndexPage extends Component
         }
 
         $procurements = $query->paginate($this->perPage);
+
+        // Add current mode and status to each procurement
+        foreach ($procurements as $procurement) {
+            $modeStatus = $this->getCurrentModeAndStatus($procurement);
+            $procurement->currentMode = $modeStatus['mode'];
+            $procurement->currentStatus = $modeStatus['status'];
+
+            // For per-item procurements, add mode and status to each item
+            if ($procurement->procurement_type === 'perItem') {
+                foreach ($procurement->pr_items as $item) {
+                    $itemModeStatus = $this->getItemModeAndStatus($item);
+                    $item->currentMode = $itemModeStatus['mode'];
+                    $item->currentStatus = $itemModeStatus['status'];
+                }
+            }
+        }
 
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
             'procurements' => $procurements,

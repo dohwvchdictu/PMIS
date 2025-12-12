@@ -14,18 +14,6 @@
                     <circle cx="10" cy="10" r="7" />
                 </svg>
             </div>
-            {{-- @can('create_procurement')
-                <a href="{{ route('procurements.create') }}"
-                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-hidden focus:bg-emerald-700">
-                    <svg class="shrink-0 size-4" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                    </svg>
-                    Procurement
-                </a>
-            @endcan --}}
-
         </div>
     </div>
 
@@ -44,16 +32,12 @@
                         class="px-1 py-1 text-left text-xs font-medium text-black dark:text-white uppercase sticky left-[128px] z-10 bg-gray-200 dark:bg-neutral-900 w-md">
                         Procurement Program / Project
                     </th>
-                    {{-- <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-40">
-                        Stage
-                    </th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-20">
-                        Remarks
-                    </th> --}}
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
                         BAC Category</th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-20">
-                        Division</th>
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-32">
+                        Current Mode</th>
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
+                        Status</th>
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-32">
                         Cluster / Committee</th>
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-36">
@@ -115,20 +99,8 @@
                                                 }
                                             })">
                                             <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-
-
-                                                {{-- @can('edit_procurement')
-                                                    <li>
-                                                        <a href="{{ route('procurements.edit', $procurement->procID) }}"
-                                                            @click="open = false"
-                                                            class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
-                                                            <x-heroicon-o-pencil class="w-4 h-4 text-amber-600" /> Edit
-                                                        </a>
-                                                    </li>
-                                                @endcan --}}
                                                 @can('update_mode::of::procurement')
                                                     <li>
-
                                                         <a href="{{ route(
                                                             'mode-of-procurement.' . ($procurement->procurement_type === 'perItem' ? 'update-per-item' : 'update-per-lot'),
                                                             [
@@ -162,51 +134,34 @@
                             {{ $procurement->procurement_program_project }}
                         </td>
 
-                        {{-- <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
-                            @if ($procurement->procurement_type === 'perLot')
-                                @if ($procurement->currentPrStage && $procurement->currentPrStage->procurementStage)
-                                    <span>
-                                        {{ $procurement->currentPrStage->procurementStage->procurementstage }}
-                                    </span>
-                                @else
-                                    <span class="text-gray-400 dark:text-gray-500 text-xs">No Stage</span>
-                                @endif
-                            @else
-                                <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
-                            @endif
-                        </td>
-                        @php
-                            $remarks = $procurement->currentLotRemark->remark->remarks ?? '';
-
-                            $remarksColor = match (true) {
-                                str_contains($remarks, 'Ongoing') => 'bg-yellow-400 text-black',
-                                str_contains($remarks, 'Awarded') => 'bg-green-600 text-white',
-                                str_contains($remarks, 'Cancelled') => 'bg-black text-white',
-                                default => 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white',
-                            };
-                        @endphp
-                        <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
-                            @if ($procurement->procurement_type === 'perLot')
-                                @if ($procurement->currentLotRemark && $procurement->currentLotRemark->remark)
-                                    <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold {{ $remarksColor }}">
-                                        {{ $remarks }}
-                                    </span>
-                                @else
-                                    <span class="text-gray-400 dark:text-gray-500 text-xs">No Remark</span>
-                                @endif
-                            @else
-                                <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
-                            @endif
-
-                        </td> --}}
-
                         <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
                             {{ $procurement->category?->bacType?->abbreviation ?? '' }}
                         </td>
+
                         <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
-                            {{ $procurement->division->abbreviation }}
+                            @if ($procurement->procurement_type === 'perLot')
+                                @if ($procurement->currentMode)
+                                    {{ $procurement->currentMode->modeofprocurements }}
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500 text-xs">No Mode</span>
+                                @endif
+                            @else
+                                <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
+                            @endif
                         </td>
+
+                        <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
+                            @if ($procurement->procurement_type === 'perLot')
+                                @if ($procurement->currentStatus)
+                                    {{ $procurement->currentStatus }}
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500 text-xs">Pending</span>
+                                @endif
+                            @else
+                                <span class="text-gray-400 dark:text-gray-500 text-xs italic">See items</span>
+                            @endif
+                        </td>
+
                         <td class="px-1 py-1 text-center text-sm text-black dark:text-white">
                             {{ $procurement->clusterCommittee->clustercommittee }}
                         </td>
@@ -232,7 +187,7 @@
                     <!-- Expanded Per Item Rows -->
                     @if ($procurement->procurement_type === 'perItem' && $expandedProcurementId == $procurement->procID)
                         <tr>
-                            <td colspan="13" class="bg-gray-50 dark:bg-neutral-900">
+                            <td colspan="11" class="bg-gray-50 dark:bg-neutral-900">
                                 <div>
                                     <table class="w-full text-sm border border-gray-300 dark:border-neutral-700">
                                         <thead class="bg-gray-200 dark:bg-neutral-900">
@@ -246,12 +201,12 @@
                                                     Item Description
                                                 </th>
                                                 <th
-                                                    class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-7">
-                                                    PR Stage
+                                                    class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-32">
+                                                    Current Mode
                                                 </th>
                                                 <th
-                                                    class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-48">
-                                                    Remarks
+                                                    class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
+                                                    Status
                                                 </th>
                                                 <th
                                                     class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-10">
@@ -282,39 +237,18 @@
                                                     </td>
                                                     <td
                                                         class="px-1 py-1 text-center text-sm text-black dark:text-white">
-                                                        @if ($item->prstage && $item->prstage->stage)
-                                                            <span>
-                                                                {{ $item->prstage->stage->procurementstage }}
-                                                            </span>
+                                                        @if ($item->currentMode)
+                                                            {{ $item->currentMode->modeofprocurements }}
                                                         @else
-                                                            <span class="text-gray-400 dark:text-gray-500 text-xs">No
-                                                                Stage</span>
+                                                            No Mode
                                                         @endif
                                                     </td>
-                                                    @php
-                                                        $remarks = $item->currentItemRemark->remark->remarks ?? '';
-
-                                                        $remarksColor = match (true) {
-                                                            str_contains($remarks, 'Ongoing')
-                                                                => 'bg-yellow-400 text-black',
-                                                            str_contains($remarks, 'Awarded')
-                                                                => 'bg-green-600 text-white',
-                                                            str_contains($remarks, 'Cancelled')
-                                                                => 'bg-black text-white',
-                                                            default
-                                                                => 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white',
-                                                        };
-                                                    @endphp
                                                     <td
                                                         class="px-1 py-1 text-center text-sm text-black dark:text-white">
-                                                        @if ($item->currentItemRemark && $item->currentItemRemark->remark)
-                                                            <span
-                                                                class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold {{ $remarksColor }}">
-                                                                {{ $remarks }}
-                                                            </span>
+                                                        @if ($item->currentStatus)
+                                                            {{ $item->currentStatus }}
                                                         @else
-                                                            <span class="text-gray-400 dark:text-gray-500 text-xs">No
-                                                                Remark</span>
+                                                            Pending
                                                         @endif
                                                     </td>
                                                     <td
@@ -425,5 +359,4 @@
 
     <livewire:procurements.procurement-view-page />
     <x-forms.pdf-viewer />
-    <!-- End Card -->
 </div>
