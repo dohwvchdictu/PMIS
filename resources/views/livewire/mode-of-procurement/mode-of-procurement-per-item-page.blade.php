@@ -185,6 +185,11 @@
                                                 $hasBiddingData =
                                                     !empty($item['ib_number']) && !empty($item['bidding_number']);
 
+                                                // Check if Pre-Proc Conference is filled
+                                                $hasPreProcConference =
+                                                    !empty($item['pre_proc_conference']) &&
+                                                    trim($item['pre_proc_conference']) !== '';
+
                                                 $hasSuccessfulResult =
                                                     $bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL';
 
@@ -196,7 +201,7 @@
                                                     !empty($item['resolution_number']);
 
                                                 $canAddNewMode =
-                                                    $hasBiddingData &&
+                                                    ($hasBiddingData || $hasPreProcConference) &&
                                                     ($bidResult === 'UNSUCCESSFUL' || $ntfResult === 'UNSUCCESSFUL') &&
                                                     !$hasSuccessfulResult &&
                                                     !$hasSvpComplete;
