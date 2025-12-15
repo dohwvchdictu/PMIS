@@ -34,7 +34,7 @@
                     </th>
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
                         BAC Category</th>
-                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-32">
+                    <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-36">
                         Current Mode</th>
                     <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white w-24">
                         Status</th>

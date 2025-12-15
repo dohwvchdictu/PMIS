@@ -4,7 +4,6 @@ namespace App\Livewire\ModeOfProcurement;
 
 use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
-use App\Models\NtfBidSchedule;
 use App\Models\PostProcurement;
 use App\Models\PrSvp;
 use App\Models\Supplier;
@@ -85,16 +84,15 @@ class ModeOfProcurementPerItemPage extends Component
             // Check if item is eligible for post-procurement
             $isEligible = false;
 
-            if (in_array($modeId, [2, 3, 4])) {
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $bidResult = $item['bidding_result'] ?? '';
-                $ntfResult = $item['ntf_bidding_result'] ?? '';
 
-                if ($bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL') {
+                if ($bidResult === 'SUCCESSFUL') {
                     $isEligible = true;
                 }
             }
 
-            if ($modeId == 5) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
@@ -110,7 +108,7 @@ class ModeOfProcurementPerItemPage extends Component
                 // Load post-procurement data for this prItemID (stored as ref_id)
                 $post = PostProcurement::where('ref_id', $prItemID)->first();
 
-                $this->postItems[$index] = [
+                $this->postItems[$prItemID] = [
                     'resolutionNumber' => $post?->resolution_number ?? null,
                     'bidEvaluationDate' => $post?->bid_evaluation_date ?? null,
                     'postQualDate' => $post?->post_qual_date ?? null,
@@ -137,17 +135,15 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($this->form['items'] as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            if (in_array($modeId, [2, 3, 4])) {
-                $bidResult = $item['bidding_result'] ?? '';
-                $ntfResult = $item['ntf_bidding_result'] ?? '';
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
 
-                if ($bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL') {
+                $bidResult = $item['bidding_result'] ?? '';
+
+                if ($bidResult === 'SUCCESSFUL') {
                     return true;
                 }
             }
-
-            // Check SVP for all required fields
-            if ($modeId == 5) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
@@ -177,11 +173,10 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Fetch Schedules by ref_id (prItemID)
         $bidSchedules = BidSchedule::whereIn('ref_id', $prItemIds)->get();
-        $ntfSchedules = NtfBidSchedule::whereIn('ref_id', $prItemIds)->get();
         $prSvps = PrSvp::whereIn('ref_id', $prItemIds)->get();
 
         // Build unified schedule map keyed by prItemID and mop_uid
-        $scheduleMap = $this->buildScheduleMap($bidSchedules, $ntfSchedules, $prSvps);
+        $scheduleMap = $this->buildScheduleMap($bidSchedules, $prSvps);
 
         $this->form['items'] = [];
 
@@ -211,7 +206,6 @@ class ModeOfProcurementPerItemPage extends Component
 
     private function buildScheduleMap(
         Collection $bidSchedules,
-        Collection $ntfSchedules,
         Collection $prSvps
     ): Collection {
         $map = collect();
@@ -234,34 +228,6 @@ class ModeOfProcurementPerItemPage extends Component
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
             ];
-        }
-
-        // Merge NtfBidSchedule data
-        foreach ($ntfSchedules as $schedule) {
-            $refId = $schedule->ref_id;
-            if (!$map->has($refId)) {
-                $map[$refId] = collect();
-            }
-            $mopUid = $schedule->mop_uid;
-            $existing = $map[$refId]->get($mopUid, []);
-
-            $map[$refId][$mopUid] = array_merge($existing, [
-                'mop_uid' => $schedule->mop_uid,
-                'ib_number' => $schedule->ib_number ?? $existing['ib_number'] ?? null,
-                'pre_proc_conference' => $schedule->pre_proc_conference ?? $existing['pre_proc_conference'] ?? null,
-                'ads_post_ib' => $schedule->ads_post_ib ?? $existing['ads_post_ib'] ?? null,
-                'pre_bid_conf' => $schedule->pre_bid_conf ?? $existing['pre_bid_conf'] ?? null,
-                'eligibility_check' => $schedule->eligibility_check ?? $existing['eligibility_check'] ?? null,
-                'sub_open_bids' => $schedule->sub_open_bids ?? $existing['sub_open_bids'] ?? null,
-                'bidding_number' => $schedule->bidding_number ?? $existing['bidding_number'] ?? null,
-                'ntf_no' => $schedule->ntf_no,
-                'ntf_bidding_date' => $schedule->ntf_bidding_date,
-                'ntf_bidding_result' => $schedule->ntf_bidding_result,
-                'rfq_no' => $schedule->rfq_no,
-                'canvass_date' => $schedule->canvass_date,
-                'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
-                'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
-            ]);
         }
 
         // Merge PrSvp data
@@ -307,9 +273,6 @@ class ModeOfProcurementPerItemPage extends Component
             'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
-            'ntf_no' => $schedule['ntf_no'] ?? null,
-            'ntf_bidding_date' => $schedule['ntf_bidding_date'] ?? null,
-            'ntf_bidding_result' => $schedule['ntf_bidding_result'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
@@ -355,10 +318,6 @@ class ModeOfProcurementPerItemPage extends Component
             'bidding_date' => null,
             'bidding_result' => null,
 
-            // --- NTF ---
-            'ntf_no' => null,
-            'ntf_bidding_date' => null,
-            'ntf_bidding_result' => null,
 
             // --- SVP ---
             'rfq_no' => null,
@@ -435,10 +394,26 @@ class ModeOfProcurementPerItemPage extends Component
         // Update the item in the form array
         $this->form['items'][$this->editingIndex] = $this->editingItem;
 
+        // ✅ ADD VALIDATION BEFORE SAVING
+        $this->scheduleValidationErrors = [];
+        if (!$this->validateSchedules()) {
+            $errorMessage = implode(' ', $this->scheduleValidationErrors);
+            LivewireAlert::title('Validation Failed')
+                ->error()
+                ->text($errorMessage)
+                ->toast()
+                ->position('top-end')
+                ->show();
+
+            // Restore original value on validation failure
+            $this->mount($this->procurement);
+            return;
+        }
+
         // Save to database
         $this->saveTab1();
 
-        // Close modal
+        // Close modal only after successful save
         $this->closeEditModal();
 
         LivewireAlert::title('History Updated')
@@ -491,8 +466,7 @@ class ModeOfProcurementPerItemPage extends Component
                 continue;
             }
 
-            // Validate Bidding Schedule (Modes 2, 3, 4)
-            if (!in_array($modeId, [1, 5])) {
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
                 $hasBiddingData = !empty($item['ib_number']) ||
@@ -541,62 +515,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            // Validate NTF Schedule (Mode 4)
-            if ($modeId == 4) {
-                $existingNtfSchedule = NtfBidSchedule::where($matchCriteria)->first();
-
-                $hasNtfData = !empty($item['ib_number']) ||
-                    !empty($item['bidding_number']) ||
-                    !empty($item['pre_proc_conference']) ||
-                    !empty($item['ads_post_ib']) ||
-                    !empty($item['pre_bid_conf']) ||
-                    !empty($item['eligibility_check']) ||
-                    !empty($item['sub_open_bids']) ||
-                    !empty($item['ntf_no']) ||
-                    !empty($item['ntf_bidding_date']) ||
-                    !empty($item['ntf_bidding_result']) ||
-                    !empty($item['rfq_no']) ||
-                    !empty($item['canvass_date']) ||
-                    !empty($item['date_returned_of_canvass']) ||
-                    !empty($item['abstract_of_canvass_date']);
-
-                if ($existingNtfSchedule && !$hasNtfData) {
-                    $this->scheduleValidationErrors[] = "At least one NTF schedule field must be filled for Item {$itemNumber}.";
-                    $isValid = false;
-                }
-
-                // Validate NTF Bidding Result dependencies
-                $ntfBiddingResult = $item['ntf_bidding_result'] ?? null;
-                if (!is_null($ntfBiddingResult) && trim($ntfBiddingResult) !== '') {
-                    $missingNtfFields = [];
-
-                    // Check if Pre-Proc Conference is filled
-                    $hasPreProcConference = !empty($item['pre_proc_conference']) && trim($item['pre_proc_conference']) !== '';
-
-                    if (!$hasPreProcConference) {
-                        // If Pre-Proc Conference is not filled, require all three fields
-                        if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
-                            $missingNtfFields[] = 'Bidding #';
-                        }
-                        if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
-                            $missingNtfFields[] = 'IB No.';
-                        }
-                        if (empty($item['ntf_bidding_date']) || trim($item['ntf_bidding_date']) === '') {
-                            $missingNtfFields[] = 'NTF Bidding Date';
-                        }
-
-                        if (!empty($missingNtfFields)) {
-                            $fieldsList = implode(', ', $missingNtfFields);
-                            $this->scheduleValidationErrors[] = "Item {$itemNumber}: Cannot set NTF Bidding Result without {$fieldsList} or Pre-Proc Conference.";
-                            $isValid = false;
-                        }
-                    }
-                    // If Pre-Proc Conference is filled, allow NTF bidding result (no validation errors)
-                }
-            }
-
-            // Validate SVP (Mode 5)
-            if ($modeId == 5) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
                 $hasSvpData = !empty($item['rfq_no']) ||
@@ -806,8 +725,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         };
 
-        // BIDDING SCHEDULE (Modes 2, 3, 4)
-        if (!in_array($modeId, [1, 5])) {
+        if (in_array($modeId, [2, 3, 4, 5, 6])) {
             $hasBiddingData = !empty($itemData['ib_number']) ||
                 !empty($itemData['bidding_number']) ||
                 !empty($itemData['pre_proc_conference']) ||
@@ -849,60 +767,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        // NTF BID SCHEDULE (Mode 4)
-        if ($modeId == 4) {
-            $hasNtfData = !empty($itemData['ib_number']) ||
-                !empty($itemData['bidding_number']) ||
-                !empty($itemData['pre_proc_conference']) ||
-                !empty($itemData['ads_post_ib']) ||
-                !empty($itemData['pre_bid_conf']) ||
-                !empty($itemData['eligibility_check']) ||
-                !empty($itemData['sub_open_bids']) ||
-                !empty($itemData['ntf_no']) ||
-                !empty($itemData['ntf_bidding_date']) ||
-                !empty($itemData['ntf_bidding_result']) ||
-                !empty($itemData['rfq_no']) ||
-                !empty($itemData['canvass_date']) ||
-                !empty($itemData['date_returned_of_canvass']) ||
-                !empty($itemData['abstract_of_canvass_date']);
-
-            $existingNtfSchedule = NtfBidSchedule::where($matchCriteria)->first();
-
-            if ($hasNtfData || $existingNtfSchedule) {
-                if (!$hasNtfData && $existingNtfSchedule) {
-                    return;
-                }
-
-                $identity = $getIdentity(NtfBidSchedule::class);
-
-                $model = NtfBidSchedule::updateOrCreate(
-                    $matchCriteria,
-                    [
-                        'uid' => $identity['uid'],
-                        'ref_id' => $refId,
-                        'mop_uid' => $parentUid,
-                        'ib_number' => $itemData['ib_number'] ?? null,
-                        'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
-                        'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
-                        'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
-                        'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
-                        'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
-                        'bidding_number' => $itemData['bidding_number'] ?? null,
-                        'ntf_no' => $itemData['ntf_no'] ?? null,
-                        'ntf_bidding_date' => $this->nullableDate($itemData['ntf_bidding_date'] ?? null),
-                        'ntf_bidding_result' => $itemData['ntf_bidding_result'] ?? null,
-                        'rfq_no' => $itemData['rfq_no'] ?? null,
-                        'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
-                        'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
-                        'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
-                    ]
-                );
-                $checkStatus($model);
-            }
-        }
-
-        // PR SVP (Mode 5)
-        if ($modeId == 5) {
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
             $hasSvpData = !empty($itemData['rfq_no']) ||
                 !empty($itemData['canvass_date']) ||
                 !empty($itemData['date_returned_of_canvass']) ||
@@ -956,16 +821,15 @@ class ModeOfProcurementPerItemPage extends Component
         $postAvailableItems = array_filter($this->form['items'] ?? [], function ($item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            if (in_array($modeId, [2, 3, 4])) {
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $bidResult = $item['bidding_result'] ?? '';
-                $ntfResult = $item['ntf_bidding_result'] ?? '';
 
-                if ($bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL') {
+                if ($bidResult === 'SUCCESSFUL') {
                     return true;
                 }
             }
 
-            if ($modeId == 5) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
