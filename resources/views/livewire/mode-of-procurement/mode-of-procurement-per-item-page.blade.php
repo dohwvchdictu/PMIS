@@ -90,7 +90,7 @@
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
                                         Description</th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
                                         Mode of Procurement</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
@@ -119,9 +119,6 @@
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Result</th>
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        NTF No.</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         RFQ No.</th>
@@ -173,39 +170,43 @@
 
                                         $canAddNewMode = false;
 
-                                        if ($isHead) {
-                                            if ($modeId == 1) {
-                                                $canAddNewMode = true;
-                                            } elseif ($modeId == 5) {
-                                                $canAddNewMode = false;
-                                            } elseif (!empty($modeId)) {
-                                                $bidResult = $item['bidding_result'] ?? '';
-                                                $ntfResult = $item['ntf_bidding_result'] ?? '';
+                                        if (
+                                            in_array($modeId, [
+                                                7,
+                                                8,
+                                                9,
+                                                10,
+                                                11,
+                                                12,
+                                                13,
+                                                14,
+                                                15,
+                                                16,
+                                                17,
+                                                18,
+                                                19,
+                                                20,
+                                                21,
+                                                22,
+                                                23,
+                                            ])
+                                        ) {
+                                            $canAddNewMode = false;
+                                        } else {
+                                            $bidResult = $item['bidding_result'] ?? '';
+                                            $hasBiddingData =
+                                                !empty($item['ib_number']) &&
+                                                !empty($item['bidding_number']) &&
+                                                !empty($item['bidding_date']);
+                                            $hasPreProcConference =
+                                                !empty($item['pre_proc_conference']) &&
+                                                trim($item['pre_proc_conference']) !== '';
 
-                                                $hasBiddingData =
-                                                    !empty($item['ib_number']) && !empty($item['bidding_number']);
-
-                                                // Check if Pre-Proc Conference is filled
-                                                $hasPreProcConference =
-                                                    !empty($item['pre_proc_conference']) &&
-                                                    trim($item['pre_proc_conference']) !== '';
-
-                                                $hasSuccessfulResult =
-                                                    $bidResult === 'SUCCESSFUL' || $ntfResult === 'SUCCESSFUL';
-
-                                                $hasSvpComplete =
-                                                    !empty($item['rfq_no']) &&
-                                                    !empty($item['canvass_date']) &&
-                                                    !empty($item['date_returned_of_canvass']) &&
-                                                    !empty($item['abstract_of_canvass_date']) &&
-                                                    !empty($item['resolution_number']);
-
-                                                $canAddNewMode =
-                                                    ($hasBiddingData || $hasPreProcConference) &&
-                                                    ($bidResult === 'UNSUCCESSFUL' || $ntfResult === 'UNSUCCESSFUL') &&
-                                                    !$hasSuccessfulResult &&
-                                                    !$hasSvpComplete;
-                                            }
+                                            $canAddNewMode =
+                                                $modeId == 1 ||
+                                                (($hasBiddingData || $hasPreProcConference) &&
+                                                    $bidResult === 'UNSUCCESSFUL' &&
+                                                    !$this->isPostAvailable);
                                         }
                                     @endphp
 
@@ -298,7 +299,7 @@
                                         </td>
 
                                         {{-- Bidding Number --}}
-                                        @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
+                                        @if ($showFields && $modeId && !in_array($modeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
@@ -309,12 +310,7 @@
         : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- IB Number --}}
-                                        @if ($showFields && $modeId && !in_array($modeId, [5, 1]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="ib-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.ib_number"
@@ -364,37 +360,14 @@
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Bidding Date or NTF Bidding Date --}}
-                                        @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="bid-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @elseif ($showFields && $modeId == 4)
-                                            <td class="px-2 py-2">
-                                                <input type="date" wire:key="ntf-date-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Bidding Result or NTF Bidding Result --}}
-                                        {{-- Bidding Result or NTF Bidding Result --}}
-                                        @if ($showFields && $modeId && !in_array($modeId, [4, 5, 1]))
                                             <td class="px-2 py-2">
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
@@ -405,35 +378,20 @@
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
                                                 </select>
                                             </td>
-                                        @elseif ($showFields && $modeId == 4)
-                                            <td class="px-2 py-2">
-                                                <select wire:key="ntf-res-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_bidding_result"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @if ($disableInputs || isset($postItems[$itemIndex])) disabled @endif>
-                                                    <option value="">Select...</option>
-                                                    <option value="SUCCESSFUL">SUCCESSFUL</option>
-                                                    <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
-                                                </select>
-                                            </td>
                                         @else
                                             <td class="px-2 py-2"></td>
-                                        @endif
-
-                                        {{-- NTF No. --}}
-                                        @if ($showFields && $modeId == 4)
-                                            <td class="px-2 py-2">
-                                                <input type="text" wire:key="ntf-no-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ntf_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    placeholder="NTF-2025-001" @disabled($disableInputs)>
-                                            </td>
-                                        @else
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                         @endif
 
                                         {{-- RFQ No. --}}
-                                        @if ($showFields && in_array($modeId, [4, 5]))
+                                        @if ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
@@ -443,12 +401,7 @@
         : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="RFQ-2025-001" @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Canvass Date --}}
-                                        @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="can-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.canvass_date"
@@ -458,12 +411,7 @@
             : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Date Returned of Canvass --}}
-                                        @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ret-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.date_returned_of_canvass"
@@ -473,12 +421,7 @@
             : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Abstract of Canvass Date --}}
-                                        @if ($showFields && in_array($modeId, [4, 5]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="abs-can-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.abstract_of_canvass_date"
@@ -488,12 +431,7 @@
             : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            <td class="px-2 py-2"></td>
-                                        @endif
 
-                                        {{-- Resolution Number --}}
-                                        @if ($showFields && $modeId == 5)
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="res-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.resolution_number"
@@ -505,7 +443,13 @@
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
+
+
                                     </tr>
 
                                     @if ($isHead && $showHistory && $historyForPrItemId === $currentPrID)
@@ -533,7 +477,7 @@
 
                                                                 {{-- Mode of Procurement (now aligned) --}}
                                                                 <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
                                                                     Mode of Procurement</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
@@ -562,9 +506,6 @@
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Bidding Result</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    NTF No.</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     RFQ No.</th>
@@ -600,12 +541,11 @@
                                                             @if ($historyItems->count() > 0)
                                                                 @foreach ($historyItems as $histIndex => $historyItem)
                                                                     @php
-                                                                        $histIndex = collect($form['items'])->search(
-                                                                            function ($item) use ($historyItem) {
-                                                                                return $item['uid'] ===
-                                                                                    $historyItem['uid'];
-                                                                            },
+                                                                        $actualIndex = collect($form['items'])->search(
+                                                                            fn($item) => $item['uid'] ===
+                                                                                $historyItem['uid'],
                                                                         );
+
                                                                         $historyModeId =
                                                                             $historyItem['mode_of_procurement_id'] ??
                                                                             null;
@@ -620,7 +560,7 @@
                                                                             @else
                                                                                 <td class="px-2 py-2 align-middle">
                                                                                     <button type="button"
-                                                                                        wire:click="editHistoryItem({{ $histIndex }})"
+                                                                                        wire:click="editHistoryItem({{ $actualIndex }})"
                                                                                         class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                                                                                         title="Edit History Record">
                                                                                         <x-heroicon-o-pencil
@@ -669,15 +609,11 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bidding_date'] ?? ($historyItem['ntf_bidding_date'] ?? '-') }}
+                                                                            {{ $historyItem['bidding_date'] ?? '-' }}
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bidding_result'] ?? ($historyItem['ntf_bidding_result'] ?? '-') }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ntf_no'] ?? '-' }}
+                                                                            {{ $historyItem['bidding_result'] ?? '-' }}
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
@@ -703,7 +639,7 @@
                                                                 @endforeach
                                                             @else
                                                                 <tr>
-                                                                    <td colspan="19"
+                                                                    <td colspan="18"
                                                                         class="px-2 py-4 text-center text-gray-500">
                                                                         No history available for this item
                                                                     </td>
@@ -718,7 +654,7 @@
 
                                 @empty
                                     <tr>
-                                        <td colspan="19" class="px-2 py-4 text-center text-gray-500">
+                                        <td colspan="18" class="px-2 py-4 text-center text-gray-500">
                                             No items available
                                         </td>
                                     </tr>
@@ -739,8 +675,7 @@
                     foreach ($form['items'] ?? [] as $index => $item) {
                         $modeId = $item['mode_of_procurement_id'] ?? null;
 
-                        // Check Bidding modes (2, 3, 4)
-                        if (in_array($modeId, [2, 3, 4])) {
+                        if (in_array($modeId, [2, 3, 4, 5, 6])) {
                             $bidResult = $item['bidding_result'] ?? '';
                             $ntfResult = $item['ntf_bidding_result'] ?? '';
 
@@ -750,8 +685,7 @@
                             }
                         }
 
-                        // Check SVP (Mode 5)
-                        if ($modeId == 5) {
+                        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
                             if (
                                 !empty($item['rfq_no']) &&
                                 !empty($item['canvass_date']) &&
@@ -941,11 +875,11 @@
                     <table class="w-full text-xs min-w-max">
                         <thead class="sticky top-0 bg-gray-100 dark:bg-neutral-700 z-10">
                             <tr>
-                                <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 w-44">
                                     Mode of Procurement
                                 </th>
                                 {{-- Bidding Columns --}}
-                                @if ($editModeId && !in_array($editModeId, [5, 1]))
+                                @if ($editModeId && !in_array($editModeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 w-20">
                                         Bidding #</th>
@@ -961,31 +895,13 @@
                                         Eligibility</th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Sub/Open</th>
-                                @endif
-
-                                {{-- Bidding Date --}}
-                                @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Bidding Date</th>
-                                @elseif($editModeId == 4)
-                                    <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                        NTF Bid Date</th>
-                                @endif
-
-                                {{-- Result --}}
-                                @if ($editModeId && !in_array($editModeId, [1, 5]))
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Result</th>
                                 @endif
 
-                                {{-- NTF Specific --}}
-                                @if ($editModeId == 4)
-                                    <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                        NTF No.</th>
-                                @endif
-
-                                {{-- SVP/NTF Shared --}}
-                                @if ($editModeId && in_array($editModeId, [4, 5]))
+                                @if ($editModeId && in_array($editModeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         RFQ No.</th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
@@ -995,10 +911,6 @@
                                         Returned</th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Abstract</th>
-                                @endif
-
-                                {{-- Resolution --}}
-                                @if ($editModeId == 5)
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Resolution #</th>
                                 @endif
@@ -1019,7 +931,7 @@
                                 </td>
 
                                 {{-- Bidding Fields --}}
-                                @if ($editModeId && !in_array($editModeId, [5, 1]))
+                                @if ($editModeId && !in_array($editModeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                     <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.bidding_number"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
@@ -1048,23 +960,10 @@
                                         <input type="date" wire:model.defer="editingItem.sub_open_bids"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                @endif
-
-                                {{-- Bidding/NTF Date --}}
-                                @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
                                     <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.bidding_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                @elseif($editModeId == 4)
-                                    <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.ntf_bidding_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                    </td>
-                                @endif
-
-                                {{-- Result --}}
-                                @if ($editModeId && !in_array($editModeId, [4, 5, 1]))
                                     <td class="px-2 py-2">
                                         <select wire:model.defer="editingItem.bidding_result" disabled
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white cursor-not-allowed">
@@ -1073,27 +972,10 @@
                                             <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
                                         </select>
                                     </td>
-                                @elseif($editModeId == 4)
-                                    <td class="px-2 py-2">
-                                        <select wire:model.defer="editingItem.ntf_bidding_result" disabled
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white cursor-not-allowed">
-                                            <option value="">Select...</option>
-                                            <option value="SUCCESSFUL">SUCCESSFUL</option>
-                                            <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
-                                        </select>
-                                    </td>
-                                @endif
-
-                                {{-- NTF No --}}
-                                @if ($editModeId == 4)
-                                    <td class="px-2 py-2">
-                                        <input type="text" wire:model.defer="editingItem.ntf_no"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                    </td>
                                 @endif
 
                                 {{-- SVP/NTF Fields --}}
-                                @if ($editModeId && in_array($editModeId, [4, 5]))
+                                @if ($editModeId && in_array($editModeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]))
                                     <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.rfq_no"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
@@ -1110,10 +992,6 @@
                                         <input type="date" wire:model.defer="editingItem.abstract_of_canvass_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
-                                @endif
-
-                                {{-- Resolution --}}
-                                @if ($editModeId == 5)
                                     <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.resolution_number"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
