@@ -161,9 +161,22 @@
                                         $isHistory = !$loop->first;
 
                                         $hasSchedule =
+                                            // Bidding fields
                                             !empty($item['bidding_number']) ||
+                                            !empty($item['ib_number']) ||
+                                            !empty($item['pre_proc_conference']) ||
+                                            !empty($item['ads_post_ib']) ||
+                                            !empty($item['pre_bid_conf']) ||
+                                            !empty($item['eligibility_check']) ||
+                                            !empty($item['sub_open_bids']) ||
+                                            !empty($item['bidding_date']) ||
+                                            !empty($item['bidding_result']) ||
+                                            // SVP/Canvass fields
                                             !empty($item['rfq_no']) ||
-                                            !empty($item['canvass_date']);
+                                            !empty($item['canvass_date']) ||
+                                            !empty($item['date_returned_of_canvass']) ||
+                                            !empty($item['abstract_of_canvass_date']) ||
+                                            !empty($item['resolution_number']);
 
                                         $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
                                         $disableInputs = $isHistory;
