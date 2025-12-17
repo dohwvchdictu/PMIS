@@ -178,7 +178,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4" wire:ignore>
         <!-- Category Chart -->
         <div class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Category</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurement by Categories</h3>
             @if ($categoryCounts->isNotEmpty())
                 <div class="h-64">
                     <canvas id="categoryChart"></canvas>
@@ -192,7 +192,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" wire:ignore>
             <div
                 class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Stage</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurement by Stage</h3>
 
                 @if ($procurementStagePerLotCounts->isNotEmpty() || $procurementStagePerItemCounts->isNotEmpty())
                     <div class="h-64">
@@ -208,7 +208,7 @@
             <!-- Remarks Chart -->
             <div
                 class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Remarks</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurement by Remarks</h3>
 
                 @if ($remarksPerLotCounts->isNotEmpty() || $remarksPerItemCounts->isNotEmpty())
                     <div class="h-64">
@@ -223,7 +223,7 @@
         </div>
         <!-- Venue Specific Chart -->
         <div class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Venue Specific</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurement by Venue Specific</h3>
             @if ($venueSpecificCounts->isNotEmpty())
                 <div class="h-64">
                     <canvas id="venueSpecificChart"></canvas>
@@ -236,7 +236,7 @@
         </div>
         <!-- Venue Province/HUC Chart -->
         <div class="bg-white dark:bg-neutral-700 rounded-xl shadow border border-gray-200 dark:border-neutral-700 p-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurements by Province/HUC</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Procurement by Province/HUC</h3>
             @if ($venueProvinceHucCounts->isNotEmpty())
                 <div class="h-64">
                     <canvas id="venueProvinceHucChart"></canvas>
@@ -264,11 +264,13 @@
                 return;
             }
 
+            // ✅ Get current dark mode state
             const isDarkMode = document.documentElement.classList.contains('dark');
+            console.log('Dark mode is:', isDarkMode); // Debug log
 
             // Set global Chart.js color defaults
-            Chart.defaults.color = isDarkMode ? '#ffffff' : '#6b7280';
-            Chart.defaults.plugins.legend.labels.color = isDarkMode ? '#ffffff' : '#000000';
+            Chart.defaults.color = isDarkMode ? '#E5E7EB' : '#6b7280';
+            Chart.defaults.plugins.legend.labels.color = isDarkMode ? '#E5E7EB' : '#374151';
             Chart.defaults.plugins.tooltip.titleColor = isDarkMode ? '#ffffff' : '#000000';
             Chart.defaults.plugins.tooltip.bodyColor = isDarkMode ? '#ffffff' : '#000000';
             Chart.defaults.plugins.tooltip.backgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
@@ -318,6 +320,9 @@
 
                 if (combinedData.length === 0) return null;
 
+                // Get dark mode state at chart creation time
+                const chartIsDarkMode = document.documentElement.classList.contains('dark');
+
                 return new Chart(ctx.getContext('2d'), {
                     type: 'doughnut',
                     data: {
@@ -325,7 +330,7 @@
                         datasets: [{
                             data: combinedData,
                             backgroundColor: combinedColors,
-                            borderColor: isDarkMode ? '#374151' : '#ffffff',
+                            borderColor: chartIsDarkMode ? '#374151' : '#ffffff',
                             borderWidth: 2,
                             hoverOffset: 10
                         }]
@@ -337,7 +342,7 @@
                             legend: {
                                 position: 'right',
                                 labels: {
-                                    color: isDarkMode ? '#E5E7EB' : '#374151',
+                                    color: chartIsDarkMode ? '#E5E7EB' : '#374151',
                                     padding: 10,
                                     font: {
                                         size: 11
@@ -349,7 +354,8 @@
                                             text: `${label}: ${data.datasets[0].data[i]}`,
                                             fillStyle: data.datasets[0].backgroundColor[i],
                                             hidden: false,
-                                            index: i
+                                            index: i,
+                                            fontColor: chartIsDarkMode ? '#E5E7EB' : '#374151'
                                         }));
                                     }
                                 }
@@ -404,7 +410,7 @@
                                             size: 10
                                         },
                                         boxWidth: 12,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
+                                        color: isDarkMode ? '#E5E7EB' : '#374151'
                                     }
                                 }
                             }
@@ -466,7 +472,7 @@
                                     ticks: {
                                         maxRotation: 45,
                                         minRotation: 45,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
+                                        color: isDarkMode ? '#E5E7EB' : '#374151'
                                     },
                                     grid: {
                                         color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
@@ -476,7 +482,7 @@
                                     beginAtZero: true,
                                     ticks: {
                                         stepSize: 1,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
+                                        color: isDarkMode ? '#E5E7EB' : '#374151'
                                     },
                                     grid: {
                                         color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
@@ -517,7 +523,7 @@
                                     ticks: {
                                         maxRotation: 45,
                                         minRotation: 45,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
+                                        color: isDarkMode ? '#E5E7EB' : '#374151'
                                     },
                                     grid: {
                                         color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
@@ -527,7 +533,7 @@
                                     beginAtZero: true,
                                     ticks: {
                                         stepSize: 1,
-                                        color: isDarkMode ? '#D1D5DB' : '#374151'
+                                        color: isDarkMode ? '#E5E7EB' : '#374151'
                                     },
                                     grid: {
                                         color: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
@@ -539,7 +545,7 @@
                 }
             }
 
-            console.log('Charts initialized');
+            console.log('Charts initialized successfully');
         }
 
         // Initialize on DOM ready
@@ -558,8 +564,8 @@
         if (window.matchMedia) {
             const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
             const handleSystemThemeChange = () => {
-                console.log('System color scheme changed.');
-                initializeCharts();
+                console.log('System color scheme changed, reinitializing charts...');
+                setTimeout(initializeCharts, 100);
             };
 
             if (darkModeQuery.addEventListener) {
@@ -573,8 +579,8 @@
         const themeObserver = new MutationObserver((mutationsList) => {
             for (const mutation of mutationsList) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    console.log('HTML class attribute changed, re-initializing charts.');
-                    initializeCharts();
+                    console.log('HTML class changed, reinitializing charts...');
+                    setTimeout(initializeCharts, 100);
                 }
             }
         });

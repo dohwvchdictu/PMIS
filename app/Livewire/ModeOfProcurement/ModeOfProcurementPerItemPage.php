@@ -92,7 +92,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
@@ -143,7 +143,7 @@ class ModeOfProcurementPerItemPage extends Component
                     return true;
                 }
             }
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
@@ -515,7 +515,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
                 $hasSvpData = !empty($item['rfq_no']) ||
@@ -767,7 +767,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
             $hasSvpData = !empty($itemData['rfq_no']) ||
                 !empty($itemData['canvass_date']) ||
                 !empty($itemData['date_returned_of_canvass']) ||
@@ -829,7 +829,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])) {
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 if (
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
