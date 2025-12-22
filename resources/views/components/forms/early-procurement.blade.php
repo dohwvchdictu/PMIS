@@ -6,7 +6,7 @@
 ])
 
 @php
-    $value = data_get($attributes->wire('model')->value, $form['early_procurement'] ?? 0);
+    $value = data_get($form, 'early_procurement', false);
 @endphp
 
 <div class="flex flex-col col-span-4">
