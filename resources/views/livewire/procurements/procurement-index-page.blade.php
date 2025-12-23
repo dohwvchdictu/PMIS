@@ -87,52 +87,51 @@
     <div class="overflow-auto flex-1">
         <table class="table-fixed w-full min-w-[1200px] divide-y divide-gray-200 dark:divide-neutral-700">
             <thead
-                class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-20">
+                class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-10">
                 <tr>
-                    <th
-                        class="px-2 py-3 sticky left-0 z-40 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 w-12">
+                    <th class="px-2 py-1 sticky left-0 z-40 bg-gray-100 dark:bg-neutral-900 w-12">
                     </th>
 
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[48px] z-30 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 w-40">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[48px] z-30 bg-gray-100 dark:bg-neutral-900 w-40">
                         PR Number
                     </th>
 
                     <th
-                        class="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[208px] z-20 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 w-80">
+                        class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[208px] z-20 bg-gray-100 dark:bg-neutral-900 w-80">
                         Procurement Program / Project
                     </th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
                         Stage
                     </th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
                         Remarks
                     </th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                         Date Receipt</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-24">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-24">
                         BAC Category</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-20">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-20">
                         Division</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
                         Cluster / Committee</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
                         Category</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                         Early Procurement</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
                         Source of Funds</th>
                     <th
-                        class="px-1 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
                         ABC Amount</th>
                 </tr>
             </thead>
@@ -204,7 +203,7 @@
                                                             class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 text-blue-600 dark:text-blue-400 transition-all duration-150 group/item">
                                                             <x-heroicon-o-eye
                                                                 class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                            <span class="font-medium">View Details</span>
+                                                            <span class="font-medium">View</span>
                                                         </button>
                                                     </li>
                                                 @endcan
@@ -221,7 +220,7 @@
                                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                                         d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Zm3.75 11.625a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                                                                 </svg>
-                                                                <span class="font-medium">View PR File</span>
+                                                                <span class="font-medium">View PR</span>
                                                             </a>
                                                         </li>
                                                     @endif
@@ -294,7 +293,7 @@
                         </td>
 
                         <td
-                            class="px-3 py-4 text-left text-sm sticky left-[208px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
+                            class="px-3 py-4 text-left text-xs sticky left-[208px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
                             <div class="font-medium break-words whitespace-normal"
                                 title="{{ $procurement->procurement_program_project }}">
                                 {{ $procurement->procurement_program_project }}
