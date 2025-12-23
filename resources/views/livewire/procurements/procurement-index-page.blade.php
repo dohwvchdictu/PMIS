@@ -1,64 +1,85 @@
 <div
     class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col">
 
-    <!-- Enhanced Header Section -->
-    <div
-        class="sticky top-0 z-20 bg-gradient-to-r from-white to-gray-50 dark:from-neutral-800 dark:to-neutral-900 px-6 py-4 border-b border-gray-200 dark:border-neutral-700 w-full">
-
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <!-- Filter Section -->
-            <div class="flex items-center gap-2 flex-wrap">
-                <!-- Search Input with Enhanced Styling -->
-                <div class="relative group">
-                    <input type="text" wire:model.live="search" placeholder="Search Procurements..."
-                        class="px-4 py-2.5 pl-10 border border-gray-300 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600 dark:placeholder-gray-400" />
-                    <svg class="absolute left-3 top-3 text-gray-400 dark:text-gray-500 group-focus-within:text-emerald-500 transition-colors"
-                        width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 21l-4.35-4.35" />
-                        <circle cx="10" cy="10" r="7" />
-                    </svg>
-                </div>
-
-                <!-- Filter Dropdowns with Enhanced Styling -->
-                <div class="relative group w-40">
-                    <x-forms.searchable-select wire:model.live="divisionFilter" :options="$divisions"
-                        labelKey="abbreviation" valueKey="id" placeholder="Division" />
-                </div>
-
-                <div class="relative group w-60">
-                    <x-forms.searchable-select wire:model.live="clusterCommitteeFilter" :options="$clusterCommittees"
-                        labelKey="clustercommittee" valueKey="id" placeholder="Cluster" />
-                </div>
-
-                <div class="relative group w-80">
-                    <x-forms.searchable-select wire:model.live="endUserFilter" :options="$endUsers" labelKey="endusers"
-                        valueKey="id" placeholder="End User" />
-                </div>
-
-                <div class="relative group w-48">
-                    <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources"
-                        labelKey="fundsources" valueKey="id" placeholder="Fund Source" />
-                </div>
-
-                <div class="relative group w-40">
-                    <x-forms.searchable-select wire:model.live="remarkFilter" :options="$remarks" labelKey="remarks"
-                        valueKey="id" placeholder="Remarks" />
-                </div>
+    <!-- Enhanced Header with Expandable Filters -->
+    <div class="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 w-full"
+        x-data="{ showFilters: false }">
+        <!-- Single Row: Search, Filters, Add Button -->
+        <div class="px-6 py-4 flex items-center justify-between gap-4">
+            <!-- Search Bar -->
+            <div class="relative flex-1 max-w-md">
+                <input type="text" wire:model.live="search" placeholder="Search procurements..."
+                    class="w-full px-4 py-2.5 pl-10 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-800 dark:text-white dark:border-neutral-600 dark:placeholder-gray-400" />
+                <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
             </div>
 
-            <!-- Action Button -->
-            @can('create_procurement')
-                <a href="{{ route('procurements.create') }}"
-                    class="py-2.5 px-4 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md dark:focus:ring-offset-neutral-800">
-                    <svg class="shrink-0 size-4" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
+            <!-- Filter Toggle & Add Button -->
+            <div class="flex items-center gap-2">
+                <button @click="showFilters = !showFilters"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200"
+                    :class="showFilters ?
+                        'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300' :
+                        'bg-gray-100 dark:bg-neutral-700 border-gray-200 dark:border-neutral-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
-                    New Procurement
-                </a>
-            @endcan
+                    <span>Filters</span>
+                </button>
+                @can('create_procurement')
+                    <a href="{{ route('procurements.create') }}"
+                        class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-sm hover:shadow">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add
+                    </a>
+                @endcan
+            </div>
+        </div>
+
+        <!-- Expandable Filters Section -->
+        <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-96"
+            x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 max-h-96"
+            x-transition:leave-end="opacity-0 max-h-0"
+            class="relative z-40 overflow-visible border-t border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900/50">
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div class="relative z-50">
+                        <label
+                            class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Division</label>
+                        <x-forms.searchable-select wire:model.live="divisionFilter" :options="$divisions"
+                            labelKey="abbreviation" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Cluster</label>
+                        <x-forms.searchable-select wire:model.live="clusterCommitteeFilter" :options="$clusterCommittees"
+                            labelKey="clustercommittee" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">End
+                            User</label>
+                        <x-forms.searchable-select wire:model.live="endUserFilter" :options="$endUsers" labelKey="endusers"
+                            valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Fund
+                            Source</label>
+                        <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources"
+                            labelKey="fundsources" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Remarks</label>
+                        <x-forms.searchable-select wire:model.live="remarkFilter" :options="$remarks" labelKey="remarks"
+                            valueKey="id" placeholder="All" />
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -78,7 +99,7 @@
                     </th>
 
                     <th
-                        class="px-1 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[208px] z-20 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 w-80">
+                        class="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[208px] z-20 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 w-80">
                         Procurement Program / Project
                     </th>
                     <th
@@ -122,7 +143,7 @@
                     <tr
                         class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-gray-50/50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 transition-all duration-200 group">
                         <td
-                            class="px-1 py-4 text-center sticky left-0 z-40 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white">
+                            class="px-1 py-4 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white">
                             <div class="flex items-center justify-center gap-1">
                                 <!-- Enhanced Expand/Collapse Button -->
                                 @if ($procurement->procurement_type === 'perItem')
@@ -140,7 +161,8 @@
                                             <svg xmlns="http://www.w3.org/2000/svg"
                                                 class="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none"
                                                 viewBox="0 0 22 22" stroke="currentColor" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M9 5l7 7-7 7" />
                                             </svg>
                                         @endif
                                     </button>
@@ -264,7 +286,7 @@
                         </td>
 
                         <td
-                            class="px-2 py-4 text-center text-sm font-bold sticky left-[48px] z-30 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
+                            class="px-2 py-4 text-center text-sm font-bold sticky left-[48px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
                             <span
                                 class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs">
                                 {{ $procurement->pr_number }}

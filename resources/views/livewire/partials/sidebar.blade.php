@@ -4,10 +4,10 @@
             transition-all duration-100 transform
             w-55 h-full
             hidden
-            fixed inset-y-0 start-0 z-40
-            bg-white border-e border-white
+            fixed inset-y-0 start-0 z-70
+            bg-white
             lg:block lg:translate-x-0 lg:end-auto lg:bottom-0
-            dark:bg-neutral-800 dark:border-neutral-700"
+            dark:bg-neutral-800"
     role="dialog" tabindex="-1" aria-label="Sidebar">
 
     <div class="flex flex-col h-full">

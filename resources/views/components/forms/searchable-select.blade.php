@@ -90,7 +90,7 @@
                     :class="{ 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200': selected ==
                             option['{{ $valueKey }}'] }">
 
-                    <span x-text="option['{{ $labelKey }}']" class="block truncate font-normal"></span>
+                    <span x-text="option['{{ $labelKey }}']" class="block break-words whitespace-normal font-normal"></span>
 
                     <span x-show="selected == option['{{ $valueKey }}']"
                         class="absolute inset-y-0 right-0 flex items-center pr-4 text-emerald-600 dark:text-emerald-400">

@@ -1,6 +1,6 @@
-<div class="fixed top-0 inset-x-0 z-30 pt-20 ">
+<div class="fixed top-0 inset-x-0 z-60 pt-20 ">
     <header
-        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-b border-gray-200 text-sm py-2.5 lg:ps-55 dark:bg-neutral-800 dark:border-neutral-700">
+        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-gray-200 text-sm py-2.5 lg:ps-55 dark:bg-emerald-600 ">
         <nav class="px-4 sm:px-6 flex basis-full items-center w-full mx-auto">
             <div class="me-5 lg:me-0 lg:hidden">
                 <!-- Logo -->
