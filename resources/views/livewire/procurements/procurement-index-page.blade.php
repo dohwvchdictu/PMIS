@@ -49,7 +49,7 @@
             x-transition:leave-end="opacity-0 max-h-0"
             class="relative z-40 overflow-visible border-t border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900/50">
             <div class="px-6 py-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                     <div class="relative z-50">
                         <label
                             class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Division</label>
@@ -77,6 +77,16 @@
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Remarks</label>
                         <x-forms.searchable-select wire:model.live="remarkFilter" :options="$remarks" labelKey="remarks"
                             valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Early
+                            Procurement</label>
+                        <select wire:model.live="earlyProcurementFilter"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            <option value="">All</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
                     </div>
                 </div>
             </div>

@@ -39,7 +39,7 @@
                         <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                     transition-all duration-200 border-l-4
                     {{ request()->routeIs('dashboard')
-                        ? 'bg-emerald-50 text-emerald-700 border-l-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-l-emerald-400'
+                        ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
                         : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
                             href="{{ route('dashboard') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -61,7 +61,7 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('procurements.*')
-                            ? 'bg-emerald-50 text-emerald-700 border-l-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-l-emerald-400'
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
                             : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
                                 href="{{ route('procurements.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -79,7 +79,7 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('bac-approved-pr.*')
-                            ? 'bg-emerald-50 text-emerald-700 border-l-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-l-emerald-400'
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
                             : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
                                 href="{{ route('bac-approved-pr.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -91,7 +91,7 @@
                                         d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V9.375Zm9.586 4.594a.75.75 0 0 0-1.172-.938l-2.476 3.096-.908-.907a.75.75 0 0 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.116-.062l3-3.75Z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                <span>Approved PR</span>
+                                <span>BAC Approved PR</span>
                             </a>
                         </li>
                     @endcan
@@ -101,7 +101,7 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('schedule-for-procurement.*')
-                            ? 'bg-emerald-50 text-emerald-700 border-l-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-l-emerald-400'
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
                             : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
                                 href="{{ route('schedule-for-procurement.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -123,7 +123,7 @@
                             <a class="w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                             transition-all duration-200 border-l-4
                             {{ request()->routeIs('mode-of-procurement.*')
-                                ? 'bg-emerald-50 text-emerald-700 border-l-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-l-emerald-400'
+                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
                                 : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
                                 href="{{ route('mode-of-procurement.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
