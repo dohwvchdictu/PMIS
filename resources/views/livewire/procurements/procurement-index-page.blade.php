@@ -99,16 +99,16 @@
             <thead
                 class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-10">
                 <tr>
-                    <th class="px-2 py-1 sticky left-0 z-40 bg-gray-100 dark:bg-neutral-900 w-12">
+                    <th class="px-2 py-1 sticky left-0 z-40 bg-gray-100 dark:bg-neutral-900 w-16">
                     </th>
 
                     <th
-                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[48px] z-30 bg-gray-100 dark:bg-neutral-900 w-40">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[64px] z-30 bg-gray-100 dark:bg-neutral-900 w-40">
                         PR Number
                     </th>
 
                     <th
-                        class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[208px] z-20 bg-gray-100 dark:bg-neutral-900 w-80">
+                        class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[224px] z-20 bg-gray-100 dark:bg-neutral-900 w-80">
                         Procurement Program / Project
                     </th>
                     <th
@@ -152,8 +152,8 @@
                     <tr
                         class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-gray-50/50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 transition-all duration-200 group">
                         <td
-                            class="px-1 py-4 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white">
-                            <div class="flex items-center justify-center gap-1">
+                            class="py-4 pr-2 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white w-20">
+                            <div class="flex items-center justify-end gap-1">
                                 <!-- Enhanced Expand/Collapse Button -->
                                 @if ($procurement->procurement_type === 'perItem')
                                     <button type="button"
@@ -295,7 +295,7 @@
                         </td>
 
                         <td
-                            class="px-2 py-4 text-center text-sm font-bold sticky left-[48px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
+                            class="px-2 py-4 text-center text-sm font-bold sticky left-[64px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
                             <span
                                 class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
                                 {{ $procurement->pr_number }}
@@ -303,7 +303,7 @@
                         </td>
 
                         <td
-                            class="px-3 py-4 text-left text-xs sticky left-[208px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
+                            class="px-3 py-4 text-left text-xs sticky left-[224px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
                             <div class="font-medium break-words whitespace-normal"
                                 title="{{ $procurement->procurement_program_project }}">
                                 {{ $procurement->procurement_program_project }}
