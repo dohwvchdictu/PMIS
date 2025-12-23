@@ -2,100 +2,120 @@
     <div
         class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col">
 
+        <!-- Enhanced Header -->
         <div
-            class="sticky top-0 z-20 bg-white px-6 py-4 grid gap-3 md:flex md:justify-between md:items-center border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 w-full">
-            <div class="flex items-center gap-x-2">
-                <div class="relative">
+            class="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 w-full">
+            <!-- Single Row: Search and Add Button -->
+            <div class="px-6 py-4 flex items-center justify-between gap-4">
+                <!-- Search Bar -->
+                <div class="relative flex-1 max-w-md">
                     <input type="text" wire:model.live.debounce.300ms="search"
                         placeholder="Search by IB No. or Project Name..."
-                        class="px-4 py-2 border border-gray-300 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700" />
-                    <svg class="absolute right-3 top-2.5 text-gray-500 dark:text-white" width="20" height="20"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M21 21l-4.35-4.35" />
-                        <circle cx="10" cy="10" r="7" />
+                        class="w-full px-4 py-2.5 pl-10 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-800 dark:text-white dark:border-neutral-600 dark:placeholder-gray-400" />
+                    <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
 
+                <!-- Schedule Button -->
+                <div class="flex items-center gap-2">
+                    @can('create_schedule::for::procurement')
+                        <button type="button" @click="showTypeModal = true"
+                            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-sm hover:shadow">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Schedule
+                        </button>
+                    @endcan
+                </div>
             </div>
-            @can('create_schedule::for::procurement')
-                <button type="button" @click="showTypeModal = true"
-                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700">
-                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                    </svg>
-                    Schedule
-                </button>
-            @endcan
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Enhanced Table Section -->
+        <div class="overflow-auto flex-1">
             <table class="table-fixed w-full min-w-[1100px] divide-y divide-gray-200 dark:divide-neutral-700">
-                <thead class="bg-gray-200 dark:bg-neutral-900 sticky top-0 z-20">
+                <thead
+                    class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-10">
                     <tr>
-                        <th class="px-2 py-2 sticky left-0 z-30 bg-gray-200 dark:bg-neutral-900 w-10"></th>
+                        <th class="px-2 py-1 sticky left-0 z-40 bg-gray-100 dark:bg-neutral-900 w-12"></th>
 
                         <th
-                            class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase sticky left-[32px] z-30 bg-gray-200 dark:bg-neutral-900 w-32">
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[48px] z-30 bg-gray-100 dark:bg-neutral-900 w-44">
                             IB Number
                         </th>
                         <th
-                            class="px-1 py-1 text-left text-xs font-medium text-black dark:text-white uppercase sticky left-[160px] z-30 bg-gray-200 dark:bg-neutral-900 w-28">
+                            class="px-1 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[224px] z-20 bg-gray-100 dark:bg-neutral-900 w-32">
                             Opening of Bids
                         </th>
                         <th
-                            class="px-1 py-1 text-left text-xs font-medium text-black dark:text-white uppercase sticky left-[272px] z-30 bg-gray-200 dark:bg-neutral-900 w-sm">
+                            class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[352px] z-20 bg-gray-100 dark:bg-neutral-900 w-sm">
                             Name of Project
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             Framework
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-34">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-34">
                             Bidding Status
                         </th>
 
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             ABC Amount
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             2%
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             5%
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             30%
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-28">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                             Action Taken
                         </th>
-                        <th class="px-1 py-1 text-center text-xs font-medium text-black dark:text-white uppercase w-32">
+                        <th
+                            class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
                             Next Bidding
                         </th>
                     </tr>
                 </thead>
 
-                <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
+                <tbody class="bg-white dark:bg-neutral-800">
                     @forelse ($schedules as $schedule)
-                        <tr wire:key="schedule-{{ $schedule->id }}">
+                        <tr wire:key="schedule-{{ $schedule->id }}"
+                            class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-gray-50/50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 transition-all duration-200 group">
                             {{-- Col 1: Actions --}}
                             <td
-                                class="px-2 py-2 text-center sticky left-0 bg-white text-black dark:text-white dark:bg-neutral-800">
+                                class="px-1 py-4 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white">
                                 <div x-data="{ open: false }" class="relative inline-block" x-ref="menuWrapper">
                                     <button @click="open = !open" @click.away="open = false"
-                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-neutral-700 focus:outline-none">
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            stroke-width="2" stroke="currentColor"
+                                            class="size-5 text-gray-600 dark:text-gray-300">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                 d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
                                         </svg>
                                     </button>
                                     <template x-teleport="body">
-                                        <div x-show="open" x-transition @click.away="open = false"
-                                            class="absolute z-[9999] bg-white border border-gray-200 rounded shadow-lg dark:bg-neutral-800 dark:border-neutral-700"
+                                        <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                            x-transition:enter-start="transform opacity-0 scale-95"
+                                            x-transition:enter-end="transform opacity-100 scale-100"
+                                            x-transition:leave="transition ease-in duration-75"
+                                            x-transition:leave-start="transform opacity-100 scale-100"
+                                            x-transition:leave-end="transform opacity-0 scale-95"
+                                            @click.away="open = false"
+                                            class="absolute z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl dark:bg-neutral-800 dark:border-neutral-700 min-w-[180px] overflow-hidden"
                                             x-ref="dropdown" x-init="$watch('open', value => {
                                                 if (value) {
                                                     let rect = $refs.menuWrapper.getBoundingClientRect();
@@ -108,7 +128,7 @@
                                                     <li>
                                                         <a href="{{ $schedule->google_drive_link }}" target="_blank"
                                                             rel="noopener noreferrer"
-                                                            class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-green-600">
+                                                            class="w-full flex items-center gap-1 text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 text-green-600">
 
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -129,8 +149,14 @@
                                                             'page' => $schedules->currentPage(),
                                                         ]) }}"
                                                             @click="open = false"
-                                                            class="w-full flex items-center gap-1 text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
-                                                            <x-heroicon-o-pencil class="w-4 h-4 text-amber-600" /> Edit
+                                                            class="w-full flex items-center gap-1 text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 text-amber-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                                class="w-4 h-4">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 9.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                                                            </svg>
+                                                            Edit
                                                         </a>
                                                     </li>
                                                 @endcan
@@ -140,75 +166,124 @@
                                 </div>
                             </td>
                             <td
-                                class="px-1 py-1 text-center text-sm sticky left-[32px] z-10 bg-white dark:bg-neutral-800 text-black dark:text-white">
-                                {{ $schedule->ib_number }}
+                                class="px-2 py-4 text-center text-sm font-bold sticky left-[48px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
+                                    {{ $schedule->ib_number }}
+                                </span>
                             </td>
                             <td
-                                class="px-1 py-1 text-center text-sm sticky left-[160px] z-10 bg-white dark:bg-neutral-800 text-black dark:text-white">
+                                class="px-3 py-4 text-center text-sm sticky left-[224px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
                                 {{ optional($schedule->opening_of_bids)->format('M d, Y') }}
                             </td>
                             <td
-                                class="px-1 py-1 text-left text-sm sticky left-[272px] z-10 bg-white dark:bg-neutral-800 text-black dark:text-white">
-                                {{ $schedule->project_name }}
+                                class="px-3 py-4 text-left text-sm sticky left-[352px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100">
+                                <div class="font-medium break-words whitespace-normal"
+                                    title="{{ $schedule->project_name }}">
+                                    {{ $schedule->project_name }}
+                                </div>
                             </td>
-                            <td class="px-1 py-1 text-center text-sm text-black dark:text-neutral-200">
+                            <td
+                                class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-neutral-200">
                                 @if ($schedule->is_framework)
-                                    <x-heroicon-s-check-circle title="Yes"
-                                        class="h-5 w-5 text-emerald-600 mx-auto" />
+                                    <div
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+                                        <x-heroicon-s-check-circle title="Yes"
+                                            class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                        <span
+                                            class="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
+                                    </div>
                                 @else
-                                    <x-heroicon-s-x-circle title="No" class="h-5 w-5 text-red-600 mx-auto" />
+                                    <div
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
+                                        <x-heroicon-s-x-circle title="No"
+                                            class="h-4 w-4 text-red-600 dark:text-red-400" />
+                                        <span class="text-xs font-medium text-red-700 dark:text-red-300">No</span>
+                                    </div>
                                 @endif
                             </td>
                             @php
                                 $status = $schedule->biddingStatus?->name ?? '';
 
                                 $statusColor = match (true) {
-                                    $status === 'Awarded' => 'bg-lime-700 text-white',
-                                    str_contains($status, 'Failed') => 'bg-red-700 text-white',
-                                    str_contains($status, 'For Checking') => 'bg-rose-200 text-black',
+                                    $status === 'Awarded'
+                                        => 'from-lime-100 to-lime-200 text-lime-800 border-lime-300 dark:from-lime-900/40 dark:to-lime-800/40 dark:text-lime-200 dark:border-lime-700',
+                                    str_contains($status, 'Failed')
+                                        => 'from-red-100 to-red-200 text-red-800 border-red-300 dark:from-red-900/40 dark:to-red-800/40 dark:text-red-200 dark:border-red-700',
+                                    str_contains($status, 'For Checking')
+                                        => 'from-rose-100 to-rose-200 text-rose-800 border-rose-300 dark:from-rose-900/40 dark:to-rose-800/40 dark:text-rose-200 dark:border-rose-700',
                                     str_contains($status, 'On Hold') || str_contains($status, 'On-Hold')
-                                        => 'bg-black text-white',
-                                    $status === 'For Posting' => 'bg-blue-800 text-white',
-                                    $status === 'Posted' => 'bg-sky-300 text-black',
-                                    str_contains($status, 'Evaluation') => 'bg-rose-300 text-black',
+                                        => 'from-slate-100 to-slate-200 text-slate-800 border-slate-300 dark:from-slate-900/40 dark:to-slate-800/40 dark:text-slate-200 dark:border-slate-700',
+                                    $status === 'For Posting'
+                                        => 'from-blue-100 to-blue-200 text-blue-800 border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700',
+                                    $status === 'Posted'
+                                        => 'from-sky-100 to-sky-200 text-sky-800 border-sky-300 dark:from-sky-900/40 dark:to-sky-800/40 dark:text-sky-200 dark:border-sky-700',
+                                    str_contains($status, 'Evaluation')
+                                        => 'from-orange-100 to-orange-200 text-orange-800 border-orange-300 dark:from-orange-900/40 dark:to-orange-800/40 dark:text-orange-200 dark:border-orange-700',
                                     $status === 'For Bid Docs' || $status === 'For Biddocs'
-                                        => 'bg-yellow-400 text-black',
-                                    str_contains($status, 'Post-Qualified') => 'bg-green-200 text-black',
-                                    $status === 'Partially Awarded' => 'bg-lime-400 text-black',
-                                    default => 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white',
+                                        => 'from-amber-100 to-amber-200 text-amber-800 border-amber-300 dark:from-amber-900/40 dark:to-amber-800/40 dark:text-amber-200 dark:border-amber-700',
+                                    str_contains($status, 'Post-Qualified')
+                                        => 'from-emerald-100 to-emerald-200 text-emerald-800 border-emerald-300 dark:from-emerald-900/40 dark:to-emerald-800/40 dark:text-emerald-200 dark:border-emerald-700',
+                                    $status === 'Partially Awarded'
+                                        => 'from-green-100 to-green-200 text-green-800 border-green-300 dark:from-green-900/40 dark:to-green-800/40 dark:text-green-200 dark:border-green-700',
+                                    default
+                                        => 'from-gray-100 to-gray-200 text-gray-800 border-gray-300 dark:from-neutral-700 dark:to-neutral-600 dark:text-gray-200 dark:border-neutral-600',
                                 };
                             @endphp
 
-                            <td class="px-1 py-1 text-center text-sm">
+                            <td
+                                class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold {{ $statusColor }}">
+                                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r {{ $statusColor }} border shadow-sm">
                                     {{ $status }}
                                 </span>
                             </td>
 
 
-                            <td class="px-1 py-1 text-right text-sm text-black dark:text-neutral-200">
-                                ₱ {{ number_format($schedule->ABC, 2) }}
+                            <td
+                                class="px-3 py-4 text-right text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
+                                <div class="inline-flex items-baseline gap-0.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                    <span
+                                        class="text-emerald-700 dark:text-emerald-400">{{ number_format($schedule->ABC, 2) }}</span>
+                                </div>
                             </td>
-                            <td class="px-1 py-1 text-right text-sm text-black dark:text-neutral-200">
-                                ₱ {{ number_format($schedule->two_percent, 2) }}
+                            <td
+                                class="px-3 py-4 text-right text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
+                                <div class="inline-flex items-baseline gap-0.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                    <span
+                                        class="text-emerald-700 dark:text-emerald-400">{{ number_format($schedule->two_percent, 2) }}</span>
+                                </div>
                             </td>
-                            <td class="px-1 py-1 text-right text-sm text-black dark:text-neutral-200">
-                                ₱ {{ number_format($schedule->five_percent, 2) }}
+                            <td
+                                class="px-3 py-4 text-right text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
+                                <div class="inline-flex items-baseline gap-0.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                    <span
+                                        class="text-emerald-700 dark:text-emerald-400">{{ number_format($schedule->five_percent, 2) }}</span>
+                                </div>
                             </td>
-                            <td class="px-1 py-1 text-right text-sm text-black dark:text-neutral-200">
-                                ₱ {{ number_format($schedule->thirty_percent, 2) }}
+                            <td
+                                class="px-3 py-4 text-right text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
+                                <div class="inline-flex items-baseline gap-0.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                    <span
+                                        class="text-emerald-700 dark:text-emerald-400">{{ number_format($schedule->thirty_percent, 2) }}</span>
+                                </div>
                             </td>
-                            <td class="px-1 py-1 text-center text-sm text-black dark:text-neutral-200">
+                            <td
+                                class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
                                 {{ $schedule->action_taken }}
                             </td>
-                            <td class="px-1 py-1 text-center text-sm text-black dark:text-neutral-200">
+                            <td
+                                class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
                                 {{ optional($schedule->next_bidding_schedule)->format('M d, Y') }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="text-center py-10 text-gray-500">
+                            <td colspan="12" class="text-center py-4 text-gray-500 dark:text-neutral-400">
                                 No bidding schedules found.
                             </td>
                         </tr>
@@ -217,28 +292,36 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Enhanced Footer Pagination -->
         <div
-            class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full p-2 border-t border-gray-200 dark:border-neutral-700 gap-2 sm:gap-4">
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full p-4 border-t border-gray-200 dark:border-neutral-700 gap-3 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-900 dark:to-neutral-800">
 
-            {{-- Left: Per-page selector --}}
-            <div class="flex items-center gap-x-2 sm:justify-start w-full sm:w-auto">
-                <label for="perPage" class="text-xs text-gray-600 dark:text-gray-300">Show</label>
+            <!-- Left: Per-page selector -->
+            <div class="flex items-center gap-x-2">
+                <label for="perPage" class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
                 <select id="perPage" wire:model.live="perPage"
-                    class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-700">
+                    class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
                     <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
                     <option value="100">100</option>
                 </select>
+                <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
             </div>
 
-            {{-- Center: Summary + Pagination --}}
-            <div class="flex flex-col items-center justify-center w-full">
-                <div class="text-xs text-gray-500 text-center">
-                    Showing {{ $schedules->firstItem() }} to {{ $schedules->lastItem() }} of
-                    {{ $schedules->total() }} items
+            <!-- Center: Summary + Pagination -->
+            <div class="flex flex-col items-center justify-center gap-3 flex-1">
+                <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Showing <span
+                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $schedules->firstItem() }}</span>
+                    to
+                    <span
+                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $schedules->lastItem() }}</span>
+                    of
+                    <span
+                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $schedules->total() }}</span>
+                    items
                 </div>
                 <div class="flex justify-center">
                     {{ $schedules->links('vendor.pagination.tailwind') }}

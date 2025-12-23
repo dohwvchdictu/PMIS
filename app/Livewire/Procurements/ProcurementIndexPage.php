@@ -11,7 +11,7 @@ use App\Models\Division;
 use App\Models\ClusterCommittee;
 use App\Models\EndUser;
 use App\Models\FundSource;
-use App\Models\Remark; // Add this import
+use App\Models\Remark;
 
 class ProcurementIndexPage extends Component
 {
@@ -28,7 +28,8 @@ class ProcurementIndexPage extends Component
         'clusterCommitteeFilter' => ['except' => ''],
         'endUserFilter' => ['except' => ''],
         'fundSourceFilter' => ['except' => ''],
-        'remarkFilter' => ['except' => ''], // Add this
+        'remarkFilter' => ['except' => ''],
+        'earlyProcurementFilter' => ['except' => ''], // Add this
     ];
     protected $paginationTheme = 'tailwind';
 
@@ -40,7 +41,8 @@ class ProcurementIndexPage extends Component
     public $clusterCommitteeFilter = '';
     public $endUserFilter = '';
     public $fundSourceFilter = '';
-    public $remarkFilter = ''; // Add this
+    public $remarkFilter = '';
+    public $earlyProcurementFilter = ''; // Add this
 
     // Modal
     public $showModal = false;
@@ -62,7 +64,7 @@ class ProcurementIndexPage extends Component
     public $venueProvinces = [];
     public $endUsers = [];
     public $fundSources = [];
-    public $remarks = []; // Add this
+    public $remarks = [];
 
     public function mount()
     {
@@ -87,7 +89,7 @@ class ProcurementIndexPage extends Component
     public function loadFilterOptions()
     {
         // If no filters applied, show all options
-        if (!$this->divisionFilter && !$this->clusterCommitteeFilter && !$this->endUserFilter && !$this->fundSourceFilter && !$this->remarkFilter) {
+        if (!$this->divisionFilter && !$this->clusterCommitteeFilter && !$this->endUserFilter && !$this->fundSourceFilter && !$this->remarkFilter && !$this->earlyProcurementFilter) {
             $this->divisions = Division::orderBy('abbreviation')->get();
             $this->clusterCommittees = ClusterCommittee::orderBy('clustercommittee')->get();
             $this->endUsers = EndUser::orderBy('endusers')->get();
@@ -117,6 +119,9 @@ class ProcurementIndexPage extends Component
                 });
             });
         }
+        if ($this->earlyProcurementFilter !== '') {
+            $divisionQuery->where('early_procurement', $this->earlyProcurementFilter);
+        }
         $divisionIds = $divisionQuery->distinct()->pluck('divisions_id')->filter();
         $this->divisions = Division::whereIn('id', $divisionIds)->orderBy('abbreviation')->get();
 
@@ -139,6 +144,9 @@ class ProcurementIndexPage extends Component
                     $subQ->where('remarks_id', $this->remarkFilter);
                 });
             });
+        }
+        if ($this->earlyProcurementFilter !== '') {
+            $clusterQuery->where('early_procurement', $this->earlyProcurementFilter);
         }
         $clusterIds = $clusterQuery->distinct()->pluck('cluster_committees_id')->filter();
         $this->clusterCommittees = ClusterCommittee::whereIn('id', $clusterIds)->orderBy('clustercommittee')->get();
@@ -163,6 +171,9 @@ class ProcurementIndexPage extends Component
                 });
             });
         }
+        if ($this->earlyProcurementFilter !== '') {
+            $endUserQuery->where('early_procurement', $this->earlyProcurementFilter);
+        }
         $endUserIds = $endUserQuery->distinct()->pluck('end_users_id')->filter();
         $this->endUsers = EndUser::whereIn('id', $endUserIds)->orderBy('endusers')->get();
 
@@ -186,6 +197,9 @@ class ProcurementIndexPage extends Component
                 });
             });
         }
+        if ($this->earlyProcurementFilter !== '') {
+            $fundQuery->where('early_procurement', $this->earlyProcurementFilter);
+        }
         $fundIds = $fundQuery->distinct()->pluck('fund_source_id')->filter();
         $this->fundSources = FundSource::whereIn('id', $fundIds)->orderBy('fundsources')->get();
 
@@ -202,6 +216,9 @@ class ProcurementIndexPage extends Component
         }
         if (!empty($this->fundSourceFilter)) {
             $remarkQuery->where('fund_source_id', $this->fundSourceFilter);
+        }
+        if ($this->earlyProcurementFilter !== '') {
+            $remarkQuery->where('early_procurement', $this->earlyProcurementFilter);
         }
 
         // Get remark IDs from both lot and item remarks
@@ -306,7 +323,13 @@ class ProcurementIndexPage extends Component
         $this->loadFilterOptions();
     }
 
-    public function updatedRemarkFilter() // Add this method
+    public function updatedRemarkFilter()
+    {
+        $this->resetPage();
+        $this->loadFilterOptions();
+    }
+
+    public function updatedEarlyProcurementFilter() // Add this method
     {
         $this->resetPage();
         $this->loadFilterOptions();
@@ -322,7 +345,8 @@ class ProcurementIndexPage extends Component
         $this->clusterCommitteeFilter = '';
         $this->endUserFilter = '';
         $this->fundSourceFilter = '';
-        $this->remarkFilter = ''; // Add this
+        $this->remarkFilter = '';
+        $this->earlyProcurementFilter = ''; // Add this
         $this->resetPage();
         $this->loadFilterOptions(); // Reload all options
     }
@@ -342,9 +366,9 @@ class ProcurementIndexPage extends Component
                 'clusterCommittee',
                 'endUser',
                 'fundSource',
-                'currentLotRemark.remark', // Add this
+                'currentLotRemark.remark',
                 'pr_items' => function ($query) {
-                    $query->with(['prstage.stage', 'currentItemRemark.remark']); // Add currentItemRemark.remark
+                    $query->with(['prstage.stage', 'currentItemRemark.remark']);
                 }
             ])
             ->latest();
@@ -390,6 +414,11 @@ class ProcurementIndexPage extends Component
                         $subQ->where('remarks_id', $this->remarkFilter);
                     });
             });
+        }
+
+        // Apply early procurement filter
+        if ($this->earlyProcurementFilter !== '') {
+            $query->where('early_procurement', $this->earlyProcurementFilter);
         }
 
         $procurements = $query->paginate($this->perPage);

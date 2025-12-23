@@ -3,6 +3,7 @@
 namespace App\Livewire\ModeOfProcurement;
 
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use App\Models\BacType;
 use App\Models\MopGroup;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
@@ -24,12 +25,16 @@ class ModeOfProcurementIndexPage extends Component
 
     protected $queryString = [
         'search' => ['except' => ''],
+        'bacCategoryFilter' => ['except' => null],
         'perPage' => ['except' => 10],
     ];
     protected $paginationTheme = 'tailwind';
 
     // Search
     public $search = '';
+
+    // Filters
+    public $bacCategoryFilter = null;
 
     // Modal
     public $showModal = false;
@@ -85,6 +90,11 @@ class ModeOfProcurementIndexPage extends Component
      * Reset pagination when search term changes.
      */
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingBacCategoryFilter()
     {
         $this->resetPage();
     }
@@ -236,15 +246,24 @@ class ModeOfProcurementIndexPage extends Component
             ->with([
                 'currentPrStage.procurementStage',
                 'mopLots.modeOfProcurement',
-                'pr_items'
+                'pr_items',
+                'category.bacType'
             ])
             ->latest();
 
+        // Search filter
         if (!empty($this->search)) {
             $searchTerm = '%' . $this->search . '%';
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('pr_number', 'like', $searchTerm)
                     ->orWhere('procurement_program_project', 'like', $searchTerm);
+            });
+        }
+
+        // BAC Category filter
+        if ($this->bacCategoryFilter) {
+            $query->whereHas('category', function ($q) {
+                $q->where('bac_type_id', $this->bacCategoryFilter);
             });
         }
 
@@ -266,8 +285,12 @@ class ModeOfProcurementIndexPage extends Component
             }
         }
 
+        // Get BAC Categories for filter (ordered by name)
+        $bacCategories = BacType::orderBy('name', 'asc')->get();
+
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
             'procurements' => $procurements,
+            'bacCategories' => $bacCategories,
         ]);
     }
 }

@@ -28,7 +28,7 @@
     @livewire('partials.sidebar')
 
     <!-- Content -->
-    <div class="w-full lg:pl-55 pt-[156px]">
+    <div class="w-full lg:pl-48 pt-[156px]">
         <main class="p-4 md:p-6">
             {{ $slot }}
         </main>
