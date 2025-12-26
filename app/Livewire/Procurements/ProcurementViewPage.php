@@ -3,6 +3,7 @@
 namespace App\Livewire\Procurements;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 use App\Models\{
     Procurement,
     Category,
@@ -14,11 +15,11 @@ use App\Models\{
     FundSource
 };
 
-
 class ProcurementViewPage extends Component
 {
     public $showModal = false;
     public $showTable = false;
+
     // Data your view uses:
     public $categories = [];
     public $divisions = [];
@@ -30,14 +31,11 @@ class ProcurementViewPage extends Component
     public $page = 1;
     public $perPage = 10;
 
-
-    protected $listeners = ['open-procurement-view' => 'open'];
-
     public $form = [
-        'procurement_type' => 'perLot', // 👈 default so it's always defined
+        'procurement_type' => 'perLot', // default
     ];
 
-
+    #[On('open-procurement-view')]
     public function open($procID)
     {
         $procurement = Procurement::with('pr_items', 'category.categoryType', 'category.bacType')
@@ -49,15 +47,15 @@ class ProcurementViewPage extends Component
         $this->form['category_type'] = $procurement->category?->categoryType?->category_type ?? null;
         $this->form['rbac_sbac'] = $procurement->category?->bacType?->abbreviation ?? null;
 
-        // ✅ Normalize procurement_type
+        // Normalize procurement_type
         if (!in_array($this->form['procurement_type'] ?? null, ['perItem', 'perLot'])) {
             $this->form['procurement_type'] = 'perLot';
         }
 
-        // 🔁 Reverse items if perItem
+        // Reverse items if perItem
         if ($this->form['procurement_type'] === 'perItem') {
             $this->form['items'] = $procurement->pr_items
-                ->sortByDesc('id') // or prItemID if needed
+                ->sortByDesc('id')
                 ->map(fn($item) => [
                     'prItemID' => $item->prItemID,
                     'item_no' => $item->item_no,
@@ -69,6 +67,24 @@ class ProcurementViewPage extends Component
         }
 
         // Load lookup/reference data
+        $this->loadReferenceData();
+
+        $this->showModal = true;
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->showTable = false;
+
+        // Reset form to defaults
+        $this->form = [
+            'procurement_type' => 'perLot',
+        ];
+    }
+
+    protected function loadReferenceData()
+    {
         $this->categories = Category::with(['categoryType', 'bacType'])->get();
         $this->divisions = Division::all();
         $this->clusterCommittees = ClusterCommittee::all();
@@ -76,8 +92,6 @@ class ProcurementViewPage extends Component
         $this->venueProvinces = ProvinceHuc::all();
         $this->endUsers = EndUser::all();
         $this->fundSources = FundSource::all();
-
-        $this->showModal = true;
     }
 
     public function render()
