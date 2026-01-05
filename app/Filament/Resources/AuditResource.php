@@ -7,9 +7,9 @@ use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use OwenIt\Auditing\Models\Audit;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Facades\Filament;
+use App\Models\Audit;
 
 class AuditResource extends Resource
 {
@@ -65,7 +65,6 @@ class AuditResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->default('System')
-                    ->description(fn($record) => $record->user?->email ?? 'N/A')
                     ->icon('heroicon-o-user')
                     ->iconColor('primary'),
 
@@ -231,11 +230,11 @@ class AuditResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::whereDate('created_at', today())->count();
-        return $count > 0 ? (string) $count : null;
-    }
+    // public static function getNavigationBadge(): ?string
+    // {
+    //     $count = static::getModel()::whereDate('created_at', today())->count();
+    //     return $count > 0 ? (string) $count : null;
+    // }
 
     public static function getNavigationBadgeColor(): ?string
     {

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class PrLotPrstage extends Model
+class PrLotPrstage extends Model implements Auditable
 {
     use HasFactory;
-
+    use \OwenIt\Auditing\Auditable;
     protected $table = 'pr_lot_prstage';
 
     protected $fillable = [
@@ -16,6 +17,20 @@ class PrLotPrstage extends Model
         'pr_stage_id',
         'stage_history',
     ];
+    protected $auditInclude = [
+        'procID',
+        'pr_stage_id',
+        'stage_history',
+    ];
+
+    protected $auditTimestamps = true;
+
+    protected $auditStrict = false;
+
+    protected function resolveUser()
+    {
+        return \App\Models\User::resolveAuditUser();
+    }
 
     public function procurement()
     {

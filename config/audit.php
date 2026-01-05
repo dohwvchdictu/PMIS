@@ -6,26 +6,18 @@ return [
     'implementation' => OwenIt\Auditing\Models\Audit::class,
 
     'user' => [
-    'morph_prefix' => 'user',
-    'guards' => [
-        'web',
-        'sanctum',
+        'morph_prefix' => 'user',
+        'guards' => [
+            'web',
+            'sanctum',
+        ],
+        'resolver' => \App\Models\User::class . '@resolveAuditUser',
     ],
-    'resolver' => function () {
-        return \App\Models\User::resolveAuditUser();
-    },
-],
 
     'resolver' => [
-        'ip_address' => function () {
-            return request()->ip();
-        },
-        'user_agent' => function () {
-            return request()->userAgent();
-        },
-        'url' => function () {
-            return request()->fullUrl();
-        },
+        'ip_address' => null,
+        'user_agent' => null,
+        'url' => null,
     ],
 
     'events' => [

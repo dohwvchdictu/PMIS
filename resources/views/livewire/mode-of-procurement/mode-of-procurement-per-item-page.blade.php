@@ -179,7 +179,7 @@
 
                                         $showFields = !empty($modeId) && $isSavedRecord;
                                         $disableInputs = false;
-                                        $disableSelect = $hasSchedule;
+                                        $disableSelect = $hasSchedule || $modeId == 1;
 
                                         $canAddNewMode = false;
 
@@ -388,7 +388,7 @@
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @if ($disableInputs || isset($postItems[$itemIndex])) disabled @endif>
+                                                    @disabled($disableInputs)>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>

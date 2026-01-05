@@ -1004,6 +1004,20 @@ class ModeOfProcurementPerItemPage extends Component
                 ->toast()->position('top-end')->show();
         }
     }
+    public function hasPostDataForItem($itemIndex): bool
+    {
+        $item = $this->form['items'][$itemIndex] ?? null;
+        if (!$item)
+            return false;
+
+        $prItemID = $item['prItemID'] ?? null;
+        if (!$prItemID)
+            return false;
+
+        // Check if post data exists in the postItems array for this prItemID
+        return isset($this->postItems[$prItemID]) &&
+            !empty(array_filter($this->postItems[$prItemID] ?? []));
+    }
 
     public function save(): void
     {

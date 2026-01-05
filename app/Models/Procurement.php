@@ -78,13 +78,8 @@ class Procurement extends Model implements Auditable
 
     protected $auditTimestamps = true;
 
-    // Disable strict auditing to avoid retrieved event issues
     protected $auditStrict = false;
 
-    /**
-     * Override the resolveUser method from Auditable trait
-     * This fixes the "Invalid UserResolver implementation" error
-     */
     protected function resolveUser()
     {
         return \App\Models\User::resolveAuditUser();

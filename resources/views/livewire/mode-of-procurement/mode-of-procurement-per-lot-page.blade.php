@@ -375,11 +375,23 @@
                                             </td>
 
                                             <td class="px-2 py-2">
+                                                @php
+                                                    $biddingResult = $item['bidding_result'] ?? '';
+
+                                                    $hasPostData = \App\Models\PostProcurement::where(
+                                                        'ref_id',
+                                                        $this->procID,
+                                                    )->exists();
+
+                                                    $shouldDisableBiddingResult =
+                                                        $disableInputs ||
+                                                        ($biddingResult === 'SUCCESSFUL' && $hasPostData);
+                                                @endphp
+
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
-                                                    @if ($this->isPostAvailable) disabled @endif
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
+                                                    @if ($shouldDisableBiddingResult) disabled @endif>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>

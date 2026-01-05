@@ -105,30 +105,7 @@ class ViewAudit extends ViewRecord
                             ->view('filament.infolists.audit-changes'),
                     ])
                     ->visible(fn($record) => !empty($record->old_values) || !empty($record->new_values))
-                    ->headerActions([
-                        Infolists\Components\Actions\Action::make('export')
-                            ->label('Export Changes')
-                            ->icon('heroicon-o-arrow-down-tray')
-                            ->color('gray')
-                            ->action(function ($record) {
-                                $filename = 'audit-' . $record->id . '-' . now()->format('Y-m-d-His') . '.json';
-                                $data = [
-                                    'audit_id' => $record->id,
-                                    'user' => $record->user?->name ?? 'System',
-                                    'action' => $record->event,
-                                    'model' => str_replace('App\\Models\\', '', $record->auditable_type),
-                                    'record_id' => $record->auditable_id,
-                                    'timestamp' => $record->created_at->toDateTimeString(),
-                                    'ip_address' => $record->ip_address,
-                                    'old_values' => $record->old_values,
-                                    'new_values' => $record->new_values,
-                                ];
-
-                                return response()->streamDownload(function () use ($data) {
-                                    echo json_encode($data, JSON_PRETTY_PRINT);
-                                }, $filename);
-                            }),
-                    ]),
+                ,
 
                 Infolists\Components\Section::make('Raw Data')
                     ->description('JSON representation of the audit data')
