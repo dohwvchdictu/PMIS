@@ -178,8 +178,15 @@
                                             !empty($item['abstract_of_canvass_date']) ||
                                             !empty($item['resolution_number']);
 
+                                        $hasPostData = \App\Models\PostProcurement::where(
+                                            'ref_id',
+                                            $this->procID,
+                                        )->exists();
+                                        $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+                                        $isCurrentRow = $loop->first;
+
                                         $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
-                                        $disableInputs = $isHistory;
+                                        $disableInputs = $isHistory || ($isCurrentRow && $hasPostData && !$canEditMop);
                                         $showFields = $isSavedRecord;
                                         $isVisible = $loop->first;
                                     @endphp
@@ -383,9 +390,13 @@
                                                         $this->procID,
                                                     )->exists();
 
+                                                    $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+
                                                     $shouldDisableBiddingResult =
                                                         $disableInputs ||
-                                                        ($biddingResult === 'SUCCESSFUL' && $hasPostData);
+                                                        ($biddingResult === 'SUCCESSFUL' &&
+                                                            $hasPostData &&
+                                                            !$canEditMop);
                                                 @endphp
 
                                                 <select wire:key="res-{{ $rowUid }}"

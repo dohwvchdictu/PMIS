@@ -177,8 +177,11 @@
                                             !empty($item['abstract_of_canvass_date']) ||
                                             !empty($item['resolution_number']);
 
+                                        $hasPostData = $this->hasPostDataForItem($itemIndex);
+                                        $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+
                                         $showFields = !empty($modeId) && $isSavedRecord;
-                                        $disableInputs = false;
+                                        $disableInputs = $isHead && $hasPostData && !$canEditMop;
                                         $disableSelect = $hasSchedule || $modeId == 1;
 
                                         $canAddNewMode = false;
@@ -388,11 +391,14 @@
                                                 @php
                                                     $biddingResult = $item['bidding_result'] ?? '';
                                                     $hasPostData = $this->hasPostDataForItem($itemIndex);
+                                                    $canEditMop = auth()->user()->can('edit_mode::of::procurement');
 
-                                                    // Disable if: history record OR (bidding result is SUCCESSFUL AND post data exists)
+                                                    // Disable if: (bidding result is SUCCESSFUL AND post data exists AND no permission)
                                                     $shouldDisableBiddingResult =
                                                         $disableInputs ||
-                                                        ($biddingResult === 'SUCCESSFUL' && $hasPostData);
+                                                        ($biddingResult === 'SUCCESSFUL' &&
+                                                            $hasPostData &&
+                                                            !$canEditMop);
                                                 @endphp
 
                                                 <select wire:key="res-{{ $rowUid }}"
