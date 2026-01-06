@@ -11,7 +11,6 @@ use Livewire\Component;
 use App\Models\MopItem;
 use App\Models\MopLot;
 use App\Models\BidSchedule;
-use App\Models\NtfBidSchedule;
 use App\Models\PrSvp;
 use Livewire\WithPagination;
 
@@ -22,10 +21,12 @@ class ModeOfProcurementIndexPage extends Component
     // Pagination
     public $perPage = 10;
     public $itemsPerPage = 10;
+    public $ibNumberFilter = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'bacCategoryFilter' => ['except' => null],
+        'ibNumberFilter' => ['except' => null],
         'perPage' => ['except' => 10],
     ];
     protected $paginationTheme = 'tailwind';
@@ -98,6 +99,10 @@ class ModeOfProcurementIndexPage extends Component
     {
         $this->resetPage();
     }
+    public function updatingIbNumberFilter()
+    {
+        $this->resetPage();
+    }
 
     public function updatingPerPage()
     {
@@ -111,7 +116,6 @@ class ModeOfProcurementIndexPage extends Component
     {
         $prItemID = $item->prItemID;
 
-        // Get the latest MOP item for this PR item
         $latestMop = MopItem::where('prItemID', $prItemID)
             ->with('modeOfProcurement')
             ->orderBy('mode_order', 'desc')
@@ -124,7 +128,7 @@ class ModeOfProcurementIndexPage extends Component
         $status = null;
         $modeId = $latestMop->mode_of_procurement_id;
 
-        // Mode 1 - No bidding schedule needed
+        // Mode 1 - No schedule needed
         if ($modeId == 1) {
             return [
                 'mode' => $latestMop->modeOfProcurement,
@@ -132,8 +136,8 @@ class ModeOfProcurementIndexPage extends Component
             ];
         }
 
-        // Check for bidding result based on mode (2, 3, 4)
-        if (in_array($modeId, [2, 3, 4])) {
+        // Check bidding modes (2-6)
+        if (in_array($modeId, [2, 3, 4, 5, 6])) {
             $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
                 ->where('ref_id', $prItemID)
                 ->first();
@@ -143,19 +147,8 @@ class ModeOfProcurementIndexPage extends Component
             }
         }
 
-        // Check NTF result for mode 4
-        if ($modeId == 4) {
-            $ntfSchedule = NtfBidSchedule::where('mop_uid', $latestMop->uid)
-                ->where('ref_id', $prItemID)
-                ->first();
-
-            if ($ntfSchedule && $ntfSchedule->ntf_bidding_result) {
-                $status = $ntfSchedule->ntf_bidding_result;
-            }
-        }
-
-        // Check SVP resolution for mode 5
-        if ($modeId == 5) {
+        // Check SVP modes (7-24)
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
             $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
                 ->where('ref_id', $prItemID)
                 ->first();
@@ -177,7 +170,6 @@ class ModeOfProcurementIndexPage extends Component
     private function getCurrentModeAndStatus($procurement)
     {
         if ($procurement->procurement_type === 'perLot') {
-            // Get the latest MOP lot
             $latestMop = $procurement->mopLots()
                 ->with('modeOfProcurement')
                 ->orderBy('mode_order', 'desc')
@@ -188,17 +180,18 @@ class ModeOfProcurementIndexPage extends Component
             }
 
             $status = null;
+            $modeId = $latestMop->mode_of_procurement_id;
 
-            // Mode 1 - No bidding schedule needed, just return the mode
-            if ($latestMop->mode_of_procurement_id == 1) {
+            // Mode 1 - No schedule needed
+            if ($modeId == 1) {
                 return [
                     'mode' => $latestMop->modeOfProcurement,
                     'status' => null
                 ];
             }
 
-            // Check for bidding result based on mode (2, 3, 4)
-            if (in_array($latestMop->mode_of_procurement_id, [2, 3, 4])) {
+            // Check bidding modes (2-6)
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
                     ->where('ref_id', $procurement->procID)
                     ->first();
@@ -208,19 +201,8 @@ class ModeOfProcurementIndexPage extends Component
                 }
             }
 
-            // Check NTF result for mode 4
-            if ($latestMop->mode_of_procurement_id == 4) {
-                $ntfSchedule = NtfBidSchedule::where('mop_uid', $latestMop->uid)
-                    ->where('ref_id', $procurement->procID)
-                    ->first();
-
-                if ($ntfSchedule && $ntfSchedule->ntf_bidding_result) {
-                    $status = $ntfSchedule->ntf_bidding_result;
-                }
-            }
-
-            // Check SVP resolution for mode 5
-            if ($latestMop->mode_of_procurement_id == 5) {
+            // Check SVP modes (7-24)
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
                     ->where('ref_id', $procurement->procID)
                     ->first();
@@ -235,11 +217,24 @@ class ModeOfProcurementIndexPage extends Component
                 'status' => $status
             ];
         } else {
-            // For perItem, we can't determine a single mode
             return ['mode' => null, 'status' => 'Multiple'];
         }
     }
-
+    public function getIbNumbersProperty()
+    {
+        return BidSchedule::select('ib_number')
+            ->whereNotNull('ib_number')
+            ->where('ib_number', '!=', '')
+            ->distinct()
+            ->orderBy('ib_number', 'asc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->ib_number,
+                    'name' => $item->ib_number
+                ];
+            });
+    }
     public function render()
     {
         $query = Procurement::query()
@@ -267,6 +262,37 @@ class ModeOfProcurementIndexPage extends Component
             });
         }
 
+        // IB Number filter
+        if ($this->ibNumberFilter) {
+            $query->where(function ($q) {
+                // For perLot procurements - match by procID
+                $q->where(function ($subQ) {
+                    $subQ->where('procurement_type', 'perLot')
+                        ->whereExists(function ($exists) {
+                            $exists->select(\DB::raw(1))
+                                ->from('bid_schedules') // Changed from bid_schedule to bid_schedules
+                                ->whereColumn('bid_schedules.ref_id', 'procurements.procID')
+                                ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                        });
+                })
+                    // For perItem procurements - match through pr_items
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('procurement_type', 'perItem')
+                            ->whereExists(function ($exists) {
+                                $exists->select(\DB::raw(1))
+                                    ->from('pr_items')
+                                    ->whereColumn('pr_items.procID', 'procurements.procID')
+                                    ->whereExists(function ($bidExists) {
+                                        $bidExists->select(\DB::raw(1))
+                                            ->from('bid_schedules') // Changed from bid_schedule to bid_schedules
+                                            ->whereColumn('bid_schedules.ref_id', 'pr_items.prItemID')
+                                            ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                                    });
+                            });
+                    });
+            });
+        }
+
         $procurements = $query->paginate($this->perPage);
 
         // Add current mode and status to each procurement
@@ -291,6 +317,7 @@ class ModeOfProcurementIndexPage extends Component
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
             'procurements' => $procurements,
             'bacCategories' => $bacCategories,
+            'ibNumbers' => $this->ibNumbers,
         ]);
     }
 }

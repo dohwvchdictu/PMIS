@@ -150,6 +150,7 @@ class AdminPanelProvider extends PanelProvider
             \App\Filament\Resources\UserResource::class,
             \App\Filament\Resources\RoleResource::class,
             \App\Filament\Resources\PermissionResource::class,
+            \App\Filament\Resources\AuditResource::class,
         ];
     }
 

@@ -18,4 +18,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('procurements', ProcurementController::class);
+Route::apiResource('procurements', ProcurementController::class)->names([
+    'index' => 'api.procurements.index',
+    'store' => 'api.procurements.store',
+    'show' => 'api.procurements.show',
+    'update' => 'api.procurements.update',
+    'destroy' => 'api.procurements.destroy',
+]);

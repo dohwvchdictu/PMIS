@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Procurement extends Model
+class Procurement extends Model implements Auditable
 {
     use HasFactory;
-
     use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
+
+    // Define string primary key
+    protected $primaryKey = 'procID';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'procID',
         'pr_number',
@@ -39,12 +46,55 @@ class Procurement extends Model
         'expense_class',
         'abc',
         'abc_50k'
-
     ];
+
+    protected $auditInclude = [
+        'procID',
+        'pr_number',
+        'procurement_type',
+        'procurement_program_project',
+        'date_receipt',
+        'dtrack_no',
+        'unicode',
+        'divisions_id',
+        'cluster_committees_id',
+        'category_id',
+        'category_type_id',
+        'bac_type_id',
+        'venue_specific_id',
+        'venue_province_huc_id',
+        'category_venue',
+        'approved_ppmp',
+        'app_updated',
+        'immediate_date_needed',
+        'date_needed',
+        'end_users_id',
+        'early_procurement',
+        'fund_source_id',
+        'expense_class',
+        'abc',
+        'abc_50k'
+    ];
+
+    protected $auditTimestamps = true;
+
+    protected $auditStrict = false;
+
+    protected function resolveUser()
+    {
+        return \App\Models\User::resolveAuditUser();
+    }
+
+    public function generateTags(): array
+    {
+        return ['procurement', $this->pr_number];
+    }
+
     public function getRouteKeyName()
     {
         return 'procID';
     }
+
     public static function generatePrNumber(bool $isAdvance = false): string
     {
         $year = $isAdvance ? now()->year + 1 : now()->year;
@@ -72,7 +122,6 @@ class Procurement extends Model
         });
     }
 
-
     public function division()
     {
         return $this->belongsTo(Division::class, 'divisions_id');
@@ -87,6 +136,7 @@ class Procurement extends Model
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
+
     public function categoryType()
     {
         return $this->belongsTo(CategoryType::class, 'category_type_id');
@@ -141,14 +191,17 @@ class Procurement extends Model
     {
         return $this->belongsTo(EndUser::class, 'end_users_id');
     }
+
     public function bidModeOfProcurement()
     {
         return $this->hasMany(BidModeOfProcurement::class, 'procID', 'procID');
     }
+
     public function bidSchedules()
     {
         return $this->hasMany(BidSchedule::class, 'procID', 'procID');
     }
+
     public function postProcurement()
     {
         return $this->hasOne(PostProcurement::class, 'procID');
@@ -158,6 +211,7 @@ class Procurement extends Model
     {
         return $this->hasMany(PrItem::class, 'procID', 'procID');
     }
+
     public function mopLots()
     {
         return $this->hasMany(MopLot::class, 'procID', 'procID');
@@ -167,10 +221,12 @@ class Procurement extends Model
     {
         return $this->hasMany(MopItem::class, 'procID', 'procID');
     }
+
     public function currentPrStage()
     {
         return $this->hasOne(PrLotPrstage::class, 'procID', 'procID')->latest();
     }
+
     public function prLotPrstages()
     {
         return $this->hasMany(PrLotPrstage::class, 'procID', 'procID');
@@ -180,17 +236,19 @@ class Procurement extends Model
     {
         return $this->hasMany(PrItemPrstage::class, 'procID', 'procID');
     }
+
     public function bacApprovedPr()
     {
         return $this->hasOne(BACApprovedPR::class, 'procID', 'procID');
     }
+
     public function mops(): MorphMany
     {
         return $this->morphMany(Mop::class, 'procurable', 'procurable_type', 'procurable_id', 'procID');
     }
+
     public function mopGroups()
     {
-        // morphToMany(RelatedModel, name, table, foreignKey, relatedKey, parentKey)
         return $this->morphToMany(
             MopGroup::class,
             'biddable',
@@ -200,18 +258,15 @@ class Procurement extends Model
             'procID'
         );
     }
+
     public function scheduleItems()
     {
         return $this->morphMany(ScheduleForProcurementItems::class, 'itemable', 'itemable_type', 'itemable_id', 'procID');
     }
 
-    // In Procurement model
     public function currentLotRemark()
     {
         return $this->hasOne(PrLotRemark::class, 'procID', 'procID')
             ->latest('remark_history');
     }
-
-    // In PrItem model
-
 }

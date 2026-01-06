@@ -178,8 +178,15 @@
                                             !empty($item['abstract_of_canvass_date']) ||
                                             !empty($item['resolution_number']);
 
+                                        $hasPostData = \App\Models\PostProcurement::where(
+                                            'ref_id',
+                                            $this->procID,
+                                        )->exists();
+                                        $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+                                        $isCurrentRow = $loop->first;
+
                                         $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
-                                        $disableInputs = $isHistory;
+                                        $disableInputs = $isHistory || ($isCurrentRow && $hasPostData && !$canEditMop);
                                         $showFields = $isSavedRecord;
                                         $isVisible = $loop->first;
                                     @endphp
@@ -375,11 +382,27 @@
                                             </td>
 
                                             <td class="px-2 py-2">
+                                                @php
+                                                    $biddingResult = $item['bidding_result'] ?? '';
+
+                                                    $hasPostData = \App\Models\PostProcurement::where(
+                                                        'ref_id',
+                                                        $this->procID,
+                                                    )->exists();
+
+                                                    $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+
+                                                    $shouldDisableBiddingResult =
+                                                        $disableInputs ||
+                                                        ($biddingResult === 'SUCCESSFUL' &&
+                                                            $hasPostData &&
+                                                            !$canEditMop);
+                                                @endphp
+
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
-                                                    @if ($this->isPostAvailable) disabled @endif
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
+                                                    @if ($shouldDisableBiddingResult) disabled @endif>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -401,7 +424,7 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white  disabled:opacity-60 disabled:cursor-not-allowed
                 {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
@@ -528,13 +551,14 @@
 
                                                                     <tr
                                                                         class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                        @can('edit_mode::of::procurement')
-                                                                            @if ($historyModeId == 1)
-                                                                                <td class="px-2 py-2 align-middle">
 
-                                                                                </td>
-                                                                            @else
-                                                                                <td class="px-2 py-2 align-middle">
+                                                                        @if ($historyModeId == 1)
+                                                                            <td class="px-2 py-2 align-middle">
+
+                                                                            </td>
+                                                                        @else
+                                                                            <td class="px-2 py-2 align-middle">
+                                                                                @can('edit_mode::of::procurement')
                                                                                     <button type="button"
                                                                                         wire:click="editHistoryItem({{ $historyIndex }})"
                                                                                         class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
@@ -542,9 +566,9 @@
                                                                                         <x-heroicon-o-pencil
                                                                                             class="w-4 h-4" />
                                                                                     </button>
-                                                                                </td>
-                                                                            @endif
-                                                                        @endcan
+                                                                                @endcan
+                                                                            </td>
+                                                                        @endif
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             @php
