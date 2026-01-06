@@ -384,23 +384,26 @@ class ModeOfProcurementPerItemPage extends Component
         if ($this->editingIndex === null || !isset($this->form['items'][$this->editingIndex])) {
             LivewireAlert::title('Error')
                 ->error()
-                ->text('Unable to update record.')
+                ->text('Unable to update record - item not found.')
                 ->toast()
                 ->position('top-end')
                 ->show();
             return;
         }
 
+        $itemNumber = $this->editingItem['item_no'] ?? ($this->editingIndex + 1);
+        $itemDesc = $this->editingItem['description'] ?? '';
+        $shortDesc = strlen($itemDesc) > 50 ? substr($itemDesc, 0, 50) . '...' : $itemDesc;
+
         // Update the item in the form array
         $this->form['items'][$this->editingIndex] = $this->editingItem;
 
-        // ✅ ADD VALIDATION BEFORE SAVING
+        // Validate schedules before saving
         $this->scheduleValidationErrors = [];
         if (!$this->validateSchedules()) {
-            $errorMessage = implode(' ', $this->scheduleValidationErrors);
             LivewireAlert::title('Validation Failed')
                 ->error()
-                ->text($errorMessage)
+                ->text($this->formatValidationErrors($this->scheduleValidationErrors))
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -418,7 +421,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         LivewireAlert::title('History Updated')
             ->success()
-            ->text('History record has been updated successfully.')
+            ->text("Item {$itemNumber} ({$shortDesc}) has been updated successfully.")
             ->toast()
             ->position('top-end')
             ->show();
@@ -433,6 +436,7 @@ class ModeOfProcurementPerItemPage extends Component
     private function validateSchedules(): bool
     {
         $isValid = true;
+        $this->scheduleValidationErrors = [];
 
         foreach ($this->form['items'] as $index => $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
@@ -441,16 +445,18 @@ class ModeOfProcurementPerItemPage extends Component
 
             $prItemID = $item['prItemID'];
             $itemNumber = $item['item_no'] ?? ($index + 1);
+            $itemDesc = $item['description'] ?? 'Unknown Item';
+
+            // Truncate description if too long
+            $shortDesc = strlen($itemDesc) > 50 ? substr($itemDesc, 0, 50) . '...' : $itemDesc;
 
             $matchCriteria = [
                 'ref_id' => $prItemID,
                 'mop_uid' => $item['uid']
             ];
 
-            // Only validate if this item has been interacted with (has existing record or has data)
-            $hasAnyData = false;
-
             // Check if item has any filled fields
+            $hasAnyData = false;
             foreach ($item as $key => $value) {
                 if (
                     !in_array($key, ['id', 'uid', 'mode_of_procurement_id', 'mode_order', 'prItemID', 'item_no', 'description', 'amount']) &&
@@ -466,6 +472,7 @@ class ModeOfProcurementPerItemPage extends Component
                 continue;
             }
 
+            // BIDDING MODES VALIDATION (2-6)
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
@@ -481,40 +488,50 @@ class ModeOfProcurementPerItemPage extends Component
 
                 // Only validate existing records
                 if ($existingBidSchedule && !$hasBiddingData) {
-                    $this->scheduleValidationErrors[] = "At least one bidding schedule field must be filled for Item {$itemNumber}.";
+                    $this->scheduleValidationErrors[] = sprintf(
+                        "<strong>Item %s</strong> (%s): At least one bidding schedule field must be filled.",
+                        $itemNumber,
+                        $shortDesc
+                    );
                     $isValid = false;
                 }
 
-                // Validate Bidding Result dependencies - only if bidding_result is actually selected
+                // Validate Bidding Result dependencies
                 $biddingResult = $item['bidding_result'] ?? null;
                 if (!is_null($biddingResult) && trim($biddingResult) !== '') {
                     $missingFields = [];
 
-                    // Check if Pre-Proc Conference is filled
-                    $hasPreProcConference = !empty($item['pre_proc_conference']) && trim($item['pre_proc_conference']) !== '';
+                    $hasPreProcConference = !empty($item['pre_proc_conference']) &&
+                        trim($item['pre_proc_conference']) !== '';
 
                     if (!$hasPreProcConference) {
-                        // If Pre-Proc Conference is not filled, require all three fields
+                        // Check required fields
                         if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
-                            $missingFields[] = 'Bidding #';
+                            $missingFields[] = '<strong>Bidding #</strong>';
                         }
                         if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
-                            $missingFields[] = 'IB No.';
+                            $missingFields[] = '<strong>IB No.</strong>';
                         }
                         if (empty($item['bidding_date']) || trim($item['bidding_date']) === '') {
-                            $missingFields[] = 'Bidding Date';
+                            $missingFields[] = '<strong>Bidding Date</strong>';
                         }
 
                         if (!empty($missingFields)) {
                             $fieldsList = implode(', ', $missingFields);
-                            $this->scheduleValidationErrors[] = "Item {$itemNumber}: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                            $this->scheduleValidationErrors[] = sprintf(
+                                "<strong>Item %s</strong> (%s): Cannot set Bidding Result to '%s' without %s or <strong>Pre-Proc Conference</strong>.",
+                                $itemNumber,
+                                $shortDesc,
+                                $biddingResult,
+                                $fieldsList
+                            );
                             $isValid = false;
                         }
                     }
-                    // If Pre-Proc Conference is filled, allow bidding result (no validation errors)
                 }
             }
 
+            // SVP MODES VALIDATION (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
@@ -525,8 +542,41 @@ class ModeOfProcurementPerItemPage extends Component
                     !empty($item['resolution_number']);
 
                 if ($existingSvp && !$hasSvpData) {
-                    $this->scheduleValidationErrors[] = "At least one SVP field must be filled for Item {$itemNumber}.";
+                    $this->scheduleValidationErrors[] = sprintf(
+                        "<strong>Item %s</strong> (%s): At least one SVP/Canvass field must be filled.",
+                        $itemNumber,
+                        $shortDesc
+                    );
                     $isValid = false;
+                }
+
+                // Additional validation: Check if all SVP fields are complete when resolution number is filled
+                if (!empty($item['resolution_number'])) {
+                    $missingSvpFields = [];
+
+                    if (empty($item['rfq_no'])) {
+                        $missingSvpFields[] = '<strong>RFQ No.</strong>';
+                    }
+                    if (empty($item['canvass_date'])) {
+                        $missingSvpFields[] = '<strong>Canvass Date</strong>';
+                    }
+                    if (empty($item['date_returned_of_canvass'])) {
+                        $missingSvpFields[] = '<strong>Date Returned of Canvass</strong>';
+                    }
+                    if (empty($item['abstract_of_canvass_date'])) {
+                        $missingSvpFields[] = '<strong>Abstract of Canvass Date</strong>';
+                    }
+
+                    if (!empty($missingSvpFields)) {
+                        $fieldsList = implode(', ', $missingSvpFields);
+                        $this->scheduleValidationErrors[] = sprintf(
+                            "<strong>Item %s</strong> (%s): Resolution Number requires %s to be completed.",
+                            $itemNumber,
+                            $shortDesc,
+                            $fieldsList
+                        );
+                        $isValid = false;
+                    }
                 }
             }
         }
@@ -539,33 +589,46 @@ class ModeOfProcurementPerItemPage extends Component
             'form.items.*.mode_of_procurement_id' => 'required|integer',
         ];
 
+        $messages = [];
         $attributes = [];
 
+        // Build custom messages for each item
+        foreach ($this->form['items'] as $index => $item) {
+            $itemNumber = $item['item_no'] ?? ($index + 1);
+
+            $messages["form.items.{$index}.mode_of_procurement_id.required"] =
+                "Item {$itemNumber}: Mode of Procurement is required.";
+            $messages["form.items.{$index}.mode_of_procurement_id.integer"] =
+                "Item {$itemNumber}: Invalid Mode of Procurement selected.";
+
+            $attributes["form.items.{$index}.mode_of_procurement_id"] =
+                "Item {$itemNumber} - Mode of Procurement";
+        }
+
         try {
-            $this->validate($rules, [], $attributes);
+            $this->validate($rules, $messages, $attributes);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errorMessages = $e->validator->errors()->all();
-            $errorString = ' ';
-            foreach ($errorMessages as $msg) {
-                $errorString .= "{$msg}";
-            }
 
             LivewireAlert::title('Validation Failed')
                 ->error()
-                ->text('Please check the following errors:' . $errorString)
-                ->toast()->position('top-end')->show();
+                ->text($this->formatValidationErrors($errorMessages))
+                ->toast()
+                ->position('top-end')
+                ->show();
 
             throw $e;
         }
 
-        // Validate schedules before saving
+        // Validate schedules
         $this->scheduleValidationErrors = [];
         if (!$this->validateSchedules()) {
-            $errorMessage = implode(' ', $this->scheduleValidationErrors);
-            LivewireAlert::title('Validation Failed')
+            LivewireAlert::title('Schedule Validation Failed')
                 ->error()
-                ->text($errorMessage)
-                ->toast()->position('top-end')->show();
+                ->text($this->formatValidationErrors($this->scheduleValidationErrors))
+                ->toast()
+                ->position('top-end')
+                ->show();
             return;
         }
 
@@ -573,7 +636,6 @@ class ModeOfProcurementPerItemPage extends Component
         $isMopUpdated = false;
         $isScheduleAdded = false;
         $isScheduleUpdated = false;
-        $isDeleted = false;
 
         DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated) {
 
@@ -676,13 +738,33 @@ class ModeOfProcurementPerItemPage extends Component
             LivewireAlert::title('Mode Added Successfully!')->success()->text('The mode of procurement has been added.')->toast()->position('top-end')->show();
         } elseif ($isScheduleAdded) {
             LivewireAlert::title('Schedule Added!')->success()->text('A new bidding schedule has been created.')->toast()->position('top-end')->show();
-        } elseif ($isMopUpdated || $isScheduleUpdated || $isDeleted) {
+        } elseif ($isMopUpdated || $isScheduleUpdated) {
             LivewireAlert::title('Updates Saved!')->success()->text('Changes have been saved successfully.')->toast()->position('top-end')->show();
         } else {
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
         }
 
         $this->mount($this->procurement);
+    }
+
+    private function formatValidationErrors(array $errors): string
+    {
+        if (empty($errors)) {
+            return 'Unknown validation error occurred.';
+        }
+
+        if (count($errors) === 1) {
+            return strip_tags($errors[0]);
+        }
+
+        // Create a simple numbered list
+        $text = '';
+        foreach ($errors as $index => $error) {
+            $cleanError = strip_tags($error);
+            $text .= "\n• " . $cleanError;
+        }
+
+        return $text;
     }
 
     protected function saveRelatedSchedules(
@@ -823,7 +905,6 @@ class ModeOfProcurementPerItemPage extends Component
 
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $bidResult = $item['bidding_result'] ?? '';
-
                 if ($bidResult === 'SUCCESSFUL') {
                     return true;
                 }
@@ -844,24 +925,21 @@ class ModeOfProcurementPerItemPage extends Component
             return false;
         });
 
-        if (empty($postAvailableItems)) {
-            LivewireAlert::title('No Items Available')
-                ->info()
-                ->text('No items are eligible for post-procurement entry.')
-                ->toast()->position('top-end')->show();
-            return;
-        }
-
-        // Build validation rules - only validate non-empty items
+        // Build validation rules with custom messages
         $rules = [];
+        $messages = [];
         $attributes = [];
 
-        foreach ($this->postItems as $index => $postItem) {
-            $item = $this->form['items'][$index] ?? null;
+        foreach ($this->postItems as $prItemID => $postItem) {
+            $item = collect($this->form['items'])->firstWhere('prItemID', $prItemID);
 
             if (!$item) {
                 continue;
             }
+
+            $itemNumber = $item['item_no'] ?? 'Unknown';
+            $itemDesc = $item['description'] ?? '';
+            $shortDesc = strlen($itemDesc) > 40 ? substr($itemDesc, 0, 40) . '...' : $itemDesc;
 
             // Check if this item has any data
             $hasData = !empty($postItem['resolutionNumber']) ||
@@ -875,33 +953,42 @@ class ModeOfProcurementPerItemPage extends Component
                 !empty($postItem['dateOfPostingOfAwardOnPhilGEPS']) ||
                 !empty($postItem['supplier_id']);
 
-            // Only validate if this item has data
             if ($hasData) {
-                $rules["postItems.{$index}.resolutionNumber"] = 'required|string|max:255';
-                $rules["postItems.{$index}.bidEvaluationDate"] = 'nullable|date';
-                $rules["postItems.{$index}.postQualDate"] = 'nullable|date';
-                $rules["postItems.{$index}.recommendingForAward"] = 'nullable|date';
-                $rules["postItems.{$index}.noticeOfAward"] = 'nullable|date';
-                $rules["postItems.{$index}.awardedAmount"] = 'nullable|numeric';
-                $rules["postItems.{$index}.philgepsReferenceNo"] = 'nullable|string|max:255';
-                $rules["postItems.{$index}.awardNoticeNumber"] = 'nullable|string|max:255';
-                $rules["postItems.{$index}.dateOfPostingOfAwardOnPhilGEPS"] = 'nullable|date';
-                $rules["postItems.{$index}.supplier_id"] = 'nullable|integer|exists:suppliers,id';
+                $rules["postItems.{$prItemID}.resolutionNumber"] = 'required|string|max:255';
+                $rules["postItems.{$prItemID}.bidEvaluationDate"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.postQualDate"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.recommendingForAward"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.noticeOfAward"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.awardedAmount"] = 'nullable|numeric|min:0';
+                $rules["postItems.{$prItemID}.philgepsReferenceNo"] = 'nullable|string|max:255';
+                $rules["postItems.{$prItemID}.awardNoticeNumber"] = 'nullable|string|max:255';
+                $rules["postItems.{$prItemID}.dateOfPostingOfAwardOnPhilGEPS"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.supplier_id"] = 'nullable|integer|exists:suppliers,id';
 
-                $attributes["postItems.{$index}.resolutionNumber"] = "Item {$this->form['items'][$index]['item_no']} - Resolution #";
-                $attributes["postItems.{$index}.bidEvaluationDate"] = "Item {$this->form['items'][$index]['item_no']} - Bid Evaluation Date";
-                $attributes["postItems.{$index}.postQualDate"] = "Item {$this->form['items'][$index]['item_no']} - Post Qual Date";
-                $attributes["postItems.{$index}.recommendingForAward"] = "Item {$this->form['items'][$index]['item_no']} - Recommending For Award";
-                $attributes["postItems.{$index}.noticeOfAward"] = "Item {$this->form['items'][$index]['item_no']} - Notice of Award";
-                $attributes["postItems.{$index}.awardedAmount"] = "Item {$this->form['items'][$index]['item_no']} - Awarded Amount";
-                $attributes["postItems.{$index}.philgepsReferenceNo"] = "Item {$this->form['items'][$index]['item_no']} - PhilGEPS Reference #";
-                $attributes["postItems.{$index}.awardNoticeNumber"] = "Item {$this->form['items'][$index]['item_no']} - Award Notice #";
-                $attributes["postItems.{$index}.dateOfPostingOfAwardOnPhilGEPS"] = "Item {$this->form['items'][$index]['item_no']} - Posting of Award Date";
-                $attributes["postItems.{$index}.supplier_id"] = "Item {$this->form['items'][$index]['item_no']} - Supplier";
+                // Custom messages
+                $messages["postItems.{$prItemID}.resolutionNumber.required"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Resolution Number is required.";
+                $messages["postItems.{$prItemID}.awardedAmount.numeric"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount must be a valid number.";
+                $messages["postItems.{$prItemID}.awardedAmount.min"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount cannot be negative.";
+                $messages["postItems.{$prItemID}.supplier_id.exists"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Selected supplier is invalid.";
+
+                // Date validation messages
+                foreach (['bidEvaluationDate', 'postQualDate', 'recommendingForAward', 'noticeOfAward', 'dateOfPostingOfAwardOnPhilGEPS'] as $dateField) {
+                    $fieldLabel = ucwords(str_replace(['_', 'Date', 'Of'], [' ', '', 'of'], $dateField));
+                    $messages["postItems.{$prItemID}.{$dateField}.date"] =
+                        "<strong>Item {$itemNumber}</strong> ({$shortDesc}): {$fieldLabel} must be a valid date.";
+                }
+
+                // Attributes for better error display
+                $attributes["postItems.{$prItemID}.resolutionNumber"] = "Item {$itemNumber} - Resolution #";
+                $attributes["postItems.{$prItemID}.awardedAmount"] = "Item {$itemNumber} - Awarded Amount";
+                $attributes["postItems.{$prItemID}.supplier_id"] = "Item {$itemNumber} - Supplier";
             }
         }
 
-        // If no rules were added, no data to save
         if (empty($rules)) {
             LivewireAlert::title('No Changes')
                 ->info()
@@ -911,15 +998,16 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         try {
-            $this->validate($rules, [], $attributes);
+            $this->validate($rules, $messages, $attributes);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errorMessages = $e->validator->errors()->all();
-            $errorString = ' ' . implode(' ', $errorMessages);
 
-            LivewireAlert::title('Validation Failed')
+            LivewireAlert::title('Post-Procurement Validation Failed')
                 ->error()
-                ->text('Please check the following errors:' . $errorString)
-                ->toast()->position('top-end')->show();
+                ->text($this->formatValidationErrors($errorMessages))
+                ->toast()
+                ->position('top-end')
+                ->show();
 
             throw $e;
         }
@@ -928,18 +1016,13 @@ class ModeOfProcurementPerItemPage extends Component
         $isUpdated = false;
 
         DB::transaction(function () use (&$isAdded, &$isUpdated) {
-            foreach ($this->postItems as $index => $postItem) {
-                $item = $this->form['items'][$index] ?? null;
+            // Loop through postItems (which contains the form data)
+            foreach ($this->postItems as $prItemID => $postItem) {
+                // Get the corresponding form item
+                $item = collect($this->form['items'])->firstWhere('prItemID', $prItemID);
 
                 // Skip if item doesn't exist or doesn't have a mode
                 if (!$item || empty($item['mode_of_procurement_id'])) {
-                    continue;
-                }
-
-                $prItemID = $item['prItemID'] ?? null;
-
-                // Skip if no prItemID
-                if (!$prItemID) {
                     continue;
                 }
 
@@ -1003,6 +1086,9 @@ class ModeOfProcurementPerItemPage extends Component
                 ->text('Post-procurement details remain unchanged.')
                 ->toast()->position('top-end')->show();
         }
+
+        // Reload data to refresh postItems
+        $this->mount($this->procurement);
     }
     public function hasPostDataForItem($itemIndex): bool
     {

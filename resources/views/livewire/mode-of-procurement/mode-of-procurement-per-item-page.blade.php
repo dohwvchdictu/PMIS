@@ -385,10 +385,20 @@
                                             </td>
 
                                             <td class="px-2 py-2">
+                                                @php
+                                                    $biddingResult = $item['bidding_result'] ?? '';
+                                                    $hasPostData = $this->hasPostDataForItem($itemIndex);
+
+                                                    // Disable if: history record OR (bidding result is SUCCESSFUL AND post data exists)
+                                                    $shouldDisableBiddingResult =
+                                                        $disableInputs ||
+                                                        ($biddingResult === 'SUCCESSFUL' && $hasPostData);
+                                                @endphp
+
                                                 <select wire:key="res-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_result"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
+                                                    @if ($shouldDisableBiddingResult) disabled @endif>
                                                     <option value="">Select...</option>
                                                     <option value="SUCCESSFUL">SUCCESSFUL</option>
                                                     <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
@@ -775,6 +785,10 @@
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
                                     @foreach ($postAvailableItems as $itemIndex => $item)
+                                        @php
+                                            $prItemID = $item['prItemID'] ?? null;
+                                        @endphp
+
                                         <tr class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
                                             <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                                 {{ $item['item_no'] }}
@@ -784,55 +798,55 @@
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.resolutionNumber"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionNumber"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white
-                                            {{ $errors->has('postItems.' . $itemIndex . '.resolutionNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
+                {{ $errors->has('postItems.' . $prItemID . '.resolutionNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
                                                     placeholder="RES-YYYY-NNN">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.bidEvaluationDate"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.bidEvaluationDate"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.postQualDate"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.postQualDate"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.recommendingForAward"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.recommendingForAward"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.noticeOfAward"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.noticeOfAward"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="number" step="0.01"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.awardedAmount"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.philgepsReferenceNo"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.philgepsReferenceNo"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
                                                     placeholder="PHL-YYYY-NNN">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.awardNoticeNumber"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.awardNoticeNumber"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
                                                     placeholder="AN-YYYY-NNN">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $itemIndex }}.dateOfPostingOfAwardOnPhilGEPS"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.dateOfPostingOfAwardOnPhilGEPS"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
-                                                <select wire:model.defer="postItems.{{ $itemIndex }}.supplier_id"
+                                                <select wire:model.defer="postItems.{{ $prItemID }}.supplier_id"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                                     <option value="">Select Supplier...</option>
                                                     @foreach ($suppliers as $supplier)
@@ -981,8 +995,20 @@
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <select wire:model.defer="editingItem.bidding_result" disabled
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white cursor-not-allowed">
+                                        @php
+                                            $editBiddingResult = $editingItem['bidding_result'] ?? '';
+                                            $editIndex = $this->editingIndex ?? null;
+                                            $editHasPostData =
+                                                $editIndex !== null ? $this->hasPostDataForItem($editIndex) : false;
+
+                                            $disableEditBiddingResult =
+                                                $editBiddingResult === 'SUCCESSFUL' && $editHasPostData;
+                                        @endphp
+
+                                        <select wire:model.defer="editingItem.bidding_result"
+                                            @if ($disableEditBiddingResult) disabled @endif
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
+        {{ $disableEditBiddingResult ? 'cursor-not-allowed' : '' }}">
                                             <option value="">Select...</option>
                                             <option value="SUCCESSFUL">SUCCESSFUL</option>
                                             <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
