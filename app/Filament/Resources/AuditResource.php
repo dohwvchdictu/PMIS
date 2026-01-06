@@ -99,14 +99,6 @@ class AuditResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
-                    ->searchable()
-                    ->icon('heroicon-o-globe-alt')
-                    ->iconColor('gray')
-                    ->copyable()
-                    ->copyMessage('IP copied!')
-                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('user_agent')
                     ->label('Browser')
@@ -132,8 +124,8 @@ class AuditResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date & Time')
                     ->dateTime('M d, Y h:i A')
+                    ->timezone('Asia/Manila')
                     ->sortable()
-                    ->description(fn($record) => $record->created_at->diffForHumans())
                     ->icon('heroicon-o-clock')
                     ->iconColor('gray'),
             ])

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class MopItem extends Model
+class MopItem extends Model implements Auditable
 {
     use HasFactory;
-
+    use \OwenIt\Auditing\Auditable;
     protected $table = 'mop_item';
 
     protected $fillable = [
@@ -18,7 +19,21 @@ class MopItem extends Model
         'mode_of_procurement_id',
         'mode_order',
     ];
+    protected $auditInclude = [
+        'procID',
+        'prItemID',
+        'uid',
+        'mode_of_procurement_id',
+        'mode_order',
+    ];
+    protected $auditTimestamps = true;
 
+    protected $auditStrict = false;
+
+    protected function resolveUser()
+    {
+        return \App\Models\User::resolveAuditUser();
+    }
     public function procurement()
     {
         return $this->belongsTo(Procurement::class, 'procID');

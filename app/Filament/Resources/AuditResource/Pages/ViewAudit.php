@@ -79,10 +79,22 @@ class ViewAudit extends ViewRecord
                                     ->color('info'),
 
                                 Infolists\Components\TextEntry::make('user_agent')
-                                    ->label('User Agent')
+                                    ->label('Browser')
                                     ->icon('heroicon-o-computer-desktop')
-                                    ->limit(100)
-                                    ->tooltip(fn($record) => $record->user_agent)
+                                    ->formatStateUsing(function ($state) {
+                                        // Extract browser name and version
+                                        if (preg_match('/Chrome\/([0-9.]+)/', $state, $matches)) {
+                                            return "Chrome {$matches[1]}";
+                                        }
+                                        if (preg_match('/Firefox\/([0-9.]+)/', $state, $matches)) {
+                                            return "Firefox {$matches[1]}";
+                                        }
+                                        if (preg_match('/Safari\/([0-9.]+)/', $state, $matches) && !str_contains($state, 'Chrome')) {
+                                            return "Safari {$matches[1]}";
+                                        }
+                                        return $state; // Fallback to full user agent
+                                    })
+                                    ->tooltip(fn($record) => $record->user_agent) // Show full UA on hover
                                     ->default('N/A'),
                             ]),
 
