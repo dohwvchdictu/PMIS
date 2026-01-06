@@ -427,7 +427,7 @@
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
     {{ $errors->has('form.items.' . $itemIndex . '.rfq_no')
         ? 'border-red-500 focus:ring-red-500'
         : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
@@ -584,13 +584,14 @@
                                                                     @endphp
                                                                     <tr
                                                                         class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                        @can('edit_mode::of::procurement')
-                                                                            @if ($historyModeId == 1)
-                                                                                <td class="px-2 py-2 align-middle">
 
-                                                                                </td>
-                                                                            @else
-                                                                                <td class="px-2 py-2 align-middle">
+                                                                        @if ($historyModeId == 1)
+                                                                            <td class="px-2 py-2 align-middle">
+
+                                                                            </td>
+                                                                        @else
+                                                                            <td class="px-2 py-2 align-middle">
+                                                                                @can('edit_mode::of::procurement')
                                                                                     <button type="button"
                                                                                         wire:click="editHistoryItem({{ $actualIndex }})"
                                                                                         class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
@@ -598,9 +599,9 @@
                                                                                         <x-heroicon-o-pencil
                                                                                             class="w-4 h-4" />
                                                                                     </button>
-                                                                                </td>
-                                                                            @endif
-                                                                        @endcan
+                                                                                @endcan
+                                                                            </td>
+                                                                        @endif
                                                                         {{-- Empty columns for Item No and Description (aligns with main table) --}}
                                                                         <td class="px-2 py-2"></td>
                                                                         <td class="px-2 py-2"></td>
