@@ -41,7 +41,7 @@ class LoginPage extends Component
 
         // Get API employee id
         $apiEmployeeId = $response['employee']['id'] ?? null;
-        $user = null; // Initialize user variable
+        $user = null;
 
         if ($apiEmployeeId) {
             // Find Laravel user by hris_id
@@ -51,13 +51,17 @@ class LoginPage extends Component
             if (!$user) {
                 $employeeData = $response['employee'];
 
-                // 1. Create the new user record
-                $user = User::create([
-                    'hris_id' => $apiEmployeeId,
-                    'name' => $employeeData['firstName'] . ' ' . $employeeData['lastName'],
-                ]);
+                // Create user WITHOUT triggering audit events (no authenticated user yet)
+                $user = User::withoutEvents(function () use ($apiEmployeeId, $employeeData) {
+                    return User::create([
+                        'hris_id' => $apiEmployeeId,
+                        'name' => $employeeData['firstName'] . ' ' . $employeeData['lastName'],
+                        'email' => $employeeData['email'] ?? $this->email,
+                        'password' => bcrypt(str()->random(32)), // Random password since using API auth
+                    ]);
+                });
 
-                // 2. Assign the default 'User' role via Filament Shield
+                // Assign the default 'User' role
                 $user->assignRole('User');
             }
         }
@@ -66,7 +70,6 @@ class LoginPage extends Component
         if ($user) {
             Auth::login($user);
         } else {
-            // This will only be hit if $apiEmployeeId was null from the API response
             session()->flash('errorMessage', 'Could not verify your employee ID from the API.');
             return redirect()->route('login');
         }
@@ -85,7 +88,6 @@ class LoginPage extends Component
 
         if ($photoUrl) {
             try {
-                // Download the image from API
                 $res = Http::withHeaders([
                     'Authorization' => 'Bearer ' . ($response['token'] ?? ''),
                 ])->get($photoUrl);
@@ -94,10 +96,7 @@ class LoginPage extends Component
                     $contents = $res->body();
                     $filename = 'employees/' . $response['employee']['id'] . '.jpg';
 
-                    // Save to storage/app/public/employees/
                     Storage::disk('public')->put($filename, $contents);
-
-                    // Update session to point to local copy
                     session(['user_photo' => asset('storage/' . $filename)]);
                 } else {
                     session(['user_photo' => asset('storage/employees/default.png')]);
@@ -106,7 +105,6 @@ class LoginPage extends Component
                 session(['user_photo' => asset('storage/employees/default.png')]);
             }
         } else {
-            // No photo URL, use default
             session(['user_photo' => asset('storage/employees/default.png')]);
         }
 

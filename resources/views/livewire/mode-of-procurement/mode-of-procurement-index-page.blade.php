@@ -47,8 +47,18 @@
                         <x-forms.searchable-select wire:model.live="bacCategoryFilter" :options="$bacCategories" labelKey="name"
                             valueKey="id" placeholder="All" />
                     </div>
+
+                    <!-- Category Filter -->
+                    <div class="relative z-40">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">
+                            Category
+                        </label>
+                        <x-forms.searchable-select wire:model.live="categoryFilter" :options="$allCategories" labelKey="name"
+                            valueKey="id" placeholder="All" />
+                    </div>
+
                     <!-- IB Number Filter -->
-                    <div class="relative z-50">
+                    <div class="relative z-30">
                         <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">
                             IB Number
                         </label>
