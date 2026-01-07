@@ -42,35 +42,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     protected $auditTimestamps = true;
     protected $auditStrict = false;
 
-    /**
-     * Resolve the user for auditing
-     */
-    public static function resolveAuditUser()
-    {
-        try {
-            // Try web guard first (your main app)
-            if (auth()->guard('web')->check()) {
-                return auth()->guard('web')->user();
-            }
-
-            // Try Filament guard (admin panel)
-            if (class_exists(\Filament\Facades\Filament::class)) {
-                if (\Filament\Facades\Filament::auth()->check()) {
-                    return \Filament\Facades\Filament::auth()->user();
-                }
-            }
-
-            // Try sanctum guard (if used)
-            if (auth()->guard('sanctum')->check()) {
-                return auth()->guard('sanctum')->user();
-            }
-
-        } catch (\Throwable $e) {
-            \Log::error('User resolver error: ' . $e->getMessage());
-        }
-
-        return null;
-    }
+    // NO resolveAuditUser() method needed!
 
     public function canAccessPanel(Panel $panel): bool
     {

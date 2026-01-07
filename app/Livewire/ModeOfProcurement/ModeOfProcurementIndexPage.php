@@ -4,6 +4,7 @@ namespace App\Livewire\ModeOfProcurement;
 
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use App\Models\BacType;
+use App\Models\Category;
 use App\Models\MopGroup;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class ModeOfProcurementIndexPage extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'bacCategoryFilter' => ['except' => null],
+        'categoryFilter' => ['except' => null],
         'ibNumberFilter' => ['except' => null],
         'perPage' => ['except' => 10],
     ];
@@ -36,6 +38,7 @@ class ModeOfProcurementIndexPage extends Component
 
     // Filters
     public $bacCategoryFilter = null;
+    public $categoryFilter = null;
 
     // Modal
     public $showModal = false;
@@ -99,6 +102,12 @@ class ModeOfProcurementIndexPage extends Component
     {
         $this->resetPage();
     }
+
+    public function updatingCategoryFilter()
+    {
+        $this->resetPage();
+    }
+
     public function updatingIbNumberFilter()
     {
         $this->resetPage();
@@ -220,6 +229,7 @@ class ModeOfProcurementIndexPage extends Component
             return ['mode' => null, 'status' => 'Multiple'];
         }
     }
+
     public function getIbNumbersProperty()
     {
         return BidSchedule::select('ib_number')
@@ -235,6 +245,7 @@ class ModeOfProcurementIndexPage extends Component
                 ];
             });
     }
+
     public function render()
     {
         $query = Procurement::query()
@@ -262,6 +273,11 @@ class ModeOfProcurementIndexPage extends Component
             });
         }
 
+        // Category filter
+        if ($this->categoryFilter) {
+            $query->where('category_id', $this->categoryFilter);
+        }
+
         // IB Number filter
         if ($this->ibNumberFilter) {
             $query->where(function ($q) {
@@ -270,7 +286,7 @@ class ModeOfProcurementIndexPage extends Component
                     $subQ->where('procurement_type', 'perLot')
                         ->whereExists(function ($exists) {
                             $exists->select(\DB::raw(1))
-                                ->from('bid_schedules') // Changed from bid_schedule to bid_schedules
+                                ->from('bid_schedules')
                                 ->whereColumn('bid_schedules.ref_id', 'procurements.procID')
                                 ->where('bid_schedules.ib_number', $this->ibNumberFilter);
                         });
@@ -284,7 +300,7 @@ class ModeOfProcurementIndexPage extends Component
                                     ->whereColumn('pr_items.procID', 'procurements.procID')
                                     ->whereExists(function ($bidExists) {
                                         $bidExists->select(\DB::raw(1))
-                                            ->from('bid_schedules') // Changed from bid_schedule to bid_schedules
+                                            ->from('bid_schedules')
                                             ->whereColumn('bid_schedules.ref_id', 'pr_items.prItemID')
                                             ->where('bid_schedules.ib_number', $this->ibNumberFilter);
                                     });
@@ -311,12 +327,28 @@ class ModeOfProcurementIndexPage extends Component
             }
         }
 
-        // Get BAC Categories for filter (ordered by name)
+        // Get BAC Categories for filter
         $bacCategories = BacType::orderBy('name', 'asc')->get();
+
+        // Get Categories for filter
+        $categoriesQuery = Category::orderBy('category', 'asc');
+
+        // If BAC Category filter is active, only show categories for that BAC type
+        if ($this->bacCategoryFilter) {
+            $categoriesQuery->where('bac_type_id', $this->bacCategoryFilter);
+        }
+
+        $allCategories = $categoriesQuery->get()->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->category
+            ];
+        });
 
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
             'procurements' => $procurements,
             'bacCategories' => $bacCategories,
+            'allCategories' => $allCategories,
             'ibNumbers' => $this->ibNumbers,
         ]);
     }
