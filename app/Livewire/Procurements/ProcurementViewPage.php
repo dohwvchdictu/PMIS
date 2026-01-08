@@ -44,6 +44,8 @@ class ProcurementViewPage extends Component
     public int $perPage = 10;
     public $mopToggles = [];
     public array $postItems = [];
+    public bool $showModal = false;
+    public ?array $selectedSupplier = null;
 
     // Post procurement data
     public ?string $resolutionNumber = null;
@@ -457,8 +459,33 @@ class ProcurementViewPage extends Component
             $this->mopToggles[$index] = true;
         }
     }
+    public function viewSupplierDetails(int $supplierId): void
+    {
+        $supplier = $this->suppliers->firstWhere('id', $supplierId);
+
+        if ($supplier) {
+            $this->selectedSupplier = [
+                'name' => $supplier->name ?? null,
+                'tin' => !empty(trim($supplier->tin)) ? trim($supplier->tin) : null,
+                'address' => !empty(trim($supplier->address)) ? trim($supplier->address) : null,
+                'mobile' => !empty(trim($supplier->mobile)) ? trim($supplier->mobile) : null,
+                'telephone' => !empty(trim($supplier->telephone)) ? trim($supplier->telephone) : null,
+                'email' => !empty(trim($supplier->email)) ? trim($supplier->email) : null,
+                'contact_person' => !empty(trim($supplier->contact_person)) ? trim($supplier->contact_person) : null,
+            ];
+            $this->showModal = true;
+        }
+    }
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->selectedSupplier = null;
+    }
     public function render()
     {
-        return view('livewire.procurements.procurement-view-page');
+        return view('livewire.procurements.procurement-view-page', [
+            'suppliers' => $this->suppliers,
+        ]);
     }
 }

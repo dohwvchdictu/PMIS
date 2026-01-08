@@ -385,7 +385,7 @@
                                             $currentMode['resolution_number']);
                                 @endphp
 
-                                {{-- Bidding Information --}}
+                                {{-- Mode Information --}}
                                 @if ($hasBiddingData)
                                     <div class="mb-6">
                                         <h4
@@ -395,7 +395,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
-                                            Bidding Information
+                                            Mode Information
                                         </h4>
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                             @if ($currentMode['bidding_number'])
@@ -465,7 +465,6 @@
                                     </div>
                                 @endif
 
-                                {{-- SVP Information --}}
                                 @if ($hasSvpData)
                                     <div>
                                         <h4
@@ -475,7 +474,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                                             </svg>
-                                            SVP Information
+                                            Mode Information
                                         </h4>
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                             @if ($currentMode['rfq_no'])
@@ -624,7 +623,7 @@
                                                         <div class="mb-3">
                                                             <p
                                                                 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                                                Bidding Information</p>
+                                                                Mode Information</p>
                                                             <div
                                                                 class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                                 @if ($historyItem['bidding_number'])
@@ -716,7 +715,7 @@
                                                         <div>
                                                             <p
                                                                 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                                                SVP Information</p>
+                                                                Mode Information</p>
                                                             <div
                                                                 class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                                 @if ($historyItem['rfq_no'])
@@ -863,7 +862,6 @@
                                             </div>
                                             <div
                                                 class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                                <span>Amount: ₱{{ number_format($currentItem['amount'], 2) }}</span>
                                                 @php
                                                     $mode = $modeOfProcurements->firstWhere(
                                                         'id',
@@ -971,7 +969,7 @@
                                                 $currentItem['resolution_number']);
                                     @endphp
 
-                                    {{-- Bidding Information --}}
+                                    {{-- Mode Information --}}
                                     @if ($hasBiddingData)
                                         <div class="mb-6">
                                             <h4
@@ -982,7 +980,7 @@
                                                         stroke-width="2"
                                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                Bidding Information
+                                                Mode Information
                                             </h4>
                                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                 @if ($currentItem['bidding_number'])
@@ -1053,7 +1051,6 @@
                                         </div>
                                     @endif
 
-                                    {{-- SVP Information --}}
                                     @if ($hasSvpData)
                                         <div>
                                             <h4
@@ -1064,7 +1061,7 @@
                                                         stroke-width="2"
                                                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                                                 </svg>
-                                                SVP Information
+                                                Mode Information
                                             </h4>
                                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                 @if ($currentItem['rfq_no'])
@@ -1212,7 +1209,7 @@
                                                             <div class="mb-3">
                                                                 <p
                                                                     class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                                                    Bidding Information</p>
+                                                                    Mode Information</p>
                                                                 <div
                                                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                                     @if ($historyItem['bidding_number'])
@@ -1306,7 +1303,7 @@
                                                             <div>
                                                                 <p
                                                                     class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                                                    SVP Information</p>
+                                                                    Mode Information</p>
                                                                 <div
                                                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                                                                     @if ($historyItem['rfq_no'])
@@ -1622,12 +1619,27 @@
                                             @php
                                                 $supplier = $suppliers->firstWhere('id', $supplier_id);
                                             @endphp
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                {{ $supplier?->company_name ?? 'Unknown Supplier' }}
-                                            </p>
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $supplier?->name ?? 'Unknown Supplier' }}
+                                                </p>
+                                                @if ($supplier)
+                                                    <button wire:click="viewSupplierDetails({{ $supplier->id }})"
+                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 transition-colors"
+                                                        title="View Contact Details">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
+
                             </div>
                         @else
                             <div
@@ -1672,9 +1684,9 @@
                                     class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                                     {{-- Item Header --}}
                                     <div
-                                        class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                        class="flex items-start justify-between mb-2 pb-2 border-b border-gray-200 dark:border-neutral-600">
                                         <div class="flex-1">
-                                            <div class="flex items-center gap-3 mb-2">
+                                            <div class="flex items-center gap-3">
                                                 <span
                                                     class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
                                                     {{ $item['item_no'] }}
@@ -1682,13 +1694,6 @@
                                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
                                                     {{ $item['description'] }}
                                                 </h3>
-                                            </div>
-                                            <div
-                                                class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                                <span>Amount: ₱{{ number_format($item['amount'], 2) }}</span>
-                                                <span class="font-medium text-emerald-600 dark:text-emerald-400">
-                                                    {{ $mode?->modeofprocurements ?? 'N/A' }}
-                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1833,9 +1838,24 @@
                                                 @php
                                                     $supplier = $suppliers->firstWhere('id', $postData['supplier_id']);
                                                 @endphp
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $supplier?->company_name ?? 'Unknown Supplier' }}
-                                                </p>
+                                                <div class="flex items-center justify-between">
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $supplier?->name ?? 'Unknown Supplier' }}
+                                                    </p>
+                                                    @if ($supplier)
+                                                        <button wire:click="viewSupplierDetails({{ $supplier->id }})"
+                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 transition-colors"
+                                                            title="View Contact Details">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
@@ -1860,4 +1880,143 @@
             @endif
         </div>
     </div>
+
+    {{-- Supplier Details Modal - Using your forms modal component --}}
+    <x-forms.modal title="Supplier Contact Details" size="max-w-lg">
+        @if ($selectedSupplier)
+            <div class="px-6 py-4 space-y-4">
+                {{-- Company Name --}}
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Company Name
+                    </label>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ $selectedSupplier['name'] ?? 'N/A' }}
+                    </p>
+                </div>
+
+                {{-- TIN --}}
+                @if (!empty(trim($selectedSupplier['tin'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            TIN
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            {{ $selectedSupplier['tin'] }}
+                        </p>
+                    </div>
+                @endif
+
+                {{-- Address --}}
+                @if (!empty(trim($selectedSupplier['address'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Address
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            {{ $selectedSupplier['address'] }}
+                        </p>
+                    </div>
+                @endif
+
+                {{-- Mobile --}}
+                @if (!empty(trim($selectedSupplier['mobile'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Mobile
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            <a href="tel:{{ $selectedSupplier['mobile'] }}"
+                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                {{ $selectedSupplier['mobile'] }}
+                            </a>
+                        </p>
+                    </div>
+                @endif
+
+                {{-- Telephone --}}
+                @if (!empty(trim($selectedSupplier['telephone'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            Telephone
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            <a href="tel:{{ $selectedSupplier['telephone'] }}"
+                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                {{ $selectedSupplier['telephone'] }}
+                            </a>
+                        </p>
+                    </div>
+                @endif
+
+                {{-- Email --}}
+                @if (!empty(trim($selectedSupplier['email'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Email
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            <a href="mailto:{{ $selectedSupplier['email'] }}"
+                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                {{ $selectedSupplier['email'] }}
+                            </a>
+                        </p>
+                    </div>
+                @endif
+
+                {{-- Contact Person --}}
+                @if (!empty(trim($selectedSupplier['contact_person'] ?? '')))
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Contact Person
+                        </label>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            {{ $selectedSupplier['contact_person'] }}
+                        </p>
+                    </div>
+                @endif
+
+                {{-- No Additional Data Message --}}
+                @if (empty(trim($selectedSupplier['tin'] ?? '')) &&
+                        empty(trim($selectedSupplier['address'] ?? '')) &&
+                        empty(trim($selectedSupplier['mobile'] ?? '')) &&
+                        empty(trim($selectedSupplier['telephone'] ?? '')) &&
+                        empty(trim($selectedSupplier['email'] ?? '')) &&
+                        empty(trim($selectedSupplier['contact_person'] ?? '')))
+                    <div class="text-center py-4">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                            No additional contact information available for this supplier.
+                        </p>
+                    </div>
+                @endif
+            </div>
+        @endif
+    </x-forms.modal>
 </div>
