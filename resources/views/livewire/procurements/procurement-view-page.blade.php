@@ -251,199 +251,1610 @@
 
             @if ($activeTab == 2)
                 {{-- Mode of Procurement Tab --}}
-                <div
-                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                    @if (!empty($form['mop_items']))
-                        <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                            <table class="w-full text-xs min-w-max">
-                                <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                    <tr>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-10">
-                                            #</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
-                                            Mode of Procurement</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
-                                            Bidding #</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            IB No.</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Pre-Proc Conference</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Ads/Post IB</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Pre-Bid Conference</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Eligibility Check</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Sub/Open of Bids</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Bidding Date</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Bidding Result</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            RFQ No.</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Canvass Date</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Returned of Canvass</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Abstract of Canvass</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution Number</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                    @foreach ($form['mop_items'] as $item)
-                                        <tr class="hover:bg-emerald-100 dark:hover:bg-neutral-800">
-                                            <td class="px-2 py-2 text-center text-gray-700 dark:text-gray-200">
-                                                {{ $item['mode_order'] }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['mode_of_procurement_name'] }}</td>
-                                            <td class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                {{ $item['bidding_number'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['ib_number'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['pre_proc_conference'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['ads_post_ib'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['pre_bid_conf'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['eligibility_check'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['sub_open_bids'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['bidding_date'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                @if ($item['bidding_result'])
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {{ $item['bidding_result'] === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                                        {{ $item['bidding_result'] }}
-                                                    </span>
+                <div class="space-y-4">
+                    @if ($form['procurement_type'] === 'perLot')
+                        {{-- PER LOT DISPLAY with History Toggle --}}
+                        @php
+                            $filteredItems = collect($form['mop_items'] ?? [])
+                                ->filter(function ($item) {
+                                    return $item['uid'] !== 'MOP-1-1';
+                                })
+                                ->sortBy('mode_order')
+                                ->values()
+                                ->reverse()
+                                ->values();
+
+                            $hasAnyHistory = $filteredItems->count() > 1;
+                        @endphp
+
+                        @if ($filteredItems->isNotEmpty())
+                            @php
+                                $currentMode = $filteredItems->first();
+                                $historyModes = $filteredItems->slice(1);
+                            @endphp
+
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                {{-- Header with Mode and Order --}}
+                                <div
+                                    class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span
+                                                class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                                                {{ $currentMode['mode_order'] }}
+                                            </span>
+                                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {{ $currentMode['mode_of_procurement_name'] }}
+                                            </h3>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        @if ($currentMode['bidding_result'])
+                                            <span
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $currentMode['bidding_result'] === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                                {{ $currentMode['bidding_result'] }}
+                                            </span>
+                                        @endif
+
+                                        {{-- Toggle Button for History --}}
+                                        @if ($hasAnyHistory)
+                                            <button type="button" wire:click="toggleMopSection('lot_history')"
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors"
+                                                title="{{ $mopToggles['lot_history'] ?? false ? 'Hide History' : 'Show History' }}">
+                                                @if ($mopToggles['lot_history'] ?? false)
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-5 w-5 text-emerald-600" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
                                                 @else
-                                                    -
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-5 w-5 text-emerald-600" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
                                                 @endif
-                                            </td>
-                                            <td class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                {{ $item['rfq_no'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['canvass_date'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['date_returned_of_canvass'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                {{ $item['abstract_of_canvass_date'] ?? '-' }}</td>
-                                            <td class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                {{ $item['resolution_number'] ?? '-' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-12">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No mode of procurement data
-                                available</p>
-                        </div>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Current Mode Data --}}
+                                @php
+                                    $modeId = $currentMode['mode_of_procurement_id'];
+                                    $hasBiddingData =
+                                        !in_array($modeId, [
+                                            1,
+                                            7,
+                                            8,
+                                            9,
+                                            10,
+                                            11,
+                                            12,
+                                            13,
+                                            14,
+                                            15,
+                                            16,
+                                            17,
+                                            18,
+                                            19,
+                                            20,
+                                            21,
+                                            22,
+                                            23,
+                                            24,
+                                        ]) &&
+                                        ($currentMode['bidding_number'] ||
+                                            $currentMode['ib_number'] ||
+                                            $currentMode['pre_proc_conference'] ||
+                                            $currentMode['ads_post_ib'] ||
+                                            $currentMode['pre_bid_conf'] ||
+                                            $currentMode['eligibility_check'] ||
+                                            $currentMode['sub_open_bids'] ||
+                                            $currentMode['bidding_date']);
+
+                                    $hasSvpData =
+                                        in_array($modeId, [
+                                            7,
+                                            8,
+                                            9,
+                                            10,
+                                            11,
+                                            12,
+                                            13,
+                                            14,
+                                            15,
+                                            16,
+                                            17,
+                                            18,
+                                            19,
+                                            20,
+                                            21,
+                                            22,
+                                            23,
+                                            24,
+                                        ]) &&
+                                        ($currentMode['rfq_no'] ||
+                                            $currentMode['canvass_date'] ||
+                                            $currentMode['date_returned_of_canvass'] ||
+                                            $currentMode['abstract_of_canvass_date'] ||
+                                            $currentMode['resolution_number']);
+                                @endphp
+
+                                {{-- Bidding Information --}}
+                                @if ($hasBiddingData)
+                                    <div class="mb-6">
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Bidding Information
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            @if ($currentMode['bidding_number'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bidding #
+                                                    </p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['bidding_number'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['ib_number'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">IB No.</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['ib_number'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['pre_proc_conference'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pre-Proc
+                                                        Conference</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['pre_proc_conference'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['ads_post_ib'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Ads/Post
+                                                        IB</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['ads_post_ib'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['pre_bid_conf'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pre-Bid
+                                                        Conference</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['pre_bid_conf'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['eligibility_check'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                        Eligibility Check</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['eligibility_check'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['sub_open_bids'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sub/Open
+                                                        of Bids</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['sub_open_bids'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['bidding_date'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bidding
+                                                        Date</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['bidding_date'] }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- SVP Information --}}
+                                @if ($hasSvpData)
+                                    <div>
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                            </svg>
+                                            SVP Information
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            @if ($currentMode['rfq_no'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">RFQ No.
+                                                    </p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['rfq_no'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['canvass_date'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Canvass
+                                                        Date</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['canvass_date'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['date_returned_of_canvass'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Returned
+                                                        of Canvass</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['date_returned_of_canvass'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['abstract_of_canvass_date'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Abstract
+                                                        of Canvass</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['abstract_of_canvass_date'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['resolution_number'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
+                                                        Number</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['resolution_number'] }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- History Section --}}
+                                @if ($hasAnyHistory && ($mopToggles['lot_history'] ?? false))
+                                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-neutral-600">
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Mode History
+                                        </h4>
+
+                                        <div class="space-y-4">
+                                            @foreach ($historyModes as $historyItem)
+                                                @php
+                                                    $historyModeId = $historyItem['mode_of_procurement_id'];
+
+                                                    $hasHistoryBidding =
+                                                        !in_array($historyModeId, [
+                                                            1,
+                                                            7,
+                                                            8,
+                                                            9,
+                                                            10,
+                                                            11,
+                                                            12,
+                                                            13,
+                                                            14,
+                                                            15,
+                                                            16,
+                                                            17,
+                                                            18,
+                                                            19,
+                                                            20,
+                                                            21,
+                                                            22,
+                                                            23,
+                                                            24,
+                                                        ]) &&
+                                                        ($historyItem['bidding_number'] ||
+                                                            $historyItem['ib_number'] ||
+                                                            $historyItem['pre_proc_conference'] ||
+                                                            $historyItem['ads_post_ib'] ||
+                                                            $historyItem['pre_bid_conf'] ||
+                                                            $historyItem['eligibility_check'] ||
+                                                            $historyItem['sub_open_bids'] ||
+                                                            $historyItem['bidding_date']);
+
+                                                    $hasHistorySvp =
+                                                        in_array($historyModeId, [
+                                                            7,
+                                                            8,
+                                                            9,
+                                                            10,
+                                                            11,
+                                                            12,
+                                                            13,
+                                                            14,
+                                                            15,
+                                                            16,
+                                                            17,
+                                                            18,
+                                                            19,
+                                                            20,
+                                                            21,
+                                                            22,
+                                                            23,
+                                                            24,
+                                                        ]) &&
+                                                        ($historyItem['rfq_no'] ||
+                                                            $historyItem['canvass_date'] ||
+                                                            $historyItem['date_returned_of_canvass'] ||
+                                                            $historyItem['abstract_of_canvass_date'] ||
+                                                            $historyItem['resolution_number']);
+                                                @endphp
+
+                                                <div
+                                                    class="bg-gray-50 dark:bg-neutral-800/50 rounded-lg p-4 border border-gray-200 dark:border-neutral-700">
+                                                    <div class="flex items-center justify-between mb-3">
+                                                        <div class="flex items-center gap-2">
+                                                            <span
+                                                                class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-400 font-semibold text-xs">
+                                                                {{ $historyItem['mode_order'] }}
+                                                            </span>
+                                                            <span
+                                                                class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                {{ $historyItem['mode_of_procurement_name'] }}
+                                                            </span>
+                                                        </div>
+                                                        @if ($historyItem['bidding_result'])
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $historyItem['bidding_result'] === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                                                {{ $historyItem['bidding_result'] }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+
+                                                    @if ($hasHistoryBidding)
+                                                        <div class="mb-3">
+                                                            <p
+                                                                class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                                Bidding Information</p>
+                                                            <div
+                                                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                @if ($historyItem['bidding_number'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Bidding #</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['bidding_number'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['ib_number'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            IB No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['ib_number'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['pre_proc_conference'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['pre_proc_conference'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['ads_post_ib'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Ads/Post IB</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['ads_post_ib'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['pre_bid_conf'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Bid Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['pre_bid_conf'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['eligibility_check'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Eligibility</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['eligibility_check'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['sub_open_bids'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Sub/Open Bids</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['sub_open_bids'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['bidding_date'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Bidding Date</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['bidding_date'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($hasHistorySvp)
+                                                        <div>
+                                                            <p
+                                                                class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                                SVP Information</p>
+                                                            <div
+                                                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                @if ($historyItem['rfq_no'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            RFQ No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['rfq_no'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['canvass_date'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Canvass Date</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['canvass_date'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['date_returned_of_canvass'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Returned</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['date_returned_of_canvass'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['abstract_of_canvass_date'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Abstract</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['abstract_of_canvass_date'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['resolution_number'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Resolution</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['resolution_number'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No mode of procurement
+                                        data available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @elseif ($form['procurement_type'] === 'perItem')
+                        {{-- PER ITEM DISPLAY WITH PAGINATION --}}
+                        @php
+                            // Group items by prItemID to show current mode + history
+                            $groupedItems = collect($form['items'] ?? [])->groupBy('prItemID');
+                            $totalItems = $groupedItems->count();
+
+                            // Pagination settings
+                            $currentPage = $page ?? 1;
+                            $itemsPerPage = $perPage ?? 10;
+                            $totalPages = ceil($totalItems / $itemsPerPage);
+
+                            // Paginate grouped items
+                            $paginatedGroups = $groupedItems->slice(($currentPage - 1) * $itemsPerPage, $itemsPerPage);
+                        @endphp
+
+                        @if ($groupedItems->isNotEmpty())
+                            {{-- Items Count and Per-Page Selector --}}
+                            <div
+                                class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="flex items-center justify-between flex-wrap gap-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                                            Showing {{ ($currentPage - 1) * $itemsPerPage + 1 }} to
+                                            {{ min($currentPage * $itemsPerPage, $totalItems) }} of
+                                            {{ $totalItems }} items
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-sm text-gray-600 dark:text-gray-400">Items per page:</label>
+                                        <select wire:model.live="perPage"
+                                            class="px-3 py-1 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="5">5</option>
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                            <option value="{{ $totalItems }}">All</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Item Cards --}}
+                            @foreach ($paginatedGroups as $prItemID => $itemGroup)
+                                @php
+                                    // Get the most recent item (first in the group, assuming sorted by mode_order desc)
+                                    $currentItem = $itemGroup->first();
+                                    $hasHistory = $itemGroup->count() > 1;
+                                    $isExpanded = $mopToggles[$prItemID] ?? false;
+                                @endphp
+
+                                <div
+                                    class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    {{-- Item Header --}}
+                                    <div
+                                        class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <span
+                                                    class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                                                    {{ $currentItem['item_no'] }}
+                                                </span>
+                                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {{ $currentItem['description'] }}
+                                                </h3>
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>Amount: ₱{{ number_format($currentItem['amount'], 2) }}</span>
+                                                @php
+                                                    $mode = $modeOfProcurements->firstWhere(
+                                                        'id',
+                                                        $currentItem['mode_of_procurement_id'],
+                                                    );
+                                                @endphp
+                                                <span class="font-medium text-emerald-600 dark:text-emerald-400">
+                                                    {{ $mode?->modeofprocurements ?? 'N/A' }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-2">
+                                            @if ($currentItem['bidding_result'])
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $currentItem['bidding_result'] === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                                    {{ $currentItem['bidding_result'] }}
+                                                </span>
+                                            @endif
+
+                                            @if ($hasHistory)
+                                                <button type="button"
+                                                    wire:click="toggleMopSection('{{ $prItemID }}')"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-600 transition-colors"
+                                                    title="{{ $isExpanded ? 'Hide History' : 'Show History' }}">
+                                                    @if ($isExpanded)
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-5 w-5 text-emerald-600" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    @else
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-5 w-5 text-emerald-600" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    @endif
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- Current Mode Data --}}
+                                    @php
+                                        $modeId = $currentItem['mode_of_procurement_id'];
+                                        $hasBiddingData =
+                                            !in_array($modeId, [
+                                                1,
+                                                7,
+                                                8,
+                                                9,
+                                                10,
+                                                11,
+                                                12,
+                                                13,
+                                                14,
+                                                15,
+                                                16,
+                                                17,
+                                                18,
+                                                19,
+                                                20,
+                                                21,
+                                                22,
+                                                23,
+                                                24,
+                                            ]) &&
+                                            ($currentItem['bidding_number'] ||
+                                                $currentItem['ib_number'] ||
+                                                $currentItem['pre_proc_conference'] ||
+                                                $currentItem['ads_post_ib'] ||
+                                                $currentItem['pre_bid_conf'] ||
+                                                $currentItem['eligibility_check'] ||
+                                                $currentItem['sub_open_bids'] ||
+                                                $currentItem['bidding_date']);
+
+                                        $hasSvpData =
+                                            in_array($modeId, [
+                                                7,
+                                                8,
+                                                9,
+                                                10,
+                                                11,
+                                                12,
+                                                13,
+                                                14,
+                                                15,
+                                                16,
+                                                17,
+                                                18,
+                                                19,
+                                                20,
+                                                21,
+                                                22,
+                                                23,
+                                                24,
+                                            ]) &&
+                                            ($currentItem['rfq_no'] ||
+                                                $currentItem['canvass_date'] ||
+                                                $currentItem['date_returned_of_canvass'] ||
+                                                $currentItem['abstract_of_canvass_date'] ||
+                                                $currentItem['resolution_number']);
+                                    @endphp
+
+                                    {{-- Bidding Information --}}
+                                    @if ($hasBiddingData)
+                                        <div class="mb-6">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Bidding Information
+                                            </h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                @if ($currentItem['bidding_number'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Bidding #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['bidding_number'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['ib_number'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">IB No.
+                                                        </p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['ib_number'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['pre_proc_conference'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Pre-Proc Conference</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['pre_proc_conference'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['ads_post_ib'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Ads/Post IB</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['ads_post_ib'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['pre_bid_conf'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Pre-Bid Conference</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['pre_bid_conf'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['eligibility_check'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Eligibility Check</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['eligibility_check'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['sub_open_bids'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Sub/Open of Bids</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['sub_open_bids'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['bidding_date'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Bidding Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['bidding_date'] }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- SVP Information --}}
+                                    @if ($hasSvpData)
+                                        <div>
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                                </svg>
+                                                SVP Information
+                                            </h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                @if ($currentItem['rfq_no'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">RFQ
+                                                            No.</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['rfq_no'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['canvass_date'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Canvass Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['canvass_date'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['date_returned_of_canvass'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Returned of Canvass</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['date_returned_of_canvass'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['abstract_of_canvass_date'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Abstract of Canvass</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['abstract_of_canvass_date'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['resolution_number'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Resolution Number</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['resolution_number'] }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- History Section --}}
+                                    @if ($hasHistory && $isExpanded)
+                                        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-neutral-600">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Mode History
+                                            </h4>
+
+                                            <div class="space-y-4">
+                                                @foreach ($itemGroup->skip(1) as $historyItem)
+                                                    @php
+                                                        $historyModeId = $historyItem['mode_of_procurement_id'];
+                                                        $historyMode = $modeOfProcurements->firstWhere(
+                                                            'id',
+                                                            $historyModeId,
+                                                        );
+
+                                                        $hasHistoryBidding =
+                                                            !in_array($historyModeId, [
+                                                                1,
+                                                                7,
+                                                                8,
+                                                                9,
+                                                                10,
+                                                                11,
+                                                                12,
+                                                                13,
+                                                                14,
+                                                                15,
+                                                                16,
+                                                                17,
+                                                                18,
+                                                                19,
+                                                                20,
+                                                                21,
+                                                                22,
+                                                                23,
+                                                                24,
+                                                            ]) &&
+                                                            ($historyItem['bidding_number'] ||
+                                                                $historyItem['ib_number'] ||
+                                                                $historyItem['pre_proc_conference'] ||
+                                                                $historyItem['ads_post_ib'] ||
+                                                                $historyItem['pre_bid_conf'] ||
+                                                                $historyItem['eligibility_check'] ||
+                                                                $historyItem['sub_open_bids'] ||
+                                                                $historyItem['bidding_date']);
+
+                                                        $hasHistorySvp =
+                                                            in_array($historyModeId, [
+                                                                7,
+                                                                8,
+                                                                9,
+                                                                10,
+                                                                11,
+                                                                12,
+                                                                13,
+                                                                14,
+                                                                15,
+                                                                16,
+                                                                17,
+                                                                18,
+                                                                19,
+                                                                20,
+                                                                21,
+                                                                22,
+                                                                23,
+                                                                24,
+                                                            ]) &&
+                                                            ($historyItem['rfq_no'] ||
+                                                                $historyItem['canvass_date'] ||
+                                                                $historyItem['date_returned_of_canvass'] ||
+                                                                $historyItem['abstract_of_canvass_date'] ||
+                                                                $historyItem['resolution_number']);
+                                                    @endphp
+
+                                                    <div
+                                                        class="bg-gray-50 dark:bg-neutral-800/50 rounded-lg p-4 border border-gray-200 dark:border-neutral-700">
+                                                        <div class="flex items-center justify-between mb-3">
+                                                            <span
+                                                                class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                {{ $historyMode?->modeofprocurements ?? 'N/A' }}
+                                                            </span>
+                                                            @if ($historyItem['bidding_result'])
+                                                                <span
+                                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $historyItem['bidding_result'] === 'SUCCESSFUL' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                                                    {{ $historyItem['bidding_result'] }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+
+                                                        @if ($hasHistoryBidding)
+                                                            <div class="mb-3">
+                                                                <p
+                                                                    class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                                    Bidding Information</p>
+                                                                <div
+                                                                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                    @if ($historyItem['bidding_number'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Bidding #</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['bidding_number'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['ib_number'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                IB No.</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['ib_number'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['pre_proc_conference'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['pre_proc_conference'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['ads_post_ib'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Ads/Post IB</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['ads_post_ib'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['pre_bid_conf'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Bid Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['pre_bid_conf'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['eligibility_check'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Eligibility</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['eligibility_check'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['sub_open_bids'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Sub/Open Bids</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['sub_open_bids'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['bidding_date'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Bidding Date</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['bidding_date'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        @endif
+
+                                                        @if ($hasHistorySvp)
+                                                            <div>
+                                                                <p
+                                                                    class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                                    SVP Information</p>
+                                                                <div
+                                                                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                    @if ($historyItem['rfq_no'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                RFQ No.</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['rfq_no'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['canvass_date'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Canvass Date</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['canvass_date'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['date_returned_of_canvass'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Returned</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['date_returned_of_canvass'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['abstract_of_canvass_date'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Abstract</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['abstract_of_canvass_date'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['resolution_number'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Resolution</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['resolution_number'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+
+                            {{-- Pagination Controls --}}
+                            @if ($totalPages > 1)
+                                <div
+                                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    <div class="flex items-center justify-between flex-wrap gap-3">
+                                        {{-- Previous Button --}}
+                                        <button type="button"
+                                            wire:click="$set('page', {{ max(1, $currentPage - 1) }})"
+                                            @if ($currentPage <= 1) disabled @endif
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                                    {{ $currentPage <= 1
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Previous
+                                        </button>
+
+                                        {{-- Page Numbers --}}
+                                        <div class="flex items-center gap-2">
+                                            @php
+                                                $startPage = max(1, $currentPage - 2);
+                                                $endPage = min($totalPages, $currentPage + 2);
+                                            @endphp
+
+                                            @if ($startPage > 1)
+                                                <button type="button" wire:click="$set('page', 1)"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                            {{ $currentPage == 1
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    1
+                                                </button>
+                                                @if ($startPage > 2)
+                                                    <span class="text-gray-500">...</span>
+                                                @endif
+                                            @endif
+
+                                            @for ($i = $startPage; $i <= $endPage; $i++)
+                                                <button type="button" wire:click="$set('page', {{ $i }})"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                            {{ $currentPage == $i
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    {{ $i }}
+                                                </button>
+                                            @endfor
+
+                                            @if ($endPage < $totalPages)
+                                                @if ($endPage < $totalPages - 1)
+                                                    <span class="text-gray-500">...</span>
+                                                @endif
+                                                <button type="button" wire:click="$set('page', {{ $totalPages }})"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                            {{ $currentPage == $totalPages
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    {{ $totalPages }}
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        {{-- Next Button --}}
+                                        <button type="button"
+                                            wire:click="$set('page', {{ min($totalPages, $currentPage + 1) }})"
+                                            @if ($currentPage >= $totalPages) disabled @endif
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                                    {{ $currentPage >= $totalPages
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                            Next
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No mode of procurement
+                                        data available</p>
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             @endif
 
             @if ($activeTab == 3)
                 {{-- Post Procurement Tab --}}
-                <div
-                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                    @if ($this->hasPostData)
-                        <div class="overflow-x-auto overflow-y-auto">
-                            <table class="w-full text-xs min-w-max">
-                                <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                    <tr>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution #</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Bid Evaluation Date</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Post Qual Date</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Recommending For Award</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Notice of Award</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Awarded Amount</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS Reference #</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Award Notice #</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Posting of Award|PhilGEPS</th>
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
-                                            Supplier</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                    <tr class="bg-white dark:bg-neutral-800">
-                                        <td class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                            {{ $resolutionNumber ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                            {{ $bidEvaluationDate ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                            {{ $postQualDate ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                            {{ $recommendingForAward ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                            {{ $noticeOfAward ?? '-' }}</td>
-                                        <td class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                            @if ($awardedAmount)
-                                                ₱{{ number_format($awardedAmount, 2) }}
-                                            @else
-                                                -
+                <div class="space-y-4">
+                    @if ($form['procurement_type'] === 'perLot')
+                        {{-- PER LOT POST PROCUREMENT --}}
+                        @if ($this->hasPostData)
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                {{-- Header --}}
+                                <div
+                                    class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                    <div
+                                        class="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5 text-emerald-700 dark:text-emerald-300" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Post-Procurement Details</h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Award and contract
+                                            information</p>
+                                    </div>
+                                </div>
+
+                                {{-- Award Information --}}
+                                <div class="mb-6">
+                                    <h4
+                                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Award Information
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                                        @if ($resolutionNumber)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution #
+                                                </p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $resolutionNumber }}</p>
+                                            </div>
+                                        @endif
+                                        @if ($bidEvaluationDate)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid Evaluation
+                                                    Date</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $bidEvaluationDate }}</p>
+                                            </div>
+                                        @endif
+                                        @if ($postQualDate)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post Qual Date
+                                                </p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $postQualDate }}</p>
+                                            </div>
+                                        @endif
+                                        @if ($recommendingForAward)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Recommending
+                                                    for Award</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $recommendingForAward }}</p>
+                                            </div>
+                                        @endif
+                                        @if ($noticeOfAward)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice of
+                                                    Award</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $noticeOfAward }}</p>
+                                            </div>
+                                        @endif
+                                        @if ($awardedAmount)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Awarded Amount
+                                                </p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    ₱{{ number_format($awardedAmount, 2) }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- PhilGEPS Information --}}
+                                @if ($philgepsReferenceNo || $awardNoticeNumber || $dateOfPostingOfAwardOnPhilGEPS)
+                                    <div class="mb-6">
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                            </svg>
+                                            PhilGEPS Information
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            @if ($philgepsReferenceNo)
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS
+                                                        Reference #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $philgepsReferenceNo }}</p>
+                                                </div>
                                             @endif
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-12">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No post-procurement data available
-                            </p>
-                        </div>
+                                            @if ($awardNoticeNumber)
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Award
+                                                        Notice #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $awardNoticeNumber }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($dateOfPostingOfAwardOnPhilGEPS)
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Posting
+                                                        Date on PhilGEPS</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $dateOfPostingOfAwardOnPhilGEPS }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Supplier Information --}}
+                                @if ($supplier_id)
+                                    <div>
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            Supplier
+                                        </h4>
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                            @php
+                                                $supplier = $suppliers->firstWhere('id', $supplier_id);
+                                            @endphp
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $supplier?->company_name ?? 'Unknown Supplier' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No post-procurement data
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @elseif ($form['procurement_type'] === 'perItem')
+                        {{-- PER ITEM POST PROCUREMENT --}}
+                        @php
+                            // Get items with post-procurement data
+                            $itemsWithPostData = collect($form['items'] ?? [])
+                                ->filter(function ($item) {
+                                    $prItemID = $item['prItemID'] ?? null;
+                                    return $prItemID &&
+                                        isset($this->postItems[$prItemID]) &&
+                                        !empty(array_filter($this->postItems[$prItemID] ?? []));
+                                })
+                                ->groupBy('prItemID')
+                                ->map(fn($group) => $group->first());
+
+                            $totalPostItems = $itemsWithPostData->count();
+                        @endphp
+
+                        @if ($totalPostItems > 0)
+                            {{-- Items with Post Data --}}
+                            @foreach ($itemsWithPostData as $prItemID => $item)
+                                @php
+                                    $postData = $this->postItems[$prItemID] ?? [];
+                                    $mode = $modeOfProcurements->firstWhere('id', $item['mode_of_procurement_id']);
+                                @endphp
+
+                                <div
+                                    class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    {{-- Item Header --}}
+                                    <div
+                                        class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <span
+                                                    class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                                                    {{ $item['item_no'] }}
+                                                </span>
+                                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {{ $item['description'] }}
+                                                </h3>
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>Amount: ₱{{ number_format($item['amount'], 2) }}</span>
+                                                <span class="font-medium text-emerald-600 dark:text-emerald-400">
+                                                    {{ $mode?->modeofprocurements ?? 'N/A' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Award Information --}}
+                                    @if (
+                                        !empty(array_filter([
+                                                $postData['resolutionNumber'] ?? null,
+                                                $postData['bidEvaluationDate'] ?? null,
+                                                $postData['postQualDate'] ?? null,
+                                                $postData['recommendingForAward'] ?? null,
+                                                $postData['noticeOfAward'] ?? null,
+                                                $postData['awardedAmount'] ?? null,
+                                            ])
+                                        ))
+                                        <div class="mb-6">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Award Information
+                                            </h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                @if (!empty($postData['resolutionNumber']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Resolution #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['resolutionNumber'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['bidEvaluationDate']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid
+                                                            Evaluation Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['bidEvaluationDate'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['postQualDate']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post
+                                                            Qual Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['postQualDate'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['recommendingForAward']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Recommending for Award</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['recommendingForAward'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['noticeOfAward']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice
+                                                            of Award</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['noticeOfAward'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['awardedAmount']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Awarded Amount</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            ₱{{ number_format($postData['awardedAmount'], 2) }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- PhilGEPS Information --}}
+                                    @if (
+                                        !empty(array_filter([
+                                                $postData['philgepsReferenceNo'] ?? null,
+                                                $postData['awardNoticeNumber'] ?? null,
+                                                $postData['dateOfPostingOfAwardOnPhilGEPS'] ?? null,
+                                            ])
+                                        ))
+                                        <div class="mb-6">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                                </svg>
+                                                PhilGEPS Information
+                                            </h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                @if (!empty($postData['philgepsReferenceNo']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            PhilGEPS Reference #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['philgepsReferenceNo'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['awardNoticeNumber']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Award
+                                                            Notice #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['awardNoticeNumber'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($postData['dateOfPostingOfAwardOnPhilGEPS']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Posting Date on PhilGEPS</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['dateOfPostingOfAwardOnPhilGEPS'] }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Supplier Information --}}
+                                    @if (!empty($postData['supplier_id']))
+                                        <div>
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                                Supplier
+                                            </h4>
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                                @php
+                                                    $supplier = $suppliers->firstWhere('id', $postData['supplier_id']);
+                                                @endphp
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $supplier?->company_name ?? 'Unknown Supplier' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No post-procurement data
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             @endif
