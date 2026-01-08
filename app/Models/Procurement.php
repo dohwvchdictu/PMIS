@@ -80,11 +80,6 @@ class Procurement extends Model implements Auditable
 
     protected $auditStrict = false;
 
-    protected function resolveUser()
-    {
-        return \App\Models\User::resolveAuditUser();
-    }
-
     public function generateTags(): array
     {
         return ['procurement', $this->pr_number];

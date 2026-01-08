@@ -167,7 +167,7 @@
                 </div>
                 <!-- Early Procurement Toggle -->
                 <div>
-                    <x-forms.early-procurement model="form.early_procurement" :form="$form" :clickable="false" />
+                    <x-forms.early-procurement model="form.early_procurement" :form="$form" :clickable="true" />
                 </div>
             </div>
         </div>

@@ -11,7 +11,7 @@ return [
             'web',
             'sanctum',
         ],
-        'resolver' => \App\Resolvers\AuditUserResolver::class,
+        'resolver' => \App\Services\CustomUserResolver::class,
     ],
 
     'resolver' => [
@@ -28,8 +28,11 @@ return [
     ],
 
     'strict' => false,
+
     'timestamps' => true,
+
     'threshold' => 0,
+
     'driver' => 'database',
 
     'drivers' => [

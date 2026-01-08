@@ -176,6 +176,7 @@ class ProcurementCreatePage extends Component
 
     public function save()
     {
+
         // Normalize binary and numeric fields
         $this->form['approved_ppmp'] = (bool) $this->form['approved_ppmp'];
         $this->form['app_updated'] = (bool) $this->form['app_updated'];
