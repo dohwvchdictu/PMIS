@@ -29,10 +29,6 @@ class MopLot extends Model implements Auditable
 
     protected $auditStrict = false;
 
-    protected function resolveUser()
-    {
-        return \App\Models\User::resolveAuditUser();
-    }
     public function procurement()
     {
         return $this->belongsTo(Procurement::class, 'procID', 'procID');

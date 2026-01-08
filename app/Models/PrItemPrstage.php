@@ -35,10 +35,6 @@ class PrItemPrstage extends Model implements Auditable
 
     protected $auditStrict = false;
 
-    protected function resolveUser()
-    {
-        return \App\Models\User::resolveAuditUser();
-    }
     public function item()
     {
         return $this->belongsTo(PrItem::class, 'prItemID', 'prItemID');

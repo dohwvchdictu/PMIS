@@ -47,11 +47,6 @@ class BidSchedule extends Model implements Auditable
 
     protected $auditStrict = false;
 
-    protected function resolveUser()
-    {
-        return \App\Models\User::resolveAuditUser();
-    }
-    // If procID is related to the Procurement model (as foreign key), you can define a relationship:
     public function procurement()
     {
         return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
