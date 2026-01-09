@@ -42,6 +42,10 @@ class ProcurementViewPage extends Component
     // Pagination
     public int $page = 1;
     public int $perPage = 10;
+    public int $postPage = 1;
+    public int $postPerPage = 10;
+    public string $mopSearchTerm = '';
+    public string $postSearchTerm = '';
     public $mopToggles = [];
     public array $postItems = [];
     public bool $showModal = false;
@@ -481,6 +485,24 @@ class ProcurementViewPage extends Component
     {
         $this->showModal = false;
         $this->selectedSupplier = null;
+    }
+    public function updatedMopSearchTerm(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedPostSearchTerm(): void
+    {
+        $this->postPage = 1;
+    }
+    public function updatedPerPage(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedPostPerPage(): void
+    {
+        $this->postPage = 1;
     }
     public function render()
     {

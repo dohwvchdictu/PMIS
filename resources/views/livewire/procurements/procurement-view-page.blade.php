@@ -794,10 +794,19 @@
                             </div>
                         @endif
                     @elseif ($form['procurement_type'] === 'perItem')
-                        {{-- PER ITEM DISPLAY WITH PAGINATION --}}
+                        {{-- PER ITEM DISPLAY WITH SEARCH AND PAGINATION --}}
                         @php
                             // Group items by prItemID to show current mode + history
                             $groupedItems = collect($form['items'] ?? [])->groupBy('prItemID');
+
+                            // Apply search filter
+                            if (!empty($mopSearchTerm)) {
+                                $groupedItems = $groupedItems->filter(function ($itemGroup) {
+                                    $firstItem = $itemGroup->first();
+                                    return stripos($firstItem['description'] ?? '', $this->mopSearchTerm) !== false;
+                                });
+                            }
+
                             $totalItems = $groupedItems->count();
 
                             // Pagination settings
@@ -809,19 +818,43 @@
                             $paginatedGroups = $groupedItems->slice(($currentPage - 1) * $itemsPerPage, $itemsPerPage);
                         @endphp
 
-                        @if ($groupedItems->isNotEmpty())
-                            {{-- Items Count and Per-Page Selector --}}
+                        @if ($totalItems > 0)
+                            {{-- Search and Pagination Controls (One Row) --}}
                             <div
                                 class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                                 <div class="flex items-center justify-between flex-wrap gap-3">
+                                    {{-- Left: Search --}}
+                                    <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                                        <div class="relative flex-1 max-w-md">
+                                            <input type="text" wire:model.live.debounce.300ms="mopSearchTerm"
+                                                placeholder="Search by item name..."
+                                                class="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        @if (!empty($mopSearchTerm))
+                                            <button wire:click="$set('mopSearchTerm', '')"
+                                                class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                                                Clear
+                                            </button>
+                                        @endif
+                                    </div>
+
+                                    {{-- Center: Item Count --}}
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm text-gray-600 dark:text-gray-400">
-                                            Showing {{ ($currentPage - 1) * $itemsPerPage + 1 }} to
+                                            Showing
+                                            {{ $totalItems > 0 ? ($currentPage - 1) * $itemsPerPage + 1 : 0 }} to
                                             {{ min($currentPage * $itemsPerPage, $totalItems) }} of
                                             {{ $totalItems }} items
                                         </span>
                                     </div>
 
+                                    {{-- Right: Items Per Page --}}
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-gray-600 dark:text-gray-400">Items per page:</label>
                                         <select wire:model.live="perPage"
@@ -1380,9 +1413,9 @@
                                             wire:click="$set('page', {{ max(1, $currentPage - 1) }})"
                                             @if ($currentPage <= 1) disabled @endif
                                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                                    {{ $currentPage <= 1
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
-                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                        {{ $currentPage <= 1
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1401,9 +1434,9 @@
                                             @if ($startPage > 1)
                                                 <button type="button" wire:click="$set('page', 1)"
                                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                            {{ $currentPage == 1
-                                                ? 'bg-emerald-600 text-white'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                {{ $currentPage == 1
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
                                                     1
                                                 </button>
                                                 @if ($startPage > 2)
@@ -1414,9 +1447,9 @@
                                             @for ($i = $startPage; $i <= $endPage; $i++)
                                                 <button type="button" wire:click="$set('page', {{ $i }})"
                                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                            {{ $currentPage == $i
-                                                ? 'bg-emerald-600 text-white'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                {{ $currentPage == $i
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
                                                     {{ $i }}
                                                 </button>
                                             @endfor
@@ -1427,9 +1460,9 @@
                                                 @endif
                                                 <button type="button" wire:click="$set('page', {{ $totalPages }})"
                                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                            {{ $currentPage == $totalPages
-                                                ? 'bg-emerald-600 text-white'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                {{ $currentPage == $totalPages
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
                                                     {{ $totalPages }}
                                                 </button>
                                             @endif
@@ -1440,9 +1473,9 @@
                                             wire:click="$set('page', {{ min($totalPages, $currentPage + 1) }})"
                                             @if ($currentPage >= $totalPages) disabled @endif
                                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                                    {{ $currentPage >= $totalPages
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
-                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                        {{ $currentPage >= $totalPages
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
                                             Next
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -1453,6 +1486,24 @@
                                     </div>
                                 </div>
                             @endif
+                        @elseif (!empty($mopSearchTerm))
+                            {{-- No Results Found --}}
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No items found matching
+                                        "{{ $mopSearchTerm }}"</p>
+                                    <button wire:click="$set('mopSearchTerm', '')"
+                                        class="mt-4 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                                        Clear Search
+                                    </button>
+                                </div>
+                            </div>
                         @else
                             <div
                                 class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
@@ -1656,7 +1707,7 @@
                             </div>
                         @endif
                     @elseif ($form['procurement_type'] === 'perItem')
-                        {{-- PER ITEM POST PROCUREMENT --}}
+                        {{-- PER ITEM POST PROCUREMENT WITH SEARCH AND PAGINATION --}}
                         @php
                             // Get items with post-procurement data
                             $itemsWithPostData = collect($form['items'] ?? [])
@@ -1669,12 +1720,81 @@
                                 ->groupBy('prItemID')
                                 ->map(fn($group) => $group->first());
 
+                            // Apply search filter
+                            if (!empty($postSearchTerm)) {
+                                $itemsWithPostData = $itemsWithPostData->filter(function ($item) {
+                                    return stripos($item['description'] ?? '', $this->postSearchTerm) !== false;
+                                });
+                            }
+
                             $totalPostItems = $itemsWithPostData->count();
+
+                            // Pagination settings
+                            $currentPostPage = $postPage ?? 1;
+                            $itemsPerPostPage = $postPerPage ?? 10;
+                            $totalPostPages = ceil($totalPostItems / $itemsPerPostPage);
+
+                            // Paginate items
+                            $paginatedPostItems = $itemsWithPostData->slice(
+                                ($currentPostPage - 1) * $itemsPerPostPage,
+                                $itemsPerPostPage,
+                            );
                         @endphp
 
                         @if ($totalPostItems > 0)
+                            {{-- Search and Pagination Controls (One Row) --}}
+                            <div
+                                class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="flex items-center justify-between flex-wrap gap-3">
+                                    {{-- Left: Search --}}
+                                    <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                                        <div class="relative flex-1 max-w-md">
+                                            <input type="text" wire:model.live.debounce.300ms="postSearchTerm"
+                                                placeholder="Search by item name..."
+                                                class="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        @if (!empty($postSearchTerm))
+                                            <button wire:click="$set('postSearchTerm', '')"
+                                                class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                                                Clear
+                                            </button>
+                                        @endif
+                                    </div>
+
+                                    {{-- Center: Item Count --}}
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                                            Showing
+                                            {{ $totalPostItems > 0 ? ($currentPostPage - 1) * $itemsPerPostPage + 1 : 0 }}
+                                            to
+                                            {{ min($currentPostPage * $itemsPerPostPage, $totalPostItems) }} of
+                                            {{ $totalPostItems }} items
+                                        </span>
+                                    </div>
+
+                                    {{-- Right: Items Per Page --}}
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-sm text-gray-600 dark:text-gray-400">Items per page:</label>
+                                        <select wire:model.live="postPerPage"
+                                            class="px-3 py-1 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="5">5</option>
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                            <option value="{{ $totalPostItems }}">All</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Items with Post Data --}}
-                            @foreach ($itemsWithPostData as $prItemID => $item)
+                            @foreach ($paginatedPostItems as $prItemID => $item)
                                 @php
                                     $postData = $this->postItems[$prItemID] ?? [];
                                     $mode = $modeOfProcurements->firstWhere('id', $item['mode_of_procurement_id']);
@@ -1861,6 +1981,110 @@
                                     @endif
                                 </div>
                             @endforeach
+
+                            {{-- Pagination Controls --}}
+                            @if ($totalPostPages > 1)
+                                <div
+                                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    <div class="flex items-center justify-between flex-wrap gap-3">
+                                        {{-- Previous Button --}}
+                                        <button type="button"
+                                            wire:click="$set('postPage', {{ max(1, $currentPostPage - 1) }})"
+                                            @if ($currentPostPage <= 1) disabled @endif
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                                {{ $currentPostPage <= 1
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Previous
+                                        </button>
+
+                                        {{-- Page Numbers --}}
+                                        <div class="flex items-center gap-2">
+                                            @php
+                                                $startPostPage = max(1, $currentPostPage - 2);
+                                                $endPostPage = min($totalPostPages, $currentPostPage + 2);
+                                            @endphp
+
+                                            @if ($startPostPage > 1)
+                                                <button type="button" wire:click="$set('postPage', 1)"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPostPage == 1
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    1
+                                                </button>
+                                                @if ($startPostPage > 2)
+                                                    <span class="text-gray-500">...</span>
+                                                @endif
+                                            @endif
+
+                                            @for ($i = $startPostPage; $i <= $endPostPage; $i++)
+                                                <button type="button"
+                                                    wire:click="$set('postPage', {{ $i }})"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPostPage == $i
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    {{ $i }}
+                                                </button>
+                                            @endfor
+
+                                            @if ($endPostPage < $totalPostPages)
+                                                @if ($endPostPage < $totalPostPages - 1)
+                                                    <span class="text-gray-500">...</span>
+                                                @endif
+                                                <button type="button"
+                                                    wire:click="$set('postPage', {{ $totalPostPages }})"
+                                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPostPage == $totalPostPages
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                    {{ $totalPostPages }}
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        {{-- Next Button --}}
+                                        <button type="button"
+                                            wire:click="$set('postPage', {{ min($totalPostPages, $currentPostPage + 1) }})"
+                                            @if ($currentPostPage >= $totalPostPages) disabled @endif
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                                {{ $currentPostPage >= $totalPostPages
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                            Next
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                        @elseif (!empty($postSearchTerm))
+                            {{-- No Results Found --}}
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No items found matching
+                                        "{{ $postSearchTerm }}"</p>
+                                    <button wire:click="$set('postSearchTerm', '')"
+                                        class="mt-4 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                                        Clear Search
+                                    </button>
+                                </div>
+                            </div>
                         @else
                             <div
                                 class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
@@ -1878,6 +2102,7 @@
                     @endif
                 </div>
             @endif
+
         </div>
     </div>
 
