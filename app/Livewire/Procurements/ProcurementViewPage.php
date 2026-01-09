@@ -42,6 +42,10 @@ class ProcurementViewPage extends Component
     // Pagination
     public int $page = 1;
     public int $perPage = 10;
+    public int $postPage = 1;
+    public int $postPerPage = 10;
+    public string $mopSearchTerm = '';
+    public string $postSearchTerm = '';
     public $mopToggles = [];
     public array $postItems = [];
     public bool $showModal = false;
@@ -197,6 +201,11 @@ class ProcurementViewPage extends Component
 
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
+                    // **FIX: Filter out MOP-1-1 entries**
+                    if ($mopItem->uid === 'MOP-1-1') {
+                        continue;
+                    }
+
                     $uid = $mopItem->uid;
                     // Get schedule for this specific item
                     $schedule = [];
@@ -481,6 +490,24 @@ class ProcurementViewPage extends Component
     {
         $this->showModal = false;
         $this->selectedSupplier = null;
+    }
+    public function updatedMopSearchTerm(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedPostSearchTerm(): void
+    {
+        $this->postPage = 1;
+    }
+    public function updatedPerPage(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedPostPerPage(): void
+    {
+        $this->postPage = 1;
     }
     public function render()
     {
