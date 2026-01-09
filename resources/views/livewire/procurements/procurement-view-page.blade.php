@@ -1,48 +1,79 @@
 <div>
     <div class="space-y-4">
+        <div
+            class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+            <div class="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+            <div class="p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                PR #{{ $form['pr_number'] ?? 'N/A' }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Procurement Program / Project</p>
+                        <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                            {{ $form['procurement_program_project'] ?? 'No project description available' }}
+                        </h1>
+                    </div>
+                    @can('view_procurement')
+                        @if (!empty($procurement->bacApprovedPr?->filepath))
+                            <a href="{{ $procurement->bacApprovedPr->filepath }}" target="_blank" rel="noopener noreferrer"
+                                class="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 transition-colors group">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                    stroke="currentColor" class="h-5 w-5 group-hover:scale-110 transition-transform">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Zm3.75 11.625a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                </svg>
+                            </a>
+                        @endif
+                    @endcan
+                </div>
+            </div>
+        </div>
 
-        {{-- Stepper --}}
         <div
             class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
             <ul class="flex items-center w-full px-4 py-3">
                 {{-- Step 1: Basic Details --}}
-                <li class="flex items-center gap-x-2 flex-1 group">
+                <li class="flex items-center flex-1">
                     <button type="button" wire:click="setStep(1)"
-                        class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105 {{ $activeTab == 1 ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600' : 'bg-emerald-600 text-white hover:bg-emerald-700' }}">
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 hover:scale-105 shadow-md {{ $activeTab == 1 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400' : ($this->hasMopData ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-emerald-600 text-white') }}">
                         1
                     </button>
                     <span
-                        class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 1 ? 'text-black dark:text-white' : 'text-gray-500' }}">
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 1 ? 'text-gray-900 dark:text-white' : 'text-gray-500' }}">
                         Details
                     </span>
                     <div
-                        class="h-px grow transition-colors duration-300 {{ $activeTab > 1 || $this->hasMopData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+                        class="h-px flex-1 mx-3 transition-all duration-300 {{ $activeTab > 1 || $this->hasMopData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
                     </div>
                 </li>
 
                 {{-- Step 2: Mode of Procurement --}}
-                <li class="flex items-center gap-x-2 flex-1 group">
+                <li class="flex items-center flex-1">
                     <button type="button" wire:click="setStep(2)" @if (!$this->hasMopData) disabled @endif
-                        class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105 {{ $activeTab == 2 ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600' : ($this->hasMopData ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed') }}">
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 2 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasMopData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                         2
                     </button>
                     <span
-                        class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 2 || $this->hasMopData ? 'text-black dark:text-white' : 'text-gray-400' }}">
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 2 || $this->hasMopData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                         Mode of Procurement
                     </span>
                     <div
-                        class="h-px grow transition-colors duration-300 {{ $activeTab > 2 || $this->hasPostData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+                        class="h-px flex-1 mx-3 transition-all duration-300 {{ $activeTab > 2 || $this->hasPostData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
                     </div>
                 </li>
 
                 {{-- Step 3: Post Procurement --}}
-                <li class="flex items-center gap-x-2 group">
+                <li class="flex items-center">
                     <button type="button" wire:click="setStep(3)" @if (!$this->hasPostData) disabled @endif
-                        class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105 {{ $activeTab == 3 ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600' : ($this->hasPostData ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed') }}">
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 3 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPostData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                         3
                     </button>
                     <span
-                        class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 3 || $this->hasPostData ? 'text-black dark:text-white' : 'text-gray-400' }}">
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 3 || $this->hasPostData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                         Post Procurement
                     </span>
                 </li>
@@ -54,86 +85,167 @@
             @if ($activeTab == 1)
                 {{-- Basic Details Tab --}}
                 <div class="space-y-4">
-                    <div
-                        class="bg-white p-4 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 relative">
 
-                        {{-- Document Button - Top Right Corner --}}
-                        @can('view_procurement')
-                            @if (!empty($procurement->bacApprovedPr?->filepath))
-                                <a href="{{ $procurement->bacApprovedPr->filepath }}" target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="absolute top-0 right-0 inline-flex items-center justify-center p-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-tr-xl rounded-bl-xl transition-all duration-150 shadow-sm hover:shadow-md group">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="2" stroke="currentColor"
-                                        class="size-5 group-hover:scale-110 transition-transform">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Zm3.75 11.625a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    @if ($form['procurement_type'] === 'perItem')
+                        <div
+                            class="bg-white p-4 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                            {{-- Header with Toggle --}}
+                            <div class="flex justify-between items-center mb-4">
+                                <h3
+                                    class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                                     </svg>
-                                </a>
-                            @endif
-                        @endcan
-
-                        {{-- PR Number and Program/Project --}}
-                        <div class="grid grid-cols-2 md:grid-cols-10 gap-4">
-                            <div class="col-span-1">
-                                <x-forms.readonly-input id="pr_number" label="PR No." model="form.pr_number"
-                                    :form="$form" :required="true" :colspan="1" textAlign="right"
-                                    :viewOnly="true" class="flex-1" />
-                            </div>
-                            <div class="col-span-9">
-                                <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
-                                    model="form.procurement_program_project" :form="$form" :required="true"
-                                    :maxlength="500" :rows="$textareaRows" colspan="col-span-9" :viewOnly="true"
-                                    :autoResize="true" />
-                            </div>
-                        </div>
-
-                        {{-- Per Lot / Per Item Toggle + Table --}}
-                        <div class="mt-6 flex flex-col md:flex-row md:items-start md:space-x-6">
-                            <div class="flex items-center gap-x-3">
-                                <x-forms.prType id="procurement-toggle" model="form.procurement_type" :form="$form"
-                                    :viewOnly="true" />
+                                    Item List
+                                </h3>
+                                <button type="button" wire:click="$toggle('showTable')"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {{ $showTable ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-500' }}">
+                                    @if (!$showTable)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                        <span>Show</span>
+                                    @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        <span>Hide</span>
+                                    @endif
+                                </button>
                             </div>
 
-                            @if ($form['procurement_type'] === 'perItem')
-                                <div class="mt-4 md:mt-0 w-full md:max-w-3xl">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <div class="flex items-center gap-x-2">
-                                            <button type="button" wire:click="$toggle('showTable')"
-                                                class="transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-600">
-                                                @if (!$showTable)
-                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                        class="h-5 w-5 text-emerald-600" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                @else
-                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                        class="h-5 w-5 text-emerald-600" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                    </svg>
+                            {{-- Table Section --}}
+                            @if ($showTable)
+                                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-neutral-600">
+                                    <x-forms.prItems-table :form="$form" model="form.items" :page="$page"
+                                        :per-page="$perPage" :viewOnly="true" />
+                                </div>
+
+                                {{-- Pagination Controls --}}
+                                @php
+                                    $totalItems = count($form['items'] ?? []);
+                                    $currentPage = $page ?? 1;
+                                    $itemsPerPage = $perPage ?? 10;
+                                    $totalPages = ceil($totalItems / $itemsPerPage);
+                                @endphp
+
+                                @if ($totalPages > 1)
+                                    <div
+                                        class="mt-4 flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-neutral-600">
+                                        {{-- Items per page --}}
+                                        <div class="flex items-center gap-2">
+                                            <label class="text-sm text-gray-600 dark:text-gray-400">Show:</label>
+                                            <select wire:model.live="perPage"
+                                                class="px-3 py-1.5 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="20">20</option>
+                                                <option value="50">50</option>
+                                                <option value="{{ $totalItems }}">All</option>
+                                            </select>
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">items per page</span>
+                                        </div>
+
+                                        {{-- Page info --}}
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                            Showing {{ $totalItems > 0 ? ($currentPage - 1) * $itemsPerPage + 1 : 0 }}
+                                            to
+                                            {{ min($currentPage * $itemsPerPage, $totalItems) }} of
+                                            {{ $totalItems }} items
+                                        </div>
+
+                                        {{-- Pagination buttons --}}
+                                        <div class="flex items-center gap-2">
+                                            {{-- Previous Button --}}
+                                            <button type="button"
+                                                wire:click="$set('page', {{ max(1, $currentPage - 1) }})"
+                                                @if ($currentPage <= 1) disabled @endif
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                                {{ $currentPage <= 1
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M15 19l-7-7 7-7" />
+                                                </svg>
+                                                Previous
+                                            </button>
+
+                                            {{-- Page Numbers --}}
+                                            <div class="flex items-center gap-1">
+                                                @php
+                                                    $startPage = max(1, $currentPage - 2);
+                                                    $endPage = min($totalPages, $currentPage + 2);
+                                                @endphp
+
+                                                @if ($startPage > 1)
+                                                    <button type="button" wire:click="$set('page', 1)"
+                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPage == 1
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                        1
+                                                    </button>
+                                                    @if ($startPage > 2)
+                                                        <span class="text-gray-500 px-1">...</span>
+                                                    @endif
                                                 @endif
+
+                                                @for ($i = $startPage; $i <= $endPage; $i++)
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ $i }})"
+                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPage == $i
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                        {{ $i }}
+                                                    </button>
+                                                @endfor
+
+                                                @if ($endPage < $totalPages)
+                                                    @if ($endPage < $totalPages - 1)
+                                                        <span class="text-gray-500 px-1">...</span>
+                                                    @endif
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ $totalPages }})"
+                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                                        {{ $currentPage == $totalPages
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
+                                                        {{ $totalPages }}
+                                                    </button>
+                                                @endif
+                                            </div>
+
+                                            {{-- Next Button --}}
+                                            <button type="button"
+                                                wire:click="$set('page', {{ min($totalPages, $currentPage + 1) }})"
+                                                @if ($currentPage >= $totalPages) disabled @endif
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                                {{ $currentPage >= $totalPages
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                Next
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
                                             </button>
                                         </div>
                                     </div>
-
-                                    @if ($showTable)
-                                        <div
-                                            class="bg-white p-4 rounded-xl shadow border border-gray-200 overflow-x-auto w-full dark:bg-neutral-700">
-                                            <h3 class="font-semibold text-gray-700 dark:text-white mb-3">Item List</h3>
-                                            @if (data_get($form, 'procurement_type') === 'perItem')
-                                                <x-forms.prItems-table :form="$form" model="form.items"
-                                                    :page="$page" :per-page="$perPage" :viewOnly="true" />
-                                            @endif
-                                        </div>
-                                    @endif
-                                </div>
+                                @endif
                             @endif
                         </div>
-                    </div>
+                    @endif
 
                     {{-- Category and Division Details --}}
                     <div
@@ -145,9 +257,9 @@
                             <x-forms.select id="category_id" label="Category" model="form.category_id"
                                 :form="$form" :options="$categories" optionValue="id" optionLabel="category"
                                 :required="true" :viewOnly="true" colspan="col-span-2" />
-                            <x-forms.readonly-input id="category_type" label="Category Type" model="form.category_type"
+                            <x-forms.input id="category_type" label="Category Type" model="form.category_type"
                                 :form="$form" :required="false" :viewOnly="true" :colspan="1" />
-                            <x-forms.readonly-input id="rbac_sbac" label="RBAC / SBAC" model="form.rbac_sbac"
+                            <x-forms.input id="rbac_sbac" label="RBAC / SBAC" model="form.rbac_sbac"
                                 :form="$form" :required="false" :viewOnly="true" :colspan="1" />
                             <x-forms.input id="dtrack_no" label="DTRACK #" model="form.dtrack_no" :form="$form"
                                 :required="true" :viewOnly="true" colspan="col-span-1" />
@@ -175,9 +287,8 @@
                                 model="form.venue_province_huc_id" :form="$form" :options="$venueProvinces"
                                 optionValue="id" optionLabel="province_huc" :viewOnly="true" :required="false"
                                 colspan="col-span-2" />
-                            <x-forms.readonly-input id="category_venue" label="Category / Venue"
-                                model="form.category_venue" :form="$form" :required="false" :viewOnly="true"
-                                colspan="col-span-4" />
+                            <x-forms.input id="category_venue" label="Category / Venue" model="form.category_venue"
+                                :form="$form" :required="false" :viewOnly="true" colspan="col-span-4" />
                             <div class="flex flex-col col-span-2">
                                 <x-forms.approved-ppmp :form="$form" model="form.approved_ppmp"
                                     :viewOnly="true" />
@@ -1445,7 +1556,8 @@
                                             @endif
 
                                             @for ($i = $startPage; $i <= $endPage; $i++)
-                                                <button type="button" wire:click="$set('page', {{ $i }})"
+                                                <button type="button"
+                                                    wire:click="$set('page', {{ $i }})"
                                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
                                 {{ $currentPage == $i
                                     ? 'bg-emerald-600 text-white'
@@ -1458,7 +1570,8 @@
                                                 @if ($endPage < $totalPages - 1)
                                                     <span class="text-gray-500">...</span>
                                                 @endif
-                                                <button type="button" wire:click="$set('page', {{ $totalPages }})"
+                                                <button type="button"
+                                                    wire:click="$set('page', {{ $totalPages }})"
                                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
                                 {{ $currentPage == $totalPages
                                     ? 'bg-emerald-600 text-white'
@@ -2115,41 +2228,11 @@
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                         Company Name
                     </label>
-                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p class="text-sm font-semibold text-black dark:text-white">
                         {{ $selectedSupplier['name'] ?? 'N/A' }}
                     </p>
                 </div>
 
-                {{-- TIN --}}
-                @if (!empty(trim($selectedSupplier['tin'] ?? '')))
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            TIN
-                        </label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            {{ $selectedSupplier['tin'] }}
-                        </p>
-                    </div>
-                @endif
-
-                {{-- Address --}}
-                @if (!empty(trim($selectedSupplier['address'] ?? '')))
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Address
-                        </label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            {{ $selectedSupplier['address'] }}
-                        </p>
-                    </div>
-                @endif
 
                 {{-- Mobile --}}
                 @if (!empty(trim($selectedSupplier['mobile'] ?? '')))
@@ -2162,11 +2245,8 @@
                             </svg>
                             Mobile
                         </label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            <a href="tel:{{ $selectedSupplier['mobile'] }}"
-                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ $selectedSupplier['mobile'] }}
-                            </a>
+                        <p class="text-sm text-black dark:text-white">
+                            {{ $selectedSupplier['mobile'] }}
                         </p>
                     </div>
                 @endif
@@ -2182,11 +2262,8 @@
                             </svg>
                             Telephone
                         </label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            <a href="tel:{{ $selectedSupplier['telephone'] }}"
-                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ $selectedSupplier['telephone'] }}
-                            </a>
+                        <p class="text-sm text-black dark:text-white">
+                            {{ $selectedSupplier['telephone'] }}
                         </p>
                     </div>
                 @endif
@@ -2202,11 +2279,8 @@
                             </svg>
                             Email
                         </label>
-                        <p class="text-sm text-gray-900 dark:text-white">
-                            <a href="mailto:{{ $selectedSupplier['email'] }}"
-                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ $selectedSupplier['email'] }}
-                            </a>
+                        <p class="text-sm text-black dark:text-white">
+                            {{ $selectedSupplier['email'] }}
                         </p>
                     </div>
                 @endif
