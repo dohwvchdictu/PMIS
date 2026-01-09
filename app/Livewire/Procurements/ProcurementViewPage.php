@@ -201,6 +201,11 @@ class ProcurementViewPage extends Component
 
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
+                    // **FIX: Filter out MOP-1-1 entries**
+                    if ($mopItem->uid === 'MOP-1-1') {
+                        continue;
+                    }
+
                     $uid = $mopItem->uid;
                     // Get schedule for this specific item
                     $schedule = [];
