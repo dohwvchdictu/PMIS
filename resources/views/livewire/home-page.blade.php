@@ -34,7 +34,7 @@
 
         <!-- BAC Categories Card -->
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-5">
                 <div class="bg-blue-500/10 p-3 rounded-xl">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
@@ -49,7 +49,7 @@
             <div class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                 @foreach ($summaryStats['bacCategories'] as $bac)
                     <div
-                        class="group bg-gradient-to-r from-gray-50 to-white dark:from-neutral-700 dark:to-neutral-700 rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-neutral-600">
+                        class="group bg-gradient-to-r from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-800 rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-neutral-600">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex-1 pr-3">
                                 {{ $bac['fullName'] }}
@@ -71,7 +71,7 @@
 
         <!-- Division ABC Breakdown Card -->
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-5">
                 <div class="bg-purple-500/10 p-3 rounded-xl">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
@@ -86,7 +86,7 @@
             <div class="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                 @foreach ($summaryStats['divisionAbc'] as $div)
                     <div
-                        class="flex items-center justify-between bg-gradient-to-r from-purple-50 to-white dark:from-neutral-700 dark:to-neutral-700 rounded-lg px-4 py-3 hover:shadow-sm transition-all border border-purple-100 dark:border-neutral-600">
+                        class="flex items-center justify-between bg-gradient-to-r from-purple-50 to-white dark:from-neutral-800 dark:to-neutral-800 rounded-lg px-4 py-3 hover:shadow-sm transition-all border border-purple-100 dark:border-neutral-600">
                         <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[60%]">
                             {{ $div['abbreviation'] }}
                         </span>
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Division Cards Section -->
-    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+    <div class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
         <div class="flex items-center gap-3 mb-6">
             <div class="bg-emerald-500/10 p-3 rounded-xl">
                 <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
@@ -115,7 +115,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             @foreach ($divisionCounts as $div)
                 <div wire:click="selectDivision({{ $div['id'] }})"
-                    class="group relative bg-gradient-to-br from-gray-50 to-white dark:from-neutral-700 dark:to-neutral-800 rounded-xl p-5 border-2 border-gray-200 dark:border-neutral-600 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-lg transition-all duration-300 cursor-pointer">
+                    class="group relative bg-gradient-to-br from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-800 rounded-xl p-5 border-2 border-gray-200 dark:border-neutral-600 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-lg transition-all duration-300 cursor-pointer">
 
                     <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
@@ -146,7 +146,7 @@
     <!-- Cluster Committee Breakdown -->
     @if ($selectedDivisionId)
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700 animate-fade-in">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700 animate-fade-in">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
                     <div class="bg-indigo-500/10 p-3 rounded-xl">
@@ -176,7 +176,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 @foreach ($clusterCommitteeCounts as $cluster)
                     <div
-                        class="bg-gradient-to-br from-indigo-50 to-white dark:from-neutral-700 dark:to-neutral-800 rounded-xl p-5 border-2 border-indigo-100 dark:border-neutral-600 hover:border-indigo-500 hover:shadow-md transition-all">
+                        class="bg-gradient-to-br from-indigo-50 to-white dark:from-neutral-700 dark:to-neutral-700 rounded-xl p-5 border-2 border-indigo-100 dark:border-neutral-600 hover:border-indigo-500 hover:shadow-md transition-all">
                         <div class="flex items-start justify-between mb-3">
                             <p class="text-sm font-bold text-gray-800 dark:text-gray-100 flex-1 pr-3 line-clamp-2">
                                 {{ $cluster['name'] }}
@@ -209,7 +209,7 @@
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" wire:ignore>
         <!-- Category Chart -->
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-6">
                 <div class="bg-orange-500/10 p-3 rounded-xl">
                     <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
@@ -237,7 +237,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-6">
             <!-- Procurement Stage Chart -->
             <div
-                class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+                class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="bg-blue-500/10 p-3 rounded-xl">
                         <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
@@ -261,7 +261,7 @@
 
             <!-- Remarks Chart -->
             <div
-                class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+                class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="bg-pink-500/10 p-3 rounded-xl">
                         <svg class="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor"
@@ -289,7 +289,7 @@
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" wire:ignore>
         <!-- Venue Specific Chart -->
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-6">
                 <div class="bg-cyan-500/10 p-3 rounded-xl">
                     <svg class="w-6 h-6 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor"
@@ -315,7 +315,7 @@
 
         <!-- Venue Province/HUC Chart -->
         <div
-            class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
+            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-6">
                 <div class="bg-teal-500/10 p-3 rounded-xl">
                     <svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor"
