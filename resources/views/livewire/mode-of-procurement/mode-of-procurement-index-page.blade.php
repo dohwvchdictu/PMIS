@@ -549,6 +549,5 @@
     </div>
 
     <!-- Modals -->
-    <livewire:procurements.procurement-view-page />
     <x-forms.pdf-viewer />
 </div>

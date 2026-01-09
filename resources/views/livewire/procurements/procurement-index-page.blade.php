@@ -207,34 +207,15 @@
                                             <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
                                                 @can('view_procurement')
                                                     <li>
-                                                        <button
-                                                            x-on:click="$dispatch('open-procurement-view', { procID: '{{ $procurement->procID }}' })"
-                                                            type="button"
+                                                        <a href="{{ route('procurements.view', ['procurement' => $procurement->procID]) }}"
                                                             class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 text-blue-600 dark:text-blue-400 transition-all duration-150 group/item">
                                                             <x-heroicon-o-eye
                                                                 class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                            <span class="font-medium">View</span>
-                                                        </button>
+                                                            <span class="font-medium">View Details</span>
+                                                        </a>
                                                     </li>
                                                 @endcan
-                                                @can('view_procurement')
-                                                    @if (!empty($procurement->bacApprovedPr?->filepath))
-                                                        <li>
-                                                            <a href="{{ $procurement->bacApprovedPr->filepath }}"
-                                                                target="_blank" rel="noopener noreferrer"
-                                                                class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 dark:hover:from-green-900/30 dark:hover:to-green-800/30 text-green-600 dark:text-green-400 transition-all duration-150 group/item">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                    viewBox="0 0 24 24" stroke-width="1.5"
-                                                                    stroke="currentColor"
-                                                                    class="size-4 group-hover/item:scale-110 transition-transform">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Zm3.75 11.625a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                                                                </svg>
-                                                                <span class="font-medium">View PR</span>
-                                                            </a>
-                                                        </li>
-                                                    @endif
-                                                @endcan
+
                                                 @can('edit_procurement')
                                                     <li>
                                                         <a href="{{ route(
@@ -651,6 +632,4 @@
     </div>
 
     <!-- Modals -->
-    <livewire:procurements.procurement-view-page />
-    <x-forms.pdf-viewer />
 </div>
