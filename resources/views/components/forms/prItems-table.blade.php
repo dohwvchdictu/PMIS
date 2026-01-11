@@ -22,7 +22,7 @@
 @if ($showTable || $viewOnly)
     <div class="overflow-x-auto ">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700 rounded-xl">
-            <thead class="bg-gray-200 dark:bg-neutral-900">
+            <thead class="bg-gray-200 dark:bg-neutral-800">
                 <tr>
                     <th
                         class="px-3 md:px-6 py-2 md:py-3 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase w-16 md:w-20">

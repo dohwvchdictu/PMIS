@@ -7,7 +7,7 @@
             fixed inset-y-0 start-0 z-70
             bg-white
             lg:block lg:translate-x-0 lg:end-auto lg:bottom-0
-            dark:bg-neutral-800"
+            dark:bg-neutral-700"
     role="dialog" tabindex="-1" aria-label="Sidebar">
 
     <div class="flex flex-col h-full">
@@ -39,8 +39,8 @@
                         <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                     transition-all duration-200 border-l-4
                     {{ request()->routeIs('dashboard')
-                        ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
-                        : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
+                        ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                        : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
                             href="{{ route('dashboard') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="size-5 flex-shrink-0">
@@ -61,8 +61,8 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('procurements.*')
-                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
-                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
                                 href="{{ route('procurements.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-5 flex-shrink-0">
@@ -79,8 +79,8 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('bac-approved-pr.*')
-                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
-                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
                                 href="{{ route('bac-approved-pr.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-5 flex-shrink-0">
@@ -101,8 +101,8 @@
                             <a class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                         transition-all duration-200 border-l-4
                         {{ request()->routeIs('schedule-for-procurement.*')
-                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
-                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
+                            ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                            : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
                                 href="{{ route('schedule-for-procurement.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-5 flex-shrink-0">
@@ -123,8 +123,8 @@
                             <a class="w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                             transition-all duration-200 border-l-4
                             {{ request()->routeIs('mode-of-procurement.*')
-                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-emerald-600 dark:border-l-emerald-600'
-                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}"
+                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
                                 href="{{ route('mode-of-procurement.index') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-5 flex-shrink-0">
@@ -144,13 +144,13 @@
 
         <!-- Fixed Admin Button -->
         @can('view_any_administrator')
-            <div class="ml-3 mr-3 p-3 bg-white border-t border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
+            <div class=" p-4 bg-white border-t border-gray-200 dark:bg-neutral-700 dark:border-neutral-800">
                 <a href="{{ url('/administrator') }}" target="_blank" rel="noopener noreferrer"
                     class="flex items-center gap-x-3 py-2.5 px-3 text-xs font-medium rounded-lg
                             transition-all duration-200 border-l-4
                             {{ request()->is('administrator*')
-                                ? 'bg-indigo-50 text-indigo-700 border-l-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-l-indigo-400'
-                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-700/50' }}">
+                                ? 'bg-indigo-50 text-indigo-700 border-l-indigo-600 dark:bg-indigo-900/30 dark:text-white dark:border-l-indigo-400'
+                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                         class="size-5 flex-shrink-0">
                         <path

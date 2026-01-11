@@ -208,7 +208,7 @@
         </div>
     </div>
     <div
-        class="fixed bottom-5 right-0 left-0 lg:ml-[13.75rem] flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-49">
+        class="fixed bottom-5 right-0 left-0 lg:left-48 flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 z-49">
         <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end">
             <button wire:click="save"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">

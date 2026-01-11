@@ -97,7 +97,7 @@
 
     <div class="h-8">
         <div
-            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 lg:pl-55 dark:bg-neutral-800 dark:border-neutral-700">
+            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 lg:pl-55 dark:bg-neutral-700 dark:border-neutral-700">
             <div class="flex items-center py-1">
                 <ol class="ms-3 flex items-center whitespace-nowrap">
                     @foreach ($segments as $index => $segment)

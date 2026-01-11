@@ -21,7 +21,7 @@
     </script>
 </head>
 
-<body class="bg-gray-50 dark:bg-neutral-900">
+<body class="bg-gray-50 dark:bg-neutral-800">
 
     @livewire('partials.header')
     @livewire('partials.navbar')

@@ -25,7 +25,7 @@ class ProcurementViewPage extends Component
     public Procurement $procurement;
     public array $form = [];
     public int $activeTab = 1;
-    public bool $showTable = false;
+    public bool $showTable = true;
     public int $textareaRows = 1;
 
     // Reference data
