@@ -50,6 +50,7 @@ class ModeOfProcurementIndexPage extends Component
 
     // Collapsible functionality
     public $expandedProcurementId = null;
+    public $expandedGroupId = null;
 
     // Form / Reference Data
     public $form = [];
@@ -87,6 +88,18 @@ class ModeOfProcurementIndexPage extends Component
             $this->$property = null;
         } else {
             $this->$property = $value;
+        }
+    }
+
+    /**
+     * Toggle group expansion
+     */
+    public function toggleGroup($groupId)
+    {
+        if ($this->expandedGroupId === $groupId) {
+            $this->expandedGroupId = null;
+        } else {
+            $this->expandedGroupId = $groupId;
         }
     }
 
@@ -230,6 +243,111 @@ class ModeOfProcurementIndexPage extends Component
         }
     }
 
+    /**
+     * Check if procurement is groupable (per-lot with mode 2-6 and has IB number)
+     */
+    private function isGroupable($procurement)
+    {
+        if ($procurement->procurement_type !== 'perLot') {
+            return false;
+        }
+
+        $latestMop = $procurement->mopLots()
+            ->orderBy('mode_order', 'desc')
+            ->first();
+
+        if (!$latestMop) {
+            return false;
+        }
+
+        $modeId = $latestMop->mode_of_procurement_id;
+
+        // Only bidding modes (2-6) are groupable
+        if (!in_array($modeId, [2, 3, 4, 5, 6])) {
+            return false;
+        }
+
+        // Check if has IB number
+        $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+            ->where('ref_id', $procurement->procID)
+            ->first();
+
+        return $bidSchedule && !empty($bidSchedule->ib_number);
+    }
+
+    /**
+     * Get IB number for a procurement
+     */
+    private function getIBNumber($procurement)
+    {
+        $latestMop = $procurement->mopLots()
+            ->orderBy('mode_order', 'desc')
+            ->first();
+
+        if (!$latestMop) {
+            return null;
+        }
+
+        $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+            ->where('ref_id', $procurement->procID)
+            ->first();
+
+        return $bidSchedule ? $bidSchedule->ib_number : null;
+    }
+
+    /**
+     * Process per-lot procurements and group by IB number
+     */
+    private function processPerLotGrouping($procurements)
+    {
+        $ibGroups = [];
+        $ungrouped = [];
+
+        foreach ($procurements as $procurement) {
+            if ($this->isGroupable($procurement)) {
+                $ibNumber = $this->getIBNumber($procurement);
+
+                if ($ibNumber) {
+                    if (!isset($ibGroups[$ibNumber])) {
+                        $ibGroups[$ibNumber] = [
+                            'ib_number' => $ibNumber,
+                            'mode' => $procurement->currentMode,
+                            'procurements' => [],
+                            'total_abc' => 0,
+                            'count' => 0,
+                            'statuses' => [],
+                        ];
+                    }
+
+                    $ibGroups[$ibNumber]['procurements'][] = $procurement;
+                    $ibGroups[$ibNumber]['total_abc'] += $procurement->abc ?? 0;
+                    $ibGroups[$ibNumber]['count']++;
+                    $ibGroups[$ibNumber]['statuses'][] = $procurement->currentStatus;
+                }
+            } else {
+                $ungrouped[] = $procurement;
+            }
+        }
+
+        // Calculate overall status for each group
+        foreach ($ibGroups as $key => $group) {
+            $statuses = array_filter($group['statuses']);
+
+            if (empty($statuses)) {
+                $ibGroups[$key]['overall_status'] = 'PENDING';
+            } elseif (count(array_unique($statuses)) === 1) {
+                $ibGroups[$key]['overall_status'] = 'ALL_' . strtoupper($statuses[0]);
+            } else {
+                $ibGroups[$key]['overall_status'] = 'MIXED';
+            }
+        }
+
+        return [
+            'ib_groups' => $ibGroups,
+            'ungrouped' => $ungrouped,
+        ];
+    }
+
     public function getIbNumbersProperty()
     {
         return BidSchedule::select('ib_number')
@@ -256,6 +374,17 @@ class ModeOfProcurementIndexPage extends Component
                 'category.bacType'
             ])
             ->latest();
+
+        // Filter out Mode ID = 1 for per-lot procurements
+        $query->where(function ($q) {
+            $q->where('procurement_type', 'perLot')
+                ->whereHas('mopLots', function ($sub) {
+                    $sub->where('mode_of_procurement_id', '!=', 1);
+                });
+
+            // Keep per-item for now (will handle later)
+            $q->orWhere('procurement_type', 'perItem');
+        });
 
         // Search filter
         if (!empty($this->search)) {
@@ -307,6 +436,11 @@ class ModeOfProcurementIndexPage extends Component
                             });
                     });
             });
+
+            // Auto-expand the filtered IB group
+            if ($this->ibNumberFilter) {
+                $this->expandedGroupId = $this->ibNumberFilter;
+            }
         }
 
         $procurements = $query->paginate($this->perPage);
@@ -326,6 +460,9 @@ class ModeOfProcurementIndexPage extends Component
                 }
             }
         }
+
+        // Process grouping for per-lot procurements
+        $groupedData = $this->processPerLotGrouping($procurements);
 
         // Get BAC Categories for filter
         $bacCategories = BacType::orderBy('name', 'asc')->get();
@@ -347,6 +484,7 @@ class ModeOfProcurementIndexPage extends Component
 
         return view('livewire.mode-of-procurement.mode-of-procurement-index-page', [
             'procurements' => $procurements,
+            'groupedData' => $groupedData,
             'bacCategories' => $bacCategories,
             'allCategories' => $allCategories,
             'ibNumbers' => $this->ibNumbers,
