@@ -55,6 +55,7 @@ class ProcurementViewPage extends Component
     public ?string $resolutionNumber = null;
     public ?string $bidEvaluationDate = null;
     public ?string $postQualDate = null;
+    public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
     public ?string $recommendingForAward = null;
     public ?float $awardedAmount = null;
@@ -362,6 +363,7 @@ class ProcurementViewPage extends Component
                 $this->resolutionNumber = $post->resolution_number;
                 $this->bidEvaluationDate = $post->bid_evaluation_date;
                 $this->postQualDate = $post->post_qual_date;
+                $this->noticeOfAwardNumber = $post->notice_of_award_number;
                 $this->noticeOfAward = $post->notice_of_award;
                 $this->recommendingForAward = $post->recommending_for_award;
                 $this->awardedAmount = $post->awarded_amount;
@@ -391,6 +393,7 @@ class ProcurementViewPage extends Component
                         'resolutionNumber' => $post->resolution_number,
                         'bidEvaluationDate' => $post->bid_evaluation_date,
                         'postQualDate' => $post->post_qual_date,
+                        'noticeOfAwardNumber' => $post->notice_of_award_number,
                         'noticeOfAward' => $post->notice_of_award,
                         'recommendingForAward' => $post->recommending_for_award,
                         'awardedAmount' => $post->awarded_amount,

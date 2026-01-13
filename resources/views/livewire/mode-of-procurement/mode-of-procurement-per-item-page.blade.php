@@ -750,19 +750,15 @@
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution #
+                                            Resolution Award Number
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Bid Evaluation Date
+                                            Resolution Award Date
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Post Qual Date
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Recommending For Award
+                                            Notice of Award Number
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -771,10 +767,6 @@
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Awarded Amount
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS Reference #
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -805,25 +797,20 @@
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionNumber"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardNumber"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white
-                {{ $errors->has('postItems.' . $prItemID . '.resolutionNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
+        {{ $errors->has('postItems.' . $prItemID . '.resolutionAwardNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
                                                     placeholder="RES-YYYY-NNN">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.bidEvaluationDate"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardDate"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
-                                                <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.postQualDate"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.recommendingForAward"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                <input type="text"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.noticeOfAwardNumber"
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="date"
@@ -834,12 +821,6 @@
                                                 <input type="number" step="0.01"
                                                     wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
                                                     class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="text"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.philgepsReferenceNo"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="PHL-YYYY-NNN">
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"

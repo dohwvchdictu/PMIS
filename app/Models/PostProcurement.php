@@ -13,12 +13,10 @@ class PostProcurement extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [
         'ref_id',
-        'resolution_number',
-        'bid_evaluation_date',
-        'post_qual_date',
-        'recommending_for_award',
+        'resolution_award_number',
+        'resolution_award_date',
+        'notice_of_award_number',
         'notice_of_award',
-        'philgeps_reference_no',
         'award_notice_no',
         'awarded_amount',
         'date_of_posting_of_award_on_philgeps',
@@ -26,12 +24,10 @@ class PostProcurement extends Model implements Auditable
     ];
     protected $auditInclude = [
         'ref_id',
-        'resolution_number',
-        'bid_evaluation_date',
-        'post_qual_date',
-        'recommending_for_award',
+        'resolution_award_number',
+        'resolution_award_date',
+        'notice_of_award_number',
         'notice_of_award',
-        'philgeps_reference_no',
         'award_notice_no',
         'awarded_amount',
         'date_of_posting_of_award_on_philgeps',

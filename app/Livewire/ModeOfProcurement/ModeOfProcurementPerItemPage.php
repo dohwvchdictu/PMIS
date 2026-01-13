@@ -27,13 +27,10 @@ class ModeOfProcurementPerItemPage extends Component
 
     // Post-Procurement Tab Fields
     public array $postItems = [];
-    public ?string $resolutionNumber = null;
-    public ?string $bidEvaluationDate = null;
-    public ?string $postQualDate = null;
+    public ?string $resolutionAwardNumber = null;
     public ?string $noticeOfAward = null;
-    public ?string $recommendingForAward = null;
+    public ?string $resolutionAwardDate = null;
     public ?float $awardedAmount = null;
-    public ?string $philgepsReferenceNo = null;
     public ?string $awardNoticeNumber = null;
     public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
     public ?int $supplier_id = null;
@@ -109,13 +106,11 @@ class ModeOfProcurementPerItemPage extends Component
                 $post = PostProcurement::where('ref_id', $prItemID)->first();
 
                 $this->postItems[$prItemID] = [
-                    'resolutionNumber' => $post?->resolution_number ?? null,
-                    'bidEvaluationDate' => $post?->bid_evaluation_date ?? null,
-                    'postQualDate' => $post?->post_qual_date ?? null,
+                    'resolutionAwardNumber' => $post?->resolution_award_number ?? null,
+                    'noticeOfAwardNumber' => $post?->notice_of_award_number ?? null,
                     'noticeOfAward' => $post?->notice_of_award ?? null,
-                    'recommendingForAward' => $post?->recommending_for_award ?? null,
+                    'resolutionAwardDate' => $post?->resolution_award_date ?? null,
                     'awardedAmount' => $post?->awarded_amount ?? null,
-                    'philgepsReferenceNo' => $post?->philgeps_reference_no ?? null,
                     'awardNoticeNumber' => $post?->award_notice_no ?? null,
                     'dateOfPostingOfAwardOnPhilGEPS' => $post?->date_of_posting_of_award_on_philgeps ?? null,
                     'supplier_id' => $post?->supplier_id ?? null,
@@ -942,32 +937,29 @@ class ModeOfProcurementPerItemPage extends Component
             $shortDesc = strlen($itemDesc) > 40 ? substr($itemDesc, 0, 40) . '...' : $itemDesc;
 
             // Check if this item has any data
-            $hasData = !empty($postItem['resolutionNumber']) ||
-                !empty($postItem['bidEvaluationDate']) ||
-                !empty($postItem['postQualDate']) ||
-                !empty($postItem['recommendingForAward']) ||
+            $hasData = !empty($postItem['resolutionAwardNumber']) ||
+                !empty($postItem['resolutionAwardDate']) ||
+                !empty($postItem['noticeOfAwardNumber']) ||
                 !empty($postItem['noticeOfAward']) ||
                 !empty($postItem['awardedAmount']) ||
-                !empty($postItem['philgepsReferenceNo']) ||
                 !empty($postItem['awardNoticeNumber']) ||
                 !empty($postItem['dateOfPostingOfAwardOnPhilGEPS']) ||
                 !empty($postItem['supplier_id']);
 
             if ($hasData) {
-                $rules["postItems.{$prItemID}.resolutionNumber"] = 'required|string|max:255';
-                $rules["postItems.{$prItemID}.bidEvaluationDate"] = 'nullable|date';
-                $rules["postItems.{$prItemID}.postQualDate"] = 'nullable|date';
-                $rules["postItems.{$prItemID}.recommendingForAward"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.resolutionAwardNumber"] = 'required|string|max:255';
+                $rules["postItems.{$prItemID}.resolutionAwardDate"] = 'nullable|date';
+                $rules["postItems.{$prItemID}.noticeOfAwardNumber"] = 'nullable|string|max:255';
                 $rules["postItems.{$prItemID}.noticeOfAward"] = 'nullable|date';
                 $rules["postItems.{$prItemID}.awardedAmount"] = 'nullable|numeric|min:0';
-                $rules["postItems.{$prItemID}.philgepsReferenceNo"] = 'nullable|string|max:255';
                 $rules["postItems.{$prItemID}.awardNoticeNumber"] = 'nullable|string|max:255';
                 $rules["postItems.{$prItemID}.dateOfPostingOfAwardOnPhilGEPS"] = 'nullable|date';
                 $rules["postItems.{$prItemID}.supplier_id"] = 'nullable|integer|exists:suppliers,id';
 
+
                 // Custom messages
-                $messages["postItems.{$prItemID}.resolutionNumber.required"] =
-                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Resolution Number is required.";
+                $messages["postItems.{$prItemID}.resolutionAwardNumber.required"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Resolution Award Number is required.";
                 $messages["postItems.{$prItemID}.awardedAmount.numeric"] =
                     "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount must be a valid number.";
                 $messages["postItems.{$prItemID}.awardedAmount.min"] =
@@ -975,15 +967,16 @@ class ModeOfProcurementPerItemPage extends Component
                 $messages["postItems.{$prItemID}.supplier_id.exists"] =
                     "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Selected supplier is invalid.";
 
+
                 // Date validation messages
-                foreach (['bidEvaluationDate', 'postQualDate', 'recommendingForAward', 'noticeOfAward', 'dateOfPostingOfAwardOnPhilGEPS'] as $dateField) {
+                foreach (['resolutionAwardDate', 'noticeOfAward', 'dateOfPostingOfAwardOnPhilGEPS'] as $dateField) {
                     $fieldLabel = ucwords(str_replace(['_', 'Date', 'Of'], [' ', '', 'of'], $dateField));
                     $messages["postItems.{$prItemID}.{$dateField}.date"] =
                         "<strong>Item {$itemNumber}</strong> ({$shortDesc}): {$fieldLabel} must be a valid date.";
                 }
 
                 // Attributes for better error display
-                $attributes["postItems.{$prItemID}.resolutionNumber"] = "Item {$itemNumber} - Resolution #";
+                $attributes["postItems.{$prItemID}.resolutionAwardNumber"] = "Item {$itemNumber} - Resolution Award #";
                 $attributes["postItems.{$prItemID}.awardedAmount"] = "Item {$itemNumber} - Awarded Amount";
                 $attributes["postItems.{$prItemID}.supplier_id"] = "Item {$itemNumber} - Supplier";
             }
@@ -1027,13 +1020,11 @@ class ModeOfProcurementPerItemPage extends Component
                 }
 
                 // Check if post item has any data
-                $hasData = !empty($postItem['resolutionNumber']) ||
-                    !empty($postItem['bidEvaluationDate']) ||
-                    !empty($postItem['postQualDate']) ||
-                    !empty($postItem['recommendingForAward']) ||
+                $hasData = !empty($postItem['resolutionAwardNumber']) ||
+                    !empty($postItem['resolutionAwardDate']) ||
+                    !empty($postItem['noticeOfAwardNumber']) ||
                     !empty($postItem['noticeOfAward']) ||
                     !empty($postItem['awardedAmount']) ||
-                    !empty($postItem['philgepsReferenceNo']) ||
                     !empty($postItem['awardNoticeNumber']) ||
                     !empty($postItem['dateOfPostingOfAwardOnPhilGEPS']) ||
                     !empty($postItem['supplier_id']);
@@ -1044,13 +1035,11 @@ class ModeOfProcurementPerItemPage extends Component
 
                 $data = [
                     'ref_id' => $prItemID,
-                    'resolution_number' => $postItem['resolutionNumber'],
-                    'bid_evaluation_date' => $this->nullableDate($postItem['bidEvaluationDate'] ?? null),
-                    'post_qual_date' => $this->nullableDate($postItem['postQualDate'] ?? null),
-                    'recommending_for_award' => $this->nullableDate($postItem['recommendingForAward'] ?? null),
+                    'resolution_award_number' => $postItem['resolutionAwardNumber'],
+                    'resolution_award_date' => $this->nullableDate($postItem['resolutionAwardDate'] ?? null),
+                    'notice_of_award_number' => $postItem['noticeOfAwardNumber'] ?? null,
                     'notice_of_award' => $this->nullableDate($postItem['noticeOfAward'] ?? null),
                     'awarded_amount' => $postItem['awardedAmount'] ?? null,
-                    'philgeps_reference_no' => $postItem['philgepsReferenceNo'] ?? null,
                     'award_notice_no' => $postItem['awardNoticeNumber'] ?? null,
                     'date_of_posting_of_award_on_philgeps' => $this->nullableDate($postItem['dateOfPostingOfAwardOnPhilGEPS'] ?? null),
                     'supplier_id' => $postItem['supplier_id'] ?? null,

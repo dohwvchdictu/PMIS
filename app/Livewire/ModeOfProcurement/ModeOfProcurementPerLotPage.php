@@ -27,13 +27,11 @@ class ModeOfProcurementPerLotPage extends Component
 
 
     // Post-Procurement Tab Fields
-    public ?string $resolutionNumber = null;
-    public ?string $bidEvaluationDate = null;
-    public ?string $postQualDate = null;
+    public ?string $resolutionAwardNumber = null;
+    public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
-    public ?string $recommendingForAward = null;
+    public ?string $resolutionAwardDate = null;
     public ?float $awardedAmount = null;
-    public ?string $philgepsReferenceNo = null;
     public ?string $awardNoticeNumber = null;
     public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
     public ?int $supplier_id = null;
@@ -82,13 +80,11 @@ class ModeOfProcurementPerLotPage extends Component
         $post = PostProcurement::where('ref_id', $this->procID)->first();
 
         if ($post) {
-            $this->resolutionNumber = $post->resolution_number;
-            $this->bidEvaluationDate = $post->bid_evaluation_date;
-            $this->postQualDate = $post->post_qual_date;
+            $this->resolutionAwardNumber = $post->resolution_award_number;
+            $this->noticeOfAwardNumber = $post->notice_of_award_number;
             $this->noticeOfAward = $post->notice_of_award;
-            $this->recommendingForAward = $post->recommending_for_award;
+            $this->resolutionAwardDate = $post->resolution_award_date;
             $this->awardedAmount = $post->awarded_amount;
-            $this->philgepsReferenceNo = $post->philgeps_reference_no;
             $this->awardNoticeNumber = $post->award_notice_no;
             $this->dateOfPostingOfAwardOnPhilGEPS = $post->date_of_posting_of_award_on_philgeps;
             $this->supplier_id = $post->supplier_id;
@@ -118,11 +114,12 @@ class ModeOfProcurementPerLotPage extends Component
 
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 if (
+                    !empty($item['resolution_number_mop']) &&
                     !empty($item['rfq_no']) &&
                     !empty($item['canvass_date']) &&
                     !empty($item['date_returned_of_canvass']) &&
-                    !empty($item['abstract_of_canvass_date']) &&
-                    !empty($item['resolution_number'])
+                    !empty($item['abstract_of_canvass_date'])
+
                 ) {
                     return true;
                 }
@@ -185,23 +182,28 @@ class ModeOfProcurementPerLotPage extends Component
 
             // Shared fields
             'ib_number' => $schedule['ib_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
 
             // Bidding specific
             'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
 
+            //Other mode than Competive Bidding
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
+
             // SVP specific
             'rfq_no' => $schedule['rfq_no'] ?? null,
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
             'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-            'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
     }
     private function buildScheduleMap(Collection $bidSchedules, Collection $prSvps): Collection
@@ -211,25 +213,29 @@ class ModeOfProcurementPerLotPage extends Component
         foreach ($bidSchedules as $uid => $schedule) {
             $map[$uid] = [
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
         foreach ($prSvps as $uid => $schedule) {
             $existing = $map->get($uid, []);
             $map[$uid] = array_merge($existing, [
+                'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
                 'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
                 'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
-                'resolution_number' => $schedule->resolution_number,
             ]);
         }
 
@@ -244,18 +250,21 @@ class ModeOfProcurementPerLotPage extends Component
             'mode_order' => 1,
             'bidding_number' => null,
             'ib_number' => null,
+            'philgeps_posting_ref_no' => null,
             'pre_proc_conference' => null,
             'ads_post_ib' => null,
             'pre_bid_conf' => null,
             'eligibility_check' => null,
             'sub_open_bids' => null,
+            'bid_evaluation_date' => null,
+            'post_qualification_date' => null,
             'bidding_date' => null,
             'bidding_result' => null,
+            'resolution_number_mop' => null,
             'rfq_no' => null,
             'canvass_date' => null,
             'date_returned_of_canvass' => null,
             'abstract_of_canvass_date' => null,
-            'resolution_number' => null,
         ];
 
         $this->form['items'][] = $newItem;
@@ -433,14 +442,22 @@ class ModeOfProcurementPerLotPage extends Component
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
                 $hasBiddingData = !empty($item['ib_number']) ||
+                    !empty($item['philgeps_posting_ref_no']) ||
                     !empty($item['bidding_number']) ||
                     !empty($item['pre_proc_conference']) ||
                     !empty($item['ads_post_ib']) ||
                     !empty($item['pre_bid_conf']) ||
                     !empty($item['eligibility_check']) ||
                     !empty($item['sub_open_bids']) ||
+                    !empty($item['bid_evaluation_date']) ||
+                    !empty($item['post_qualification_date']) ||
                     !empty($item['bidding_date']) ||
                     !empty($item['bidding_result']);
+
+                // Only add resolution_number_mop check for modes 3-6
+                if (in_array($modeId, [3, 4, 5, 6])) {
+                    $hasBiddingData = $hasBiddingData || !empty($item['resolution_number_mop']);
+                }
 
                 // Only validate existing records
                 if ($existingBidSchedule && !$hasBiddingData) {
@@ -474,18 +491,18 @@ class ModeOfProcurementPerLotPage extends Component
                             $isValid = false;
                         }
                     }
-                    // If Pre-Proc Conference is filled, allow bidding result (no validation errors)
                 }
             }
 
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
-                $hasSvpData = !empty($item['rfq_no']) ||
+                $hasSvpData = !empty($item['resolution_number_mop']) ||
+                    !empty($item['rfq_no']) ||
                     !empty($item['canvass_date']) ||
                     !empty($item['date_returned_of_canvass']) ||
-                    !empty($item['abstract_of_canvass_date']) ||
-                    !empty($item['resolution_number']);
+                    !empty($item['abstract_of_canvass_date']);
+
 
                 if ($existingSvp && !$hasSvpData) {
                     $this->scheduleValidationErrors[] = "At least one SVP field must be filled.";
@@ -522,14 +539,22 @@ class ModeOfProcurementPerLotPage extends Component
 
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
             $hasBiddingData = !empty($itemData['ib_number']) ||
+                !empty($itemData['philgeps_posting_ref_no']) ||
                 !empty($itemData['bidding_number']) ||
                 !empty($itemData['pre_proc_conference']) ||
                 !empty($itemData['ads_post_ib']) ||
                 !empty($itemData['pre_bid_conf']) ||
                 !empty($itemData['eligibility_check']) ||
                 !empty($itemData['sub_open_bids']) ||
+                !empty($itemData['bid_evaluation_date']) ||
+                !empty($itemData['post_qualification_date']) ||
                 !empty($itemData['bidding_date']) ||
                 !empty($itemData['bidding_result']);
+
+            // Only add resolution_number_mop check for modes 3-6
+            if (in_array($modeId, [3, 4, 5, 6])) {
+                $hasBiddingData = $hasBiddingData || !empty($itemData['resolution_number_mop']);
+            }
 
             $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
@@ -561,25 +586,30 @@ class ModeOfProcurementPerLotPage extends Component
                         'mop_uid' => $parentUid,
                         'bidding_number' => $itemData['bidding_number'] ?? null,
                         'ib_number' => $itemData['ib_number'] ?? null,
+                        'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
                         'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
                         'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
                         'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
                         'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
+                        'bid_evaluation_date' => $this->nullableDate($itemData['bid_evaluation_date'] ?? null),
+                        'post_qualification_date' => $this->nullableDate($itemData['post_qualification_date'] ?? null),
                         'bidding_date' => $this->nullableDate($itemData['bidding_date'] ?? null),
                         'bidding_result' => $itemData['bidding_result'] ?? null,
+                        'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                     ]
                 );
                 $checkStatus($model);
             }
         }
 
+        // ... rest of the SVP logic remains the same
         if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-            $hasSvpData = !empty($itemData['rfq_no']) ||
+            $hasSvpData = !empty($itemData['resolution_number_mop']) ||
+                !empty($itemData['rfq_no']) ||
                 !empty($itemData['canvass_date']) ||
                 !empty($itemData['date_returned_of_canvass']) ||
-                !empty($itemData['abstract_of_canvass_date']) ||
-                !empty($itemData['resolution_number']);
+                !empty($itemData['abstract_of_canvass_date']);
 
             $existingSvp = PrSvp::where($matchCriteria)->first();
 
@@ -608,11 +638,11 @@ class ModeOfProcurementPerLotPage extends Component
                         'uid' => $uid,
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
+                        'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                         'rfq_no' => $itemData['rfq_no'] ?? null,
                         'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
                         'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
                         'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
-                        'resolution_number' => $itemData['resolution_number'] ?? null,
                     ]
                 );
                 $checkStatus($model);
@@ -623,26 +653,22 @@ class ModeOfProcurementPerLotPage extends Component
     public function savePost()
     {
         $rules = [
-            'resolutionNumber' => 'required|string|max:255',
-            'bidEvaluationDate' => 'nullable|date',
-            'postQualDate' => 'nullable|date',
-            'recommendingForAward' => 'nullable|date',
+            'resolutionAwardNumber' => 'required|string|max:255',
+            'resolutionAwardDate' => 'nullable|date',
+            'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
             'awardedAmount' => 'nullable|numeric',
-            'philgepsReferenceNo' => 'nullable|string|max:255',
             'awardNoticeNumber' => 'nullable|string|max:255',
             'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ];
 
         $attributes = [
-            'resolutionNumber' => 'Resolution #',
-            'bidEvaluationDate' => 'Bid Evaluation Date',
-            'postQualDate' => 'Post Qual Date',
-            'recommendingForAward' => 'Recommending For Award',
+            'resolutionAwardNumber' => 'Resolution Award Number',
+            'resolutionAwardDate' => 'Resolution Award Date',
+            'noticeOfAwardNumber' => 'Notice of Award Number',
             'noticeOfAward' => 'Notice of Award Date',
             'awardedAmount' => 'Awarded Amount',
-            'philgepsReferenceNo' => 'PhilGEPS Reference #',
             'awardNoticeNumber' => 'Award Notice #',
             'dateOfPostingOfAwardOnPhilGEPS' => 'Posting of Award Date',
             'supplier_id' => 'Supplier',
@@ -668,13 +694,11 @@ class ModeOfProcurementPerLotPage extends Component
         DB::transaction(function () use (&$isAdded, &$isUpdated) {
             $data = [
                 'ref_id' => $this->procID,
-                'resolution_number' => $this->resolutionNumber,
-                'bid_evaluation_date' => $this->nullableDate($this->bidEvaluationDate),
-                'post_qual_date' => $this->nullableDate($this->postQualDate),
-                'recommending_for_award' => $this->nullableDate($this->recommendingForAward),
+                'resolution_award_number' => $this->resolutionAwardNumber,
+                'resolution_award_date' => $this->nullableDate($this->resolutionAwardDate),
+                'notice_of_award_number' => $this->noticeOfAwardNumber,
                 'notice_of_award' => $this->nullableDate($this->noticeOfAward),
                 'awarded_amount' => $this->awardedAmount,
-                'philgeps_reference_no' => $this->philgepsReferenceNo,
                 'award_notice_no' => $this->awardNoticeNumber,
                 'date_of_posting_of_award_on_philgeps' => $this->nullableDate($this->dateOfPostingOfAwardOnPhilGEPS),
                 'supplier_id' => $this->supplier_id,

@@ -1707,6 +1707,14 @@
                                                     {{ $recommendingForAward }}</p>
                                             </div>
                                         @endif
+                                        @if ($noticeOfAwardNumber)
+                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice of
+                                                    Award #</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $noticeOfAwardNumber }}</p>
+                                            </div>
+                                        @endif
                                         @if ($noticeOfAward)
                                             <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice of
