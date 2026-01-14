@@ -194,7 +194,7 @@
                                                             class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-amber-50 hover:to-amber-100 dark:hover:from-amber-900/30 dark:hover:to-amber-800/30 text-amber-600 dark:text-amber-400 transition-all duration-150 group/item">
                                                             <x-heroicon-o-pencil
                                                                 class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                            <span class="font-medium">Update MOP</span>
+                                                            <span class="font-medium">Update</span>
                                                         </a>
                                                     </li>
                                                 @endcan
