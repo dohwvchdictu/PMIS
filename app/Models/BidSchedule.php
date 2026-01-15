@@ -21,6 +21,12 @@ class BidSchedule extends Model implements Auditable
         'philgeps_posting_ref_no',
         'pre_proc_conference',
         'ads_post_ib',
+        'list_invited_observers',
+        'obsrvr_prebid_conf',
+        'obsrvr_eligibility',
+        'obsrvr_sub_open_of_bid',
+        'obsrvr_bid',
+        'obsrvr_post_qual',
         'pre_bid_conf',
         'eligibility_check',
         'sub_open_bids',
@@ -41,6 +47,12 @@ class BidSchedule extends Model implements Auditable
         'philgeps_posting_ref_no',
         'pre_proc_conference',
         'ads_post_ib',
+        'list_invited_observers',
+        'obsrvr_prebid_conf',
+        'obsrvr_eligibility',
+        'obsrvr_sub_open_of_bid',
+        'obsrvr_bid',
+        'obsrvr_post_qual',
         'pre_bid_conf',
         'eligibility_check',
         'sub_open_bids',
@@ -51,6 +63,7 @@ class BidSchedule extends Model implements Auditable
         'bidding_result',
         'resolution_number_mop',
     ];
+
     protected $auditTimestamps = true;
 
     protected $auditStrict = false;
@@ -59,6 +72,4 @@ class BidSchedule extends Model implements Auditable
     {
         return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
-
-
 }
