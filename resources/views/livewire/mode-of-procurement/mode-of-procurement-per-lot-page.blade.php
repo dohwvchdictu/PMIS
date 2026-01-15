@@ -174,26 +174,8 @@
                                         $isSavedRecord = isset($item['id']) && is_numeric($item['id']);
                                         $isHistory = !$loop->first;
 
-                                        $hasSchedule =
-                                            // Bidding fields
-                                            !empty($item['bidding_number']) ||
-                                            !empty($item['ib_number']) ||
-                                            !empty($item['pre_proc_conference']) ||
-                                            !empty($item['ads_post_ib']) ||
-                                            !empty($item['pre_bid_conf']) ||
-                                            !empty($item['eligibility_check']) ||
-                                            !empty($item['sub_open_bids']) ||
-                                            !empty($item['bid_evaluation_date']) ||
-                                            !empty($item['post_qualification_date']) ||
-                                            !empty($item['bidding_date']) ||
-                                            !empty($item['bidding_result']) ||
-                                            // Resolution Number (MOP)
-                                            !empty($item['resolution_number_mop']) ||
-                                            // SVP/Canvass fields
-                                            !empty($item['rfq_no']) ||
-                                            !empty($item['canvass_date']) ||
-                                            !empty($item['date_returned_of_canvass']) ||
-                                            !empty($item['abstract_of_canvass_date']);
+                                        // Use component method for consistent empty checking
+                                        $hasSchedule = $this->itemHasSchedule($item);
 
                                         $hasPostData = \App\Models\PostProcurement::where(
                                             'ref_id',
@@ -242,48 +224,7 @@
                                                     @endif
 
                                                     @php
-                                                        if (
-                                                            in_array($modeId, [
-                                                                7,
-                                                                8,
-                                                                9,
-                                                                10,
-                                                                11,
-                                                                12,
-                                                                13,
-                                                                14,
-                                                                15,
-                                                                16,
-                                                                17,
-                                                                18,
-                                                                19,
-                                                                20,
-                                                                21,
-                                                                22,
-                                                                23,
-                                                                24,
-                                                            ])
-                                                        ) {
-                                                            $canAddRebid = false;
-                                                        } else {
-                                                            $bidResult = $item['bidding_result'] ?? '';
-
-                                                            $hasBiddingData =
-                                                                !empty($item['ib_number']) &&
-                                                                !empty($item['bidding_number']) &&
-                                                                !empty($item['bidding_date']);
-
-                                                            // Check if Pre-Proc Conference is filled
-                                                            $hasPreProcConference =
-                                                                !empty($item['pre_proc_conference']) &&
-                                                                trim($item['pre_proc_conference']) !== '';
-
-                                                            $canAddRebid =
-                                                                $modeId == 1 ||
-                                                                (($hasBiddingData || $hasPreProcConference) &&
-                                                                    $bidResult === 'UNSUCCESSFUL' &&
-                                                                    !$this->isPostAvailable);
-                                                        }
+                                                        $canAddRebid = $this->canAddRebidForItem($item, $modeId);
                                                     @endphp
 
                                                     @if ($canAddRebid)
@@ -463,32 +404,18 @@
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                         @endif
-                                        {{-- Resolution Number (MOP) - Show for all modes except 1 --}}
-                                        @if ($showFields && $modeId && !in_array($modeId, [1]))
+
+                                        @if ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
                                             <td class="px-2 py-2">
-                                                @if (in_array($modeId, [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
-                                                    {{-- Editable input for modes that require/allow Resolution Number --}}
-                                                    <input type="text" wire:key="res-mop-{{ $rowUid }}"
-                                                        wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
-                                                        class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+                                                {{-- Editable input for modes that require/allow Resolution Number --}}
+                                                <input type="text" wire:key="res-mop-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
                 {{ $errors->has('form.items.' . $itemIndex . '.resolution_number_mop')
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                        placeholder="RES-2025-001" @disabled($disableInputs)
-                                                        @if (in_array($modeId, [3, 4, 5, 6])) title="Required for this procurement mode" @endif>
-                                                @else
-                                                    {{-- Mode 2 (Competitive Bidding): Show N/A --}}
-                                                    <div class="flex items-center justify-center h-full">
-                                                        <span class="text-gray-400 dark:text-gray-500 text-xs"></span>
-                                                    </div>
-                                                @endif
+                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
                                             </td>
-                                        @else
-                                            {{-- Empty cell for mode 1 or when fields shouldn't show --}}
-                                            <td class="px-2 py-2"></td>
-                                        @endif
-
-                                        @if ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
@@ -982,16 +909,14 @@
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Result
                                     </th>
-                                    @if (in_array($editModeId, [3, 4, 5, 6]))
-                                        <th
-                                            class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution # <span class="text-red-500">*</span>
-                                        </th>
-                                    @endif
                                 @endif
 
                                 @if ($editModeId && in_array($editModeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
                                     {{-- SVP/ALTERNATIVE MODE HEADERS (Modes 7-24) --}}
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution # (MOP)
+                                    </th>
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         RFQ No.
@@ -1078,17 +1003,15 @@
                                             <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
                                         </select>
                                     </td>
-                                    @if (in_array($editModeId, [3, 4, 5, 6]))
-                                        <td class="px-2 py-2">
-                                            <input type="text" wire:model.defer="editingItem.resolution_number_mop"
-                                                placeholder="RES-2025-001"
-                                                class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                        </td>
-                                    @endif
                                 @endif
 
                                 @if ($editModeId && in_array($editModeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
                                     {{-- SVP/ALTERNATIVE MODE FIELDS --}}
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model.defer="editingItem.resolution_number_mop"
+                                            placeholder="RES-2025-001"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
+                                    </td>
                                     <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.rfq_no"
                                             placeholder="RFQ-2025-001"
@@ -1105,11 +1028,6 @@
                                     <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.abstract_of_canvass_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                    </td>
-                                    <td class="px-2 py-2">
-                                        <input type="text" wire:model.defer="editingItem.resolution_number_mop"
-                                            placeholder="RES-2025-001"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                 @endif
                             </tr>
