@@ -251,6 +251,8 @@ class ModeOfProcurementPerLotPage extends Component
         foreach ($prSvps as $uid => $schedule) {
             $existing = $map->get($uid, []);
             $map[$uid] = array_merge($existing, [
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no ?? $existing['philgeps_posting_ref_no'] ?? null,
+                'ads_post_ib' => $schedule->ads_post_ib ?? $existing['ads_post_ib'] ?? null,
                 'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
@@ -613,7 +615,6 @@ class ModeOfProcurementPerLotPage extends Component
         };
 
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
-            // FIX #5: Using hasAnyValue() for consistent checking
             $biddingFields = [
                 $itemData['ib_number'] ?? null,
                 $itemData['philgeps_posting_ref_no'] ?? null,
@@ -682,8 +683,9 @@ class ModeOfProcurementPerLotPage extends Component
         }
 
         if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-            // FIX #5: Using hasAnyValue() for consistent checking
             $svpFields = [
+                $itemData['philgeps_posting_ref_no'] ?? null,
+                $itemData['ads_post_ib'] ?? null,
                 $itemData['resolution_number_mop'] ?? null,
                 $itemData['rfq_no'] ?? null,
                 $itemData['canvass_date'] ?? null,
@@ -719,6 +721,8 @@ class ModeOfProcurementPerLotPage extends Component
                         'uid' => $uid,
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
+                        'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
+                        'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
                         'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                         'rfq_no' => $itemData['rfq_no'] ?? null,
                         'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
@@ -961,6 +965,7 @@ class ModeOfProcurementPerLotPage extends Component
             // Bidding fields
             $item['bidding_number'] ?? null,
             $item['ib_number'] ?? null,
+            $item['philgeps_posting_ref_no'] ?? null,
             $item['pre_proc_conference'] ?? null,
             $item['ads_post_ib'] ?? null,
             $item['pre_bid_conf'] ?? null,

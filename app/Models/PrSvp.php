@@ -11,11 +11,14 @@ class PrSvp extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'ref_id',
         'mop_uid',
         'uid',
-        'resolution_number',
+        'philgeps_posting_ref_no',
+        'ads_post_ib',
+        'resolution_number_mop',
         'rfq_no',
         'canvass_date',
         'date_returned_of_canvass',
@@ -26,12 +29,15 @@ class PrSvp extends Model implements Auditable
         'ref_id',
         'mop_uid',
         'uid',
-        'resolution_number',
+        'philgeps_posting_ref_no',
+        'ads_post_ib',
+        'resolution_number_mop',
         'rfq_no',
         'canvass_date',
         'date_returned_of_canvass',
         'abstract_of_canvass_date',
     ];
+
     protected $auditTimestamps = true;
 
     protected $auditStrict = false;
@@ -40,6 +46,4 @@ class PrSvp extends Model implements Auditable
     {
         return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
-
-
 }
