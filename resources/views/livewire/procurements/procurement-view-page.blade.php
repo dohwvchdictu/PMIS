@@ -9,7 +9,7 @@
                         <div class="flex items-center gap-2 mb-3">
                             <span
                                 class="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                PR #{{ $form['pr_number'] ?? 'N/A' }}
+                                PR # {{ $form['pr_number'] ?? 'N/A' }}
                             </span>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Procurement Program / Project</p>

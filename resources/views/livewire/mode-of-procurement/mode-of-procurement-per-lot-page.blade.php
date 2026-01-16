@@ -1,52 +1,68 @@
-<div class="space-y-2">
+<div class="space-y-4">
     <div
-        class="relative bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+        <div class="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+        <div class="p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            PR # {{ $form['pr_number'] ?? 'N/A' }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Procurement Program / Project</p>
+                    <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                        {{ $form['procurement_program_project'] ?? 'No project description available' }}
+                    </h1>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div
+        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
 
         <ul class="flex items-center w-full max-w-7xl px-4 py-3 bg-white dark:bg-neutral-700 mx-auto"
             data-hs-stepper='{"isCompleted": true}'>
 
             {{-- STEP 1: DETAILS --}}
-            <li class="flex items-center gap-x-2 flex-1 group"
-                data-hs-stepper-nav-item='{"index": 1, "isCompleted": {{ $activeTab > 1 ? 'true' : 'false' }} }'>
-
+            <li class="flex items-center flex-1">
                 <button type="button" wire:click="setStep(1)"
-                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
+                    class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 hover:scale-105 shadow-md
             {{ $activeTab == 1
-                ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400'
                 : ($activeTab > 1 || $this->isPostAvailable
-                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200') }}">
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                    : 'bg-emerald-600 text-white') }}">
                     1
                 </button>
 
                 <span
-                    class="text-sm font-medium whitespace-nowrap {{ $activeTab >= 1 ? 'text-black dark:text-white' : 'text-gray-500' }}">
+                    class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 1 ? 'text-gray-900 dark:text-white' : 'text-gray-500' }}">
                     Details
                 </span>
 
                 <div
-                    class="h-px grow transition-colors duration-300
-            {{ $activeTab > 1 || $this->isPostAvailable ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-500' }}">
+                    class="h-px flex-1 mx-3 transition-all duration-300
+            {{ $activeTab > 1 || $this->isPostAvailable ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
                 </div>
             </li>
 
             {{-- STEP 2: POST --}}
-            <li class="flex items-center gap-x-2 group"
-                data-hs-stepper-nav-item='{"index": 2, "isCompleted": {{ $activeTab > 2 ? 'true' : 'false' }} }'>
-
+            <li class="flex items-center">
                 <button type="button" @if (!$this->isPostAvailable && $activeTab < 2) disabled @else wire:click="setStep(2)" @endif
-                    class="size-8 flex justify-center items-center rounded-full font-medium text-sm transition hover:scale-105
+                    class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md
             {{ $activeTab == 2
-                ? 'bg-green-500 text-white border-2 border-emerald-700 hover:bg-green-600'
+                ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105'
                 : ($activeTab > 2 || $this->isPostAvailable
-                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer'
-                    : 'bg-gray-100 text-neutral-400 cursor-not-allowed') }}">
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                     2
                 </button>
 
                 <span
-                    class="text-sm font-medium whitespace-nowrap
-            {{ $activeTab >= 2 || $this->isPostAvailable ? 'text-gray-800 dark:text-white' : 'text-neutral-400 dark:text-neutral-500' }}">
+                    class="ml-2 text-sm font-semibold whitespace-nowrap
+            {{ $activeTab >= 2 || $this->isPostAvailable ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                     Post
                 </span>
             </li>
@@ -56,25 +72,10 @@
 
     <div>
         @if ($activeTab == 1)
-            <div class="flex flex-col gap-2 pt-2">
-                <div
-                    class="bg-white p-4 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                    <div class="grid grid-cols-2 md:grid-cols-10 gap-4">
-                        <div class="col-span-1">
-                            <x-forms.input id="pr_number" label="PR No." model="form.pr_number" :form="$form"
-                                :required="true" textAlign="right" :readonly="true" />
-                        </div>
-
-                        <div class="col-span-9">
-                            <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
-                                model="form.procurement_program_project" :required="true" :readonly="true"
-                                :rows="$textareaRows" :autoResize="true" />
-                        </div>
-                    </div>
-                </div>
+            <div class="flex flex-col">
 
                 <div
-                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mt-4">
+                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
 
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
