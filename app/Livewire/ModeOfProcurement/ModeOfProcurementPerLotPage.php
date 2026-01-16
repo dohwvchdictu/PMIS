@@ -31,8 +31,8 @@ class ModeOfProcurementPerLotPage extends Component
     public ?string $noticeOfAward = null;
     public ?string $resolutionAwardDate = null;
     public ?float $awardedAmount = null;
-    public ?string $awardNoticeNumber = null;
-    public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
+    public ?string $philgepsNoticeOfAwardNo = null;
+    public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
 
     public Collection $suppliers;
@@ -111,8 +111,8 @@ class ModeOfProcurementPerLotPage extends Component
             $this->noticeOfAward = $post->notice_of_award;
             $this->resolutionAwardDate = $post->resolution_award_date;
             $this->awardedAmount = $post->awarded_amount;
-            $this->awardNoticeNumber = $post->award_notice_no;
-            $this->dateOfPostingOfAwardOnPhilGEPS = $post->date_of_posting_of_award_on_philgeps;
+            $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
+            $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
         }
     }
@@ -751,17 +751,17 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
-        // FIX #9: Using hasAnyValue() to check if user started filling form
         $postFields = [
             $this->resolutionAwardNumber,
             $this->resolutionAwardDate,
             $this->noticeOfAwardNumber,
             $this->noticeOfAward,
             $this->awardedAmount,
-            $this->awardNoticeNumber,
-            $this->dateOfPostingOfAwardOnPhilGEPS,
+            $this->philgepsNoticeOfAwardNo,
+            $this->philgepsPostingOfAward,
             $this->supplier_id,
         ];
+
 
         $hasAnyPostData = $this->hasAnyValue($postFields);
 
@@ -772,8 +772,8 @@ class ModeOfProcurementPerLotPage extends Component
             'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
             'awardedAmount' => 'nullable|numeric|min:0',
-            'awardNoticeNumber' => 'nullable|string|max:255',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
+            'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
+            'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ];
 
@@ -789,8 +789,8 @@ class ModeOfProcurementPerLotPage extends Component
             'noticeOfAwardNumber' => 'Notice of Award Number',
             'noticeOfAward' => 'Notice of Award Date',
             'awardedAmount' => 'Awarded Amount',
-            'awardNoticeNumber' => 'Award Notice Number',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'Posting of Award Date',
+            'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
+            'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
         ];
 
@@ -825,8 +825,8 @@ class ModeOfProcurementPerLotPage extends Component
                 'notice_of_award_number' => $this->noticeOfAwardNumber,
                 'notice_of_award' => $this->noticeOfAward,
                 'awarded_amount' => $this->awardedAmount,
-                'award_notice_no' => $this->awardNoticeNumber,
-                'date_of_posting_of_award_on_philgeps' => $this->nullableDate($this->dateOfPostingOfAwardOnPhilGEPS),
+                'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
+                'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                 'supplier_id' => $this->supplier_id,
             ];
 

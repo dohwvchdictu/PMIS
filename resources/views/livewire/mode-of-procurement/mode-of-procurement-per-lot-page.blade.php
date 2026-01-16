@@ -928,11 +928,11 @@
 
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Award Notice Number</th>
+                                        PhilGEPS| Notice of Award No.</th>
 
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Posting of Award|PhilGEPS</th>
+                                        PhilGEPS| Posting of Award</th>
 
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
@@ -971,13 +971,13 @@
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
-                                        <input type="text" wire:model.defer="awardNoticeNumber"
+                                        <input type="text" wire:model.defer="philgepsNoticeOfAwardNo"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="AN-YYYY-NNN">
+                                            placeholder="PHL-NOA-YYYY-NNN">
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
-                                        <input type="date" wire:model.defer="dateOfPostingOfAwardOnPhilGEPS"
+                                        <input type="date" wire:model.defer="philgepsPostingOfAward"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                     </td>
 
