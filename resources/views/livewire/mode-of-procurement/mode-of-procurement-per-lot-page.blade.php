@@ -1,16 +1,18 @@
 <div class="space-y-4">
     <div
-        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
-        <div class="h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-        <div class="p-6">
+        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
+        <!-- PR Number Badge - Top Left Corner -->
+        <div class="absolute top-0 left-0 z-10">
+            <span
+                class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md">
+                PR #{{ $form['pr_number'] ?? 'N/A' }}
+            </span>
+        </div>
+
+        <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
+        <div class="p-6 pt-8">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-md text-sm font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            PR # {{ $form['pr_number'] ?? 'N/A' }}
-                        </span>
-                    </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Procurement Program / Project</p>
                     <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
                         {{ $form['procurement_program_project'] ?? 'No project description available' }}
