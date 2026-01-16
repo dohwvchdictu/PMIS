@@ -41,7 +41,7 @@
 
                 <span
                     class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 1 ? 'text-gray-900 dark:text-white' : 'text-gray-500' }}">
-                    Details
+                    Mode of Procurement
                 </span>
 
                 <div
@@ -65,7 +65,7 @@
                 <span
                     class="ml-2 text-sm font-semibold whitespace-nowrap
             {{ $activeTab >= 2 || $this->isPostAvailable ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
-                    Post
+                    Post Procurement
                 </span>
             </li>
 
