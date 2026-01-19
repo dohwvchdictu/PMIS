@@ -245,6 +245,7 @@ class ModeOfProcurementPerLotPage extends Component
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
@@ -497,6 +498,12 @@ class ModeOfProcurementPerLotPage extends Component
                     $isValid = false;
                 }
 
+                if (in_array($modeId, [3, 4, 5, 6])) {
+                    if ($hasBiddingData && !$this->hasValue($item['resolution_number_mop'])) {
+                        $this->scheduleValidationErrors[] = "{$modeName}: Resolution Number (MOP) is required for this procurement mode.";
+                        $isValid = false;
+                    }
+                }
                 // Validate Bidding Result dependencies
                 $biddingResult = $item['bidding_result'] ?? null;
 
