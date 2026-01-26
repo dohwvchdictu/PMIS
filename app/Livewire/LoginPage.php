@@ -9,6 +9,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use App\Services\ApiService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginPage extends Component
 {
@@ -32,6 +33,16 @@ class LoginPage extends Component
             'password' => $this->password,
         ];
 
+        // Check if this is a local database user (bypass API)
+        $localUser = User::where('email', $this->email)
+            ->whereNotNull('password')
+            ->first();
+
+        if ($localUser && Hash::check($this->password, $localUser->password)) {
+            return $this->handleLocalLogin($localUser, $credentials);
+        }
+
+        // Continue with API authentication
         $response = $apiService->login($credentials);
 
         if (!isset($response['statusCode']) || $response['statusCode'] != 200) {
@@ -107,6 +118,31 @@ class LoginPage extends Component
         } else {
             session(['user_photo' => asset('storage/employees/default.png')]);
         }
+
+        return redirect()->route('dashboard');
+    }
+
+    /**
+     * Handle login for local database users (no API check)
+     */
+    protected function handleLocalLogin($user, $credentials)
+    {
+        Auth::login($user);
+
+        // Set mock session data for local users
+        session([
+            'jwt_token' => 'local_token_' . time(),
+            'roleName' => $user->roles->first()?->name ?? 'User',
+            'user' => [
+                'id' => $user->hris_id ?? $user->id,
+                'firstName' => explode(' ', $user->name)[0] ?? 'User',
+                'lastName' => explode(' ', $user->name)[1] ?? '',
+                'email' => $user->email,
+            ],
+            'token_created_at' => time(),
+            'login_credentials' => $credentials,
+            'user_photo' => asset('storage/employees/default.png'),
+        ]);
 
         return redirect()->route('dashboard');
     }

@@ -289,13 +289,6 @@ class HomePage extends Component
 
         // Log them
         \Log::info('SQL Queries:', $queries);
-
-        // You can also dd() to see immediately
-        dd([
-            'categories' => $categories,
-            'clusters' => $clusters,
-            'queries' => $queries
-        ]);
     }
 
     public function getCategoryTypeCountsProperty()

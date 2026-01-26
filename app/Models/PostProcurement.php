@@ -11,32 +11,31 @@ class PostProcurement extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'ref_id',
-        'resolution_number',
-        'bid_evaluation_date',
-        'post_qual_date',
-        'recommending_for_award',
+        'resolution_award_number',
+        'resolution_award_date',
+        'notice_of_award_number',
         'notice_of_award',
-        'philgeps_reference_no',
-        'award_notice_no',
+        'philgeps_notice_of_award_no',
         'awarded_amount',
-        'date_of_posting_of_award_on_philgeps',
+        'philgeps_posting_of_award',
         'supplier_id',
     ];
+
     protected $auditInclude = [
         'ref_id',
-        'resolution_number',
-        'bid_evaluation_date',
-        'post_qual_date',
-        'recommending_for_award',
+        'resolution_award_number',
+        'resolution_award_date',
+        'notice_of_award_number',
         'notice_of_award',
-        'philgeps_reference_no',
-        'award_notice_no',
+        'philgeps_notice_of_award_no',
         'awarded_amount',
-        'date_of_posting_of_award_on_philgeps',
+        'philgeps_posting_of_award',
         'supplier_id',
     ];
+
     protected $auditTimestamps = true;
 
     protected $auditStrict = false;
@@ -45,5 +44,4 @@ class PostProcurement extends Model implements Auditable
     {
         return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
-
 }

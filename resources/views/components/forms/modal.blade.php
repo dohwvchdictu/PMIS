@@ -1,6 +1,7 @@
 @props([
     'title' => null,
     'size' => 'max-w-6xl',
+    'closeMethod' => 'closeModal', // ✅ NEW: Allow custom close method
 ])
 
 <div x-data="{ show: @entangle('showModal') }" @keydown.escape.window="show = false" x-cloak>
@@ -23,7 +24,7 @@
                 <div
                     class="flex justify-between items-center px-4 py-2 bg-emerald-600 text-white font-semibold dark:bg-emerald-600 dark:text-neutral-200">
                     <h2 class="text-lg font-semibold">{{ $title ?? 'Modal' }}</h2>
-                    <button @click="$wire.closeModal()"
+                    <button @click="$wire.{{ $closeMethod }}()"
                         class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-red-500 hover:bg-gray-100 dark:bg-neutral-700 dark:text-red-500 dark:hover:bg-neutral-600 transition">
                         ✕
                     </button>

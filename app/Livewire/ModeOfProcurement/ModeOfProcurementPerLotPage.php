@@ -25,17 +25,14 @@ class ModeOfProcurementPerLotPage extends Component
     public int $activeTab = 1;
     public bool $showHistory = false;
 
-
     // Post-Procurement Tab Fields
-    public ?string $resolutionNumber = null;
-    public ?string $bidEvaluationDate = null;
-    public ?string $postQualDate = null;
+    public ?string $resolutionAwardNumber = null;
+    public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
-    public ?string $recommendingForAward = null;
+    public ?string $resolutionAwardDate = null;
     public ?float $awardedAmount = null;
-    public ?string $philgepsReferenceNo = null;
-    public ?string $awardNoticeNumber = null;
-    public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
+    public ?string $philgepsNoticeOfAwardNo = null;
+    public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
 
     public Collection $suppliers;
@@ -53,7 +50,6 @@ class ModeOfProcurementPerLotPage extends Component
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
 
-        // Initialize form with typed structure
         $this->form = [
             'pr_number' => $procurement->pr_number ?? '',
             'procurement_program_project' => $procurement->procurement_program_project ?? '',
@@ -63,18 +59,46 @@ class ModeOfProcurementPerLotPage extends Component
             'items' => [],
         ];
 
-        // Load post-procurement data
         $this->loadPostProcurementData($procurement);
-
-        // Load mode of procurements as collection
         $this->modeOfProcurements = ModeOfProcurement::orderBy('id', 'asc')->get();
         $this->suppliers = Supplier::all();
-
-        // Load per-lot data
         $this->loadPerLotData($procurement);
-
-        // Calculate textarea rows
         $this->calculateTextareaRows($procurement->procurement_program_project ?? '');
+    }
+
+    // ============================================================================
+    // FIX #5: CONSISTENT EMPTY CHECK PATTERN
+    // ============================================================================
+    /**
+     * Standardized method to check if a value is considered "filled"
+     * Handles: null, empty string, whitespace-only strings
+     * Returns true if value has meaningful content
+     */
+    private function hasValue($value): bool
+    {
+        // null check first
+        if (is_null($value)) {
+            return false;
+        }
+
+        // Convert to string and trim
+        $stringValue = trim((string) $value);
+
+        // Check if empty after trimming
+        return $stringValue !== '';
+    }
+
+    /**
+     * Check if ANY of the provided fields have values
+     */
+    private function hasAnyValue(array $fields): bool
+    {
+        foreach ($fields as $value) {
+            if ($this->hasValue($value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function loadPostProcurementData(Procurement $procurement): void
@@ -82,15 +106,13 @@ class ModeOfProcurementPerLotPage extends Component
         $post = PostProcurement::where('ref_id', $this->procID)->first();
 
         if ($post) {
-            $this->resolutionNumber = $post->resolution_number;
-            $this->bidEvaluationDate = $post->bid_evaluation_date;
-            $this->postQualDate = $post->post_qual_date;
+            $this->resolutionAwardNumber = $post->resolution_award_number;
+            $this->noticeOfAwardNumber = $post->notice_of_award_number;
             $this->noticeOfAward = $post->notice_of_award;
-            $this->recommendingForAward = $post->recommending_for_award;
+            $this->resolutionAwardDate = $post->resolution_award_date;
             $this->awardedAmount = $post->awarded_amount;
-            $this->philgepsReferenceNo = $post->philgeps_reference_no;
-            $this->awardNoticeNumber = $post->award_notice_no;
-            $this->dateOfPostingOfAwardOnPhilGEPS = $post->date_of_posting_of_award_on_philgeps;
+            $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
+            $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
         }
     }
@@ -108,22 +130,59 @@ class ModeOfProcurementPerLotPage extends Component
         foreach ($this->form['items'] ?? [] as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
+            // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
-                $bidResult = $item['bidding_result'] ?? '';
+                // Check all required bidding fields are filled
+                $allBiddingFieldsFilled =
+                    $this->hasValue($item['bidding_number']) &&
+                    $this->hasValue($item['ib_number']) &&
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['pre_proc_conference']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
+                    $this->hasValue($item['list_invited_observers']) &&
+                    $this->hasValue($item['obsrvr_prebid_conf']) &&
+                    $this->hasValue($item['obsrvr_eligibility']) &&
+                    $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
+                    $this->hasValue($item['obsrvr_bid']) &&
+                    $this->hasValue($item['obsrvr_post_qual']) &&
+                    $this->hasValue($item['pre_bid_conf']) &&
+                    $this->hasValue($item['eligibility_check']) &&
+                    $this->hasValue($item['sub_open_bids']) &&
+                    $this->hasValue($item['bid_evaluation_date']) &&
+                    $this->hasValue($item['post_qualification_date']) &&
+                    $this->hasValue($item['bidding_date']) &&
+                    $this->hasValue($item['bidding_result']) &&
+                    ($item['bidding_result'] === 'SUCCESSFUL');
 
-                if ($bidResult === 'SUCCESSFUL') {
+                // For modes 3-6, also require resolution_number_mop
+                if (in_array($modeId, [3, 4, 5, 6])) {
+                    $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
+                }
+
+                if ($allBiddingFieldsFilled) {
                     return true;
                 }
             }
 
+            // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                if (
-                    !empty($item['rfq_no']) &&
-                    !empty($item['canvass_date']) &&
-                    !empty($item['date_returned_of_canvass']) &&
-                    !empty($item['abstract_of_canvass_date']) &&
-                    !empty($item['resolution_number'])
-                ) {
+                // Check all required SVP fields are filled
+                $allSvpFieldsFilled =
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
+                    $this->hasValue($item['list_invited_observers']) &&
+                    $this->hasValue($item['obsrvr_prebid_conf']) &&
+                    $this->hasValue($item['obsrvr_eligibility']) &&
+                    $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
+                    $this->hasValue($item['obsrvr_bid']) &&
+                    $this->hasValue($item['obsrvr_post_qual']) &&
+                    $this->hasValue($item['resolution_number_mop']) &&
+                    $this->hasValue($item['rfq_no']) &&
+                    $this->hasValue($item['canvass_date']) &&
+                    $this->hasValue($item['date_returned_of_canvass']) &&
+                    $this->hasValue($item['abstract_of_canvass_date']);
+
+                if ($allSvpFieldsFilled) {
                     return true;
                 }
             }
@@ -134,7 +193,6 @@ class ModeOfProcurementPerLotPage extends Component
 
     protected function loadPerLotData(Procurement $procurement): void
     {
-        // Get MOP Lots
         $mopLots = $procurement->mopLots()
             ->with('modeOfProcurement')
             ->orderBy('mode_order')
@@ -148,7 +206,6 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
-        // Fetch all schedules in batch queries
         $bidSchedules = BidSchedule::whereIn('mop_uid', $uids)
             ->where('ref_id', $procID)
             ->get()
@@ -159,20 +216,13 @@ class ModeOfProcurementPerLotPage extends Component
             ->get()
             ->keyBy('mop_uid');
 
-        // Build unified schedule map
         $scheduleMap = $this->buildScheduleMap($bidSchedules, $prSvps);
 
-        // Map items
         $this->form['items'] = $mopLots->map(function ($mopLot, $index) use ($scheduleMap) {
             $uid = $mopLot->uid;
             $schedule = $uid ? $scheduleMap->get($uid, []) : [];
-
             return $this->buildItemArray($mopLot, $index, $schedule);
         })->toArray();
-
-        // if ($this->isPostAvailable) {
-        //     $this->activeTab = 2;
-        // }
     }
 
     private function buildItemArray($mopLot, int $index, array $schedule): array
@@ -182,28 +232,32 @@ class ModeOfProcurementPerLotPage extends Component
             'uid' => $mopLot->uid ?? 'temp_' . uniqid(),
             'mode_of_procurement_id' => $mopLot->mode_of_procurement_id,
             'mode_order' => $mopLot->mode_order ?? ($index + 1),
-
-            // Shared fields
             'ib_number' => $schedule['ib_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
+            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
+            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
+            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? null,
+            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? null,
+            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
-
-            // Bidding specific
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
             'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
-
-            // SVP specific
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
             'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-            'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
     }
+
     private function buildScheduleMap(Collection $bidSchedules, Collection $prSvps): Collection
     {
         $map = collect();
@@ -211,30 +265,49 @@ class ModeOfProcurementPerLotPage extends Component
         foreach ($bidSchedules as $uid => $schedule) {
             $map[$uid] = [
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'list_invited_observers' => $schedule->list_invited_observers,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
+                'obsrvr_bid' => $schedule->obsrvr_bid,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
         foreach ($prSvps as $uid => $schedule) {
             $existing = $map->get($uid, []);
             $map[$uid] = array_merge($existing, [
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no ?? $existing['philgeps_posting_ref_no'] ?? null,
+                'ads_post_ib' => $schedule->ads_post_ib ?? $existing['ads_post_ib'] ?? null,
+                'list_invited_observers' => $schedule->list_invited_observers ?? $existing['list_invited_observers'] ?? null,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf ?? $existing['obsrvr_prebid_conf'] ?? null,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility ?? $existing['obsrvr_eligibility'] ?? null,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid ?? $existing['obsrvr_sub_open_of_bid'] ?? null,
+                'obsrvr_bid' => $schedule->obsrvr_bid ?? $existing['obsrvr_bid'] ?? null,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual ?? $existing['obsrvr_post_qual'] ?? null,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
                 'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
                 'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
-                'resolution_number' => $schedule->resolution_number,
             ]);
         }
 
         return $map;
     }
+
     public function addItem(): void
     {
         $newItem = [
@@ -244,24 +317,34 @@ class ModeOfProcurementPerLotPage extends Component
             'mode_order' => 1,
             'bidding_number' => null,
             'ib_number' => null,
+            'philgeps_posting_ref_no' => null,
             'pre_proc_conference' => null,
             'ads_post_ib' => null,
+            'list_invited_observers' => null,
+            'obsrvr_prebid_conf' => null,
+            'obsrvr_eligibility' => null,
+            'obsrvr_sub_open_of_bid' => null,
+            'obsrvr_bid' => null,
+            'obsrvr_post_qual' => null,
             'pre_bid_conf' => null,
             'eligibility_check' => null,
             'sub_open_bids' => null,
+            'bid_evaluation_date' => null,
+            'post_qualification_date' => null,
             'bidding_date' => null,
             'bidding_result' => null,
+            'resolution_number_mop' => null,
             'rfq_no' => null,
             'canvass_date' => null,
             'date_returned_of_canvass' => null,
             'abstract_of_canvass_date' => null,
-            'resolution_number' => null,
         ];
 
         $this->form['items'][] = $newItem;
         $this->reindexModeOrder();
         $this->showHistory = false;
     }
+
     private function reindexModeOrder(): void
     {
         foreach ($this->form['items'] as $index => &$item) {
@@ -286,11 +369,25 @@ class ModeOfProcurementPerLotPage extends Component
 
     public function setStep(int $step): void
     {
+        if ($step == 2 && !$this->isPostAvailable) {
+            LivewireAlert::title('Cannot Access Post Tab')
+                ->warning()
+                ->text('Please complete the Mode of Procurement details first. A SUCCESSFUL bidding result or complete SVP data is required.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
         $this->activeTab = $step;
     }
 
+    // ============================================================================
+    // FIX #6: TRANSACTION ROLLBACK - VALIDATE BEFORE TRANSACTION
+    // ============================================================================
     public function saveTab1()
     {
+        // STEP 1: Validate form rules FIRST
         $rules = [
             'form.items.*.mode_of_procurement_id' => 'required|integer',
         ];
@@ -301,20 +398,18 @@ class ModeOfProcurementPerLotPage extends Component
             $this->validate($rules, [], $attributes);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errorMessages = $e->validator->errors()->all();
-            $errorString = ' ';
-            foreach ($errorMessages as $msg) {
-                $errorString .= "{$msg}";
-            }
+            $errorString = implode(' ', $errorMessages);
 
             LivewireAlert::title('Validation Failed')
                 ->error()
-                ->text('Please check the following errors:' . $errorString)
+                ->text('Please check the following errors: ' . $errorString)
                 ->toast()->position('top-end')->show();
 
-            throw $e;
+            // Exit early - don't proceed to schedule validation or DB transaction
+            return;
         }
 
-        // Validate schedules before saving
+        // STEP 2: Validate schedules BEFORE starting transaction
         $this->scheduleValidationErrors = [];
         if (!$this->validateSchedules()) {
             $errorMessage = implode(' ', $this->scheduleValidationErrors);
@@ -322,17 +417,18 @@ class ModeOfProcurementPerLotPage extends Component
                 ->error()
                 ->text($errorMessage)
                 ->toast()->position('top-end')->show();
+
+            // Exit early - validation failed, don't touch database
             return;
         }
 
+        // STEP 3: ALL validation passed - NOW start the database transaction
         $isMopAdded = false;
         $isMopUpdated = false;
         $isScheduleAdded = false;
         $isScheduleUpdated = false;
-        $isDeleted = false;
 
-        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated, &$isDeleted) {
-
+        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated) {
             foreach ($this->form['items'] as $index => $item) {
                 if (empty($item['mode_of_procurement_id']))
                     continue;
@@ -378,14 +474,14 @@ class ModeOfProcurementPerLotPage extends Component
                     );
                 }
             }
-
         });
 
+        // Show appropriate success message
         if ($isMopAdded) {
             LivewireAlert::title('Mode Added Successfully!')->success()->text('The mode of procurement has been added.')->toast()->position('top-end')->show();
         } elseif ($isScheduleAdded) {
             LivewireAlert::title('Schedule Added!')->success()->text('A new bidding schedule has been created.')->toast()->position('top-end')->show();
-        } elseif ($isMopUpdated || $isScheduleUpdated || $isDeleted) {
+        } elseif ($isMopUpdated || $isScheduleUpdated) {
             LivewireAlert::title('Updates Saved!')->success()->text('Changes have been saved successfully.')->toast()->position('top-end')->show();
         } else {
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
@@ -393,6 +489,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         $this->mount($this->procurement);
     }
+
     private function validateSchedules(): bool
     {
         $isValid = true;
@@ -403,93 +500,140 @@ class ModeOfProcurementPerLotPage extends Component
                 continue;
 
             $itemNumber = $index + 1;
-            $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->name ?? "Item {$itemNumber}";
+            $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? "Item {$itemNumber}";
 
             $matchCriteria = [
                 'ref_id' => $this->procID,
                 'mop_uid' => $item['uid']
             ];
 
-            // Only validate if this item has been interacted with (has existing record or has data)
-            $hasAnyData = false;
+            // FIX #5: Using hasAnyValue() for consistent checking
+            $biddingFields = [
+                $item['ib_number'] ?? null,
+                $item['philgeps_posting_ref_no'] ?? null,
+                $item['bidding_number'] ?? null,
+                $item['pre_proc_conference'] ?? null,
+                $item['ads_post_ib'] ?? null,
+                $item['pre_bid_conf'] ?? null,
+                $item['eligibility_check'] ?? null,
+                $item['sub_open_bids'] ?? null,
+                $item['bid_evaluation_date'] ?? null,
+                $item['post_qualification_date'] ?? null,
+                $item['bidding_date'] ?? null,
+                $item['bidding_result'] ?? null,
+            ];
 
-            // Check if item has any filled fields
-            foreach ($item as $key => $value) {
-                if (
-                    !in_array($key, ['id', 'uid', 'mode_of_procurement_id', 'mode_order']) &&
-                    !is_null($value) && trim($value) !== ''
-                ) {
-                    $hasAnyData = true;
-                    break;
-                }
-            }
+            $hasAnyData = $this->hasAnyValue($biddingFields);
 
             // Skip validation for empty new items
             if (!$hasAnyData && str_starts_with($item['uid'], 'temp_')) {
                 continue;
             }
 
+            // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
-                $hasBiddingData = !empty($item['ib_number']) ||
-                    !empty($item['bidding_number']) ||
-                    !empty($item['pre_proc_conference']) ||
-                    !empty($item['ads_post_ib']) ||
-                    !empty($item['pre_bid_conf']) ||
-                    !empty($item['eligibility_check']) ||
-                    !empty($item['sub_open_bids']) ||
-                    !empty($item['bidding_date']) ||
-                    !empty($item['bidding_result']);
+                $hasBiddingData = $this->hasAnyValue($biddingFields);
 
-                // Only validate existing records
                 if ($existingBidSchedule && !$hasBiddingData) {
-                    $this->scheduleValidationErrors[] = "At least one bidding schedule field must be filled.";
+                    $this->scheduleValidationErrors[] = "{$modeName}: At least one bidding schedule field must be filled.";
                     $isValid = false;
                 }
 
-                // Validate Bidding Result dependencies - only if bidding_result is actually selected
+                if (in_array($modeId, [3, 4, 5, 6])) {
+                    if ($hasBiddingData && !$this->hasValue($item['resolution_number_mop'])) {
+                        $this->scheduleValidationErrors[] = "{$modeName}: Resolution Number (MOP) is required for this procurement mode.";
+                        $isValid = false;
+                    }
+                }
+                // Validate Bidding Result dependencies
                 $biddingResult = $item['bidding_result'] ?? null;
-                if (!is_null($biddingResult) && trim($biddingResult) !== '') {
-                    $missingFields = [];
 
-                    // Check if Pre-Proc Conference is filled
-                    $hasPreProcConference = !empty($item['pre_proc_conference']) && trim($item['pre_proc_conference']) !== '';
+                // FIX #5: Using hasValue() for consistent checking
+                if ($this->hasValue($biddingResult)) {
+                    $missingFields = [];
+                    $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
 
                     if (!$hasPreProcConference) {
-                        // If Pre-Proc Conference is not filled, require all three fields
-                        if (empty($item['bidding_number']) || trim($item['bidding_number']) === '') {
+                        if (!$this->hasValue($item['bidding_number'])) {
                             $missingFields[] = 'Bidding #';
                         }
-                        if (empty($item['ib_number']) || trim($item['ib_number']) === '') {
+                        if (!$this->hasValue($item['ib_number'])) {
                             $missingFields[] = 'IB No.';
                         }
-                        if (empty($item['bidding_date']) || trim($item['bidding_date']) === '') {
+                        if (!$this->hasValue($item['bidding_date'])) {
                             $missingFields[] = 'Bidding Date';
                         }
 
                         if (!empty($missingFields)) {
                             $fieldsList = implode(', ', $missingFields);
-                            $this->scheduleValidationErrors[] = "Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                            $this->scheduleValidationErrors[] = "{$modeName}: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
                             $isValid = false;
                         }
                     }
-                    // If Pre-Proc Conference is filled, allow bidding result (no validation errors)
+
+                    if ($biddingResult === 'SUCCESSFUL') {
+                        $successMissingFields = [];
+
+                        if (!$this->hasValue($item['bid_evaluation_date'])) {
+                            $successMissingFields[] = 'Bid Evaluation Date';
+                        }
+                        if (!$this->hasValue($item['post_qualification_date'])) {
+                            $successMissingFields[] = 'Post Qualification Date';
+                        }
+
+                        if (!empty($successMissingFields)) {
+                            $fieldsList = implode(', ', $successMissingFields);
+                            $this->scheduleValidationErrors[] = "{$modeName}: {$fieldsList} required for SUCCESSFUL bidding result.";
+                            $isValid = false;
+                        }
+                    }
                 }
             }
 
+            // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
-                $hasSvpData = !empty($item['rfq_no']) ||
-                    !empty($item['canvass_date']) ||
-                    !empty($item['date_returned_of_canvass']) ||
-                    !empty($item['abstract_of_canvass_date']) ||
-                    !empty($item['resolution_number']);
+                // FIX #5: Using hasAnyValue() for consistent checking
+                $svpFields = [
+                    $item['resolution_number_mop'] ?? null,
+                    $item['rfq_no'] ?? null,
+                    $item['canvass_date'] ?? null,
+                    $item['date_returned_of_canvass'] ?? null,
+                    $item['abstract_of_canvass_date'] ?? null,
+                ];
+
+                $hasSvpData = $this->hasAnyValue($svpFields);
 
                 if ($existingSvp && !$hasSvpData) {
-                    $this->scheduleValidationErrors[] = "At least one SVP field must be filled.";
+                    $this->scheduleValidationErrors[] = "{$modeName}: At least one SVP field must be filled.";
                     $isValid = false;
+                }
+
+                if ($hasSvpData) {
+                    $requiredSvpFields = [
+                        'resolution_number_mop' => 'Resolution Number (MOP)',
+                        'rfq_no' => 'RFQ No.',
+                        'canvass_date' => 'Canvass Date',
+                        'date_returned_of_canvass' => 'Returned of Canvass',
+                        'abstract_of_canvass_date' => 'Abstract of Canvass'
+                    ];
+
+                    $missingSvpFields = [];
+                    foreach ($requiredSvpFields as $field => $label) {
+                        // FIX #5: Using hasValue() for consistent checking
+                        if (!$this->hasValue($item[$field] ?? null)) {
+                            $missingSvpFields[] = $label;
+                        }
+                    }
+
+                    if (!empty($missingSvpFields)) {
+                        $fieldsList = implode(', ', $missingSvpFields);
+                        $this->scheduleValidationErrors[] = "{$modeName}: All SVP fields are required. Missing: {$fieldsList}";
+                        $isValid = false;
+                    }
                 }
             }
         }
@@ -521,20 +665,25 @@ class ModeOfProcurementPerLotPage extends Component
         };
 
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
-            $hasBiddingData = !empty($itemData['ib_number']) ||
-                !empty($itemData['bidding_number']) ||
-                !empty($itemData['pre_proc_conference']) ||
-                !empty($itemData['ads_post_ib']) ||
-                !empty($itemData['pre_bid_conf']) ||
-                !empty($itemData['eligibility_check']) ||
-                !empty($itemData['sub_open_bids']) ||
-                !empty($itemData['bidding_date']) ||
-                !empty($itemData['bidding_result']);
+            $biddingFields = [
+                $itemData['ib_number'] ?? null,
+                $itemData['philgeps_posting_ref_no'] ?? null,
+                $itemData['bidding_number'] ?? null,
+                $itemData['pre_proc_conference'] ?? null,
+                $itemData['ads_post_ib'] ?? null,
+                $itemData['pre_bid_conf'] ?? null,
+                $itemData['eligibility_check'] ?? null,
+                $itemData['sub_open_bids'] ?? null,
+                $itemData['bid_evaluation_date'] ?? null,
+                $itemData['post_qualification_date'] ?? null,
+                $itemData['bidding_date'] ?? null,
+                $itemData['bidding_result'] ?? null,
+            ];
 
+            $hasBiddingData = $this->hasAnyValue($biddingFields);
             $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
             if ($hasBiddingData || $existingBidSchedule) {
-                // Skip if all fields are empty
                 if (!$hasBiddingData && $existingBidSchedule) {
                     return;
                 }
@@ -561,13 +710,23 @@ class ModeOfProcurementPerLotPage extends Component
                         'mop_uid' => $parentUid,
                         'bidding_number' => $itemData['bidding_number'] ?? null,
                         'ib_number' => $itemData['ib_number'] ?? null,
+                        'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
                         'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'list_invited_observers' => $itemData['list_invited_observers'] ?? null,
+                        'obsrvr_prebid_conf' => $this->nullableDate($itemData['obsrvr_prebid_conf'] ?? null),
+                        'obsrvr_eligibility' => $this->nullableDate($itemData['obsrvr_eligibility'] ?? null),
+                        'obsrvr_sub_open_of_bid' => $this->nullableDate($itemData['obsrvr_sub_open_of_bid'] ?? null),
+                        'obsrvr_bid' => $this->nullableDate($itemData['obsrvr_bid'] ?? null),
+                        'obsrvr_post_qual' => $this->nullableDate($itemData['obsrvr_post_qual'] ?? null),
                         'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
                         'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
                         'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
+                        'bid_evaluation_date' => $this->nullableDate($itemData['bid_evaluation_date'] ?? null),
+                        'post_qualification_date' => $this->nullableDate($itemData['post_qualification_date'] ?? null),
                         'bidding_date' => $this->nullableDate($itemData['bidding_date'] ?? null),
                         'bidding_result' => $itemData['bidding_result'] ?? null,
+                        'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                     ]
                 );
                 $checkStatus($model);
@@ -575,12 +734,24 @@ class ModeOfProcurementPerLotPage extends Component
         }
 
         if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-            $hasSvpData = !empty($itemData['rfq_no']) ||
-                !empty($itemData['canvass_date']) ||
-                !empty($itemData['date_returned_of_canvass']) ||
-                !empty($itemData['abstract_of_canvass_date']) ||
-                !empty($itemData['resolution_number']);
+            // Save all fields (SVP + observers) to PrSvp for modes 7-24
+            $svpFields = [
+                $itemData['philgeps_posting_ref_no'] ?? null,
+                $itemData['ads_post_ib'] ?? null,
+                $itemData['list_invited_observers'] ?? null,
+                $itemData['obsrvr_prebid_conf'] ?? null,
+                $itemData['obsrvr_eligibility'] ?? null,
+                $itemData['obsrvr_sub_open_of_bid'] ?? null,
+                $itemData['obsrvr_bid'] ?? null,
+                $itemData['obsrvr_post_qual'] ?? null,
+                $itemData['resolution_number_mop'] ?? null,
+                $itemData['rfq_no'] ?? null,
+                $itemData['canvass_date'] ?? null,
+                $itemData['date_returned_of_canvass'] ?? null,
+                $itemData['abstract_of_canvass_date'] ?? null,
+            ];
 
+            $hasSvpData = $this->hasAnyValue($svpFields);
             $existingSvp = PrSvp::where($matchCriteria)->first();
 
             if ($hasSvpData || $existingSvp) {
@@ -608,11 +779,19 @@ class ModeOfProcurementPerLotPage extends Component
                         'uid' => $uid,
                         'ref_id' => $refId,
                         'mop_uid' => $parentUid,
+                        'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
+                        'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'list_invited_observers' => $itemData['list_invited_observers'] ?? null,
+                        'obsrvr_prebid_conf' => $this->nullableDate($itemData['obsrvr_prebid_conf'] ?? null),
+                        'obsrvr_eligibility' => $this->nullableDate($itemData['obsrvr_eligibility'] ?? null),
+                        'obsrvr_sub_open_of_bid' => $this->nullableDate($itemData['obsrvr_sub_open_of_bid'] ?? null),
+                        'obsrvr_bid' => $this->nullableDate($itemData['obsrvr_bid'] ?? null),
+                        'obsrvr_post_qual' => $this->nullableDate($itemData['obsrvr_post_qual'] ?? null),
+                        'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                         'rfq_no' => $itemData['rfq_no'] ?? null,
                         'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
                         'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
                         'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
-                        'resolution_number' => $itemData['resolution_number'] ?? null,
                     ]
                 );
                 $checkStatus($model);
@@ -620,46 +799,83 @@ class ModeOfProcurementPerLotPage extends Component
         }
     }
 
+    // ============================================================================
+    // FIX #9: IMPROVED POST-PROCUREMENT SAVE LOGIC WITH CLEAR VALIDATION
+    // ============================================================================
     public function savePost()
     {
+        // First check if Post tab should be accessible
+        if (!$this->isPostAvailable) {
+            LivewireAlert::title('Invalid Action')
+                ->error()
+                ->text('Cannot save post-procurement data. Prerequisites not met.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        $postFields = [
+            $this->resolutionAwardNumber,
+            $this->resolutionAwardDate,
+            $this->noticeOfAwardNumber,
+            $this->noticeOfAward,
+            $this->awardedAmount,
+            $this->philgepsNoticeOfAwardNo,
+            $this->philgepsPostingOfAward,
+            $this->supplier_id,
+        ];
+
+
+        $hasAnyPostData = $this->hasAnyValue($postFields);
+
+        // Define base validation rules (all nullable by default)
         $rules = [
-            'resolutionNumber' => 'required|string|max:255',
-            'bidEvaluationDate' => 'nullable|date',
-            'postQualDate' => 'nullable|date',
-            'recommendingForAward' => 'nullable|date',
+            'resolutionAwardNumber' => 'nullable|string|max:255',
+            'resolutionAwardDate' => 'nullable|date',
+            'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
-            'awardedAmount' => 'nullable|numeric',
-            'philgepsReferenceNo' => 'nullable|string|max:255',
-            'awardNoticeNumber' => 'nullable|string|max:255',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'nullable|date',
+            'awardedAmount' => 'nullable|numeric|min:0',
+            'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
+            'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ];
 
+        // FIX #9: If ANY field has data, make Resolution Award Number and Date REQUIRED
+        if ($hasAnyPostData) {
+            $rules['resolutionAwardNumber'] = 'required|string|max:255';
+            $rules['resolutionAwardDate'] = 'required|date';
+        }
+
         $attributes = [
-            'resolutionNumber' => 'Resolution #',
-            'bidEvaluationDate' => 'Bid Evaluation Date',
-            'postQualDate' => 'Post Qual Date',
-            'recommendingForAward' => 'Recommending For Award',
+            'resolutionAwardNumber' => 'Resolution Award Number',
+            'resolutionAwardDate' => 'Resolution Award Date',
+            'noticeOfAwardNumber' => 'Notice of Award Number',
             'noticeOfAward' => 'Notice of Award Date',
             'awardedAmount' => 'Awarded Amount',
-            'philgepsReferenceNo' => 'PhilGEPS Reference #',
-            'awardNoticeNumber' => 'Award Notice #',
-            'dateOfPostingOfAwardOnPhilGEPS' => 'Posting of Award Date',
+            'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
+            'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
         ];
 
+        // FIX #9: Custom error messages for better UX
+        $messages = [
+            'resolutionAwardNumber.required' => 'Resolution Award Number is required when entering post-procurement data.',
+            'resolutionAwardDate.required' => 'Resolution Award Date is required when entering post-procurement data.',
+        ];
+
         try {
-            $this->validate($rules, [], $attributes);
+            $this->validate($rules, $messages, $attributes);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errorMessages = $e->validator->errors()->all();
-            $errorString = ' ' . implode(' ', $errorMessages);
+            $errorString = implode(' ', $errorMessages);
 
             LivewireAlert::title('Validation Failed')
                 ->error()
-                ->text('Please check the following errors:' . $errorString)
+                ->text($errorString)
                 ->toast()->position('top-end')->show();
 
-            throw $e;
+            return; // Exit early on validation failure
         }
 
         $isAdded = false;
@@ -668,15 +884,13 @@ class ModeOfProcurementPerLotPage extends Component
         DB::transaction(function () use (&$isAdded, &$isUpdated) {
             $data = [
                 'ref_id' => $this->procID,
-                'resolution_number' => $this->resolutionNumber,
-                'bid_evaluation_date' => $this->nullableDate($this->bidEvaluationDate),
-                'post_qual_date' => $this->nullableDate($this->postQualDate),
-                'recommending_for_award' => $this->nullableDate($this->recommendingForAward),
-                'notice_of_award' => $this->nullableDate($this->noticeOfAward),
+                'resolution_award_number' => $this->resolutionAwardNumber,
+                'resolution_award_date' => $this->resolutionAwardDate,
+                'notice_of_award_number' => $this->noticeOfAwardNumber,
+                'notice_of_award' => $this->noticeOfAward,
                 'awarded_amount' => $this->awardedAmount,
-                'philgeps_reference_no' => $this->philgepsReferenceNo,
-                'award_notice_no' => $this->awardNoticeNumber,
-                'date_of_posting_of_award_on_philgeps' => $this->nullableDate($this->dateOfPostingOfAwardOnPhilGEPS),
+                'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
+                'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                 'supplier_id' => $this->supplier_id,
             ];
 
@@ -693,32 +907,52 @@ class ModeOfProcurementPerLotPage extends Component
         });
 
         if ($isAdded) {
-            LivewireAlert::title('Post-Procurement Added!')->success()->text('The procurement award details have been saved.')->toast()->position('top-end')->show();
+            LivewireAlert::title('Post-Procurement Added!')
+                ->success()
+                ->text('The procurement award details have been saved.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         } elseif ($isUpdated) {
-            LivewireAlert::title('Post-Procurement Updated!')->success()->text('The procurement award details have been updated.')->toast()->position('top-end')->show();
+            LivewireAlert::title('Post-Procurement Updated!')
+                ->success()
+                ->text('The procurement award details have been updated.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            LivewireAlert::title('No Changes')->info()->text('Post-procurement details remain unchanged.')->toast()->position('top-end')->show();
+            LivewireAlert::title('No Changes')
+                ->info()
+                ->text('Post-procurement details remain unchanged.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 
     public function save()
     {
         if ($this->activeTab == 2) {
+            if (!$this->isPostAvailable) {
+                LivewireAlert::title('Cannot Save')
+                    ->error()
+                    ->text('Complete Mode of Procurement details in Tab 1 first.')
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+                $this->activeTab = 1;
+                return;
+            }
             $this->savePost();
         } else {
             $this->saveTab1();
         }
 
         $this->mount($this->procurement);
-
-        // if ($this->isPostAvailable && $this->activeTab == 1) {
-        //     $this->activeTab = 2;
-        // }
     }
 
     public function editHistoryItem($index): void
     {
-        // Calculate original index from reversed array
         $totalItems = count($this->form['items']);
         $originalIndex = $totalItems - 1 - $index;
 
@@ -732,10 +966,26 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
+        $item = $this->form['items'][$originalIndex];
+        $biddingResult = $item['bidding_result'] ?? null;
+        $hasPostData = PostProcurement::where('ref_id', $this->procID)->exists();
+        $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+
+        if ($biddingResult === 'SUCCESSFUL' && $hasPostData && !$canEditMop) {
+            LivewireAlert::title('Permission Denied')
+                ->error()
+                ->text('Cannot edit SUCCESSFUL bidding records when post-procurement data exists. This requires special permission.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
         $this->editingIndex = $originalIndex;
         $this->editingItem = $this->form['items'][$originalIndex];
         $this->showModal = true;
     }
+
     public function getIsPostActiveProperty(): bool
     {
         $post = PostProcurement::where('ref_id', $this->procID)->first();
@@ -754,10 +1004,8 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
-        // Update the item in the form array
         $this->form['items'][$this->editingIndex] = $this->editingItem;
 
-        // Validate before saving
         $this->scheduleValidationErrors = [];
         if (!$this->validateSchedules()) {
             $errorMessage = implode(' ', $this->scheduleValidationErrors);
@@ -768,32 +1016,75 @@ class ModeOfProcurementPerLotPage extends Component
                 ->position('top-end')
                 ->show();
 
-            // Restore original value on validation failure
             $this->mount($this->procurement);
             return;
         }
 
-        // Save to database
         $this->saveTab1();
-
-        // Close modal only after successful save
-        $this->closeEditModal();
+        $this->closeModal();
     }
-
-    public function closeEditModal(): void
+    public function itemHasSchedule(array $item): bool
     {
-        $this->showModal = false;  // Changed from showEditModal
+        $scheduleFields = [
+            // Bidding fields
+            $item['bidding_number'] ?? null,
+            $item['ib_number'] ?? null,
+            $item['philgeps_posting_ref_no'] ?? null,
+            $item['pre_proc_conference'] ?? null,
+            $item['ads_post_ib'] ?? null,
+            $item['pre_bid_conf'] ?? null,
+            $item['eligibility_check'] ?? null,
+            $item['sub_open_bids'] ?? null,
+            $item['bid_evaluation_date'] ?? null,
+            $item['post_qualification_date'] ?? null,
+            $item['bidding_date'] ?? null,
+            $item['bidding_result'] ?? null,
+            // Other Modes
+            $item['resolution_number_mop'] ?? null,
+            $item['rfq_no'] ?? null,
+            $item['canvass_date'] ?? null,
+            $item['date_returned_of_canvass'] ?? null,
+            $item['abstract_of_canvass_date'] ?? null,
+        ];
+
+        return $this->hasAnyValue($scheduleFields);
+    }
+    public function canAddRebidForItem(array $item, ?int $modeId): bool
+    {
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            return false;
+        }
+
+        $bidResult = $item['bidding_result'] ?? '';
+
+        $hasBiddingData = $this->hasValue($item['ib_number']) &&
+            $this->hasValue($item['bidding_number']) &&
+            $this->hasValue($item['bidding_date']);
+
+        $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
+
+        return $modeId == 1 ||
+            (($hasBiddingData || $hasPreProcConference) &&
+                $bidResult === 'UNSUCCESSFUL' &&
+                !$this->isPostAvailable);
+    }
+    public function closeModal(): void
+    {
+        $this->showModal = false;
         $this->editingItem = null;
         $this->editingIndex = null;
     }
+
     private function nullableDate($value)
     {
-        return empty($value) ? null : $value;
+        return $this->hasValue($value) ? $value : null;
     }
+
     public function cancel()
     {
         return redirect()->route('mode-of-procurement.index', $this->queryParams);
     }
+
     public function render()
     {
         return view('livewire.mode-of-procurement.mode-of-procurement-per-lot-page', [
