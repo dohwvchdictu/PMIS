@@ -64,6 +64,15 @@
                         <x-forms.searchable-select wire:model.live="ibNumberFilter" :options="$ibNumbers" labelKey="name"
                             valueKey="id" placeholder="All" />
                     </div>
+
+                    <!-- Current Mode Filter -->
+                    <div class="relative z-20">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">
+                            Current Mode
+                        </label>
+                        <x-forms.searchable-select wire:model.live="currentModeFilter" :options="$modes" labelKey="name"
+                            valueKey="id" placeholder="All" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -90,6 +99,10 @@
                     <th
                         class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-28">
                         BAC Category
+                    </th>
+                    <th
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
+                        IB Number
                     </th>
                     <th
                         class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
@@ -229,6 +242,32 @@
                         <td
                             class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
                             @if ($procurement->procurement_type === 'perLot')
+                                @php
+                                    $latestMop = $procurement->mopLots()->orderBy('mode_order', 'desc')->first();
+                                    $ibNumber = null;
+                                    if ($latestMop) {
+                                        $bidSchedule = \App\Models\BidSchedule::where('mop_uid', $latestMop->uid)
+                                            ->where('ref_id', $procurement->procID)
+                                            ->first();
+                                        $ibNumber = $bidSchedule?->ib_number;
+                                    }
+                                @endphp
+                                @if ($ibNumber)
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-md font-mono text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                        {{ $ibNumber }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-500 dark:text-gray-400 italic text-xs">N/A</span>
+                                @endif
+                            @else
+                                <span class="text-gray-500 dark:text-gray-400 italic text-xs">See items ↓</span>
+                            @endif
+                        </td>
+
+                        <td
+                            class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-700 dark:text-gray-200">
+                            @if ($procurement->procurement_type === 'perLot')
                                 @if ($procurement->currentMode)
                                     <span
                                         class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700 shadow-sm">
@@ -315,7 +354,7 @@
                     <!-- Enhanced Expanded Per Item Rows -->
                     @if ($procurement->procurement_type === 'perItem' && $expandedProcurementId == $procurement->procID)
                         <tr>
-                            <td colspan="11"
+                            <td colspan="12"
                                 class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 p-4">
                                 <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-inner">
                                     <table
@@ -330,6 +369,10 @@
                                                 <th
                                                     class="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-md">
                                                     Item Description
+                                                </th>
+                                                <th
+                                                    class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                                                    IB Number
                                                 </th>
                                                 <th
                                                     class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
@@ -367,6 +410,36 @@
                                                     <td
                                                         class="px-2 py-3 text-left text-sm text-gray-700 dark:text-gray-200">
                                                         {{ $item->description }}
+                                                    </td>
+                                                    <td
+                                                        class="px-2 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
+                                                        @php
+                                                            $latestMopItem = \App\Models\MopItem::where(
+                                                                'prItemID',
+                                                                $item->prItemID,
+                                                            )
+                                                                ->orderBy('mode_order', 'desc')
+                                                                ->first();
+                                                            $itemIbNumber = null;
+                                                            if ($latestMopItem) {
+                                                                $itemBidSchedule = \App\Models\BidSchedule::where(
+                                                                    'mop_uid',
+                                                                    $latestMopItem->uid,
+                                                                )
+                                                                    ->where('ref_id', $item->prItemID)
+                                                                    ->first();
+                                                                $itemIbNumber = $itemBidSchedule?->ib_number;
+                                                            }
+                                                        @endphp
+                                                        @if ($itemIbNumber)
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                                                                {{ $itemIbNumber }}
+                                                            </span>
+                                                        @else
+                                                            <span
+                                                                class="text-gray-400 dark:text-gray-500 text-xs italic">N/A</span>
+                                                        @endif
                                                     </td>
                                                     <td
                                                         class="px-2 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
@@ -417,7 +490,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5"
+                                                    <td colspan="6"
                                                         class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                                         <div class="flex flex-col items-center gap-2">
                                                             <svg class="w-12 h-12 text-gray-300 dark:text-gray-600"
