@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\Storage;
 class ApiService
 {
     protected $client;
-    protected $tokenTTL = 300;         // token validity (5 minutes)
-    protected $refreshThreshold = 240; // refresh after 4 minutes
+    protected $tokenTTL;
+    protected $refreshThreshold;
 
     public function __construct()
     {
+        $this->tokenTTL = config('jwt.ttl', 300);
+        $this->refreshThreshold = config('jwt.refresh_threshold', 240);
+
         $this->client = new Client([
-            'base_uri' => 'http://192.168.100.162:8081/',
-            'timeout' => 10.0,
+            'base_uri' => config('jwt.api.base_url', 'http://192.168.100.162:8081/'),
+            'timeout' => config('jwt.api.timeout', 10.0),
         ]);
     }
 

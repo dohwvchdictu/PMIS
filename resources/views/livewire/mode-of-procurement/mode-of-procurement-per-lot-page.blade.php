@@ -491,13 +491,50 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- Empty cells for other bidding-specific fields --}}
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
+                                            {{-- Observer fields for SVP modes --}}
+                                            <td class="px-2 py-2">
+                                                <textarea wire:key="list-observers-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.list_invited_observers"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    rows="2" placeholder="List observers" @disabled($disableInputs)></textarea>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="obs-prebid-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.obsrvr_prebid_conf"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="obs-elig-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.obsrvr_eligibility"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="obs-subopen-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.obsrvr_sub_open_of_bid"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="obs-bid-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.obsrvr_bid"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="obs-postqual-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.obsrvr_post_qual"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            {{-- Empty cells for remaining bidding-specific fields --}}
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>

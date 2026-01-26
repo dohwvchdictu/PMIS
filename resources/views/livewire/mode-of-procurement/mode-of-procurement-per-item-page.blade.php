@@ -932,7 +932,7 @@
         @endif
 
         @if ($activeTab == 2)
-            <div class="flex flex-col gap-2 pt-2">
+            <div class="flex flex-col">
                 @php
                     // Filter items that meet post-procurement criteria
                     $postAvailableItems = [];

@@ -148,22 +148,59 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($this->form['items'] as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
+            // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
-                $bidResult = $item['bidding_result'] ?? null;
-                if ($bidResult === 'SUCCESSFUL') {
+                // Check all required bidding fields are filled
+                $allBiddingFieldsFilled =
+                    $this->hasValue($item['bidding_number']) &&
+                    $this->hasValue($item['ib_number']) &&
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['pre_proc_conference']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
+                    $this->hasValue($item['list_invited_observers']) &&
+                    $this->hasValue($item['obsrvr_prebid_conf']) &&
+                    $this->hasValue($item['obsrvr_eligibility']) &&
+                    $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
+                    $this->hasValue($item['obsrvr_bid']) &&
+                    $this->hasValue($item['obsrvr_post_qual']) &&
+                    $this->hasValue($item['pre_bid_conf']) &&
+                    $this->hasValue($item['eligibility_check']) &&
+                    $this->hasValue($item['sub_open_bids']) &&
+                    $this->hasValue($item['bid_evaluation_date']) &&
+                    $this->hasValue($item['post_qualification_date']) &&
+                    $this->hasValue($item['bidding_date']) &&
+                    $this->hasValue($item['bidding_result']) &&
+                    ($item['bidding_result'] === 'SUCCESSFUL');
+
+                // For modes 3-6, also require resolution_number_mop
+                if (in_array($modeId, [3, 4, 5, 6])) {
+                    $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
+                }
+
+                if ($allBiddingFieldsFilled) {
                     return true;
                 }
             }
 
+            // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                // Using hasValue() for consistent checking
-                if (
+                // Check all required SVP fields are filled
+                $allSvpFieldsFilled =
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
+                    $this->hasValue($item['list_invited_observers']) &&
+                    $this->hasValue($item['obsrvr_prebid_conf']) &&
+                    $this->hasValue($item['obsrvr_eligibility']) &&
+                    $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
+                    $this->hasValue($item['obsrvr_bid']) &&
+                    $this->hasValue($item['obsrvr_post_qual']) &&
                     $this->hasValue($item['resolution_number_mop']) &&
                     $this->hasValue($item['rfq_no']) &&
                     $this->hasValue($item['canvass_date']) &&
                     $this->hasValue($item['date_returned_of_canvass']) &&
-                    $this->hasValue($item['abstract_of_canvass_date'])
-                ) {
+                    $this->hasValue($item['abstract_of_canvass_date']);
+
+                if ($allSvpFieldsFilled) {
                     return true;
                 }
             }
@@ -267,6 +304,12 @@ class ModeOfProcurementPerItemPage extends Component
                 'mop_uid' => $schedule->mop_uid,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no ?? ($existing['philgeps_posting_ref_no'] ?? null),
                 'ads_post_ib' => $schedule->ads_post_ib ?? ($existing['ads_post_ib'] ?? null),
+                'list_invited_observers' => $schedule->list_invited_observers ?? ($existing['list_invited_observers'] ?? null),
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf ?? ($existing['obsrvr_prebid_conf'] ?? null),
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility ?? ($existing['obsrvr_eligibility'] ?? null),
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid ?? ($existing['obsrvr_sub_open_of_bid'] ?? null),
+                'obsrvr_bid' => $schedule->obsrvr_bid ?? ($existing['obsrvr_bid'] ?? null),
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual ?? ($existing['obsrvr_post_qual'] ?? null),
                 'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
@@ -951,6 +994,12 @@ class ModeOfProcurementPerItemPage extends Component
             $svpFields = [
                 $itemData['philgeps_posting_ref_no'] ?? null,
                 $itemData['ads_post_ib'] ?? null,
+                $itemData['list_invited_observers'] ?? null,
+                $itemData['obsrvr_prebid_conf'] ?? null,
+                $itemData['obsrvr_eligibility'] ?? null,
+                $itemData['obsrvr_sub_open_of_bid'] ?? null,
+                $itemData['obsrvr_bid'] ?? null,
+                $itemData['obsrvr_post_qual'] ?? null,
                 $itemData['resolution_number_mop'] ?? null,
                 $itemData['rfq_no'] ?? null,
                 $itemData['canvass_date'] ?? null,
@@ -988,6 +1037,12 @@ class ModeOfProcurementPerItemPage extends Component
                         'mop_uid' => $parentUid,
                         'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'list_invited_observers' => $itemData['list_invited_observers'] ?? null,
+                        'obsrvr_prebid_conf' => $this->nullableDate($itemData['obsrvr_prebid_conf'] ?? null),
+                        'obsrvr_eligibility' => $this->nullableDate($itemData['obsrvr_eligibility'] ?? null),
+                        'obsrvr_sub_open_of_bid' => $this->nullableDate($itemData['obsrvr_sub_open_of_bid'] ?? null),
+                        'obsrvr_bid' => $this->nullableDate($itemData['obsrvr_bid'] ?? null),
+                        'obsrvr_post_qual' => $this->nullableDate($itemData['obsrvr_post_qual'] ?? null),
                         'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                         'rfq_no' => $itemData['rfq_no'] ?? null,
                         'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),

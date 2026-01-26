@@ -410,7 +410,6 @@ class ProcurementPage extends Component
             })
             ->values();
 
-        // dd($modes->pluck('mode_of_procurement_id'));
         $this->form['modes'] = $modes->map(function ($mode) {
             $isNtf = $mode->mode_of_procurement_id == 4;
             $isPrSvp = $mode->mode_of_procurement_id == 5;
@@ -467,8 +466,6 @@ class ProcurementPage extends Component
                 })
                 ->values()->toArray();
 
-            // dd($schedules);
-
             return [
                 'uid' => $mode->uid,
                 'mode_of_procurement_id' => $mode->mode_of_procurement_id,
@@ -521,14 +518,14 @@ class ProcurementPage extends Component
         }
 
         if ($value === 'form.procurement_type') {
-        if ($this->form['procurement_type'] === 'item' && empty($this->form['items'])) {
-            $this->addItem(); // automatically create 1 row
-        }
+            if ($this->form['procurement_type'] === 'item' && empty($this->form['items'])) {
+                $this->addItem(); // automatically create 1 row
+            }
 
-        if ($this->form['procurement_type'] === 'lot') {
-            $this->form['items'] = []; // reset items if switching back
+            if ($this->form['procurement_type'] === 'lot') {
+                $this->form['items'] = []; // reset items if switching back
+            }
         }
-    }
     }
     public function updatedFormCategoryId()
     {
