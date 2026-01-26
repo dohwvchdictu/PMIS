@@ -23,12 +23,14 @@ class ModeOfProcurementIndexPage extends Component
     public $perPage = 10;
     public $itemsPerPage = 10;
     public $ibNumberFilter = null;
+    public $currentModeFilter = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'bacCategoryFilter' => ['except' => null],
         'categoryFilter' => ['except' => null],
         'ibNumberFilter' => ['except' => null],
+        'currentModeFilter' => ['except' => null],
         'perPage' => ['except' => 10],
     ];
     protected $paginationTheme = 'tailwind';
@@ -109,6 +111,11 @@ class ModeOfProcurementIndexPage extends Component
     }
 
     public function updatingIbNumberFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCurrentModeFilter()
     {
         $this->resetPage();
     }
@@ -246,6 +253,18 @@ class ModeOfProcurementIndexPage extends Component
             });
     }
 
+    public function getModesProperty()
+    {
+        return \App\Models\ModeOfProcurement::orderBy('id', 'asc')
+            ->get()
+            ->map(function ($mode) {
+                return [
+                    'id' => $mode->id,
+                    'name' => $mode->modeofprocurements
+                ];
+            });
+    }
+
     public function render()
     {
         $query = Procurement::query()
@@ -276,6 +295,49 @@ class ModeOfProcurementIndexPage extends Component
         // Category filter
         if ($this->categoryFilter) {
             $query->where('category_id', $this->categoryFilter);
+        }
+
+        // Current Mode filter
+        if ($this->currentModeFilter) {
+            $query->where(function ($q) {
+                // For perLot procurements
+                $q->where(function ($subQ) {
+                    $subQ->where('procurement_type', 'perLot')
+                        ->whereExists(function ($exists) {
+                            $exists->select(\DB::raw(1))
+                                ->from('mop_lot')
+                                ->whereColumn('mop_lot.procID', 'procurements.procID')
+                                ->where('mop_lot.mode_of_procurement_id', $this->currentModeFilter)
+                                ->whereNotExists(function ($notExists) {
+                                    $notExists->select(\DB::raw(1))
+                                        ->from('mop_lot as ml2')
+                                        ->whereColumn('ml2.procID', 'mop_lot.procID')
+                                        ->whereColumn('ml2.mode_order', '>', 'mop_lot.mode_order');
+                                });
+                        });
+                })
+                    // For perItem procurements
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('procurement_type', 'perItem')
+                            ->whereExists(function ($exists) {
+                                $exists->select(\DB::raw(1))
+                                    ->from('pr_items')
+                                    ->whereColumn('pr_items.procID', 'procurements.procID')
+                                    ->whereExists(function ($mopExists) {
+                                        $mopExists->select(\DB::raw(1))
+                                            ->from('mop_item')
+                                            ->whereColumn('mop_item.prItemID', 'pr_items.prItemID')
+                                            ->where('mop_item.mode_of_procurement_id', $this->currentModeFilter)
+                                            ->whereNotExists(function ($notExists) {
+                                                $notExists->select(\DB::raw(1))
+                                                    ->from('mop_item as mi2')
+                                                    ->whereColumn('mi2.prItemID', 'mop_item.prItemID')
+                                                    ->whereColumn('mi2.mode_order', '>', 'mop_item.mode_order');
+                                            });
+                                    });
+                            });
+                    });
+            });
         }
 
         // IB Number filter
@@ -350,6 +412,7 @@ class ModeOfProcurementIndexPage extends Component
             'bacCategories' => $bacCategories,
             'allCategories' => $allCategories,
             'ibNumbers' => $this->ibNumbers,
+            'modes' => $this->modes,
         ]);
     }
 }
