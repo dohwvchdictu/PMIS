@@ -117,7 +117,7 @@ Route::middleware(['jwt'])->group(function () {
 
     // Logout
     Route::post('/logout', function () {
-        session()->forget(['jwt_token', 'roleName', 'user']);
+        session()->forget(['jwt_token', 'token_created_at', 'login_credentials', 'roleName', 'user', 'user_photo']);
         session()->invalidate();
         session()->regenerateToken();
         return redirect()->route('login');
