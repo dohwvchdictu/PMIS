@@ -14,8 +14,8 @@ class ApiService
 
     public function __construct()
     {
-        $this->tokenTTL = config('jwt.ttl', 300);
-        $this->refreshThreshold = config('jwt.refresh_threshold', 240);
+        $this->tokenTTL = config('jwt.ttl', 28800);
+        $this->refreshThreshold = config('jwt.refresh_threshold', 300);
 
         $this->client = new Client([
             'base_uri' => config('jwt.api.base_url', 'http://192.168.100.162:8081/'),
