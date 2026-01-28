@@ -97,9 +97,6 @@
                         <table class="w-full text-xs min-w-max">
                             <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                 <tr>
-                                    <th class="px-2 py-3 text-left f<thead class="sticky top-0 bg-gray-200
-                                        dark:bg-neutral-800 z-20">
-                                <tr>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                     </th>
