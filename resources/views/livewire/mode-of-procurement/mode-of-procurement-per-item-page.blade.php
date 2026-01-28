@@ -541,7 +541,7 @@
 
                                             @if ($showFields && $modeId && !in_array($modeId, [1]))
                                                 <td class="px-2 py-2">
-                                                    @if (in_array($modeId, [3, 4, 5, 6]))
+                                                    @if (in_array($modeId, [2, 3, 4, 5, 6]))
                                                         <input type="text" wire:key="res-mop-{{ $rowUid }}"
                                                             wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
                                                             class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
@@ -551,7 +551,7 @@
                                                             placeholder="RES-2025-001" @disabled($disableInputs)
                                                             title="Required for this procurement mode">
                                                     @else
-                                                        {{-- Mode 2: Show N/A or leave empty --}}
+                                                        {{-- Other modes: Show empty --}}
                                                         <div class="flex items-center justify-center h-full">
                                                             <span
                                                                 class="text-gray-400 dark:text-gray-500 text-xs"></span>
@@ -1202,8 +1202,8 @@
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Result</th>
 
-                                    <!-- NEW: Add Resolution # (MOP) for modes 3-6 -->
-                                    @if (in_array($editModeId, [3, 4, 5, 6]))
+                                    <!-- NEW: Add Resolution # (MOP) for modes 2-6 -->
+                                    @if (in_array($editModeId, [2, 3, 4, 5, 6]))
                                         <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                             Resolution # <span class="text-red-500">*</span></th>
                                     @endif
@@ -1339,7 +1339,7 @@
                                         </select>
                                     </td>
 
-                                    @if (in_array($editModeId, [3, 4, 5, 6]))
+                                    @if (in_array($editModeId, [2, 3, 4, 5, 6]))
                                         <td class="px-2 py-2">
                                             <input type="text" wire:model.defer="editingItem.resolution_number_mop"
                                                 placeholder="RES-2025-001"

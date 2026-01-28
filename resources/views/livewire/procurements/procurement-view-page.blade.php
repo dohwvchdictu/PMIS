@@ -1777,42 +1777,7 @@
                                     </div>
                                 @endif
 
-                                {{-- Supplier Information --}}
-                                @if ($supplier_id)
-                                    <div>
-                                        <h4
-                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            Supplier
-                                        </h4>
-                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
-                                            @php
-                                                $supplier = $suppliers->firstWhere('id', $supplier_id);
-                                            @endphp
-                                            <div class="flex items-center justify-between">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $supplier?->name ?? 'Unknown Supplier' }}
-                                                </p>
-                                                @if ($supplier)
-                                                    <button wire:click="viewSupplierDetails({{ $supplier->id }})"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 transition-colors"
-                                                        title="View Contact Details">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+
 
                             </div>
                         @else
