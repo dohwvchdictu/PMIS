@@ -245,6 +245,13 @@ class ProcurementEditPage extends Component
             $this->form['procurement_type'] = 'perLot';
         }
 
+        // Clean item amounts before validation
+        if (($this->form['procurement_type'] ?? '') === 'perItem' && !empty($this->form['items'])) {
+            foreach ($this->form['items'] as $index => $item) {
+                $this->form['items'][$index]['amount'] = floatval(preg_replace('/[^0-9.]/', '', $item['amount'] ?? 0));
+            }
+        }
+
         // --- 1. Main form validation ---
         $validator = Validator::make($this->form, [
             'pr_number' => [

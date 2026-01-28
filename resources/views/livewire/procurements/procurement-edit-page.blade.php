@@ -105,11 +105,11 @@
             <x-forms.input id="dtrack_no" label="DTRACK #" model="form.dtrack_no" :form="$form"
                 colspan="col-span-1" />
             <!-- UniCode -->
-            <x-forms.input id="unicode" label="UniCode" model="form.unicode" :form="$form" :required="false"
+            <x-forms.input id="unicode" label="UniCode" model="form.unicode" :form="$form" :required="true"
                 colspan="col-span-2" />
             <!-- Division -->
             <x-forms.select id="divisions_id" label="Division" model="form.divisions_id" :form="$form"
-                :options="$divisions" optionValue="id" optionLabel="divisions" :required="true" colspan="col-span-3"
+                :options="$divisions" optionValue="id" optionLabel="divisions" :required="true" colspan="col-span-4"
                 :searchable="false" />
             <!-- Cluster / Committee -->
             <x-forms.select id="cluster_committees_id" label="Cluster / Committee" model="form.cluster_committees_id"
