@@ -28,7 +28,7 @@ class JwtMiddleware
         // Validate JWT token exists
         $token = Session::get('jwt_token');
         $tokenCreatedAt = Session::get('token_created_at', 0);
-        $tokenTTL = config('jwt.ttl', 604800); // Default 7 days
+        $tokenTTL = config('jwt.ttl', 28800); // Default 8 hours
         $refreshThreshold = config('jwt.refresh_threshold', 300); // Default 5 minutes
         $tokenAge = time() - $tokenCreatedAt;
 
@@ -38,7 +38,7 @@ class JwtMiddleware
             return redirect()->route('login')->with('error', 'Session expired. Please login again.');
         }
 
-        // Check if token has completely expired (7 days)
+        // Check if token has completely expired (8 hours)
         if ($tokenAge >= $tokenTTL) {
             // Try to refresh the token one last time
             if ($this->attemptTokenRefresh()) {
@@ -48,7 +48,7 @@ class JwtMiddleware
             // If refresh failed, log out
             Session::forget(['jwt_token', 'token_created_at', 'login_credentials']);
             auth()->logout();
-            return redirect()->route('login')->with('error', 'Session expired after 7 days. Please login again.');
+            return redirect()->route('login')->with('error', 'Session expired. Please login again.');
         }
 
         // Automatically refresh token every 5 minutes (API handles the actual refresh)

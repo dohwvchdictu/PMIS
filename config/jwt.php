@@ -14,7 +14,7 @@ return [
 
     'secret' => env('JWT_SECRET', env('APP_KEY')),
 
-    'ttl' => env('JWT_TTL', 604800), // Token validity in seconds (default: 7 days)
+    'ttl' => env('JWT_TTL', 28800), // Token validity in seconds (default: 8 hours)
 
     'refresh_threshold' => env('JWT_REFRESH_THRESHOLD', 300), // Refresh after N seconds (default: 5 minutes)
 
