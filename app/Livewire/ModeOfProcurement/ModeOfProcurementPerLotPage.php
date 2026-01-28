@@ -136,9 +136,7 @@ class ModeOfProcurementPerLotPage extends Component
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
                     $this->hasValue($item['ib_number']) &&
-                    $this->hasValue($item['philgeps_posting_ref_no']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
-                    $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['list_invited_observers']) &&
                     $this->hasValue($item['obsrvr_prebid_conf']) &&
                     $this->hasValue($item['obsrvr_eligibility']) &&
@@ -168,8 +166,6 @@ class ModeOfProcurementPerLotPage extends Component
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
                 // Check all required SVP fields are filled
                 $allSvpFieldsFilled =
-                    $this->hasValue($item['philgeps_posting_ref_no']) &&
-                    $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['resolution_number_mop']) &&
                     $this->hasValue($item['rfq_no']) &&
                     $this->hasValue($item['canvass_date']) &&
@@ -529,12 +525,6 @@ class ModeOfProcurementPerLotPage extends Component
                     $isValid = false;
                 }
 
-                if (in_array($modeId, [2, 3, 4, 5, 6])) {
-                    if ($hasBiddingData && !$this->hasValue($item['resolution_number_mop'])) {
-                        $this->scheduleValidationErrors[] = "{$modeName}: Resolution Number (MOP) is required for this procurement mode.";
-                        $isValid = false;
-                    }
-                }
                 // Validate Bidding Result dependencies
                 $biddingResult = $item['bidding_result'] ?? null;
 
@@ -586,7 +576,6 @@ class ModeOfProcurementPerLotPage extends Component
 
                 // FIX #5: Using hasAnyValue() for consistent checking
                 $svpFields = [
-                    $item['resolution_number_mop'] ?? null,
                     $item['rfq_no'] ?? null,
                     $item['canvass_date'] ?? null,
                     $item['date_returned_of_canvass'] ?? null,
@@ -600,29 +589,7 @@ class ModeOfProcurementPerLotPage extends Component
                     $isValid = false;
                 }
 
-                if ($hasSvpData) {
-                    $requiredSvpFields = [
-                        'resolution_number_mop' => 'Resolution Number (MOP)',
-                        'rfq_no' => 'RFQ No.',
-                        'canvass_date' => 'Canvass Date',
-                        'date_returned_of_canvass' => 'Returned of Canvass',
-                        'abstract_of_canvass_date' => 'Abstract of Canvass'
-                    ];
-
-                    $missingSvpFields = [];
-                    foreach ($requiredSvpFields as $field => $label) {
-                        // FIX #5: Using hasValue() for consistent checking
-                        if (!$this->hasValue($item[$field] ?? null)) {
-                            $missingSvpFields[] = $label;
-                        }
-                    }
-
-                    if (!empty($missingSvpFields)) {
-                        $fieldsList = implode(', ', $missingSvpFields);
-                        $this->scheduleValidationErrors[] = "{$modeName}: All SVP fields are required. Missing: {$fieldsList}";
-                        $isValid = false;
-                    }
-                }
+                // No required field validation for SVP modes during save - all fields are optional
             }
         }
 
