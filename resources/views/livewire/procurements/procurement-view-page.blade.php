@@ -1,16 +1,124 @@
 <div>
     <div class="space-y-4">
         <div
-            class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
-            <!-- PR Number Badge - Top Left Corner -->
-            <div class="absolute top-0 left-0 z-10">
+            class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
+            <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
+
+            <!-- PR Number, Stage and Remarks -->
+            <div class="absolute top-1.5 left-0 z-10 flex items-center">
+                <!-- PR Number Badge -->
                 <span
-                    class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md">
-                    PR #{{ $form['pr_number'] ?? 'N/A' }}
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-emerald-600 text-white shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>PR #{{ $form['pr_number'] ?? 'N/A' }}</span>
                 </span>
+
+                @if ($form['procurement_type'] === 'perLot')
+                    <!-- Stage Badge -->
+                    @if ($procurement->currentPrStage?->procurementStage)
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-blue-600 text-white shadow-sm {{ !$procurement->currentLotRemark?->remark ? 'rounded-br-lg' : '' }}">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="truncate max-w-xs">{{ $procurement->currentPrStage->procurementStage->procurementstage ?? 'N/A' }}</span>
+                        </span>
+                    @endif
+
+                    <!-- Remark Badge -->
+                    @if ($procurement->currentLotRemark?->remark)
+                        @php
+                            $remarks = $procurement->currentLotRemark->remark->remarks ?? '';
+
+                            $remarksColor = match (true) {
+                                str_contains($remarks, 'Ongoing') => 'bg-yellow-600 text-white',
+                                str_contains($remarks, 'Awarded') => 'bg-green-600 text-white',
+                                str_contains($remarks, 'Cancelled') => 'bg-red-600 text-white',
+                                default => 'bg-gray-600 text-white',
+                            };
+
+                            $remarkIcon = match (true) {
+                                str_contains($remarks, 'Ongoing') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
+                                str_contains($remarks, 'Awarded') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                                str_contains($remarks, 'Cancelled') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                                default => '',
+                            };
+                        @endphp
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-br-lg text-sm font-semibold {{ $remarksColor }} shadow-sm">
+                            {!! $remarkIcon !!}
+                            <span class="truncate max-w-xs">{{ $remarks }}</span>
+                        </span>
+                    @endif
+                @else
+                    <!-- For perItem, show if there are multiple stages/remarks -->
+                    @php
+                        $uniqueStages = $procurement->pr_items
+                            ->pluck('prstage.procurementStage.procurementstage')
+                            ->filter()
+                            ->unique();
+                        $uniqueRemarks = $procurement->pr_items
+                            ->pluck('currentItemRemark.remark.remarks')
+                            ->filter()
+                            ->unique();
+                    @endphp
+
+                    @if ($uniqueStages->isNotEmpty())
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-blue-600 text-white shadow-sm {{ $uniqueRemarks->isEmpty() ? 'rounded-br-lg' : '' }}">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="truncate max-w-xs">
+                                @if ($uniqueStages->count() > 1)
+                                    Multiple Stages ({{ $uniqueStages->count() }})
+                                @else
+                                    {{ $uniqueStages->first() }}
+                                @endif
+                            </span>
+                        </span>
+                    @endif
+
+                    @if ($uniqueRemarks->isNotEmpty())
+                        @php
+                            $firstRemark = $uniqueRemarks->first();
+
+                            $remarksColor = match (true) {
+                                str_contains($firstRemark, 'Ongoing') => 'bg-yellow-600 text-white',
+                                str_contains($firstRemark, 'Awarded') => 'bg-green-600 text-white',
+                                str_contains($firstRemark, 'Cancelled') => 'bg-red-600 text-white',
+                                default => 'bg-gray-600 text-white',
+                            };
+
+                            $remarkIcon = match (true) {
+                                str_contains($firstRemark, 'Ongoing') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
+                                str_contains($firstRemark, 'Awarded') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                                str_contains($firstRemark, 'Cancelled') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                                default => '',
+                            };
+                        @endphp
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-br-lg text-sm font-semibold {{ $remarksColor }} shadow-sm">
+                            {!! $remarkIcon !!}
+                            <span class="truncate max-w-xs">
+                                @if ($uniqueRemarks->count() > 1)
+                                    Multiple Remarks ({{ $uniqueRemarks->count() }})
+                                @else
+                                    {{ $uniqueRemarks->first() }}
+                                @endif
+                            </span>
+                        </span>
+                    @endif
+                @endif
             </div>
 
-            <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
             <div class="p-6 pt-8">
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex-1 min-w-0">
@@ -152,7 +260,8 @@
                                                 <option value="50">50</option>
                                                 <option value="{{ $totalItems }}">All</option>
                                             </select>
-                                            <span class="text-sm text-gray-600 dark:text-gray-400">items per page</span>
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">items per
+                                                page</span>
                                         </div>
 
                                         {{-- Page info --}}
@@ -173,8 +282,8 @@
                                 {{ $currentPage <= 1
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
                                     : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2" d="M15 19l-7-7 7-7" />
                                                 </svg>
@@ -1428,7 +1537,8 @@
                                                                                 Sub/Open Bids</p>
                                                                             <p
                                                                                 class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                                {{ $historyItem['sub_open_bids'] }}</p>
+                                                                                {{ $historyItem['sub_open_bids'] }}
+                                                                            </p>
                                                                         </div>
                                                                     @endif
                                                                     @if ($historyItem['bidding_date'])
@@ -1777,42 +1887,7 @@
                                     </div>
                                 @endif
 
-                                {{-- Supplier Information --}}
-                                @if ($supplier_id)
-                                    <div>
-                                        <h4
-                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            Supplier
-                                        </h4>
-                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
-                                            @php
-                                                $supplier = $suppliers->firstWhere('id', $supplier_id);
-                                            @endphp
-                                            <div class="flex items-center justify-between">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $supplier?->name ?? 'Unknown Supplier' }}
-                                                </p>
-                                                @if ($supplier)
-                                                    <button wire:click="viewSupplierDetails({{ $supplier->id }})"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 transition-colors"
-                                                        title="View Contact Details">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+
 
                             </div>
                         @else

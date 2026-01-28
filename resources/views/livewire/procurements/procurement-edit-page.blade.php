@@ -15,7 +15,7 @@
             <!-- Procurement Program / Project -->
             <div class="col-span-9">
                 <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
-                    model="form.procurement_program_project" :required="true" :rows="$textareaRows" :readonly="true"
+                    model="form.procurement_program_project" :required="true" :rows="$textareaRows" :readonly="false"
                     :autoResize="true" />
             </div>
         </div>
