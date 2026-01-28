@@ -67,11 +67,15 @@ class ProcurementViewPage extends Component
     public function mount(Procurement $procurement): void
     {
         $procurement->load([
-            'pr_items',
+            'pr_items' => function ($query) {
+                $query->with(['prstage.stage', 'currentItemRemark.remark']);
+            },
             'category.categoryType',
             'category.bacType',
             'mopLots.modeOfProcurement',
-            'bacApprovedPr'
+            'bacApprovedPr',
+            'currentPrStage.procurementStage',
+            'currentLotRemark.remark'
         ]);
 
         $this->procurement = $procurement;
