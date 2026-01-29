@@ -111,15 +111,16 @@
                             <td class="px-4 py-3">
                                 @if (!empty($item['stage']))
                                     <div class="flex justify-center">
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                        <button type="button" wire:click="viewStageHistory('{{ $item['prItemID'] }}')"
+                                            title="View stage history"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer">
                                             <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                             </svg>
                                             <span class="truncate max-w-[150px]">{{ $item['stage'] }}</span>
-                                        </span>
+                                        </button>
                                     </div>
                                 @else
                                     <div class="text-center text-gray-400 dark:text-gray-500 text-sm">—</div>

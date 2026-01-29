@@ -51,6 +51,9 @@ class ProcurementViewPage extends Component
     public array $postItems = [];
     public bool $showModal = false;
     public ?array $selectedSupplier = null;
+    public array $stageHistory = [];
+    public string $modalType = '';
+    public ?string $selectedPrItemID = null;
 
     // Post procurement data
     public ?string $resolutionNumber = null;
@@ -550,6 +553,7 @@ class ProcurementViewPage extends Component
                 'email' => !empty(trim($supplier->email)) ? trim($supplier->email) : null,
                 'contact_person' => !empty(trim($supplier->contact_person)) ? trim($supplier->contact_person) : null,
             ];
+            $this->modalType = 'supplier';
             $this->showModal = true;
         }
     }
@@ -558,6 +562,89 @@ class ProcurementViewPage extends Component
     {
         $this->showModal = false;
         $this->selectedSupplier = null;
+        $this->stageHistory = [];
+        $this->modalType = '';
+        $this->selectedPrItemID = null;
+    }
+
+    public function viewStageHistory($prItemID = null): void
+    {
+        $this->selectedPrItemID = $prItemID;
+
+        if ($prItemID) {
+            // Per Item: Get stage changes for specific item
+            $prStages = \App\Models\PrItemPrstage::where('procID', $this->procurement->procID)
+                ->where('prItemID', $prItemID)
+                ->with(['stage'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Per Lot: Get stage changes for entire procurement
+            $prStages = \App\Models\PrLotPrstage::where('procID', $this->procurement->procID)
+                ->with(['procurementStage'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        $history = [];
+
+        // Process stage records with audit information
+        foreach ($prStages as $prStage) {
+            // Get the most recent audit record for this stage change (created event)
+            $modelType = $prItemID ? 'App\\Models\\PrItemPrstage' : 'App\\Models\\PrLotPrstage';
+
+            $audit = \App\Models\Audit::where('auditable_type', $modelType)
+                ->where('auditable_id', $prStage->id)
+                ->where('event', 'created')
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $userName = 'System';
+            $auditDate = $prStage->created_at;
+
+            if ($audit) {
+                // Try to get user from audit record
+                if ($audit->user_id && $audit->user) {
+                    $userName = $audit->user->name ?? $audit->user->email ?? 'System';
+                } elseif ($audit->user_id) {
+                    // Try to find user directly if relationship didn't load
+                    $user = \App\Models\User::find($audit->user_id);
+                    $userName = $user ? ($user->name ?? $user->email) : 'System';
+                }
+                // Use audit created_at for more accurate timestamp
+                $auditDate = $audit->created_at ?? $prStage->created_at;
+            }
+
+            // Get stage name based on type
+            $stageName = $prItemID
+                ? ($prStage->stage?->procurementstage ?? 'N/A')
+                : ($prStage->procurementStage?->procurementstage ?? 'N/A');
+
+            $history[] = [
+                'stage' => $stageName,
+                'date' => $auditDate?->format('M d, Y h:i A') ?? 'N/A',
+                'user' => $userName,
+                'timestamp' => $auditDate?->timestamp ?? 0,
+            ];
+        }
+
+        // Sort by timestamp descending (most recent first)
+        usort($history, function ($a, $b) {
+            return $b['timestamp'] - $a['timestamp'];
+        });
+
+        $this->stageHistory = $history;
+        $this->modalType = 'stageHistory';
+        $this->showModal = true;
+    }
+
+    public function closeStageHistoryModal(): void
+    {
+        $this->showModal = false;
+        $this->modalType = '';
+        $this->stageHistory = [];
+        $this->selectedPrItemID = null;
     }
     public function updatedMopSearchTerm(): void
     {
