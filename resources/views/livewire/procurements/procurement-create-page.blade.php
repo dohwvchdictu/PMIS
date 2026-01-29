@@ -19,63 +19,166 @@
         </div>
 
         <!-- Per Lot / Per Item Toggle + Table -->
-        <div class="mt-6 flex flex-col md:flex-row md:items-start md:space-x-6">
+        <div class="mt-6">
             <!-- Toggle -->
-            <div class="flex items-center gap-x-3">
+            <div class="flex items-center gap-x-3 mb-4">
                 <x-forms.prType id="procurement-toggle" model="form.procurement_type" :form="$form" />
+                @if ($form['procurement_type'] === 'perItem')
+                    {{-- Show/Hide table button --}}
+                    <button type="button" wire:click="$toggle('showTable')"
+                        class="p-2 rounded-lg border transition-all duration-200
+                        {{ $showTable
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/30'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-600' }}">
+                        @if (!$showTable)
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        @endif
+                    </button>
+                @endif
             </div>
             <!-- Table shows only when "Per Item" is selected -->
             @if ($form['procurement_type'] === 'perItem')
-                <div class="mt-4 md:mt-0 w-full md:max-w-3xl">
-                    {{-- Header row --}}
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-x-2">
-                            {{-- Show/Hide table button --}}
-                            <button type="button" wire:click="$toggle('showTable')"
-                                class="transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800">
-                                @if (!$showTable)
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                @else
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                @endif
-                            </button>
-
-                        </div>
-                    </div>
+                <div class="w-full">
 
                     @if ($showTable)
                         <div
-                            class="bg-white p-4 rounded-xl shadow border border-gray-200 overflow-x-auto w-full dark:bg-neutral-700">
-
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="font-semibold text-gray-700  dark:text-white">Item List</h3>
-                                <button type="button" wire:click="addItem"
-                                    class="py-1 px-2 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700">
-                                    <svg class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path d="M5 12h14" />
-                                        <path d="M12 5v14" />
-                                    </svg>
-                                    Item
-                                </button>
+                            class="bg-gradient-to-br from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-700 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-600 overflow-hidden">
+                            <!-- Table Header -->
+                            <div
+                                class="bg-white dark:bg-neutral-700 border-b border-gray-200 dark:border-neutral-600 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Item List
+                                        </h2>
+                                    </div>
+                                    <button type="button" wire:click="addItem"
+                                        class="p-2 text-sm font-medium rounded-lg border border-transparent bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 transition-all duration-200 shadow-sm hover:shadow-md">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
-                            {{-- Items table component --}}
+
                             @if ($form['procurement_type'] === 'perItem')
                                 <x-forms.prItems-table :form="$form" model="form.items" :page="$page"
                                     :per-page="$perPage" />
                             @endif
 
-                        </div>
+                            {{-- Pagination --}}
+                            @php
+                                $totalItems = count($form['items'] ?? []);
+                                $totalPages = max(1, ceil($totalItems / $perPage));
+                            @endphp
 
+                            @if ($totalItems > 0)
+                                <!-- Table Footer -->
+                                <div
+                                    class="bg-white dark:bg-neutral-700 border-t border-gray-200 dark:border-neutral-600 px-6 py-4">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <!-- Left: Per-page selector -->
+                                        <div class="flex items-center gap-x-2">
+                                            <label
+                                                class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
+                                            <select wire:model.live="perPage"
+                                                class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
+                                        </div>
+
+                                        <!-- Center: Pagination -->
+                                        <div class="flex flex-col items-center gap-2 flex-1">
+                                            @php
+                                                $offset = ($page - 1) * $perPage;
+                                                $from = $totalItems > 0 ? $offset + 1 : 0;
+                                                $to = min($offset + $perPage, $totalItems);
+                                            @endphp
+                                            <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                                Showing <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $from }}</span>
+                                                to
+                                                <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $to }}</span>
+                                                of
+                                                <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalItems }}</span>
+                                                items
+                                            </div>
+
+                                            @if ($totalPages > 1)
+                                                <div class="flex items-center gap-1">
+                                                    <!-- Previous Button -->
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ max(1, $page - 1) }})"
+                                                        @if ($page <= 1) disabled @endif
+                                                        class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M15 19l-7-7 7-7" />
+                                                        </svg>
+                                                    </button>
+
+                                                    <!-- Page Numbers -->
+                                                    @for ($i = 1; $i <= $totalPages; $i++)
+                                                        @if ($i == 1 || $i == $totalPages || abs($i - $page) <= 2)
+                                                            <button type="button"
+                                                                wire:click="$set('page', {{ $i }})"
+                                                                class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $page == $i ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                                                {{ $i }}
+                                                            </button>
+                                                        @elseif (abs($i - $page) == 3)
+                                                            <span class="px-2 text-xs text-gray-500">...</span>
+                                                        @endif
+                                                    @endfor
+
+                                                    <!-- Next Button -->
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ min($totalPages, $page + 1) }})"
+                                                        @if ($page >= $totalPages) disabled @endif
+                                                        class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                            </path>
+                                        </svg>
+                                        <span class="font-medium">No items found</span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
                     @endif
                 </div>
             @endif
@@ -110,12 +213,13 @@
                 :searchable="false" />
             <!-- Cluster / Committee -->
             <x-forms.select id="cluster_committees_id" label="Cluster / Committee" model="form.cluster_committees_id"
-                :form="$form" :options="$clusterCommittees" optionValue="id" optionLabel="clustercommittee" :required="true"
-                colspan="col-span-2" :searchable="false" />
+                :form="$form" :options="$clusterCommittees" optionValue="id" optionLabel="clustercommittee"
+                :required="true" colspan="col-span-2" :searchable="false" />
 
         </div>
     </div>
-    <div class="bg-white p-6 rounded-xl shadow border border-gray-200 mt-6 dark:bg-neutral-700 dark:border-neutral-700">
+    <div
+        class="bg-white p-6 rounded-xl shadow border border-gray-200 mt-6 dark:bg-neutral-700 dark:border-neutral-700">
         <!-- Simple Form Fields in Landscape Layout -->
         <div class="grid grid-cols-4 gap-4">
             <!-- Venue Specific -->

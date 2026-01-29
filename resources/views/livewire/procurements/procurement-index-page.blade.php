@@ -398,148 +398,141 @@
                     <!-- Enhanced Expanded Per Item Rows -->
                     @if ($procurement->procurement_type === 'perItem' && $expandedProcurementId == $procurement->procID)
                         <tr>
-                            <td colspan="13"
-                                class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 p-4">
-                                <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-inner">
-                                    <table
-                                        class="w-full text-sm border border-gray-300 dark:border-neutral-700 rounded-lg overflow-hidden">
-                                        <thead
-                                            class="bg-gradient-to-r from-gray-200 to-gray-300 dark:from-neutral-900 dark:to-neutral-800">
-                                            <tr>
-                                                <th
-                                                    class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-2">
-                                                    Item #
-                                                </th>
-                                                <th
-                                                    class="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-md">
-                                                    Item Description
-                                                </th>
-                                                <th
-                                                    class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-7">
-                                                    PR Stage
-                                                </th>
-                                                <th
-                                                    class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">
-                                                    Remarks
-                                                </th>
-                                                <th
-                                                    class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-10">
-                                                    Amount
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody
-                                            class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
-                                            @php
-                                                $items = $procurement->pr_items;
-                                                $currentPage = request()->get('itemsPage_' . $procurement->procID, 1);
-                                                $itemsPerPage = $itemsPerPage ?? 5;
-                                                $offset = ($currentPage - 1) * $itemsPerPage;
-                                                $paginatedItems = $items->slice($offset, $itemsPerPage);
-                                                $totalItems = $items->count();
-                                                $totalPages = ceil($totalItems / $itemsPerPage);
-                                            @endphp
-
-                                            @forelse($paginatedItems as $item)
-                                                <tr
-                                                    class="hover:bg-emerald-50 dark:hover:bg-neutral-700/50 transition-colors duration-150">
-                                                    <td
-                                                        class="px-2 py-3 text-center text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $item->item_no }}
-                                                    </td>
-                                                    <td
-                                                        class="px-2 py-3 text-left text-sm text-gray-700 dark:text-gray-200">
-                                                        {{ $item->description }}
-                                                    </td>
-                                                    <td
-                                                        class="px-2 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
-                                                        @if ($item->prstage && $item->prstage->stage)
-                                                            <span
-                                                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                                                {{ $item->prstage->stage->procurementstage }}
-                                                            </span>
-                                                        @else
-                                                            <span
-                                                                class="text-gray-400 dark:text-gray-500 text-xs italic">No
-                                                                Stage</span>
-                                                        @endif
-                                                    </td>
+                            <td colspan="13" class="p-0">
+                                <div
+                                    class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 p-6">
+                                    <div
+                                        class="bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-300 dark:border-neutral-600 overflow-hidden">
+                                        <!-- Items Table with Independent Horizontal Scroll -->
+                                        <div class="overflow-x-auto max-w-full" style="overflow-y: hidden;">
+                                            <table class="w-full text-sm">
+                                                <thead
+                                                    class="bg-gradient-to-r from-gray-200 to-gray-300 dark:from-neutral-900 dark:to-neutral-800">
+                                                    <tr>
+                                                        <th
+                                                            class="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider min-w-[80px]">
+                                                            Item #
+                                                        </th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider min-w-[300px]">
+                                                            Item Description
+                                                        </th>
+                                                        <th
+                                                            class="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider min-w-[180px]">
+                                                            PR Stage
+                                                        </th>
+                                                        <th
+                                                            class="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider min-w-[200px]">
+                                                            Remarks
+                                                        </th>
+                                                        <th
+                                                            class="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider min-w-[150px]">
+                                                            Amount
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody
+                                                    class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
                                                     @php
-                                                        $remarks = $item->currentItemRemark->remark->remarks ?? '';
-
-                                                        $remarksColor = match (true) {
-                                                            str_contains($remarks, 'Ongoing')
-                                                                => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:border-yellow-800',
-                                                            str_contains($remarks, 'Awarded')
-                                                                => 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-800',
-                                                            str_contains($remarks, 'Cancelled')
-                                                                => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800',
-                                                            default
-                                                                => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600',
-                                                        };
+                                                        $items = $procurement->pr_items;
+                                                        $currentPage = $itemsPages[$procurement->procID] ?? 1;
+                                                        $itemsPerPage = $itemsPerPage ?? 5;
+                                                        $offset = ($currentPage - 1) * $itemsPerPage;
+                                                        $paginatedItems = $items->slice($offset, $itemsPerPage);
+                                                        $totalItems = $items->count();
+                                                        $totalPages = ceil($totalItems / $itemsPerPage);
                                                     @endphp
-                                                    <td
-                                                        class="px-2 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
-                                                        @if ($item->currentItemRemark && $item->currentItemRemark->remark)
-                                                            <span
-                                                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border {{ $remarksColor }}">
-                                                                {{ $remarks }}
-                                                            </span>
-                                                        @else
-                                                            <span
-                                                                class="text-gray-400 dark:text-gray-500 text-xs italic">No
-                                                                Remark</span>
-                                                        @endif
-                                                    </td>
-                                                    <td
-                                                        class="px-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                                                        <span
-                                                            class="text-gray-500 dark:text-gray-400">₱</span>{{ number_format($item->amount ?? 0, 2) }}
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="5"
-                                                        class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                                        <div class="flex flex-col items-center gap-2">
-                                                            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600"
-                                                                fill="none" stroke="currentColor"
-                                                                viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
-                                                                </path>
-                                                            </svg>
-                                                            <span class="font-medium">No items found</span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
 
-                                    <!-- Enhanced Items Pagination -->
-                                    @if ($totalItems > $itemsPerPage)
-                                        <div
-                                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full p-4 border-t border-gray-200 dark:border-neutral-700 gap-3 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+                                                    @forelse($paginatedItems as $item)
+                                                        <tr
+                                                            class="hover:bg-emerald-50 dark:hover:bg-neutral-700/50 transition-colors duration-150">
+                                                            <td
+                                                                class="px-4 py-3 text-center text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $item->item_no }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200">
+                                                                <div class="max-w-md break-words">
+                                                                    {{ $item->description }}</div>
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
+                                                                @if ($item->prstage && $item->prstage->stage)
+                                                                    <span
+                                                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                                        {{ $item->prstage->stage->procurementstage }}
+                                                                    </span>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500 text-xs italic">No
+                                                                        Stage</span>
+                                                                @endif
+                                                            </td>
+                                                            @php
+                                                                $remarks =
+                                                                    $item->currentItemRemark->remark->remarks ?? '';
 
-                                            <!-- Left: Per-page selector -->
-                                            <div class="flex items-center gap-x-2">
-                                                <label for="itemsPerPage_{{ $procurement->procID }}"
-                                                    class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
-                                                <select id="itemsPerPage_{{ $procurement->procID }}"
-                                                    wire:model.live="itemsPerPage"
-                                                    class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
-                                                    <option value="5">5</option>
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                </select>
-                                                <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
-                                            </div>
+                                                                $remarksColor = match (true) {
+                                                                    str_contains($remarks, 'Ongoing')
+                                                                        => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:border-yellow-800',
+                                                                    str_contains($remarks, 'Awarded')
+                                                                        => 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-800',
+                                                                    str_contains($remarks, 'Cancelled')
+                                                                        => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800',
+                                                                    default
+                                                                        => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600',
+                                                                };
+                                                            @endphp
+                                                            <td
+                                                                class="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-200">
+                                                                @if ($item->currentItemRemark && $item->currentItemRemark->remark)
+                                                                    <span
+                                                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border {{ $remarksColor }}">
+                                                                        {{ $remarks }}
+                                                                    </span>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500 text-xs italic">No
+                                                                        Remark</span>
+                                                                @endif
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                                <div class="inline-flex items-baseline gap-0.5">
+                                                                    <span
+                                                                        class="text-xs text-gray-500 dark:text-gray-400">₱</span>
+                                                                    <span>{{ number_format($item->amount ?? 0, 2) }}</span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="5"
+                                                                class="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                                                                <div class="flex flex-col items-center gap-3">
+                                                                    <svg class="w-16 h-16 text-gray-300 dark:text-gray-600"
+                                                                        fill="none" stroke="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                                                        </path>
+                                                                    </svg>
+                                                                    <span class="font-medium text-base">No items
+                                                                        found</span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                            <!-- Center: Summary + Pagination -->
-                                            <div class="flex flex-col items-center justify-center gap-3">
+                                        <!-- Enhanced Items Pagination -->
+                                        @if ($totalItems > $itemsPerPage)
+                                            <div
+                                                class="flex flex-col items-center justify-center w-full p-4 border-t border-gray-200 dark:border-neutral-700 gap-3 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+
                                                 <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
                                                     Showing <span
                                                         class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $offset + 1 }}</span>
@@ -557,32 +550,49 @@
                                                     <div class="flex gap-1">
                                                         <!-- Previous Button -->
                                                         @if ($currentPage > 1)
-                                                            <a href="?itemsPage_{{ $procurement->procID }}={{ $currentPage - 1 }}"
-                                                                class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
-                                                                Previous
-                                                            </a>
+                                                            <button type="button"
+                                                                wire:click="setItemsPage('{{ $procurement->procID }}', {{ $currentPage - 1 }})"
+                                                                class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                                <svg class="w-4 h-4" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M15 19l-7-7 7-7" />
+                                                                </svg>
+                                                            </button>
                                                         @endif
 
                                                         <!-- Page Numbers -->
                                                         @for ($i = 1; $i <= $totalPages; $i++)
-                                                            <a href="?itemsPage_{{ $procurement->procID }}={{ $i }}"
-                                                                class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $i == $currentPage ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
-                                                                {{ $i }}
-                                                            </a>
+                                                            @if ($i == 1 || $i == $totalPages || abs($i - $currentPage) <= 2)
+                                                                <button type="button"
+                                                                    wire:click="setItemsPage('{{ $procurement->procID }}', {{ $i }})"
+                                                                    class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $i == $currentPage ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                                                    {{ $i }}
+                                                                </button>
+                                                            @elseif (abs($i - $currentPage) == 3)
+                                                                <span class="px-2 text-xs text-gray-500">...</span>
+                                                            @endif
                                                         @endfor
 
                                                         <!-- Next Button -->
                                                         @if ($currentPage < $totalPages)
-                                                            <a href="?itemsPage_{{ $procurement->procID }}={{ $currentPage + 1 }}"
-                                                                class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
-                                                                Next
-                                                            </a>
+                                                            <button type="button"
+                                                                wire:click="setItemsPage('{{ $procurement->procID }}', {{ $currentPage + 1 }})"
+                                                                class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                                <svg class="w-4 h-4" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                            </button>
                                                         @endif
                                                     </div>
                                                 @endif
                                             </div>
-                                        </div>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                         </tr>

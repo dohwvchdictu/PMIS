@@ -142,9 +142,9 @@
                     @if ($form['procurement_type'] === 'perItem')
                         <div
                             class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                            {{-- Header with Toggle --}}
+                            {{-- Header with Search and Toggle --}}
                             <div
-                                class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                class="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
                                 <div class="flex-1">
                                     <h3
                                         class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
@@ -158,42 +158,60 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400">Procurement items and details
                                     </p>
                                 </div>
-                                <button type="button" wire:click="$toggle('showTable')"
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {{ $showTable ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-500' }}">
-                                    @if (!$showTable)
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                        <span>Show</span>
-                                    @else
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 15l7-7 7 7" />
-                                        </svg>
-                                        <span>Hide</span>
-                                    @endif
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <input type="text" wire:model.live.debounce.300ms="itemSearchTerm"
+                                        placeholder="Search items..."
+                                        class="w-full max-w-xs px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white">
+                                    <button type="button" wire:click="$toggle('showTable')"
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {{ $showTable ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-500' }}">
+                                        @if (!$showTable)
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                            <span>Show</span>
+                                        @else
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 15l7-7 7 7" />
+                                            </svg>
+                                            <span>Hide</span>
+                                        @endif
+                                    </button>
+                                </div>
                             </div>
 
                             {{-- Table Section --}}
                             @if ($showTable)
+                                @php
+                                    // Apply search filter
+                                    $allItems = $form['items'] ?? [];
+                                    $searchLower = strtolower($itemSearchTerm ?? '');
+                                    $filteredItems = empty($itemSearchTerm)
+                                        ? $allItems
+                                        : array_filter($allItems, function ($item) use ($searchLower) {
+                                            return str_contains(strtolower($item['description'] ?? ''), $searchLower) ||
+                                                str_contains(strtolower($item['item_no'] ?? ''), $searchLower);
+                                        });
+
+                                    $totalItems = count($filteredItems);
+                                    $currentPage = $page ?? 1;
+                                    $itemsPerPage = $perPage ?? 10;
+                                    $totalPages = max(1, ceil($totalItems / $itemsPerPage));
+                                @endphp
+
                                 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-neutral-600">
                                     <x-forms.prItems-table :form="$form" model="form.items" :page="$page"
-                                        :per-page="$perPage" :viewOnly="true" />
+                                        :per-page="$perPage" :viewOnly="true" :filteredItems="$filteredItems" />
                                 </div>
 
                                 {{-- Pagination Controls --}}
                                 @php
-                                    $totalItems = count($form['items'] ?? []);
-                                    $currentPage = $page ?? 1;
-                                    $itemsPerPage = $perPage ?? 10;
-                                    $totalPages = ceil($totalItems / $itemsPerPage);
                                 @endphp
 
-                                @if ($totalPages > 1)
+                                @if ($totalItems > 0)
                                     <div
                                         class="mt-4 flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-neutral-600">
                                         {{-- Items per page --}}
@@ -205,99 +223,79 @@
                                                 <option value="10">10</option>
                                                 <option value="20">20</option>
                                                 <option value="50">50</option>
-                                                <option value="{{ $totalItems }}">All</option>
+                                                <option value="100">100</option>
                                             </select>
-                                            <span class="text-sm text-gray-600 dark:text-gray-400">items per
-                                                page</span>
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">per page</span>
                                         </div>
 
-                                        {{-- Page info --}}
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            Showing {{ $totalItems > 0 ? ($currentPage - 1) * $itemsPerPage + 1 : 0 }}
-                                            to
-                                            {{ min($currentPage * $itemsPerPage, $totalItems) }} of
-                                            {{ $totalItems }} items
-                                        </div>
-
-                                        {{-- Pagination buttons --}}
-                                        <div class="flex items-center gap-2">
-                                            {{-- Previous Button --}}
-                                            <button type="button"
-                                                wire:click="$set('page', {{ max(1, $currentPage - 1) }})"
-                                                @if ($currentPage <= 1) disabled @endif
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                                {{ $currentPage <= 1
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
-                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 19l-7-7 7-7" />
-                                                </svg>
-                                                Previous
-                                            </button>
-
-                                            {{-- Page Numbers --}}
-                                            <div class="flex items-center gap-1">
-                                                @php
-                                                    $startPage = max(1, $currentPage - 2);
-                                                    $endPage = min($totalPages, $currentPage + 2);
-                                                @endphp
-
-                                                @if ($startPage > 1)
-                                                    <button type="button" wire:click="$set('page', 1)"
-                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                        {{ $currentPage == 1
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
-                                                        1
-                                                    </button>
-                                                    @if ($startPage > 2)
-                                                        <span class="text-gray-500 px-1">...</span>
-                                                    @endif
-                                                @endif
-
-                                                @for ($i = $startPage; $i <= $endPage; $i++)
-                                                    <button type="button"
-                                                        wire:click="$set('page', {{ $i }})"
-                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                        {{ $currentPage == $i
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
-                                                        {{ $i }}
-                                                    </button>
-                                                @endfor
-
-                                                @if ($endPage < $totalPages)
-                                                    @if ($endPage < $totalPages - 1)
-                                                        <span class="text-gray-500 px-1">...</span>
-                                                    @endif
-                                                    <button type="button"
-                                                        wire:click="$set('page', {{ $totalPages }})"
-                                                        class="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                                        {{ $currentPage == $totalPages
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-300 dark:hover:bg-neutral-700' }}">
-                                                        {{ $totalPages }}
-                                                    </button>
-                                                @endif
+                                        {{-- Center: Pagination --}}
+                                        <div class="flex flex-col items-center gap-2 flex-1">
+                                            {{-- Page info --}}
+                                            <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                                Showing <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalItems > 0 ? ($currentPage - 1) * $itemsPerPage + 1 : 0 }}</span>
+                                                to
+                                                <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ min($currentPage * $itemsPerPage, $totalItems) }}</span>
+                                                of
+                                                <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalItems }}</span>
+                                                items
                                             </div>
 
-                                            {{-- Next Button --}}
-                                            <button type="button"
-                                                wire:click="$set('page', {{ min($totalPages, $currentPage + 1) }})"
-                                                @if ($currentPage >= $totalPages) disabled @endif
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                                {{ $currentPage >= $totalPages
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800'
-                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
-                                                Next
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </button>
+                                            @if ($totalPages > 1)
+                                                {{-- Pagination buttons --}}
+                                                <div class="flex items-center gap-1">
+                                                    {{-- Previous Button --}}
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ max(1, $currentPage - 1) }})"
+                                                        @if ($currentPage <= 1) disabled @endif
+                                                        class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M15 19l-7-7 7-7" />
+                                                        </svg>
+                                                    </button>
+
+                                                    {{-- Page Numbers --}}
+                                                    @for ($i = 1; $i <= $totalPages; $i++)
+                                                        @if ($i == 1 || $i == $totalPages || abs($i - $currentPage) <= 2)
+                                                            <button type="button"
+                                                                wire:click="$set('page', {{ $i }})"
+                                                                class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $currentPage == $i ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                                                {{ $i }}
+                                                            </button>
+                                                        @elseif (abs($i - $currentPage) == 3)
+                                                            <span class="px-2 text-xs text-gray-500">...</span>
+                                                        @endif
+                                                    @endfor
+
+                                                    {{-- Next Button --}}
+                                                    <button type="button"
+                                                        wire:click="$set('page', {{ min($totalPages, $currentPage + 1) }})"
+                                                        @if ($currentPage >= $totalPages) disabled @endif
+                                                        class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                                </path>
+                                            </svg>
+                                            <span class="font-medium">No items found</span>
                                         </div>
                                     </div>
                                 @endif

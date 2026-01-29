@@ -46,6 +46,7 @@ class ProcurementViewPage extends Component
     public int $postPerPage = 10;
     public string $mopSearchTerm = '';
     public string $postSearchTerm = '';
+    public string $itemSearchTerm = '';
     public $mopToggles = [];
     public array $postItems = [];
     public bool $showModal = false;
@@ -197,14 +198,18 @@ class ProcurementViewPage extends Component
         // Build unified schedule map keyed by prItemID and mop_uid
         $scheduleMap = $this->buildPerItemScheduleMap($bidSchedules, $prSvps);
 
+        // Store basic items data before overwriting
+        $basicItems = $this->form['items'];
         $this->form['items'] = [];
 
         // Loop through PR Items
-        $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
+        $sortedPrItems = $procurement->pr_items->sortBy('item_no');
 
         foreach ($sortedPrItems as $prItem) {
             $prItemID = $prItem->prItemID;
             $relatedMops = $mopItemsGrouped->get($prItemID);
+
+            $hasValidMops = false;
 
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
@@ -213,6 +218,7 @@ class ProcurementViewPage extends Component
                         continue;
                     }
 
+                    $hasValidMops = true;
                     $uid = $mopItem->uid;
                     // Get schedule for this specific item
                     $schedule = [];
@@ -221,6 +227,15 @@ class ProcurementViewPage extends Component
                         $schedule = $prItemSchedules->get($uid, []);
                     }
                     $this->form['items'][] = $this->mapPerItemToRow($prItem, $mopItem, $schedule);
+                }
+            }
+
+            // If item has no valid MOPs (only MOP-1-1 or no MOPs), add basic item data
+            if (!$hasValidMops) {
+                // Find the basic item from the original array
+                $basicItem = collect($basicItems)->firstWhere('prItemID', $prItemID);
+                if ($basicItem) {
+                    $this->form['items'][] = $basicItem;
                 }
             }
         }
@@ -552,6 +567,11 @@ class ProcurementViewPage extends Component
     public function updatedPostSearchTerm(): void
     {
         $this->postPage = 1;
+    }
+
+    public function updatedItemSearchTerm(): void
+    {
+        $this->page = 1;
     }
     public function updatedPerPage(): void
     {
