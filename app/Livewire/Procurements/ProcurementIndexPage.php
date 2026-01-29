@@ -20,6 +20,7 @@ class ProcurementIndexPage extends Component
     // Pagination
     public $perPage = 10;
     public $itemsPerPage = 10;
+    public $itemsPages = []; // Store current page for each procurement's items
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -54,6 +55,12 @@ class ProcurementIndexPage extends Component
 
     // Collapsible functionality
     public $expandedProcurementId = null;
+
+    // Method to set items page for specific procurement
+    public function setItemsPage($procID, $page)
+    {
+        $this->itemsPages[$procID] = $page;
+    }
 
     // Form / Reference Data
     public $form = [];

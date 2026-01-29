@@ -46,10 +46,14 @@ class ProcurementViewPage extends Component
     public int $postPerPage = 10;
     public string $mopSearchTerm = '';
     public string $postSearchTerm = '';
+    public string $itemSearchTerm = '';
     public $mopToggles = [];
     public array $postItems = [];
     public bool $showModal = false;
     public ?array $selectedSupplier = null;
+    public array $stageHistory = [];
+    public string $modalType = '';
+    public ?string $selectedPrItemID = null;
 
     // Post procurement data
     public ?string $resolutionNumber = null;
@@ -99,6 +103,8 @@ class ProcurementViewPage extends Component
                     'item_no' => $item->item_no,
                     'description' => $item->description,
                     'amount' => $item->amount ?? 0,
+                    'stage' => $item->prstage?->stage?->procurementstage ?? null,
+                    'remark' => $item->currentItemRemark?->remark?->remarks ?? null,
                 ])
                 ->values()
                 ->toArray();
@@ -195,14 +201,18 @@ class ProcurementViewPage extends Component
         // Build unified schedule map keyed by prItemID and mop_uid
         $scheduleMap = $this->buildPerItemScheduleMap($bidSchedules, $prSvps);
 
+        // Store basic items data before overwriting
+        $basicItems = $this->form['items'];
         $this->form['items'] = [];
 
         // Loop through PR Items
-        $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
+        $sortedPrItems = $procurement->pr_items->sortBy('item_no');
 
         foreach ($sortedPrItems as $prItem) {
             $prItemID = $prItem->prItemID;
             $relatedMops = $mopItemsGrouped->get($prItemID);
+
+            $hasValidMops = false;
 
             if ($relatedMops && $relatedMops->count() > 0) {
                 foreach ($relatedMops as $mopItem) {
@@ -211,6 +221,7 @@ class ProcurementViewPage extends Component
                         continue;
                     }
 
+                    $hasValidMops = true;
                     $uid = $mopItem->uid;
                     // Get schedule for this specific item
                     $schedule = [];
@@ -219,6 +230,15 @@ class ProcurementViewPage extends Component
                         $schedule = $prItemSchedules->get($uid, []);
                     }
                     $this->form['items'][] = $this->mapPerItemToRow($prItem, $mopItem, $schedule);
+                }
+            }
+
+            // If item has no valid MOPs (only MOP-1-1 or no MOPs), add basic item data
+            if (!$hasValidMops) {
+                // Find the basic item from the original array
+                $basicItem = collect($basicItems)->firstWhere('prItemID', $prItemID);
+                if ($basicItem) {
+                    $this->form['items'][] = $basicItem;
                 }
             }
         }
@@ -230,14 +250,24 @@ class ProcurementViewPage extends Component
         foreach ($bidSchedules as $uid => $schedule) {
             $map[$uid] = [
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'list_invited_observers' => $schedule->list_invited_observers,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
+                'obsrvr_bid' => $schedule->obsrvr_bid,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
@@ -267,14 +297,24 @@ class ProcurementViewPage extends Component
             $map[$refId][$schedule->mop_uid] = [
                 'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'list_invited_observers' => $schedule->list_invited_observers,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
+                'obsrvr_bid' => $schedule->obsrvr_bid,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
@@ -311,16 +351,30 @@ class ProcurementViewPage extends Component
             'uid' => $mopItem?->uid ?? 'new_' . uniqid(),
             'mode_order' => $mopItem?->mode_order ?? 1,
 
+            // Stage and Remark
+            'stage' => $prItem->prstage?->stage?->procurementstage ?? null,
+            'remark' => $prItem->currentItemRemark?->remark?->remarks ?? null,
+
             // All schedule fields from unified map
             'ib_number' => $schedule['ib_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
+            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
+            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
+            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? null,
+            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? null,
+            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
             'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
@@ -340,13 +394,23 @@ class ProcurementViewPage extends Component
             // Bidding fields
             'ib_number' => $schedule['ib_number'] ?? null,
             'bidding_number' => $schedule['bidding_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
+            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
+            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
+            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? null,
+            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? null,
+            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
 
             // SVP fields
             'rfq_no' => $schedule['rfq_no'] ?? null,
@@ -489,6 +553,7 @@ class ProcurementViewPage extends Component
                 'email' => !empty(trim($supplier->email)) ? trim($supplier->email) : null,
                 'contact_person' => !empty(trim($supplier->contact_person)) ? trim($supplier->contact_person) : null,
             ];
+            $this->modalType = 'supplier';
             $this->showModal = true;
         }
     }
@@ -497,6 +562,89 @@ class ProcurementViewPage extends Component
     {
         $this->showModal = false;
         $this->selectedSupplier = null;
+        $this->stageHistory = [];
+        $this->modalType = '';
+        $this->selectedPrItemID = null;
+    }
+
+    public function viewStageHistory($prItemID = null): void
+    {
+        $this->selectedPrItemID = $prItemID;
+
+        if ($prItemID) {
+            // Per Item: Get stage changes for specific item
+            $prStages = \App\Models\PrItemPrstage::where('procID', $this->procurement->procID)
+                ->where('prItemID', $prItemID)
+                ->with(['stage'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Per Lot: Get stage changes for entire procurement
+            $prStages = \App\Models\PrLotPrstage::where('procID', $this->procurement->procID)
+                ->with(['procurementStage'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        $history = [];
+
+        // Process stage records with audit information
+        foreach ($prStages as $prStage) {
+            // Get the most recent audit record for this stage change (created event)
+            $modelType = $prItemID ? 'App\\Models\\PrItemPrstage' : 'App\\Models\\PrLotPrstage';
+
+            $audit = \App\Models\Audit::where('auditable_type', $modelType)
+                ->where('auditable_id', $prStage->id)
+                ->where('event', 'created')
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $userName = 'System';
+            $auditDate = $prStage->created_at;
+
+            if ($audit) {
+                // Try to get user from audit record
+                if ($audit->user_id && $audit->user) {
+                    $userName = $audit->user->name ?? $audit->user->email ?? 'System';
+                } elseif ($audit->user_id) {
+                    // Try to find user directly if relationship didn't load
+                    $user = \App\Models\User::find($audit->user_id);
+                    $userName = $user ? ($user->name ?? $user->email) : 'System';
+                }
+                // Use audit created_at for more accurate timestamp
+                $auditDate = $audit->created_at ?? $prStage->created_at;
+            }
+
+            // Get stage name based on type
+            $stageName = $prItemID
+                ? ($prStage->stage?->procurementstage ?? 'N/A')
+                : ($prStage->procurementStage?->procurementstage ?? 'N/A');
+
+            $history[] = [
+                'stage' => $stageName,
+                'date' => $auditDate?->format('M d, Y h:i A') ?? 'N/A',
+                'user' => $userName,
+                'timestamp' => $auditDate?->timestamp ?? 0,
+            ];
+        }
+
+        // Sort by timestamp descending (most recent first)
+        usort($history, function ($a, $b) {
+            return $b['timestamp'] - $a['timestamp'];
+        });
+
+        $this->stageHistory = $history;
+        $this->modalType = 'stageHistory';
+        $this->showModal = true;
+    }
+
+    public function closeStageHistoryModal(): void
+    {
+        $this->showModal = false;
+        $this->modalType = '';
+        $this->stageHistory = [];
+        $this->selectedPrItemID = null;
     }
     public function updatedMopSearchTerm(): void
     {
@@ -506,6 +654,11 @@ class ProcurementViewPage extends Component
     public function updatedPostSearchTerm(): void
     {
         $this->postPage = 1;
+    }
+
+    public function updatedItemSearchTerm(): void
+    {
+        $this->page = 1;
     }
     public function updatedPerPage(): void
     {

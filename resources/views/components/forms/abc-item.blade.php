@@ -12,7 +12,7 @@
         $id = 'abc-item-' . Str::slug($label ?? 'abc-item');
     }
 
-    $initialTotal = collect(data_get($form, 'items', []))->sum('amount');
+    $initialTotal = (float) collect(data_get($form, 'items', []))->sum(fn($item) => (float) ($item['amount'] ?? 0));
 @endphp
 
 <div class="flex flex-col {{ $colspan }}" x-data="{

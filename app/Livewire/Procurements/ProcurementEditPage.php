@@ -27,6 +27,7 @@ class ProcurementEditPage extends Component
     public $textareaRows = 1;
     public $page = 1;
     public $perPage = 10;
+    public $searchItem = '';
     public string $procID = '';
     public $queryParams = [];
     public function mount(Procurement $procurement)
@@ -48,10 +49,10 @@ class ProcurementEditPage extends Component
             $this->form['procurement_type'] = 'perLot';
         }
 
-        // Load items (reverse/sort to match create visual order) and keep prItemID
+        // Load items sorted by item_no
         if ($this->form['procurement_type'] === 'perItem') {
             $this->form['items'] = $procurement->pr_items
-                ->sortByDesc('id')
+                ->sortBy('item_no')
                 ->map(fn($item) => [
                     'prItemID' => $item->prItemID,
                     'item_no' => $item->item_no,
@@ -245,6 +246,13 @@ class ProcurementEditPage extends Component
             $this->form['procurement_type'] = 'perLot';
         }
 
+        // Clean item amounts before validation
+        if (($this->form['procurement_type'] ?? '') === 'perItem' && !empty($this->form['items'])) {
+            foreach ($this->form['items'] as $index => $item) {
+                $this->form['items'][$index]['amount'] = floatval(preg_replace('/[^0-9.]/', '', $item['amount'] ?? 0));
+            }
+        }
+
         // --- 1. Main form validation ---
         $validator = Validator::make($this->form, [
             'pr_number' => [
@@ -352,8 +360,8 @@ class ProcurementEditPage extends Component
             $existingItems = $this->procurement->pr_items()->pluck('id', 'prItemID')->toArray();
             $submittedPrItemIDs = [];
 
-            foreach (array_reverse($this->form['items']) as $index => $item) {
-                $prItemID = $item['prItemID'] ?? "{$this->procID}-" . ($index + 1);
+            foreach ($this->form['items'] as $item) {
+                $prItemID = $item['prItemID'] ?? "{$this->procID}-" . $item['item_no'];
                 $submittedPrItemIDs[] = $prItemID;
 
                 // Update or create the PR item
@@ -410,8 +418,25 @@ class ProcurementEditPage extends Component
     public function getPaginatedItemsProperty()
     {
         $items = $this->form['items'] ?? [];
+
+        // Apply search filter
+        if (!empty($this->searchItem)) {
+            $searchLower = strtolower($this->searchItem);
+            $items = array_filter($items, function ($item) use ($searchLower) {
+                return str_contains(strtolower($item['description'] ?? ''), $searchLower) ||
+                    str_contains(strtolower((string) ($item['item_no'] ?? '')), $searchLower);
+            });
+            // Re-index array after filtering
+            $items = array_values($items);
+        }
+
         $offset = ($this->page - 1) * $this->perPage;
-        return array_slice($items, $offset, $this->perPage);
+        return [
+            'items' => array_slice($items, $offset, $this->perPage),
+            'total' => count($items),
+            'from' => count($items) > 0 ? $offset + 1 : 0,
+            'to' => min($offset + $this->perPage, count($items)),
+        ];
     }
 
     public function updatingPage()
@@ -423,6 +448,18 @@ class ProcurementEditPage extends Component
         if ($this->page > $totalPages) {
             $this->page = $totalPages;
         }
+    }
+
+    public function updatedSearchItem()
+    {
+        // Reset to first page when search changes
+        $this->page = 1;
+    }
+
+    public function updatedPerPage()
+    {
+        // Reset to first page when per page changes
+        $this->page = 1;
     }
     public function cancel()
     {
