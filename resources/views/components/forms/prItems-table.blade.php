@@ -36,6 +36,16 @@
                         class="px-3 md:px-6 py-2 md:py-3 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                         Amount
                     </th>
+                    @if ($viewOnly)
+                        <th
+                            class="px-3 md:px-6 py-2 md:py-3 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            Stage
+                        </th>
+                        <th
+                            class="px-3 md:px-6 py-2 md:py-3 text-center text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            Remark
+                        </th>
+                    @endif
                     @unless ($viewOnly)
                         <th class="px-2 md:px-6 py-2 md:py-3 w-10 md:w-12"></th>
                     @endunless
@@ -86,6 +96,62 @@
                                 @endif
                             </div>
                         </td>
+
+                        @if ($viewOnly)
+                            <td class="px-3 py-2">
+                                @if (!empty($item['stage']))
+                                    <div class="flex justify-center">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            <span class="truncate max-w-[150px]">{{ $item['stage'] }}</span>
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="text-center text-gray-400 dark:text-gray-500 text-xs">-</div>
+                                @endif
+                            </td>
+
+                            <td class="px-3 py-2">
+                                @if (!empty($item['remark']))
+                                    @php
+                                        $remarkText = $item['remark'];
+                                        $remarkColor = match (true) {
+                                            str_contains($remarkText, 'Ongoing')
+                                                => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+                                            str_contains($remarkText, 'Awarded')
+                                                => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                                            str_contains($remarkText, 'Cancelled')
+                                                => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                                            default
+                                                => 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+                                        };
+                                        $remarkIcon = match (true) {
+                                            str_contains($remarkText, 'Ongoing')
+                                                => '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
+                                            str_contains($remarkText, 'Awarded')
+                                                => '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                                            str_contains($remarkText, 'Cancelled')
+                                                => '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                                            default => '',
+                                        };
+                                    @endphp
+                                    <div class="flex justify-center">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold {{ $remarkColor }}">
+                                            {!! $remarkIcon !!}
+                                            <span class="truncate max-w-[150px]">{{ $remarkText }}</span>
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="text-center text-gray-400 dark:text-gray-500 text-xs">-</div>
+                                @endif
+                            </td>
+                        @endif
 
                         @unless ($viewOnly)
                             <td class="px-2 py-2 text-center">

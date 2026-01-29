@@ -99,6 +99,8 @@ class ProcurementViewPage extends Component
                     'item_no' => $item->item_no,
                     'description' => $item->description,
                     'amount' => $item->amount ?? 0,
+                    'stage' => $item->prstage?->stage?->procurementstage ?? null,
+                    'remark' => $item->currentItemRemark?->remark?->remarks ?? null,
                 ])
                 ->values()
                 ->toArray();
@@ -230,14 +232,24 @@ class ProcurementViewPage extends Component
         foreach ($bidSchedules as $uid => $schedule) {
             $map[$uid] = [
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'list_invited_observers' => $schedule->list_invited_observers,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
+                'obsrvr_bid' => $schedule->obsrvr_bid,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
@@ -267,14 +279,24 @@ class ProcurementViewPage extends Component
             $map[$refId][$schedule->mop_uid] = [
                 'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'list_invited_observers' => $schedule->list_invited_observers,
+                'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
+                'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
+                'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
+                'obsrvr_bid' => $schedule->obsrvr_bid,
+                'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
                 'pre_bid_conf' => $schedule->pre_bid_conf,
                 'eligibility_check' => $schedule->eligibility_check,
                 'sub_open_bids' => $schedule->sub_open_bids,
+                'bid_evaluation_date' => $schedule->bid_evaluation_date,
+                'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
                 'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
         }
 
@@ -311,16 +333,30 @@ class ProcurementViewPage extends Component
             'uid' => $mopItem?->uid ?? 'new_' . uniqid(),
             'mode_order' => $mopItem?->mode_order ?? 1,
 
+            // Stage and Remark
+            'stage' => $prItem->prstage?->stage?->procurementstage ?? null,
+            'remark' => $prItem->currentItemRemark?->remark?->remarks ?? null,
+
             // All schedule fields from unified map
             'ib_number' => $schedule['ib_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
+            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
+            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
+            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? null,
+            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? null,
+            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
             'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
@@ -340,13 +376,23 @@ class ProcurementViewPage extends Component
             // Bidding fields
             'ib_number' => $schedule['ib_number'] ?? null,
             'bidding_number' => $schedule['bidding_number'] ?? null,
+            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
+            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
+            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
+            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? null,
+            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? null,
+            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? null,
             'pre_bid_conf' => $schedule['pre_bid_conf'] ?? null,
             'eligibility_check' => $schedule['eligibility_check'] ?? null,
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
+            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
+            'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
             'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
+            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
 
             // SVP fields
             'rfq_no' => $schedule['rfq_no'] ?? null,

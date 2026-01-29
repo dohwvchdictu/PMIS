@@ -8,7 +8,7 @@
             <div class="absolute top-1.5 left-0 z-10 flex items-center">
                 <!-- PR Number Badge -->
                 <span
-                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-emerald-600 text-white shadow-sm">
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-emerald-600 text-white shadow-sm {{ $form['procurement_type'] === 'perItem' ? 'rounded-br-lg' : '' }}">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -26,7 +26,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="truncate max-w-xs">{{ $procurement->currentPrStage->procurementStage->procurementstage ?? 'N/A' }}</span>
+                            <span
+                                class="truncate max-w-xs">{{ $procurement->currentPrStage->procurementStage->procurementstage ?? 'N/A' }}</span>
                         </span>
                     @endif
 
@@ -43,9 +44,12 @@
                             };
 
                             $remarkIcon = match (true) {
-                                str_contains($remarks, 'Ongoing') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
-                                str_contains($remarks, 'Awarded') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
-                                str_contains($remarks, 'Cancelled') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                                str_contains($remarks, 'Ongoing')
+                                    => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
+                                str_contains($remarks, 'Awarded')
+                                    => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                                str_contains($remarks, 'Cancelled')
+                                    => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
                                 default => '',
                             };
                         @endphp
@@ -53,67 +57,6 @@
                             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-br-lg text-sm font-semibold {{ $remarksColor }} shadow-sm">
                             {!! $remarkIcon !!}
                             <span class="truncate max-w-xs">{{ $remarks }}</span>
-                        </span>
-                    @endif
-                @else
-                    <!-- For perItem, show if there are multiple stages/remarks -->
-                    @php
-                        $uniqueStages = $procurement->pr_items
-                            ->pluck('prstage.procurementStage.procurementstage')
-                            ->filter()
-                            ->unique();
-                        $uniqueRemarks = $procurement->pr_items
-                            ->pluck('currentItemRemark.remark.remarks')
-                            ->filter()
-                            ->unique();
-                    @endphp
-
-                    @if ($uniqueStages->isNotEmpty())
-                        <span
-                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-blue-600 text-white shadow-sm {{ $uniqueRemarks->isEmpty() ? 'rounded-br-lg' : '' }}">
-                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="truncate max-w-xs">
-                                @if ($uniqueStages->count() > 1)
-                                    Multiple Stages ({{ $uniqueStages->count() }})
-                                @else
-                                    {{ $uniqueStages->first() }}
-                                @endif
-                            </span>
-                        </span>
-                    @endif
-
-                    @if ($uniqueRemarks->isNotEmpty())
-                        @php
-                            $firstRemark = $uniqueRemarks->first();
-
-                            $remarksColor = match (true) {
-                                str_contains($firstRemark, 'Ongoing') => 'bg-yellow-600 text-white',
-                                str_contains($firstRemark, 'Awarded') => 'bg-green-600 text-white',
-                                str_contains($firstRemark, 'Cancelled') => 'bg-red-600 text-white',
-                                default => 'bg-gray-600 text-white',
-                            };
-
-                            $remarkIcon = match (true) {
-                                str_contains($firstRemark, 'Ongoing') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
-                                str_contains($firstRemark, 'Awarded') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
-                                str_contains($firstRemark, 'Cancelled') => '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
-                                default => '',
-                            };
-                        @endphp
-                        <span
-                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-br-lg text-sm font-semibold {{ $remarksColor }} shadow-sm">
-                            {!! $remarkIcon !!}
-                            <span class="truncate max-w-xs">
-                                @if ($uniqueRemarks->count() > 1)
-                                    Multiple Remarks ({{ $uniqueRemarks->count() }})
-                                @else
-                                    {{ $uniqueRemarks->first() }}
-                                @endif
-                            </span>
                         </span>
                     @endif
                 @endif
@@ -198,19 +141,23 @@
 
                     @if ($form['procurement_type'] === 'perItem')
                         <div
-                            class="bg-white p-4 rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                            class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                             {{-- Header with Toggle --}}
-                            <div class="flex justify-between items-center mb-4">
-                                <h3
-                                    class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                    </svg>
-                                    Item List
-                                </h3>
+                            <div
+                                class="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                <div class="flex-1">
+                                    <h3
+                                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                        </svg>
+                                        Item List
+                                    </h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Procurement items and details
+                                    </p>
+                                </div>
                                 <button type="button" wire:click="$toggle('showTable')"
                                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {{ $showTable ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-500' }}">
                                     @if (!$showTable)
@@ -360,110 +307,221 @@
 
                     {{-- Category and Division Details --}}
                     <div
-                        class="bg-white p-4 rounded-xl shadow border border-gray-200
-                dark:bg-neutral-700 dark:border-neutral-700">
-                        <div class="grid grid-cols-2 md:grid-cols-8 gap-4">
-                            <x-forms.date id="date_receipt" label="Date Receipt" model="form.date_receipt"
-                                :form="$form" :required="false" :viewOnly="true" colspan="col-span-1" />
-                            <x-forms.select id="category_id" label="Category" model="form.category_id"
-                                :form="$form" :options="$categories" optionValue="id" optionLabel="category"
-                                :required="true" :viewOnly="true" colspan="col-span-2" />
-                            <x-forms.input id="category_type" label="Category Type" model="form.category_type"
-                                :form="$form" :required="false" :viewOnly="true" :colspan="1" />
-                            <x-forms.input id="rbac_sbac" label="RBAC / SBAC" model="form.rbac_sbac"
-                                :form="$form" :required="false" :viewOnly="true" :colspan="1" />
-                            <x-forms.input id="dtrack_no" label="DTRACK #" model="form.dtrack_no" :form="$form"
-                                :required="true" :viewOnly="true" colspan="col-span-1" />
-                            <x-forms.input id="unicode" label="UniCode" model="form.unicode" :form="$form"
-                                :viewOnly="true" :required="false" colspan="col-span-2" />
-                            <x-forms.select id="divisions_id" label="Division" model="form.divisions_id"
-                                :form="$form" :options="$divisions" optionValue="id" optionLabel="divisions"
-                                :required="true" :viewOnly="true" colspan="col-span-4" />
-                            <x-forms.select id="cluster_committees_id" label="Cluster / Committee"
-                                model="form.cluster_committees_id" :form="$form" :options="$clusterCommittees"
-                                optionValue="id" optionLabel="clustercommittee" :required="true" :viewOnly="true"
-                                colspan="col-span-2" />
+                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Category and Division Information
+                            </h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            @if ($form['date_receipt'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Date Receipt</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['date_receipt'] }}</p>
+                                </div>
+                            @endif
+                            @if ($form['category_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Category</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $categories->firstWhere('id', $form['category_id'])?->category ?? 'N/A' }}
+                                    </p>
+                                </div>
+                            @endif
+                            @if ($form['category_type'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Category Type</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['category_type'] }}</p>
+                                </div>
+                            @endif
+                            @if ($form['rbac_sbac'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">RBAC / SBAC</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['rbac_sbac'] }}</p>
+                                </div>
+                            @endif
+                            @if ($form['dtrack_no'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">DTRACK #</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['dtrack_no'] }}</p>
+                                </div>
+                            @endif
+                            @if ($form['unicode'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">UniCode</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['unicode'] }}</p>
+                                </div>
+                            @endif
+                            @if ($form['divisions_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Division</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $divisions->firstWhere('id', $form['divisions_id'])?->divisions ?? 'N/A' }}
+                                    </p>
+                                </div>
+                            @endif
+                            @if ($form['cluster_committees_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Cluster / Committee</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $clusterCommittees->firstWhere('id', $form['cluster_committees_id'])?->clustercommittee ?? 'N/A' }}
+                                    </p>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
                     {{-- Venue Details --}}
                     <div
-                        class="bg-white p-4 rounded-xl shadow border border-gray-200
-                dark:bg-neutral-700 dark:border-neutral-700">
-                        <div class="grid grid-cols-4 gap-4">
-                            <x-forms.select id="venue_specific_id" label="Venue|Specific"
-                                model="form.venue_specific_id" :form="$form" :options="$venueSpecifics" optionValue="id"
-                                optionLabel="name" :required="false" :viewOnly="true" colspan="col-span-2" />
-                            <x-forms.select id="venue_province_huc_id" label="Venue|Province/HUC"
-                                model="form.venue_province_huc_id" :form="$form" :options="$venueProvinces"
-                                optionValue="id" optionLabel="province_huc" :viewOnly="true" :required="false"
-                                colspan="col-span-2" />
-                            <x-forms.input id="category_venue" label="Category / Venue" model="form.category_venue"
-                                :form="$form" :required="false" :viewOnly="true" colspan="col-span-4" />
-                            <div class="flex flex-col col-span-2">
-                                <x-forms.approved-ppmp :form="$form" model="form.approved_ppmp"
-                                    :viewOnly="true" />
+                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Venue Information
+                            </h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            @if ($form['venue_specific_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Venue | Specific</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $venueSpecifics->firstWhere('id', $form['venue_specific_id'])?->name ?? 'N/A' }}
+                                    </p>
+                                </div>
+                            @endif
+                            @if ($form['venue_province_huc_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Venue | Province/HUC</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $venueProvinces->firstWhere('id', $form['venue_province_huc_id'])?->province_huc ?? 'N/A' }}
+                                    </p>
+                                </div>
+                            @endif
+                            @if ($form['category_venue'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Category / Venue</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['category_venue'] }}</p>
+                                </div>
+                            @endif
+                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Approved PPMP</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $form['approved_ppmp'] ? 'Yes' : 'No' }}
+                                </p>
                             </div>
-                            <div class="flex flex-col col-span-2">
-                                <x-forms.app-updated :form="$form" model="form.app_updated" :viewOnly="true" />
+                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">APP Updated</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $form['app_updated'] ? 'Yes' : 'No' }}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     {{-- Date Needed and End User --}}
                     <div
-                        class="bg-white p-4 rounded-xl shadow border border-gray-200
-                dark:bg-neutral-700 dark:border-neutral-700">
-                        <div class="grid grid-cols-4 gap-4">
-                            <div class="col-span-3 flex gap-4">
-                                <div class="flex-1">
-                                    <x-forms.textarea id="immediate_date_needed" label="Immediate Date Needed"
-                                        model="form.immediate_date_needed" :form="$form" :viewOnly="true"
-                                        :maxlength="500" rows="4" :autoResize="true" />
+                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Timeline and End User
+                            </h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            @if ($form['immediate_date_needed'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Immediate Date Needed</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['immediate_date_needed'] }}</p>
                                 </div>
-                                <div class="flex-1">
-                                    <x-forms.textarea id="date_needed" label="Date Needed" model="form.date_needed"
-                                        :form="$form" :required="false" :maxlength="500" :viewOnly="true"
-                                        rows="4" :autoResize="true" />
+                            @endif
+                            @if ($form['date_needed'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Date Needed</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['date_needed'] }}</p>
                                 </div>
-                            </div>
-                            <div class="col-span-1 flex flex-col gap-4">
-                                <div>
-                                    <x-forms.select id="end_users_id" label="PMO/End-User" model="form.end_users_id"
-                                        :form="$form" :options="$endUsers" optionValue="id" optionLabel="endusers"
-                                        :viewOnly="true" :required="false" />
+                            @endif
+                            @if ($form['end_users_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PMO/End-User</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $endUsers->firstWhere('id', $form['end_users_id'])?->endusers ?? 'N/A' }}
+                                    </p>
                                 </div>
-                                <div>
-                                    <x-forms.early-procurement model="form.early_procurement" :form="$form"
-                                        :viewOnly="true" :clickable="false" />
-                                </div>
+                            @endif
+                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Early Procurement</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $form['early_procurement'] ? 'Yes' : 'No' }}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     {{-- Fund Source and ABC --}}
-                    <div class="flex justify-center gap-4">
-                        <div
-                            class="bg-white p-4 rounded-xl shadow border border-gray-200
-                dark:bg-neutral-700 dark:border-neutral-700">
-                            <div class="grid grid-cols-4 gap-4">
-                                <div class="col-span-1">
-                                    <x-forms.select id="fund_source_id" label="Source of Funds"
-                                        model="form.fund_source_id" :form="$form" :options="$fundSources"
-                                        optionValue="id" optionLabel="fundsources" :viewOnly="true"
-                                        :required="true" />
+                    <div
+                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Budget Information
+                            </h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            @if ($form['fund_source_id'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Source of Funds</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $fundSources->firstWhere('id', $form['fund_source_id'])?->fundsources ?? 'N/A' }}
+                                    </p>
                                 </div>
-                                <div class="col-span-1">
-                                    <x-forms.input id="expense_class" label="Expense Class"
-                                        model="form.expense_class" :form="$form" :required="false"
-                                        :viewOnly="true" textAlign="right" />
+                            @endif
+                            @if ($form['expense_class'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Expense Class</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $form['expense_class'] }}</p>
                                 </div>
-                                <x-forms.currency-input id="abc" label="ABC Amount" model="form.abc"
-                                    :form="$form" :required="true" colspan="col-span-1" :viewOnly="true" />
-                                <div class="col-span-1">
-                                    <x-forms.abc50k id="abc_50k" label="ABC ⇔ 50k" model="form.abc_50k"
-                                        :viewOnly="true" :form="$form" />
+                            @endif
+                            @if ($form['abc'])
+                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">ABC Amount</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                        ₱{{ number_format($form['abc'], 2) }}
+                                    </p>
                                 </div>
+                            @endif
+                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">ABC ⇔ 50k</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $form['abc_50k'] ?? 'N/A' }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -635,6 +693,14 @@
                                                         {{ $currentMode['ib_number'] }}</p>
                                                 </div>
                                             @endif
+                                            @if ($currentMode['philgeps_posting_ref_no'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS
+                                                        Posting Ref #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['philgeps_posting_ref_no'] }}</p>
+                                                </div>
+                                            @endif
                                             @if ($currentMode['pre_proc_conference'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pre-Proc
@@ -650,6 +716,57 @@
                                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                         {{ $currentMode['ads_post_ib'] }}</p>
                                                 </div>
+                                            @endif
+                                            {{-- Observer fields only for competitive bidding modes 2-6 --}}
+                                            @if (in_array($modeId, [2, 3, 4, 5, 6]))
+                                                @if ($currentMode['list_invited_observers'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">List
+                                                            of Invited Observers</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['list_invited_observers'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentMode['obsrvr_prebid_conf'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Observer Pre-Bid Conf</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['obsrvr_prebid_conf'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentMode['obsrvr_eligibility'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Observer Eligibility</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['obsrvr_eligibility'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentMode['obsrvr_sub_open_of_bid'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Observer Sub/Open of Bid</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['obsrvr_sub_open_of_bid'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentMode['obsrvr_bid'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Observer Bid</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['obsrvr_bid'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentMode['obsrvr_post_qual'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Observer Post Qual</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentMode['obsrvr_post_qual'] }}</p>
+                                                    </div>
+                                                @endif
                                             @endif
                                             @if ($currentMode['pre_bid_conf'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
@@ -675,12 +792,36 @@
                                                         {{ $currentMode['sub_open_bids'] }}</p>
                                                 </div>
                                             @endif
+                                            @if ($currentMode['bid_evaluation_date'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid
+                                                        Evaluation Date</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['bid_evaluation_date'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['post_qualification_date'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post
+                                                        Qualification Date</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['post_qualification_date'] }}</p>
+                                                </div>
+                                            @endif
                                             @if ($currentMode['bidding_date'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bidding
                                                         Date</p>
                                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                         {{ $currentMode['bidding_date'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['resolution_number_mop'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
+                                                        #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['resolution_number_mop'] }}</p>
                                                 </div>
                                             @endif
                                         </div>
@@ -699,6 +840,30 @@
                                             Mode Information
                                         </h4>
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            @if ($currentMode['philgeps_posting_ref_no'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS
+                                                        Posting Ref #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['philgeps_posting_ref_no'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['ads_post_ib'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Ads/Post
+                                                        IB</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['ads_post_ib'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['resolution_number_mop'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
+                                                        #</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['resolution_number_mop'] }}</p>
+                                                </div>
+                                            @endif
                                             @if ($currentMode['rfq_no'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">RFQ No.
@@ -989,7 +1154,8 @@
                                                                             Resolution</p>
                                                                         <p
                                                                             class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                            {{ $historyItem['resolution_number'] }}</p>
+                                                                            {{ $historyItem['resolution_number'] }}
+                                                                        </p>
                                                                     </div>
                                                                 @endif
                                                             </div>
@@ -1116,7 +1282,7 @@
                                                 </h3>
                                             </div>
                                             <div
-                                                class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                class="flex items-center flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
                                                 @php
                                                     $mode = $modeOfProcurements->firstWhere(
                                                         'id',
@@ -1254,6 +1420,15 @@
                                                             {{ $currentItem['ib_number'] }}</p>
                                                     </div>
                                                 @endif
+                                                @if ($currentItem['philgeps_posting_ref_no'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            PhilGEPS Posting Ref #
+                                                        </p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['philgeps_posting_ref_no'] }}</p>
+                                                    </div>
+                                                @endif
                                                 @if ($currentItem['pre_proc_conference'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -1269,6 +1444,63 @@
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                             {{ $currentItem['ads_post_ib'] }}</p>
                                                     </div>
+                                                @endif
+                                                {{-- Observer fields only for competitive bidding modes 2-6 --}}
+                                                @if (in_array($modeId, [2, 3, 4, 5, 6]))
+                                                    @if ($currentItem['list_invited_observers'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                List of Invited Observers</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['list_invited_observers'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if ($currentItem['obsrvr_prebid_conf'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                Observer Pre-Bid Conf</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['obsrvr_prebid_conf'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if ($currentItem['obsrvr_eligibility'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                Observer Eligibility</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['obsrvr_eligibility'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if ($currentItem['obsrvr_sub_open_of_bid'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                Observer Sub/Open of Bid</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['obsrvr_sub_open_of_bid'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if ($currentItem['obsrvr_bid'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                Observer Bid</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['obsrvr_bid'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    @if ($currentItem['obsrvr_post_qual'])
+                                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                                Observer Post Qual</p>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $currentItem['obsrvr_post_qual'] }}</p>
+                                                        </div>
+                                                    @endif
                                                 @endif
                                                 @if ($currentItem['pre_bid_conf'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
@@ -1294,12 +1526,36 @@
                                                             {{ $currentItem['sub_open_bids'] }}</p>
                                                     </div>
                                                 @endif
+                                                @if ($currentItem['bid_evaluation_date'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid
+                                                            Evaluation Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['bid_evaluation_date'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['post_qualification_date'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post
+                                                            Qualification Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['post_qualification_date'] }}</p>
+                                                    </div>
+                                                @endif
                                                 @if ($currentItem['bidding_date'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                                                             Bidding Date</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                             {{ $currentItem['bidding_date'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['resolution_number_mop'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Resolution #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['resolution_number_mop'] }}</p>
                                                     </div>
                                                 @endif
                                             </div>
@@ -1319,6 +1575,30 @@
                                                 Mode Information
                                             </h4>
                                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                @if ($currentItem['philgeps_posting_ref_no'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            PhilGEPS Posting Ref #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['philgeps_posting_ref_no'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['ads_post_ib'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Ads/Post IB</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['ads_post_ib'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['resolution_number_mop'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Resolution #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['resolution_number_mop'] }}</p>
+                                                    </div>
+                                                @endif
                                                 @if ($currentItem['rfq_no'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">RFQ
@@ -2071,6 +2351,14 @@
                                                             {{ $postData['recommendingForAward'] }}</p>
                                                     </div>
                                                 @endif
+                                                @if (!empty($postData['noticeOfAwardNumber']))
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice
+                                                            of Award #</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $postData['noticeOfAwardNumber'] }}</p>
+                                                    </div>
+                                                @endif
                                                 @if (!empty($postData['noticeOfAward']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice
@@ -2135,45 +2423,6 @@
                                                             {{ $postData['dateOfPostingOfAwardOnPhilGEPS'] }}</p>
                                                     </div>
                                                 @endif
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    {{-- Supplier Information --}}
-                                    @if (!empty($postData['supplier_id']))
-                                        <div>
-                                            <h4
-                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                                Supplier
-                                            </h4>
-                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
-                                                @php
-                                                    $supplier = $suppliers->firstWhere('id', $postData['supplier_id']);
-                                                @endphp
-                                                <div class="flex items-center justify-between">
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $supplier?->name ?? 'Unknown Supplier' }}
-                                                    </p>
-                                                    @if ($supplier)
-                                                        <button wire:click="viewSupplierDetails({{ $supplier->id }})"
-                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 transition-colors"
-                                                            title="View Contact Details">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                                fill="none" viewBox="0 0 24 24"
-                                                                stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </button>
-                                                    @endif
-                                                </div>
                                             </div>
                                         </div>
                                     @endif
