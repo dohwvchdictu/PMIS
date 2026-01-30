@@ -170,8 +170,8 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
-                // For modes 3-6, also require resolution_number_mop
-                if (in_array($modeId, [3, 4, 5, 6])) {
+                // For modes 2-6, also require resolution_number_mop
+                if (in_array($modeId, [2, 3, 4, 5, 6])) {
                     $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
                 }
 
@@ -947,12 +947,6 @@ class ModeOfProcurementPerItemPage extends Component
             $svpFields = [
                 $itemData['philgeps_posting_ref_no'] ?? null,
                 $itemData['ads_post_ib'] ?? null,
-                $itemData['list_invited_observers'] ?? null,
-                $itemData['obsrvr_prebid_conf'] ?? null,
-                $itemData['obsrvr_eligibility'] ?? null,
-                $itemData['obsrvr_sub_open_of_bid'] ?? null,
-                $itemData['obsrvr_bid'] ?? null,
-                $itemData['obsrvr_post_qual'] ?? null,
                 $itemData['resolution_number_mop'] ?? null,
                 $itemData['rfq_no'] ?? null,
                 $itemData['canvass_date'] ?? null,
