@@ -336,11 +336,8 @@
                                             </select>
                                         </td>
 
-                                        {{-- Bidding Number --}}
-                                        @if (
-                                            $showFields &&
-                                                $modeId &&
-                                                !in_array($modeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                        {{-- COMPETITIVE BIDDING MODES (2-6) --}}
+                                        @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
@@ -361,6 +358,7 @@
         : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     placeholder="IB-2025-002" @disabled($disableInputs)>
                                             </td>
+
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="philgeps-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.philgeps_posting_ref_no"
@@ -379,6 +377,36 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
+                                            {{-- SVP/ALTERNATIVE MODES (7-24) --}}
+                                        @elseif ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                            {{-- Empty cells for Bidding # and IB No. --}}
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+
+                                            {{-- PhilGEPS Posting Ref # for SVP modes --}}
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="philgeps-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.philgeps_posting_ref_no"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+{{ $errors->has('form.items.' . $itemIndex . '.philgeps_posting_ref_no')
+    ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+    : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="PHL-2025-001" @disabled($disableInputs)>
+                                            </td>
+
+                                            {{-- Empty cell for Pre-Proc Conference --}}
+                                            <td class="px-2 py-2"></td>
+
+                                            {{-- MODE 1 OR UNSAVED RECORDS - ALL EMPTY --}}
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        {{-- Continue with Ads/Post IB and all bidding fields for COMPETITIVE BIDDING (2-6) --}}
+                                        @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
                                             {{-- Ads/Post IB --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ads-{{ $rowUid }}"
@@ -386,9 +414,10 @@
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
+
                                             <td class="px-2 py-2">
                                                 <textarea wire:key="list-observers-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.list_invited_observers" rows="2"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.list_invited_observers" rows="1"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     placeholder="List observers..." @disabled($disableInputs)></textarea>
                                             </td>
@@ -427,7 +456,39 @@
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
-                                            {{-- Pre-Bid Conference --}}
+
+                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Show Ads/Post IB, hide observers --}}
+                                        @elseif ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                            {{-- Ads/Post IB for SVP modes --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ads-svp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
+                                            {{-- Empty cells for observer fields (not needed for SVP modes 7-24) --}}
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+
+                                            {{-- MODE 1 OR UNSAVED RECORDS --}}
+                                        @else
+                                            {{-- Empty cells for Ads/Post IB and observers --}}
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                        @endif
+
+                                        {{-- Pre-Bid Conference through Bidding Result - Show only for competitive bidding (2-6) --}}
+                                        @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-bid-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.pre_bid_conf"
@@ -435,7 +496,6 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- Eligibility Check --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="elig-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.eligibility_check"
@@ -443,7 +503,6 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- Sub/Open of Bids --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="sub-open-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.sub_open_bids"
@@ -451,7 +510,6 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            <!-- Bid Evaluation Date -->
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="bid-eval-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bid_evaluation_date"
@@ -459,7 +517,6 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            <!-- Post Qualification Date -->
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="post-qual-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.post_qualification_date"
@@ -467,7 +524,6 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            <!-- Keep existing Bidding Date field -->
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="bid-date-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
@@ -497,34 +553,8 @@
                                                 </select>
                                             </td>
 
-                                            @if ($showFields && $modeId && !in_array($modeId, [1]))
-                                                <td class="px-2 py-2">
-                                                    @if (in_array($modeId, [2, 3, 4, 5, 6]))
-                                                        <input type="text" wire:key="res-mop-{{ $rowUid }}"
-                                                            wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
-                                                            class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
-    {{ $errors->has('form.items.' . $itemIndex . '.resolution_number_mop')
-        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                            placeholder="RES-2025-001" @disabled($disableInputs)
-                                                            title="Required for this procurement mode">
-                                                    @else
-                                                        {{-- Other modes: Show empty --}}
-                                                        <div class="flex items-center justify-center h-full">
-                                                            <span
-                                                                class="text-gray-400 dark:text-gray-500 text-xs"></span>
-                                                        </div>
-                                                    @endif
-                                                </td>
-                                            @else
-                                                <td class="px-2 py-2"></td>
-                                            @endif
+                                            {{-- Empty cells for remaining bidding fields for other modes --}}
                                         @else
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
-                                            <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
@@ -534,8 +564,36 @@
                                             <td class="px-2 py-2"></td>
                                         @endif
 
-                                        {{-- RFQ No. --}}
-                                        @if ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                        {{-- Resolution # (MOP) for competitive bidding modes 2-6 --}}
+                                        @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="res-mop-comp-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+    {{ $errors->has('form.items.' . $itemIndex . '.resolution_number_mop')
+        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
+                                            </td>
+
+                                            {{-- Empty SVP columns for competitive bidding --}}
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
+
+                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Resolution # (MOP) comes FIRST to match per-lot --}}
+                                        @elseif ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:key="res-num-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
+                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+    {{ $errors->has('form.items.' . $itemIndex . '.resolution_number_mop')
+        ? 'border-red-500 focus:ring-red-500'
+        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
+                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
+                                            </td>
+
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="rfq-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.rfq_no"
@@ -574,16 +632,6 @@
         ? 'border-red-500 focus:ring-red-500'
         : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                                     @disabled($disableInputs)>
-                                            </td>
-
-                                            <td class="px-2 py-2">
-                                                <input type="text" wire:key="res-num-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.resolution_number_mop"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
-    {{ $errors->has('form.items.' . $itemIndex . '.resolution_number_mop')
-        ? 'border-red-500 focus:ring-red-500'
-        : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    placeholder="RES-2025-001" @disabled($disableInputs)>
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -830,7 +878,7 @@
 
                                                                         <td
                                                                             class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            @if (in_array($historyModeId, [3, 4, 5, 6]))
+                                                                            @if (in_array($historyModeId, [2, 3, 4, 5, 6]))
                                                                                 {{ $historyItem['resolution_number_mop'] ?? '-' }}
                                                                             @else
                                                                                 -
@@ -1106,7 +1154,7 @@
                                     Mode of Procurement
                                 </th>
                                 {{-- Bidding Columns --}}
-                                @if ($editModeId && !in_array($editModeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                @if ($editModeId && in_array($editModeId, [2, 3, 4, 5, 6]))
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 w-20">
                                         Bidding #</th>
@@ -1196,7 +1244,7 @@
                                 </td>
 
                                 {{-- Bidding Fields --}}
-                                @if ($editModeId && !in_array($editModeId, [1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+                                @if ($editModeId && in_array($editModeId, [2, 3, 4, 5, 6]))
                                     <td class="px-2 py-2">
                                         <input type="text" wire:model.defer="editingItem.bidding_number"
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
@@ -1219,7 +1267,7 @@
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <textarea wire:model.defer="editingItem.list_invited_observers" rows="2"
+                                        <textarea wire:model.defer="editingItem.list_invited_observers" rows="1"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white"
                                             placeholder="List observers..."></textarea>
                                     </td>
