@@ -244,46 +244,7 @@
                                         $disableInputs = $isHead && $hasPostData && !$canEditMop;
                                         $disableSelect = $hasSchedule || $modeId == 1;
 
-                                        $canAddNewMode = false;
-
-                                        if (
-                                            in_array($modeId, [
-                                                7,
-                                                8,
-                                                9,
-                                                10,
-                                                11,
-                                                12,
-                                                13,
-                                                14,
-                                                15,
-                                                16,
-                                                17,
-                                                18,
-                                                19,
-                                                20,
-                                                21,
-                                                22,
-                                                23,
-                                            ])
-                                        ) {
-                                            $canAddNewMode = false;
-                                        } else {
-                                            $bidResult = $item['bidding_result'] ?? '';
-                                            $hasBiddingData =
-                                                !empty($item['ib_number']) &&
-                                                !empty($item['bidding_number']) &&
-                                                !empty($item['bidding_date']);
-                                            $hasPreProcConference =
-                                                !empty($item['pre_proc_conference']) &&
-                                                trim($item['pre_proc_conference']) !== '';
-
-                                            $canAddNewMode =
-                                                $modeId == 1 ||
-                                                (($hasBiddingData || $hasPreProcConference) &&
-                                                    $bidResult === 'UNSUCCESSFUL' &&
-                                                    !$this->isPostAvailable);
-                                        }
+                                        $canAddNewMode = $this->canAddNewModeForItem($item, $modeId);
                                     @endphp
 
                                     <tr wire:key="row-{{ $currentPrID }}"
@@ -749,8 +710,8 @@
                                                         </thead>
                                                         <tbody
                                                             class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                                            @if ($historyItems->count() > 0)
-                                                                @foreach ($historyItems as $histIndex => $historyItem)
+                                                            @if ($this->historyItems->count() > 0)
+                                                                @foreach ($this->historyItems as $histIndex => $historyItem)
                                                                     @php
                                                                         $actualIndex = collect($form['items'])->search(
                                                                             fn($item) => $item['uid'] ===

@@ -1242,6 +1242,32 @@ class ModeOfProcurementPerItemPage extends Component
             !empty(array_filter($this->postItems[$prItemID] ?? []));
     }
 
+    public function canAddNewModeForItem(array $item, ?int $modeId): bool
+    {
+        // SVP/Alternative modes cannot add new modes
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            return false;
+        }
+
+        $bidResult = $item['bidding_result'] ?? '';
+
+        $hasBiddingData = $this->hasValue($item['ib_number']) &&
+            $this->hasValue($item['bidding_number']) &&
+            $this->hasValue($item['bidding_date']);
+
+        $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
+
+        // Check if post data exists for THIS SPECIFIC item
+        $prItemID = $item['prItemID'] ?? null;
+        $hasPostDataForThisItem = $prItemID && isset($this->postItems[$prItemID]) &&
+            !empty(array_filter($this->postItems[$prItemID] ?? []));
+
+        return $modeId == 1 ||
+            (($hasBiddingData || $hasPreProcConference) &&
+                $bidResult === 'UNSUCCESSFUL' &&
+                !$hasPostDataForThisItem);
+    }
+
     public function save(): void
     {
         if ($this->activeTab == 2) {
