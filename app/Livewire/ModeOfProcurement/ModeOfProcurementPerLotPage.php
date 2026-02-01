@@ -38,6 +38,7 @@ class ModeOfProcurementPerLotPage extends Component
     public Collection $suppliers;
     public $queryParams = [];
     public bool $showModal = false;
+    public ?float $abc = null;
     public ?array $editingItem = null;
     public ?int $editingIndex = null;
     public array $scheduleValidationErrors = [];
@@ -58,6 +59,8 @@ class ModeOfProcurementPerLotPage extends Component
             'early_procurement' => (bool) ($procurement->early_procurement ?? false),
             'items' => [],
         ];
+
+        $this->abc = $procurement->abc;
 
         $this->loadPostProcurementData($procurement);
         $this->modeOfProcurements = ModeOfProcurement::orderBy('id', 'asc')->get();
@@ -136,6 +139,8 @@ class ModeOfProcurementPerLotPage extends Component
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
                     $this->hasValue($item['ib_number']) &&
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
                     $this->hasValue($item['obsrvr_prebid_conf']) &&
@@ -164,13 +169,20 @@ class ModeOfProcurementPerLotPage extends Component
 
             // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                // Check all required SVP fields are filled
+                // Base required SVP fields
                 $allSvpFieldsFilled =
                     $this->hasValue($item['resolution_number_mop']) &&
                     $this->hasValue($item['rfq_no']) &&
                     $this->hasValue($item['canvass_date']) &&
                     $this->hasValue($item['date_returned_of_canvass']) &&
                     $this->hasValue($item['abstract_of_canvass_date']);
+
+                // If ABC is 200k or above, also require philgeps_posting_ref_no and ads_post_ib
+                if ($this->abc >= 200000) {
+                    $allSvpFieldsFilled = $allSvpFieldsFilled &&
+                        $this->hasValue($item['philgeps_posting_ref_no']) &&
+                        $this->hasValue($item['ads_post_ib']);
+                }
 
                 if ($allSvpFieldsFilled) {
                     return true;

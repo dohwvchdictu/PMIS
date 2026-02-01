@@ -154,6 +154,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
                     $this->hasValue($item['ib_number']) &&
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
                     $this->hasValue($item['obsrvr_prebid_conf']) &&
@@ -182,13 +184,21 @@ class ModeOfProcurementPerItemPage extends Component
 
             // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                // Check all required SVP fields are filled
+                // Base required SVP fields
                 $allSvpFieldsFilled =
                     $this->hasValue($item['resolution_number_mop']) &&
                     $this->hasValue($item['rfq_no']) &&
                     $this->hasValue($item['canvass_date']) &&
                     $this->hasValue($item['date_returned_of_canvass']) &&
                     $this->hasValue($item['abstract_of_canvass_date']);
+
+                // If amount >= 200k, also require philgeps_posting_ref_no and ads_post_ib
+                $amount = (float) ($item['amount'] ?? 0);
+                if ($amount >= 200000) {
+                    $allSvpFieldsFilled = $allSvpFieldsFilled &&
+                        $this->hasValue($item['philgeps_posting_ref_no']) &&
+                        $this->hasValue($item['ads_post_ib']);
+                }
 
                 if ($allSvpFieldsFilled) {
                     return true;
