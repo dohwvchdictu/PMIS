@@ -21,10 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force Livewire update route to include /PMIS-TEST
-        Livewire::setUpdateRoute(function ($handle) {
-            return Route::post('/PMIS-TEST/livewire/update', $handle);
-        });
+
     }
 
 }
