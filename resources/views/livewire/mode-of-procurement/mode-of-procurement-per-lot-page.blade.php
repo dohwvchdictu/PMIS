@@ -109,19 +109,12 @@
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Pre-Proc Conference</th>
-
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Ads/Post IB</th>
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        List of Invited Observers</th>
-
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Observers (Pre-Bid)</th>
+                                        Pre-Proc Conference</th>
+                                    Observers (Pre-Bid)</th>
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -159,10 +152,6 @@
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Post Qualification Date
                                     </th>
-
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Bidding Date</th>
 
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -331,15 +320,15 @@
                                             </td>
 
                                             <td class="px-2 py-2">
-                                                <input type="date" wire:key="pre-proc-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
+                                                <input type="date" wire:key="ads-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
 
                                             <td class="px-2 py-2">
-                                                <input type="date" wire:key="ads-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                <input type="date" wire:key="pre-proc-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.pre_proc_conference"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
@@ -422,13 +411,6 @@
                                             </td>
 
                                             <td class="px-2 py-2">
-                                                <input type="date" wire:key="bid-date-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
-                                            <td class="px-2 py-2">
                                                 @php
                                                     $biddingResult = $item['bidding_result'] ?? '';
                                                     $hasPostData = \App\Models\PostProcurement::where(
@@ -487,9 +469,6 @@
                                                     placeholder="PHL-2025-001" @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- Empty cell for Pre-Proc Conference --}}
-                                            <td class="px-2 py-2"></td>
-
                                             {{-- Ads/Post IB for SVP modes --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="ads-svp-{{ $rowUid }}"
@@ -497,6 +476,9 @@
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                                                     @disabled($disableInputs)>
                                             </td>
+
+                                            {{-- Empty cell for Pre-Proc Conference --}}
+                                            <td class="px-2 py-2"></td>
 
                                             {{-- Empty cells for observer fields (not needed for SVP modes 7-24) --}}
                                             <td class="px-2 py-2"></td>
@@ -620,10 +602,10 @@
                                                                     PhilGEPS Posting Ref #</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Proc Conference</th>
+                                                                    Ads/Post IB</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Ads/Post IB</th>
+                                                                    Pre-Proc Conference</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     List of Invited Observers</th>
@@ -659,9 +641,6 @@
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Post Qualification Date
                                                                 </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bidding Date</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Bidding Result</th>
@@ -738,11 +717,11 @@
                                                                             </td>
                                                                             <td
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['pre_proc_conference'] ?? '-' }}
+                                                                                {{ $historyItem['ads_post_ib'] ?? '-' }}
                                                                             </td>
                                                                             <td
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['ads_post_ib'] ?? '-' }}
+                                                                                {{ $historyItem['pre_proc_conference'] ?? '-' }}
                                                                             </td>
                                                                             <td
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
@@ -790,10 +769,6 @@
                                                                             </td>
                                                                             <td
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['bidding_date'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                                 {{ $historyItem['bidding_result'] ?? '-' }}
                                                                             </td>
                                                                             {{-- Empty SVP columns --}}
@@ -811,7 +786,6 @@
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                                 {{ $historyItem['philgeps_posting_ref_no'] ?? '-' }}
                                                                             </td>
-                                                                            <td class="px-2 py-2">-</td>
                                                                             <td
                                                                                 class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                                 {{ $historyItem['ads_post_ib'] ?? '-' }}
@@ -1109,11 +1083,11 @@
                                     </th>
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Pre-Proc Conf.
+                                        Ads/Post IB
                                     </th>
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Ads/Post IB
+                                        Pre-Proc Conf.
                                     </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -1157,10 +1131,6 @@
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Post Qual.
-                                    </th>
-                                    <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Bidding Date
                                     </th>
                                     <th
                                         class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
@@ -1217,11 +1187,11 @@
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.pre_proc_conference"
+                                        <input type="date" wire:model.defer="editingItem.ads_post_ib"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.ads_post_ib"
+                                        <input type="date" wire:model.defer="editingItem.pre_proc_conference"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
@@ -1272,10 +1242,6 @@
                                     </td>
                                     <td class="px-2 py-2">
                                         <input type="date" wire:model.defer="editingItem.post_qualification_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                    </td>
-                                    <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.bidding_date"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
