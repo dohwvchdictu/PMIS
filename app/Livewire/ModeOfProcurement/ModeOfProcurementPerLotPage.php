@@ -222,6 +222,7 @@ class ModeOfProcurementPerLotPage extends Component
             'uid' => $mopLot->uid ?? 'temp_' . uniqid(),
             'mode_of_procurement_id' => $mopLot->mode_of_procurement_id,
             'mode_order' => $mopLot->mode_order ?? ($index + 1),
+            'bidding_number' => $schedule['bidding_number'] ?? null,
             'ib_number' => $schedule['ib_number'] ?? null,
             'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
@@ -237,7 +238,6 @@ class ModeOfProcurementPerLotPage extends Component
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
             'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
             'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
-            'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
             'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
@@ -253,6 +253,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         foreach ($bidSchedules as $uid => $schedule) {
             $map[$uid] = [
+                'bidding_number' => $schedule->bidding_number,
                 'ib_number' => $schedule->ib_number,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
                 'ads_post_ib' => $schedule->ads_post_ib,
@@ -268,7 +269,6 @@ class ModeOfProcurementPerLotPage extends Component
                 'sub_open_bids' => $schedule->sub_open_bids,
                 'bid_evaluation_date' => $schedule->bid_evaluation_date,
                 'post_qualification_date' => $schedule->post_qualification_date,
-                'bidding_number' => $schedule->bidding_number,
                 'bidding_result' => $schedule->bidding_result,
                 'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
@@ -490,10 +490,10 @@ class ModeOfProcurementPerLotPage extends Component
 
             // FIX #5: Using hasAnyValue() for consistent checking
             $biddingFields = [
+                $item['bidding_number'] ?? null,
                 $item['ib_number'] ?? null,
                 $item['philgeps_posting_ref_no'] ?? null,
                 $item['ads_post_ib'] ?? null,
-                $item['bidding_number'] ?? null,
                 $item['pre_proc_conference'] ?? null,
                 $item['pre_bid_conf'] ?? null,
                 $item['eligibility_check'] ?? null,
@@ -618,10 +618,10 @@ class ModeOfProcurementPerLotPage extends Component
 
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
             $biddingFields = [
+                $itemData['bidding_number'] ?? null,
                 $itemData['ib_number'] ?? null,
                 $itemData['philgeps_posting_ref_no'] ?? null,
                 $itemData['ads_post_ib'] ?? null,
-                $itemData['bidding_number'] ?? null,
                 $itemData['pre_proc_conference'] ?? null,
                 $itemData['pre_bid_conf'] ?? null,
                 $itemData['eligibility_check'] ?? null,

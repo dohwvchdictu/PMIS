@@ -409,16 +409,9 @@
                                             <td class="px-2 py-2"></td>
                                         @endif
 
-                                        {{-- Continue with Ads/Post IB and all bidding fields for COMPETITIVE BIDDING (2-6) --}}
+                                        {{-- Continue with List of Invited Observers and observer fields for COMPETITIVE BIDDING (2-6) --}}
                                         @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
-                                            {{-- Ads/Post IB --}}
-                                            <td class="px-2 py-2">
-                                                <input type="date" wire:key="ads-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
+                                            {{-- List of Invited Observers --}}
                                             <td class="px-2 py-2">
                                                 <textarea wire:key="list-observers-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.list_invited_observers" rows="1"
@@ -461,17 +454,9 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Show Ads/Post IB, hide observers --}}
+                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Empty cells for list and observers --}}
                                         @elseif ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
-                                            {{-- Ads/Post IB for SVP modes --}}
-                                            <td class="px-2 py-2">
-                                                <input type="date" wire:key="ads-svp-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
-                                            {{-- Empty cells for observer fields (not needed for SVP modes 7-24) --}}
+                                            {{-- Empty cells for list of invited observers and observer fields (not needed for SVP modes 7-24) --}}
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
@@ -481,8 +466,7 @@
 
                                             {{-- MODE 1 OR UNSAVED RECORDS --}}
                                         @else
-                                            {{-- Empty cells for Ads/Post IB and observers --}}
-                                            <td class="px-2 py-2"></td>
+                                            {{-- Empty cells for list of invited observers and observer fields --}}
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>

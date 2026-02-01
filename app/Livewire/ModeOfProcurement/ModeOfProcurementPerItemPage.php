@@ -316,6 +316,7 @@ class ModeOfProcurementPerItemPage extends Component
             'mode_order' => $mopItem?->mode_order ?? 1,
 
             // Bidding schedule fields
+            'bidding_number' => $schedule['bidding_number'] ?? null,
             'ib_number' => $schedule['ib_number'] ?? null,
             'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
@@ -331,7 +332,6 @@ class ModeOfProcurementPerItemPage extends Component
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
             'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
             'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
-            'bidding_number' => $schedule['bidding_number'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
             'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,

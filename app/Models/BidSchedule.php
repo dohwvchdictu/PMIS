@@ -16,6 +16,7 @@ class BidSchedule extends Model implements Auditable
         'ref_id',
         'mop_uid',
         'uid',
+        'bidding_number',
         'ib_number',
         'philgeps_posting_ref_no',
         'ads_post_ib',
@@ -31,7 +32,6 @@ class BidSchedule extends Model implements Auditable
         'sub_open_bids',
         'bid_evaluation_date',
         'post_qualification_date',
-        'bidding_number',
         'bidding_result',
         'resolution_number_mop',
     ];
