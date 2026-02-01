@@ -107,6 +107,9 @@
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
                                         Description</th>
                                     <th
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Amount</th>
+                                    <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
                                         Mode of Procurement</th>
                                     <th
@@ -121,10 +124,10 @@
                                     </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Pre-Proc Conference</th>
+                                        Ads/Post IB</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Ads/Post IB</th>
+                                        Pre-Proc Conference</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         List of Invited Observers
@@ -172,9 +175,6 @@
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Post Qualification Date</th>
 
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Bidding Date</th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Bidding Result</th>
@@ -228,7 +228,6 @@
                                             !empty($item['pre_bid_conf']) ||
                                             !empty($item['eligibility_check']) ||
                                             !empty($item['sub_open_bids']) ||
-                                            !empty($item['bidding_date']) ||
                                             !empty($item['bidding_result']) ||
                                             // SVP/Canvass fields
                                             !empty($item['rfq_no']) ||
@@ -321,6 +320,14 @@
                                             {{ $item['description'] }}
                                         </td>
 
+                                        {{-- Amount --}}
+                                        <td class="px-2 py-2 align-middle">
+                                            <div
+                                                class="text-xs font-semibold text-center text-gray-900 dark:text-white">
+                                                ₱{{ number_format((float) ($item['amount'] ?? 0), 2) }}
+                                            </div>
+                                        </td>
+
                                         {{-- Mode Select --}}
                                         <td class="px-2 py-2">
                                             <select wire:key="select-mode-{{ $rowUid }}"
@@ -369,6 +376,14 @@
                                                     placeholder="PHL-2025-001" @disabled($disableInputs)>
                                             </td>
 
+                                            {{-- Ads/Post IB --}}
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:key="ads-{{ $rowUid }}"
+                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+
                                             {{-- Pre-Proc Conference --}}
                                             <td class="px-2 py-2">
                                                 <input type="date" wire:key="pre-proc-{{ $rowUid }}"
@@ -384,15 +399,33 @@
                                             <td class="px-2 py-2"></td>
 
                                             {{-- PhilGEPS Posting Ref # for SVP modes --}}
-                                            <td class="px-2 py-2">
-                                                <input type="text" wire:key="philgeps-svp-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.philgeps_posting_ref_no"
-                                                    class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
+                                            @if ((float) ($item['amount'] ?? 0) >= 200000)
+                                                <td class="px-2 py-2">
+                                                    <input type="text" wire:key="philgeps-svp-{{ $rowUid }}"
+                                                        wire:model.defer="form.items.{{ $itemIndex }}.philgeps_posting_ref_no"
+                                                        class="w-full px-2 py-1 text-xs text-right border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
 {{ $errors->has('form.items.' . $itemIndex . '.philgeps_posting_ref_no')
     ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
     : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
-                                                    placeholder="PHL-2025-001" @disabled($disableInputs)>
-                                            </td>
+                                                        placeholder="PHL-2025-001" @disabled($disableInputs)
+                                                        title="PhilGEPS Posting Reference Number">
+                                                </td>
+                                            @else
+                                                <td class="px-2 py-2"></td>
+                                            @endif
+
+                                            {{-- Ads/Post IB for SVP modes --}}
+                                            @if ((float) ($item['amount'] ?? 0) >= 200000)
+                                                <td class="px-2 py-2">
+                                                    <input type="date" wire:key="ads-svp-{{ $rowUid }}"
+                                                        wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                        @disabled($disableInputs)
+                                                        title="Advertisement/Post IB Date">
+                                                </td>
+                                            @else
+                                                <td class="px-2 py-2"></td>
+                                            @endif
 
                                             {{-- Empty cell for Pre-Proc Conference --}}
                                             <td class="px-2 py-2"></td>
@@ -403,18 +436,12 @@
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
-                                        {{-- Continue with Ads/Post IB and all bidding fields for COMPETITIVE BIDDING (2-6) --}}
+                                        {{-- Continue with List of Invited Observers and observer fields for COMPETITIVE BIDDING (2-6) --}}
                                         @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
-                                            {{-- Ads/Post IB --}}
-                                            <td class="px-2 py-2">
-                                                <input type="date" wire:key="ads-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
+                                            {{-- List of Invited Observers --}}
                                             <td class="px-2 py-2">
                                                 <textarea wire:key="list-observers-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.list_invited_observers" rows="1"
@@ -457,17 +484,9 @@
                                                     @disabled($disableInputs)>
                                             </td>
 
-                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Show Ads/Post IB, hide observers --}}
+                                            {{-- SVP/ALTERNATIVE MODES (7-24) - Empty cells for list and observers --}}
                                         @elseif ($showFields && in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
-                                            {{-- Ads/Post IB for SVP modes --}}
-                                            <td class="px-2 py-2">
-                                                <input type="date" wire:key="ads-svp-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.ads_post_ib"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
-                                            {{-- Empty cells for observer fields (not needed for SVP modes 7-24) --}}
+                                            {{-- Empty cells for list of invited observers and observer fields (not needed for SVP modes 7-24) --}}
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
@@ -477,8 +496,7 @@
 
                                             {{-- MODE 1 OR UNSAVED RECORDS --}}
                                         @else
-                                            {{-- Empty cells for Ads/Post IB and observers --}}
-                                            <td class="px-2 py-2"></td>
+                                            {{-- Empty cells for list of invited observers and observer fields --}}
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
@@ -525,13 +543,6 @@
                                             </td>
 
                                             <td class="px-2 py-2">
-                                                <input type="date" wire:key="bid-date-{{ $rowUid }}"
-                                                    wire:model.defer="form.items.{{ $itemIndex }}.bidding_date"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    @disabled($disableInputs)>
-                                            </td>
-
-                                            <td class="px-2 py-2">
                                                 @php
                                                     $biddingResult = $item['bidding_result'] ?? '';
                                                     $hasPostData = $this->hasPostDataForItem($itemIndex);
@@ -555,7 +566,6 @@
 
                                             {{-- Empty cells for remaining bidding fields for other modes --}}
                                         @else
-                                            <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
                                             <td class="px-2 py-2"></td>
@@ -647,7 +657,7 @@
                                     @if ($isHead && $showHistory && $historyForPrItemId === $currentPrID)
                                         <tr
                                             class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-500 dark:border-emerald-900">
-                                            <td colspan="26" class="px-0 py-0">
+                                            <td colspan="27" class="px-0 py-0">
                                                 <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
                                                     <table class="w-full text-xs min-w-max">
                                                         <thead
@@ -661,6 +671,9 @@
                                                                 </th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
+                                                                </th>
+                                                                <th
+                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-21">
                                                                 </th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
@@ -677,10 +690,10 @@
                                                                 </th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Proc Conference</th>
+                                                                    Ads/Post IB</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Ads/Post IB</th>
+                                                                    Pre-Proc Conference</th>
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     List of Invited Observers
@@ -730,9 +743,6 @@
 
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bidding Date</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Bidding Result</th>
 
                                                                 <th
@@ -751,9 +761,6 @@
                                                                 <th
                                                                     class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                                                     Abstract of Canvass</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Resolution #</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody
@@ -789,6 +796,7 @@
 
                                                                         <td class="px-2 py-2"></td>
                                                                         <td class="px-2 py-2"></td>
+                                                                        <td class="px-2 py-2"></td>
 
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
@@ -809,11 +817,11 @@
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['pre_proc_conference'] ?? '-' }}
+                                                                            {{ $historyItem['ads_post_ib'] ?? '-' }}
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ads_post_ib'] ?? '-' }}
+                                                                            {{ $historyItem['pre_proc_conference'] ?? '-' }}
                                                                         </td>
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
@@ -869,10 +877,6 @@
 
                                                                         <td
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bidding_date'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['bidding_result'] ?? '-' }}
                                                                         </td>
 
@@ -901,15 +905,11 @@
                                                                             class="px-2 py-2 text-gray-700 dark:text-gray-200">
                                                                             {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
                                                                         </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['resolution_number_mop'] ?? '-' }}
-                                                                        </td>
                                                                     </tr>
                                                                 @endforeach
                                                             @else
                                                                 <tr>
-                                                                    <td colspan="28"
+                                                                    <td colspan="27"
                                                                         class="px-2 py-4 text-center text-gray-500">
                                                                         No history available for this item
                                                                     </td>
@@ -1164,9 +1164,9 @@
                                         PhilGEPS Ref
                                     </th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                        Pre-Proc</th>
-                                    <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Ads/Post IB</th>
+                                    <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                                        Pre-Proc</th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         List Observers
                                     </th>
@@ -1203,8 +1203,6 @@
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Post Qual.</th>
 
-                                    <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
-                                        Bidding Date</th>
                                     <th class="px-2 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
                                         Result</th>
 
@@ -1259,11 +1257,11 @@
                                             class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.pre_proc_conference"
+                                        <input type="date" wire:model.defer="editingItem.ads_post_ib"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.ads_post_ib"
+                                        <input type="date" wire:model.defer="editingItem.pre_proc_conference"
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
                                     <td class="px-2 py-2">
@@ -1318,10 +1316,6 @@
                                             class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
                                     </td>
 
-                                    <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="editingItem.bidding_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white">
-                                    </td>
                                     <td class="px-2 py-2">
                                         @php
                                             $editBiddingResult = $editingItem['bidding_result'] ?? '';

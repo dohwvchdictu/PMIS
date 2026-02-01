@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
+use Livewire\Livewire;
+use Illuminate\Support\Facades\Route;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,15 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force application URL for subdirectory deployments
-        if ($appUrl = config('app.url')) {
-            URL::forceRootUrl($appUrl);
-        }
-
-        // Force HTTPS scheme if APP_URL uses https
-        if (str_contains(config('app.url', ''), 'https://')) {
-            URL::forceScheme('https');
-        }
+        // Force Livewire update route to include /BACPMIS
+        Livewire::setUpdateRoute(function ($handle) {
+            return Route::post('/BACPMIS/livewire/update', $handle);
+        });
     }
 
 }

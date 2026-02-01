@@ -154,6 +154,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
                     $this->hasValue($item['ib_number']) &&
+                    $this->hasValue($item['philgeps_posting_ref_no']) &&
+                    $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
                     $this->hasValue($item['obsrvr_prebid_conf']) &&
@@ -166,7 +168,7 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bid_evaluation_date']) &&
                     $this->hasValue($item['post_qualification_date']) &&
-                    $this->hasValue($item['bidding_date']) &&
+                    $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
@@ -182,13 +184,21 @@ class ModeOfProcurementPerItemPage extends Component
 
             // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                // Check all required SVP fields are filled
+                // Base required SVP fields
                 $allSvpFieldsFilled =
                     $this->hasValue($item['resolution_number_mop']) &&
                     $this->hasValue($item['rfq_no']) &&
                     $this->hasValue($item['canvass_date']) &&
                     $this->hasValue($item['date_returned_of_canvass']) &&
                     $this->hasValue($item['abstract_of_canvass_date']);
+
+                // If amount >= 200k, also require philgeps_posting_ref_no and ads_post_ib
+                $amount = (float) ($item['amount'] ?? 0);
+                if ($amount >= 200000) {
+                    $allSvpFieldsFilled = $allSvpFieldsFilled &&
+                        $this->hasValue($item['philgeps_posting_ref_no']) &&
+                        $this->hasValue($item['ads_post_ib']);
+                }
 
                 if ($allSvpFieldsFilled) {
                     return true;
@@ -261,8 +271,8 @@ class ModeOfProcurementPerItemPage extends Component
                 'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
-                'pre_proc_conference' => $schedule->pre_proc_conference,
                 'ads_post_ib' => $schedule->ads_post_ib,
+                'pre_proc_conference' => $schedule->pre_proc_conference,
                 'list_invited_observers' => $schedule->list_invited_observers,
                 'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
                 'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
@@ -275,7 +285,6 @@ class ModeOfProcurementPerItemPage extends Component
                 'bid_evaluation_date' => $schedule->bid_evaluation_date,
                 'post_qualification_date' => $schedule->post_qualification_date,
                 'bidding_number' => $schedule->bidding_number,
-                'bidding_date' => $schedule->bidding_date,
                 'bidding_result' => $schedule->bidding_result,
                 'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
@@ -317,10 +326,11 @@ class ModeOfProcurementPerItemPage extends Component
             'mode_order' => $mopItem?->mode_order ?? 1,
 
             // Bidding schedule fields
+            'bidding_number' => $schedule['bidding_number'] ?? null,
             'ib_number' => $schedule['ib_number'] ?? null,
             'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? null,
-            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'ads_post_ib' => $schedule['ads_post_ib'] ?? null,
+            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? null,
             'list_invited_observers' => $schedule['list_invited_observers'] ?? null,
             'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? null,
             'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? null,
@@ -332,8 +342,6 @@ class ModeOfProcurementPerItemPage extends Component
             'sub_open_bids' => $schedule['sub_open_bids'] ?? null,
             'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? null,
             'post_qualification_date' => $schedule['post_qualification_date'] ?? null,
-            'bidding_number' => $schedule['bidding_number'] ?? null,
-            'bidding_date' => $schedule['bidding_date'] ?? null,
             'bidding_result' => $schedule['bidding_result'] ?? null,
             'resolution_number_mop' => $schedule['resolution_number_mop'] ?? null,
             'rfq_no' => $schedule['rfq_no'] ?? null,
@@ -368,8 +376,8 @@ class ModeOfProcurementPerItemPage extends Component
             'bidding_number' => null,
             'ib_number' => null,
             'philgeps_posting_ref_no' => null,
-            'pre_proc_conference' => null,
             'ads_post_ib' => null,
+            'pre_proc_conference' => null,
             'list_invited_observers' => null,
             'obsrvr_prebid_conf' => null,
             'obsrvr_eligibility' => null,
@@ -381,7 +389,6 @@ class ModeOfProcurementPerItemPage extends Component
             'sub_open_bids' => null,
             'bid_evaluation_date' => null,
             'post_qualification_date' => null,
-            'bidding_date' => null,
             'bidding_result' => null,
 
             // --- RESOLUTION NUMBER (MOP) ---
@@ -511,9 +518,9 @@ class ModeOfProcurementPerItemPage extends Component
             $biddingFields = [
                 $item['ib_number'] ?? null,
                 $item['philgeps_posting_ref_no'] ?? null,
+                $item['ads_post_ib'] ?? null,
                 $item['bidding_number'] ?? null,
                 $item['pre_proc_conference'] ?? null,
-                $item['ads_post_ib'] ?? null,
                 $item['list_invited_observers'] ?? null,
                 $item['obsrvr_prebid_conf'] ?? null,
                 $item['obsrvr_eligibility'] ?? null,
@@ -525,7 +532,6 @@ class ModeOfProcurementPerItemPage extends Component
                 $item['sub_open_bids'] ?? null,
                 $item['bid_evaluation_date'] ?? null,
                 $item['post_qualification_date'] ?? null,
-                $item['bidding_date'] ?? null,
                 $item['bidding_result'] ?? null,
             ];
 
@@ -589,8 +595,8 @@ class ModeOfProcurementPerItemPage extends Component
                         if (!$this->hasValue($item['ib_number'])) {
                             $missingFields[] = '<strong>IB No.</strong>';
                         }
-                        if (!$this->hasValue($item['bidding_date'])) {
-                            $missingFields[] = '<strong>Bidding Date</strong>';
+                        if (!$this->hasValue($item['sub_open_bids'])) {
+                            $missingFields[] = '<strong>Submission & Opening of Bids</strong>';
                         }
 
                         if (!empty($missingFields)) {
@@ -865,9 +871,9 @@ class ModeOfProcurementPerItemPage extends Component
             $biddingFields = [
                 $itemData['ib_number'] ?? null,
                 $itemData['philgeps_posting_ref_no'] ?? null,
+                $itemData['ads_post_ib'] ?? null,
                 $itemData['bidding_number'] ?? null,
                 $itemData['pre_proc_conference'] ?? null,
-                $itemData['ads_post_ib'] ?? null,
                 $itemData['list_invited_observers'] ?? null,
                 $itemData['obsrvr_prebid_conf'] ?? null,
                 $itemData['obsrvr_eligibility'] ?? null,
@@ -879,7 +885,6 @@ class ModeOfProcurementPerItemPage extends Component
                 $itemData['sub_open_bids'] ?? null,
                 $itemData['bid_evaluation_date'] ?? null,
                 $itemData['post_qualification_date'] ?? null,
-                $itemData['bidding_date'] ?? null,
                 $itemData['bidding_result'] ?? null,
             ];
 
@@ -921,8 +926,8 @@ class ModeOfProcurementPerItemPage extends Component
                         'bidding_number' => $itemData['bidding_number'] ?? null,
                         'ib_number' => $itemData['ib_number'] ?? null,
                         'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
-                        'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                        'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
                         'list_invited_observers' => $itemData['list_invited_observers'] ?? null,
                         'obsrvr_prebid_conf' => $this->nullableDate($itemData['obsrvr_prebid_conf'] ?? null),
                         'obsrvr_eligibility' => $this->nullableDate($itemData['obsrvr_eligibility'] ?? null),
@@ -934,7 +939,6 @@ class ModeOfProcurementPerItemPage extends Component
                         'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
                         'bid_evaluation_date' => $this->nullableDate($itemData['bid_evaluation_date'] ?? null),
                         'post_qualification_date' => $this->nullableDate($itemData['post_qualification_date'] ?? null),
-                        'bidding_date' => $this->nullableDate($itemData['bidding_date'] ?? null),
                         'bidding_result' => $itemData['bidding_result'] ?? null,
                         'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
                     ]
@@ -1247,7 +1251,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         $hasBiddingData = $this->hasValue($item['ib_number']) &&
             $this->hasValue($item['bidding_number']) &&
-            $this->hasValue($item['bidding_date']);
+            $this->hasValue($item['sub_open_bids']);
 
         $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
 

@@ -15,7 +15,7 @@
         <div class="bg-emerald-600 flex justify-center items-center text-center" style="height:124px;">
             <a href="#" aria-label="BACPMIS" class="block focus:outline-hidden focus:opacity-80">
                 <h1 class="text-white font-bold leading-snug text-center">
-                    <span class="text-3xl md:text-4xl">WV CHD </span><br>
+                    <span class="text-3xl md:text-4xl">WVCHD</span><br>
                     <span class="text-s md:text-xs">Procurement Monitoring</span><br>
                     <span class="text-s md:text-xs">Information System</span>
                 </h1>
