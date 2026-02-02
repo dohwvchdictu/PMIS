@@ -10,6 +10,7 @@ use App\Livewire\ModeOfProcurement\ModeOfProcurementIndexPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementUpdatePage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerItemPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerLotPage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementBulkEditPerLotPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
@@ -93,6 +94,10 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('/', ModeOfProcurementIndexPage::class)
             ->name('index')
             ->middleware('can:view_any_mode::of::procurement');
+
+        Route::get('/bulk-edit', ModeOfProcurementBulkEditPerLotPage::class)
+            ->name('bulk-edit')
+            ->middleware('can:update_mode::of::procurement');
 
         Route::get('/create', ModeOfProcurementCreatePage::class)
             ->name('create')
