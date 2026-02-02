@@ -12,6 +12,7 @@ use App\Models\Procurement;
 use App\Models\MopItem;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ModeOfProcurementBulkEditPerLotPage extends Component
 {
@@ -20,6 +21,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public array $procurementIds = [];
     public bool $showHistory = false;
     public ?string $historyForKey = null;
+    public array $bulkEdit = [];
 
     public function mount(): void
     {
@@ -378,24 +380,24 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             BidSchedule::updateOrCreate(
                 ['mop_uid' => $mopUid, 'ref_id' => $refId],
                 [
-                    'bidding_number' => $this->nullableValue($item['bidding_number']),
-                    'ib_number' => $this->nullableValue($item['ib_number']),
-                    'philgeps_posting_ref_no' => $this->nullableValue($item['philgeps_posting_ref_no']),
-                    'ads_post_ib' => $this->nullableDate($item['ads_post_ib']),
-                    'pre_proc_conference' => $this->nullableDate($item['pre_proc_conference']),
-                    'list_invited_observers' => $this->nullableDate($item['list_invited_observers']),
-                    'obsrvr_prebid_conf' => $this->nullableDate($item['obsrvr_prebid_conf']),
-                    'obsrvr_eligibility' => $this->nullableDate($item['obsrvr_eligibility']),
-                    'obsrvr_sub_open_of_bid' => $this->nullableDate($item['obsrvr_sub_open_of_bid']),
-                    'obsrvr_bid' => $this->nullableDate($item['obsrvr_bid']),
-                    'obsrvr_post_qual' => $this->nullableDate($item['obsrvr_post_qual']),
-                    'pre_bid_conf' => $this->nullableDate($item['pre_bid_conf']),
-                    'eligibility_check' => $this->nullableDate($item['eligibility_check']),
-                    'sub_open_bids' => $this->nullableDate($item['sub_open_bids']),
-                    'bid_evaluation_date' => $this->nullableDate($item['bid_evaluation_date']),
-                    'post_qualification_date' => $this->nullableDate($item['post_qualification_date']),
-                    'bidding_result' => $this->nullableValue($item['bidding_result']),
-                    'resolution_number_mop' => $this->nullableValue($item['resolution_number_mop']),
+                    'bidding_number' => $this->nullableValue($this->bulkEdit['bidding_number'] ?? ''),
+                    'ib_number' => $this->nullableValue($this->bulkEdit['ib_number'] ?? ''),
+                    'philgeps_posting_ref_no' => $this->nullableValue($this->bulkEdit['philgeps_posting_ref_no'] ?? ''),
+                    'ads_post_ib' => $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? ''),
+                    'pre_proc_conference' => $this->nullableDate($this->bulkEdit['pre_proc_conference'] ?? ''),
+                    'list_invited_observers' => $this->nullableDate($this->bulkEdit['list_invited_observers'] ?? ''),
+                    'obsrvr_prebid_conf' => $this->nullableDate($this->bulkEdit['obsrvr_prebid_conf'] ?? ''),
+                    'obsrvr_eligibility' => $this->nullableDate($this->bulkEdit['obsrvr_eligibility'] ?? ''),
+                    'obsrvr_sub_open_of_bid' => $this->nullableDate($this->bulkEdit['obsrvr_sub_open_of_bid'] ?? ''),
+                    'obsrvr_bid' => $this->nullableDate($this->bulkEdit['obsrvr_bid'] ?? ''),
+                    'obsrvr_post_qual' => $this->nullableDate($this->bulkEdit['obsrvr_post_qual'] ?? ''),
+                    'pre_bid_conf' => $this->nullableDate($this->bulkEdit['pre_bid_conf'] ?? ''),
+                    'eligibility_check' => $this->nullableDate($this->bulkEdit['eligibility_check'] ?? ''),
+                    'sub_open_bids' => $this->nullableDate($this->bulkEdit['sub_open_bids'] ?? ''),
+                    'bid_evaluation_date' => $this->nullableDate($this->bulkEdit['bid_evaluation_date'] ?? ''),
+                    'post_qualification_date' => $this->nullableDate($this->bulkEdit['post_qualification_date'] ?? ''),
+                    'bidding_result' => $this->nullableValue($this->bulkEdit['bidding_result'] ?? ''),
+                    'resolution_number_mop' => $this->nullableValue($this->bulkEdit['resolution_number_mop'] ?? ''),
                 ]
             );
         }
@@ -404,11 +406,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             PrSvp::updateOrCreate(
                 ['mop_uid' => $mopUid, 'ref_id' => $refId],
                 [
-                    'resolution_number' => $this->nullableValue($item['resolution_number']),
-                    'rfq_no' => $this->nullableValue($item['rfq_no']),
-                    'canvass_date' => $this->nullableDate($item['canvass_date']),
-                    'date_returned_of_canvass' => $this->nullableDate($item['date_returned_of_canvass']),
-                    'abstract_of_canvass_date' => $this->nullableDate($item['abstract_of_canvass_date']),
+                    'resolution_number' => $this->nullableValue($this->bulkEdit['resolution_number'] ?? ''),
+                    'rfq_no' => $this->nullableValue($this->bulkEdit['rfq_no'] ?? ''),
+                    'canvass_date' => $this->nullableDate($this->bulkEdit['canvass_date'] ?? ''),
+                    'date_returned_of_canvass' => $this->nullableDate($this->bulkEdit['date_returned_of_canvass'] ?? ''),
+                    'abstract_of_canvass_date' => $this->nullableDate($this->bulkEdit['abstract_of_canvass_date'] ?? ''),
                 ]
             );
         }
@@ -428,24 +430,24 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             BidSchedule::updateOrCreate(
                 ['mop_uid' => $mopUid, 'ref_id' => $refId],
                 [
-                    'bidding_number' => $this->nullableValue($item['bidding_number']),
-                    'ib_number' => $this->nullableValue($item['ib_number']),
-                    'philgeps_posting_ref_no' => $this->nullableValue($item['philgeps_posting_ref_no']),
-                    'ads_post_ib' => $this->nullableDate($item['ads_post_ib']),
-                    'pre_proc_conference' => $this->nullableDate($item['pre_proc_conference']),
-                    'list_invited_observers' => $this->nullableDate($item['list_invited_observers']),
-                    'obsrvr_prebid_conf' => $this->nullableDate($item['obsrvr_prebid_conf']),
-                    'obsrvr_eligibility' => $this->nullableDate($item['obsrvr_eligibility']),
-                    'obsrvr_sub_open_of_bid' => $this->nullableDate($item['obsrvr_sub_open_of_bid']),
-                    'obsrvr_bid' => $this->nullableDate($item['obsrvr_bid']),
-                    'obsrvr_post_qual' => $this->nullableDate($item['obsrvr_post_qual']),
-                    'pre_bid_conf' => $this->nullableDate($item['pre_bid_conf']),
-                    'eligibility_check' => $this->nullableDate($item['eligibility_check']),
-                    'sub_open_bids' => $this->nullableDate($item['sub_open_bids']),
-                    'bid_evaluation_date' => $this->nullableDate($item['bid_evaluation_date']),
-                    'post_qualification_date' => $this->nullableDate($item['post_qualification_date']),
-                    'bidding_result' => $this->nullableValue($item['bidding_result']),
-                    'resolution_number_mop' => $this->nullableValue($item['resolution_number_mop']),
+                    'bidding_number' => $this->nullableValue($this->bulkEdit['bidding_number'] ?? ''),
+                    'ib_number' => $this->nullableValue($this->bulkEdit['ib_number'] ?? ''),
+                    'philgeps_posting_ref_no' => $this->nullableValue($this->bulkEdit['philgeps_posting_ref_no'] ?? ''),
+                    'ads_post_ib' => $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? ''),
+                    'pre_proc_conference' => $this->nullableDate($this->bulkEdit['pre_proc_conference'] ?? ''),
+                    'list_invited_observers' => $this->nullableDate($this->bulkEdit['list_invited_observers'] ?? ''),
+                    'obsrvr_prebid_conf' => $this->nullableDate($this->bulkEdit['obsrvr_prebid_conf'] ?? ''),
+                    'obsrvr_eligibility' => $this->nullableDate($this->bulkEdit['obsrvr_eligibility'] ?? ''),
+                    'obsrvr_sub_open_of_bid' => $this->nullableDate($this->bulkEdit['obsrvr_sub_open_of_bid'] ?? ''),
+                    'obsrvr_bid' => $this->nullableDate($this->bulkEdit['obsrvr_bid'] ?? ''),
+                    'obsrvr_post_qual' => $this->nullableDate($this->bulkEdit['obsrvr_post_qual'] ?? ''),
+                    'pre_bid_conf' => $this->nullableDate($this->bulkEdit['pre_bid_conf'] ?? ''),
+                    'eligibility_check' => $this->nullableDate($this->bulkEdit['eligibility_check'] ?? ''),
+                    'sub_open_bids' => $this->nullableDate($this->bulkEdit['sub_open_bids'] ?? ''),
+                    'bid_evaluation_date' => $this->nullableDate($this->bulkEdit['bid_evaluation_date'] ?? ''),
+                    'post_qualification_date' => $this->nullableDate($this->bulkEdit['post_qualification_date'] ?? ''),
+                    'bidding_result' => $this->nullableValue($this->bulkEdit['bidding_result'] ?? ''),
+                    'resolution_number_mop' => $this->nullableValue($this->bulkEdit['resolution_number_mop'] ?? ''),
                 ]
             );
         }
@@ -454,11 +456,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             PrSvp::updateOrCreate(
                 ['mop_uid' => $mopUid, 'ref_id' => $refId],
                 [
-                    'resolution_number' => $this->nullableValue($item['resolution_number']),
-                    'rfq_no' => $this->nullableValue($item['rfq_no']),
-                    'canvass_date' => $this->nullableDate($item['canvass_date']),
-                    'date_returned_of_canvass' => $this->nullableDate($item['date_returned_of_canvass']),
-                    'abstract_of_canvass_date' => $this->nullableDate($item['abstract_of_canvass_date']),
+                    'resolution_number' => $this->nullableValue($this->bulkEdit['resolution_number'] ?? ''),
+                    'rfq_no' => $this->nullableValue($this->bulkEdit['rfq_no'] ?? ''),
+                    'canvass_date' => $this->nullableDate($this->bulkEdit['canvass_date'] ?? ''),
+                    'date_returned_of_canvass' => $this->nullableDate($this->bulkEdit['date_returned_of_canvass'] ?? ''),
+                    'abstract_of_canvass_date' => $this->nullableDate($this->bulkEdit['abstract_of_canvass_date'] ?? ''),
                 ]
             );
         }
@@ -507,6 +509,19 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             })
             ->skip(1) // Skip the current/first mode
             ->values();
+    }
+
+    private function formatDate($date): string
+    {
+        if (empty($date)) {
+            return '-';
+        }
+
+        try {
+            return Carbon::parse($date)->format('m/d/Y');
+        } catch (\Exception $e) {
+            return $date;
+        }
     }
 
     public function cancel()

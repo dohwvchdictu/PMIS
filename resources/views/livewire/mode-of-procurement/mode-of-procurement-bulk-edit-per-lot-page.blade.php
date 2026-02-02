@@ -1,15 +1,236 @@
 <div class="space-y-4">
+    <!-- Bulk Edit Form -->
     <div
         class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
         <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
-        <div class="p-6">
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Bulk Edit Mode of Procurement</h2>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Editing {{ count($items) }} procurement item(s)
-                    </p>
-                </div>
+        <div class="p-4">
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs min-w-max">
+                    <thead class="bg-gray-200 dark:bg-neutral-800">
+                        <tr>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
+                                Mode of Procurement
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
+                                Bidding #
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                IB No.
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                PhilGEPS Posting Ref #
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Ads/Post IB
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Pre-Proc Conference
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                List of Invited Observers
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Observers (Pre-Bid)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Observers (Eligibility)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Observers (Sub/Open)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Observers (Bid)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Observers (Post Qual)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Pre-Bid Conference
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Eligibility Check
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Sub/Open of Bids
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Bid Evaluation Date
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Post Qualification Date
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Bidding Result
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Resolution # (MOP)
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                RFQ No.
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Canvass Date
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Returned of Canvass
+                            </th>
+                            <th
+                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                Abstract of Canvass
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-white dark:bg-neutral-700">
+                            <!-- Mode of Procurement -->
+                            <td class="px-2 py-2">
+                                <select wire:model="bulkEdit.mode_of_procurement_id"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    <option value="">Select Mode...</option>
+                                    @foreach ($modeOfProcurements as $mode)
+                                        <option value="{{ $mode->id }}">{{ $mode->modeofprocurements }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <!-- Bidding # -->
+                            <td class="px-2 py-2">
+                                <input type="text" wire:model="bulkEdit.bidding_number"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- IB No. -->
+                            <td class="px-2 py-2">
+                                <input type="text" wire:model="bulkEdit.ib_number"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- PhilGEPS Posting Ref # -->
+                            <td class="px-2 py-2">
+                                <input type="text" wire:model="bulkEdit.philgeps_posting_ref_no"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Ads/Post IB -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.ads_post_ib"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Pre-Proc Conference -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.pre_proc_conference"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- List of Invited Observers -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.list_invited_observers"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Observers (Pre-Bid) -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.obsrvr_prebid_conf"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Observers (Eligibility) -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.obsrvr_eligibility"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Observers (Sub/Open) -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.obsrvr_sub_open_of_bid"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Observers (Bid) -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.obsrvr_bid"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Observers (Post Qual) -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.obsrvr_post_qual"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Pre-Bid Conference -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.pre_bid_conf"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Eligibility Check -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.eligibility_check"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Sub/Open of Bids -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.sub_open_bids"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Bid Evaluation Date -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.bid_evaluation_date"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Post Qualification Date -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.post_qualification_date"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Bidding Result -->
+                            <td class="px-2 py-2">
+                                <select wire:model="bulkEdit.bidding_result"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    <option value="">Select...</option>
+                                    <option value="SUCCESSFUL">SUCCESSFUL</option>
+                                    <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
+                                </select>
+                            </td>
+                            <!-- Resolution # (MOP) -->
+                            <td class="px-2 py-2">
+                                <input type="text" wire:model="bulkEdit.resolution_number_mop"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- RFQ No. -->
+                            <td class="px-2 py-2">
+                                <input type="text" wire:model="bulkEdit.rfq_no"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Canvass Date -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.canvass_date"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Returned of Canvass -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.date_returned_of_canvass"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                            <!-- Abstract of Canvass -->
+                            <td class="px-2 py-2">
+                                <input type="date" wire:model="bulkEdit.abstract_of_canvass_date"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -217,284 +438,205 @@
 
                                 <!-- Mode of Procurement -->
                                 <td class="px-2 py-2">
-                                    @if ($isHead)
-                                        <select wire:model="items.{{ $index }}.mode_of_procurement_id"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                            <option value="">Select Mode...</option>
-                                            @foreach ($modeOfProcurements as $mode)
-                                                <option value="{{ $mode->id }}">{{ $mode->modeofprocurements }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @else
-                                        <span class="text-xs text-gray-600 dark:text-gray-400">
-                                            {{ $modeOfProcurements->firstWhere('id', $item['mode_of_procurement_id'])?->modeofprocurements ?? 'N/A' }}
-                                        </span>
-                                    @endif
+                                    <span
+                                        class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400' }}">
+                                        {{ $modeOfProcurements->firstWhere('id', $item['mode_of_procurement_id'])?->modeofprocurements ?? 'N/A' }}
+                                    </span>
                                 </td>
 
                                 <!-- Bidding # -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="text" wire:model="items.{{ $index }}.bidding_number"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['bidding_number'] ?: '-' }}
+                                        </span>
                                 @endif
 
                                 <!-- IB No. -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="text" wire:model="items.{{ $index }}.ib_number"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['ib_number'] ?: '-' }}
+                                        </span>
                                 @endif
 
                                 <!-- PhilGEPS Posting Ref # -->
-                                @if ($showBiddingFields)
+                                @if ($showBiddingFields || $showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="text"
-                                            wire:model="items.{{ $index }}.philgeps_posting_ref_no"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @elseif ($showSvpFields)
-                                    <td class="px-2 py-2">
-                                        <input type="text"
-                                            wire:model="items.{{ $index }}.philgeps_posting_ref_no"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['philgeps_posting_ref_no'] ?: '-' }}
+                                        </span>
+                                    @else
                                     <td class="px-2 py-2"></td>
                                 @endif
 
                                 <!-- Ads/Post IB -->
-                                @if ($showBiddingFields)
+                                @if ($showBiddingFields || $showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.ads_post_ib"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @elseif ($showSvpFields)
-                                    <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.ads_post_ib"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['ads_post_ib']) }}
+                                        </span>
+                                    @else
                                     <td class="px-2 py-2"></td>
                                 @endif
 
                                 <!-- Pre-Proc Conference -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.pre_proc_conference"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['pre_proc_conference']) }}
+                                        </span>
                                 @endif
 
                                 <!-- List of Invited Observers -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.list_invited_observers"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['list_invited_observers']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Observer 1 (Pre-Bid) -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.obsrvr_prebid_conf"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['obsrvr_prebid_conf']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Observer 2 (Eligibility) -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.obsrvr_eligibility"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['obsrvr_eligibility']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Observer 3 (Sub/Open) -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.obsrvr_sub_open_of_bid"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['obsrvr_sub_open_of_bid']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Observer 4 (Bid) -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.obsrvr_bid"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['obsrvr_bid']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Observer 5 (Post Qual) -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.obsrvr_post_qual"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['obsrvr_post_qual']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Pre-Bid Conference -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.pre_bid_conf"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['pre_bid_conf']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Eligibility Check -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.eligibility_check"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['eligibility_check']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Sub/Open of Bids -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.sub_open_bids"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['sub_open_bids']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Bid Evaluation -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.bid_evaluation_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['bid_evaluation_date']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Post Qualification -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.post_qualification_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['post_qualification_date']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Bidding Result -->
                                 @if ($showBiddingFields)
                                     <td class="px-2 py-2">
-                                        <select wire:model="items.{{ $index }}.bidding_result"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                            <option value="">Select...</option>
-                                            <option value="SUCCESSFUL">SUCCESSFUL</option>
-                                            <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
-                                        </select>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['bidding_result'] ?: '-' }}
+                                        </span>
                                 @endif
 
                                 <!-- Resolution # (MOP) -->
-                                @if ($showBiddingFields)
+                                @if ($showBiddingFields || $showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="text"
-                                            wire:model="items.{{ $index }}.resolution_number_mop"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @elseif ($showSvpFields)
-                                    <td class="px-2 py-2">
-                                        <input type="text"
-                                            wire:model="items.{{ $index }}.resolution_number_mop"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            placeholder="RES-2025-001" @disabled($disableInputs)>
-                                    </td>
-                                @else
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['resolution_number_mop'] ?: '-' }}
+                                        </span>
+                                    @else
                                     <td class="px-2 py-2"></td>
                                 @endif
 
                                 <!-- RFQ No. -->
                                 @if ($showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="text" wire:model="items.{{ $index }}.rfq_no"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $item['rfq_no'] ?: '-' }}
+                                        </span>
                                 @endif
 
                                 <!-- Canvass Date -->
                                 @if ($showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model="items.{{ $index }}.canvass_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
-                                    </td>
-                                @else
-                                    <td class="px-2 py-2"></td>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['canvass_date']) }}
+                                        </span>
                                 @endif
 
                                 <!-- Returned of Canvass -->
                                 @if ($showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.date_returned_of_canvass"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['date_returned_of_canvass']) }}
+                                        </span>
                                     </td>
                                 @else
                                     <td class="px-2 py-2"></td>
@@ -503,10 +645,10 @@
                                 <!-- Abstract of Canvass -->
                                 @if ($showSvpFields)
                                     <td class="px-2 py-2">
-                                        <input type="date"
-                                            wire:model="items.{{ $index }}.abstract_of_canvass_date"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
-                                            @disabled($disableInputs)>
+                                        <span
+                                            class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $this->formatDate($item['abstract_of_canvass_date']) }}
+                                        </span>
                                     </td>
                                 @else
                                     <td class="px-2 py-2"></td>
