@@ -24,6 +24,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public array $bulkEdit = [];
     public array $scheduleValidationErrors = [];
     public int $activeTab = 1;
+    public bool $showAddForm = false;
 
     public function mount(): void
     {
@@ -269,6 +270,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     private function populateBulkEditData(): void
     {
+        // Clear existing data first to prevent leftover data from previous transactions
+        $this->bulkEdit = [];
+
         // Get all current items (highest mode_order) from all selected PRs
         if (empty($this->items)) {
             return;
@@ -636,7 +640,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         foreach ($procurements as $procurement) {
             $abcAmount = $procurement->abc ?? 0;
-            
+
             if ($abcAmount < 200000) {
                 $hasBelow200k = true;
                 if ($hasAbove200k) {
@@ -711,22 +715,101 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        DB::transaction(function () {
-            // Only save current items (highest mode_order), not history
-            $currentItems = $this->getCurrentItems();
-            foreach ($currentItems as $item) {
-                $this->updateItem($item);
+        $isMopAdded = false;
+        $isMopUpdated = false;
+
+        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated) {
+            // Get all procurements
+            $procurements = Procurement::whereIn('procID', $this->procurementIds)->get();
+
+            foreach ($procurements as $procurement) {
+                $currentItems = collect($this->items)
+                    ->where('procID', $procurement->procID)
+                    ->sortByDesc('mode_order')
+                    ->values();
+
+                if ($currentItems->isEmpty()) {
+                    continue;
+                }
+
+                $currentItem = $currentItems->first();
+                $modeId = $this->bulkEdit['mode_of_procurement_id'] ?? null;
+
+                // If adding a new mode (mode_id was 1, now changing to something else)
+                if ($currentItem['mode_of_procurement_id'] == 1 && $modeId && $modeId != 1) {
+                    $modeOrder = ($currentItem['mode_order'] ?? 0) + 1;
+                    $generatedUid = "MOP-{$modeId}-{$modeOrder}";
+
+                    if ($procurement->procurement_type === 'perLot') {
+                        $savedMop = MopLot::create([
+                            'procID' => $procurement->procID,
+                            'uid' => $generatedUid,
+                            'mode_of_procurement_id' => $modeId,
+                            'mode_order' => $modeOrder,
+                        ]);
+                        $isMopAdded = true;
+
+                        // Save schedules for the new mode
+                        $this->updatePerLotSchedules([
+                            'mop_uid' => $generatedUid,
+                            'procID' => $procurement->procID,
+                            'mode_of_procurement_id' => $modeId,
+                        ]);
+                    } else {
+                        // For perItem, create MopItem for each PR item
+                        foreach ($procurement->pr_items as $prItem) {
+                            $savedMop = MopItem::create([
+                                'prItemID' => $prItem->prItemID,
+                                'uid' => $generatedUid,
+                                'mode_of_procurement_id' => $modeId,
+                                'mode_order' => $modeOrder,
+                            ]);
+                            $isMopAdded = true;
+
+                            // Save schedules for the new mode
+                            $this->updatePerItemSchedules([
+                                'mop_uid' => $generatedUid,
+                                'prItemID' => $prItem->prItemID,
+                                'mode_of_procurement_id' => $modeId,
+                            ]);
+                        }
+                    }
+                } else {
+                    // Update existing mode schedules
+                    $this->updateItem($currentItem);
+                    $isMopUpdated = true;
+                }
             }
         });
 
-        LivewireAlert::title('Bulk Update Successful!')
-            ->success()
-            ->text('All items have been updated.')
-            ->toast()
-            ->position('top-end')
-            ->show();
+        // Show appropriate success message
+        if ($isMopAdded) {
+            LivewireAlert::title('Mode Added Successfully!')
+                ->success()
+                ->text('The mode of procurement has been added to all selected PRs.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } elseif ($isMopUpdated) {
+            LivewireAlert::title('Updates Saved!')
+                ->success()
+                ->text('Changes have been saved successfully.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } else {
+            LivewireAlert::title('No Changes')
+                ->info()
+                ->text('No changes were detected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
 
-        return $this->redirect(route('mode-of-procurement.index'));
+        // Reload data instead of redirecting
+        $this->loadProcurementData();
+        $this->populateBulkEditData();
+        $this->showAddForm = false;
     }
 
     private function updateItem(array $item): void
@@ -920,9 +1003,21 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     public function getDisableModeSelectProperty(): bool
     {
-        // Disable mode selection if ANY item has schedule data
         $currentItems = $this->getCurrentItems();
 
+        if (empty($currentItems)) {
+            return false;
+        }
+
+        // Check if all items have the same mode and it's not mode_id = 1
+        $firstModeId = $currentItems[0]['mode_of_procurement_id'] ?? null;
+
+        // If mode is set (not null and not 1), disable the dropdown
+        if ($firstModeId && $firstModeId != 1) {
+            return true;
+        }
+
+        // Also disable if ANY item has schedule data
         foreach ($currentItems as $item) {
             if ($this->itemHasSchedule($item)) {
                 return true;
@@ -934,6 +1029,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     public function getShowAddModeButtonProperty(): bool
     {
+        // Don't show button if form is already shown
+        if ($this->showAddForm) {
+            return false;
+        }
+
         // Show Add Mode button if all PRs have mode_id = 1 (no mode selected)
         $currentItems = $this->getCurrentItems();
 
@@ -1045,6 +1145,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         return redirect()->route('mode-of-procurement.index');
     }
 
+    public function addItem(): void
+    {
+        // Reset mode selection and enable the form
+        $this->bulkEdit['mode_of_procurement_id'] = null;
+        $this->showAddForm = true;
+    }
+
     public function render()
     {
         return view('livewire.mode-of-procurement.mode-of-procurement-bulk-edit-per-lot-page', [
@@ -1056,6 +1163,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'showSvpFields' => $this->showSvpFields,
             'abcThresholdCategory' => $this->abcThresholdCategory,
             'showAddModeButton' => $this->showAddModeButton,
+            'showAddForm' => $this->showAddForm,
         ]);
     }
 }

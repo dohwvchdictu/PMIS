@@ -216,11 +216,10 @@
                                     <!-- Actions -->
                                     <td class="px-2 py-2 align-middle">
                                         <div class="flex items-center justify-center gap-1">
-                                            @if($showAddModeButton)
+                                            @if ($showAddModeButton)
                                                 <button wire:click.prevent="addItem"
                                                     class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                                                    title="Add Mode"
-                                                    @disabled($disableInputs)>
+                                                    title="Add Mode" @disabled($disableInputs)>
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -234,9 +233,9 @@
                                     </td>
                                     <!-- Mode of Procurement -->
                                     <td class="px-2 py-2">
-                                        <select wire:model.live="bulkEdit.mode_of_procurement_id"
+                                        <select wire:model.defer="bulkEdit.mode_of_procurement_id"
                                             class="w-full max-w-xs px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                            @disabled($disableInputs || $disableModeSelect || $showAddModeButton)>
+                                            @disabled($disableInputs || $disableModeSelect || ($showAddModeButton && !$this->showAddForm))>
                                             <option value="">Select Mode...</option>
                                             @foreach ($modeOfProcurements as $mode)
                                                 <option value="{{ $mode->id }}"
@@ -361,7 +360,6 @@
                                                 class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 disabled:opacity-60 disabled:cursor-not-allowed"
                                                 placeholder="RES-2025-001" @disabled($disableInputs)>
                                         </td>
-
                                     @elseif ($showSvpFields)
                                         {{-- Empty cells for bidding-only fields (17 fields) --}}
                                         <td class="px-2 py-2"></td>
@@ -412,7 +410,6 @@
                                                 class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 disabled:opacity-60 disabled:cursor-not-allowed"
                                                 @disabled($disableInputs)>
                                         </td>
-                                    
                                     @else
                                         {{-- MODE 1 OR NO MODE SELECTED - ALL EMPTY (22 fields total) --}}
                                         <td class="px-2 py-2"></td>
