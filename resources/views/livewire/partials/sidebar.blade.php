@@ -158,14 +158,14 @@
                     </li>
 
                     <!-- BAC Reports -->
-                    <li class="hs-accordion" id="reports-bac-accordion">
+                    <li class="hs-accordion {{ request()->routeIs('reports.bac.*') ? 'active' : '' }}" id="reports-bac-accordion">
                         <button type="button"
                             class="hs-accordion-toggle w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                             transition-all duration-200 border-l-4
                             {{ request()->routeIs('reports.bac.*')
                                 ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
                                 : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
-                            aria-expanded="false" aria-controls="reports-bac-accordion-child">
+                            aria-expanded="{{ request()->routeIs('reports.bac.*') ? 'true' : 'false' }}" aria-controls="reports-bac-accordion-child">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="size-5 flex-shrink-0">
                                 <path fill-rule="evenodd"
@@ -182,7 +182,7 @@
                         </button>
 
                         <div id="reports-bac-accordion-child"
-                            class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 hidden"
+                            class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 {{ request()->routeIs('reports.bac.*') ? '' : 'hidden' }}"
                             role="region" aria-labelledby="reports-bac-accordion">
                             <ul class="ps-8 pt-1 space-y-1">
                                 <li>
