@@ -140,33 +140,61 @@ class ModeOfProcurementIndexPage extends Component
                     'pr_items',
                     'category.bacType'
                 ])
-                // Only select perLot procurements for bulk edit
-                ->where('procurement_type', 'perLot')
                 ->latest();
 
-            // Apply same filters
+            // Apply same filters as render()
             if (!empty($this->search)) {
                 $searchTerm = '%' . $this->search . '%';
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('pr_number', 'like', $searchTerm)
                         ->orWhere('procurement_program_project', 'like', $searchTerm)
                         // Search by IB Number for perLot procurements (current mode only)
-                        ->orWhereExists(function ($exists) use ($searchTerm) {
-                            $exists->select(\DB::raw(1))
-                                ->from('mop_lot')
-                                ->whereColumn('mop_lot.procID', 'procurements.procID')
-                                ->whereNotExists(function ($notExists) {
-                                    $notExists->select(\DB::raw(1))
-                                        ->from('mop_lot as ml2')
-                                        ->whereColumn('ml2.procID', 'mop_lot.procID')
-                                        ->whereColumn('ml2.mode_order', '>', 'mop_lot.mode_order');
-                                })
-                                ->whereExists(function ($bidExists) use ($searchTerm) {
-                                    $bidExists->select(\DB::raw(1))
-                                        ->from('bid_schedules')
-                                        ->whereColumn('bid_schedules.ref_id', 'mop_lot.procID')
-                                        ->whereColumn('bid_schedules.mop_uid', 'mop_lot.uid')
-                                        ->where('bid_schedules.ib_number', 'like', $searchTerm);
+                        ->orWhere(function ($subQ) use ($searchTerm) {
+                            $subQ->where('procurement_type', 'perLot')
+                                ->whereExists(function ($exists) use ($searchTerm) {
+                                    $exists->select(\DB::raw(1))
+                                        ->from('mop_lot')
+                                        ->whereColumn('mop_lot.procID', 'procurements.procID')
+                                        ->whereNotExists(function ($notExists) {
+                                            $notExists->select(\DB::raw(1))
+                                                ->from('mop_lot as ml2')
+                                                ->whereColumn('ml2.procID', 'mop_lot.procID')
+                                                ->whereColumn('ml2.mode_order', '>', 'mop_lot.mode_order');
+                                        })
+                                        ->whereExists(function ($bidExists) use ($searchTerm) {
+                                            $bidExists->select(\DB::raw(1))
+                                                ->from('bid_schedules')
+                                                ->whereColumn('bid_schedules.ref_id', 'mop_lot.procID')
+                                                ->whereColumn('bid_schedules.mop_uid', 'mop_lot.uid')
+                                                ->where('bid_schedules.ib_number', 'like', $searchTerm);
+                                        });
+                                });
+                        })
+                        // Search by IB Number for perItem procurements (current mode only)
+                        ->orWhere(function ($subQ) use ($searchTerm) {
+                            $subQ->where('procurement_type', 'perItem')
+                                ->whereExists(function ($exists) use ($searchTerm) {
+                                    $exists->select(\DB::raw(1))
+                                        ->from('pr_items')
+                                        ->whereColumn('pr_items.procID', 'procurements.procID')
+                                        ->whereExists(function ($mopExists) use ($searchTerm) {
+                                            $mopExists->select(\DB::raw(1))
+                                                ->from('mop_item')
+                                                ->whereColumn('mop_item.prItemID', 'pr_items.prItemID')
+                                                ->whereNotExists(function ($notExists) {
+                                                    $notExists->select(\DB::raw(1))
+                                                        ->from('mop_item as mi2')
+                                                        ->whereColumn('mi2.prItemID', 'mop_item.prItemID')
+                                                        ->whereColumn('mi2.mode_order', '>', 'mop_item.mode_order');
+                                                })
+                                                ->whereExists(function ($bidExists) use ($searchTerm) {
+                                                    $bidExists->select(\DB::raw(1))
+                                                        ->from('bid_schedules')
+                                                        ->whereColumn('bid_schedules.ref_id', 'mop_item.prItemID')
+                                                        ->whereColumn('bid_schedules.mop_uid', 'mop_item.uid')
+                                                        ->where('bid_schedules.ib_number', 'like', $searchTerm);
+                                                });
+                                        });
                                 });
                         });
                 });
@@ -184,6 +212,7 @@ class ModeOfProcurementIndexPage extends Component
 
             if ($this->currentModeFilter) {
                 $query->where(function ($q) {
+                    // For perLot procurements
                     $q->where(function ($subQ) {
                         $subQ->where('procurement_type', 'perLot')
                             ->whereExists(function ($exists) {
@@ -199,6 +228,7 @@ class ModeOfProcurementIndexPage extends Component
                                     });
                             });
                     })
+                        // For perItem procurements
                         ->orWhere(function ($subQ) {
                             $subQ->where('procurement_type', 'perItem')
                                 ->whereExists(function ($exists) {
@@ -224,33 +254,64 @@ class ModeOfProcurementIndexPage extends Component
 
             if ($this->ibNumberFilter) {
                 $query->where(function ($q) {
+                    // For perLot procurements - match by procID and current mode
                     $q->where(function ($subQ) {
                         $subQ->where('procurement_type', 'perLot')
                             ->whereExists(function ($exists) {
                                 $exists->select(\DB::raw(1))
-                                    ->from('bid_schedules')
-                                    ->whereColumn('bid_schedules.ref_id', 'procurements.procID')
-                                    ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                                    ->from('mop_lot')
+                                    ->whereColumn('mop_lot.procID', 'procurements.procID')
+                                    ->whereNotExists(function ($notExists) {
+                                        $notExists->select(\DB::raw(1))
+                                            ->from('mop_lot as ml2')
+                                            ->whereColumn('ml2.procID', 'mop_lot.procID')
+                                            ->whereColumn('ml2.mode_order', '>', 'mop_lot.mode_order');
+                                    })
+                                    ->whereExists(function ($bidExists) {
+                                        $bidExists->select(\DB::raw(1))
+                                            ->from('bid_schedules')
+                                            ->whereColumn('bid_schedules.ref_id', 'mop_lot.procID')
+                                            ->whereColumn('bid_schedules.mop_uid', 'mop_lot.uid')
+                                            ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                                    });
                             });
                     })
+                        // For perItem procurements - match through pr_items and current mode
                         ->orWhere(function ($subQ) {
                             $subQ->where('procurement_type', 'perItem')
                                 ->whereExists(function ($exists) {
                                     $exists->select(\DB::raw(1))
                                         ->from('pr_items')
                                         ->whereColumn('pr_items.procID', 'procurements.procID')
-                                        ->whereExists(function ($bidExists) {
-                                            $bidExists->select(\DB::raw(1))
-                                                ->from('bid_schedules')
-                                                ->whereColumn('bid_schedules.ref_id', 'pr_items.prItemID')
-                                                ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                                        ->whereExists(function ($mopExists) {
+                                            $mopExists->select(\DB::raw(1))
+                                                ->from('mop_item')
+                                                ->whereColumn('mop_item.prItemID', 'pr_items.prItemID')
+                                                ->whereNotExists(function ($notExists) {
+                                                    $notExists->select(\DB::raw(1))
+                                                        ->from('mop_item as mi2')
+                                                        ->whereColumn('mi2.prItemID', 'mop_item.prItemID')
+                                                        ->whereColumn('mi2.mode_order', '>', 'mop_item.mode_order');
+                                                })
+                                                ->whereExists(function ($bidExists) {
+                                                    $bidExists->select(\DB::raw(1))
+                                                        ->from('bid_schedules')
+                                                        ->whereColumn('bid_schedules.ref_id', 'mop_item.prItemID')
+                                                        ->whereColumn('bid_schedules.mop_uid', 'mop_item.uid')
+                                                        ->where('bid_schedules.ib_number', $this->ibNumberFilter);
+                                                });
                                         });
                                 });
                         });
                 });
             }
 
-            $this->selectedItems = $query->pluck('procID')->toArray();
+            // Only select perLot procurements on the current page
+            $procurements = $query->paginate($this->perPage);
+            $this->selectedItems = $procurements
+                ->filter(fn($p) => $p->procurement_type === 'perLot')
+                ->pluck('procID')
+                ->toArray();
         } else {
             $this->selectedItems = [];
         }
@@ -266,6 +327,170 @@ class ModeOfProcurementIndexPage extends Component
                 ->position('top-end')
                 ->show();
             return;
+        }
+
+        // Get all selected procurements with their current modes and schedules
+        $procurements = Procurement::whereIn('procID', $this->selectedItems)
+            ->with(['mopLots'])
+            ->get();
+
+        $modeGroups = [];
+        $scheduleData = [];
+
+        foreach ($procurements as $procurement) {
+            // Get the latest mode for this procurement
+            $latestMop = $procurement->mopLots()
+                ->orderBy('mode_order', 'desc')
+                ->first();
+
+            $modeId = $latestMop?->mode_of_procurement_id;
+
+            if (!isset($modeGroups[$modeId])) {
+                $modeGroups[$modeId] = [];
+            }
+
+            $modeGroups[$modeId][] = $procurement->pr_number;
+
+            // Get schedule data for this procurement - ALWAYS add to array
+            $schedule = [];
+
+            if ($latestMop) {
+                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                    $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+                        ->where('ref_id', $procurement->procID)
+                        ->first();
+
+                    if ($bidSchedule) {
+                        $schedule = [
+                            'bidding_number' => $bidSchedule->bidding_number,
+                            'ib_number' => $bidSchedule->ib_number,
+                            'philgeps_posting_ref_no' => $bidSchedule->philgeps_posting_ref_no,
+                            'ads_post_ib' => $bidSchedule->ads_post_ib,
+                            'pre_proc_conference' => $bidSchedule->pre_proc_conference,
+                            'list_invited_observers' => $bidSchedule->list_invited_observers,
+                            'obsrvr_prebid_conf' => $bidSchedule->obsrvr_prebid_conf,
+                            'obsrvr_eligibility' => $bidSchedule->obsrvr_eligibility,
+                            'obsrvr_sub_open_of_bid' => $bidSchedule->obsrvr_sub_open_of_bid,
+                            'obsrvr_bid' => $bidSchedule->obsrvr_bid,
+                            'obsrvr_post_qual' => $bidSchedule->obsrvr_post_qual,
+                            'pre_bid_conf' => $bidSchedule->pre_bid_conf,
+                            'eligibility_check' => $bidSchedule->eligibility_check,
+                            'sub_open_bids' => $bidSchedule->sub_open_bids,
+                            'bid_evaluation_date' => $bidSchedule->bid_evaluation_date,
+                            'post_qualification_date' => $bidSchedule->post_qualification_date,
+                            'bidding_result' => $bidSchedule->bidding_result,
+                            'resolution_number_mop' => $bidSchedule->resolution_number_mop,
+                        ];
+                    }
+                } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                    $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
+                        ->where('ref_id', $procurement->procID)
+                        ->first();
+
+                    if ($prSvp) {
+                        $schedule = [
+                            'resolution_number' => $prSvp->resolution_number,
+                            'rfq_no' => $prSvp->rfq_no,
+                            'canvass_date' => $prSvp->canvass_date,
+                            'date_returned_of_canvass' => $prSvp->date_returned_of_canvass,
+                            'abstract_of_canvass_date' => $prSvp->abstract_of_canvass_date,
+                        ];
+                    }
+                }
+            }
+
+            // Always add schedule data for all procurements
+            $scheduleData[$procurement->procID] = $schedule;
+        }
+
+        // Check if any PR has no mode
+        if (isset($modeGroups[null])) {
+            LivewireAlert::title('Mode Required')
+                ->warning()
+                ->text('Please select PRs with a mode of procurement')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Check if all PRs have the same mode
+        if (count($modeGroups) > 1) {
+            LivewireAlert::title('Mode Mismatch')
+                ->warning()
+                ->text('All selected PRs must have the same mode of procurement')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Check if all PRs have identical schedule data
+        $scheduleHashes = [];
+        $prNumbersByHash = [];
+
+        foreach ($procurements as $procurement) {
+            $hash = md5(json_encode($scheduleData[$procurement->procID]));
+            $scheduleHashes[$procurement->procID] = $hash;
+
+            if (!isset($prNumbersByHash[$hash])) {
+                $prNumbersByHash[$hash] = [];
+            }
+            $prNumbersByHash[$hash][] = $procurement->pr_number;
+        }
+
+        $uniqueHashes = array_unique($scheduleHashes);
+
+        if (count($uniqueHashes) > 1) {
+            // Find the minority group (PRs with different data)
+            $hashCounts = array_count_values($scheduleHashes);
+            arsort($hashCounts);
+            $majorityHash = array_key_first($hashCounts);
+
+            $differentPRs = [];
+            foreach ($scheduleHashes as $procID => $hash) {
+                if ($hash !== $majorityHash) {
+                    $pr = $procurements->firstWhere('procID', $procID);
+                    if ($pr) {
+                        $differentPRs[] = $pr->pr_number;
+                    }
+                }
+            }
+
+            $prList = implode(', ', $differentPRs);
+
+            LivewireAlert::title('Field Mismatch')
+                ->warning()
+                ->text("PR {$prList} " . (count($differentPRs) > 1 ? 'have' : 'has') . " different field values from the others")
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Check if all PRs have the same ABC threshold (< 200K or >= 200K)
+        $hasBelow200k = false;
+        $hasAbove200k = false;
+
+        foreach ($procurements as $procurement) {
+            $abcAmount = $procurement->abc ?? 0;
+
+            if ($abcAmount < 200000) {
+                $hasBelow200k = true;
+            } else {
+                $hasAbove200k = true;
+            }
+
+            // Early exit if mismatch found
+            if ($hasBelow200k && $hasAbove200k) {
+                LivewireAlert::title('ABC Threshold Mismatch')
+                    ->warning()
+                    ->text('All selected PRs must have the same ABC threshold (below ₱200K or ₱200K and above)')
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+                return;
+            }
         }
 
         return $this->redirect(route('mode-of-procurement.bulk-edit', ['items' => $this->selectedItems]));
