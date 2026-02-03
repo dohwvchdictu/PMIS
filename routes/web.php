@@ -16,6 +16,7 @@ use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
 use App\Livewire\Procurements\ProcurementViewPage;
 use App\Livewire\Procurements\PRUpdateStatus;
+use App\Livewire\Reports\BacPrsReceivedPage;
 use App\Livewire\ScheduleForPr\ScheduleForPrCreatePage;
 use App\Livewire\ScheduleForPr\ScheduleForPrEditPage;
 use App\Livewire\ScheduleForPr\ScheduleForPrIndexPage;
@@ -118,6 +119,14 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('/{procurement}/edit', ModeOfProcurementEditPage::class)
             ->name('edit')
             ->middleware('can:edit_mode::of::procurement');
+    });
+
+    // Reports routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::prefix('bac')->name('bac.')->group(function () {
+            Route::get('/prs-received', BacPrsReceivedPage::class)
+                ->name('prs-received');
+        });
     });
 
     // Logout

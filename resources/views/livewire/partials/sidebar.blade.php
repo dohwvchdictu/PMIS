@@ -138,6 +138,73 @@
                             </a>
                         </li>
                     @endcan
+
+                    <!-- Reports Section -->
+                    <li class="pt-4 mt-4 border-t border-gray-200 dark:border-neutral-600">
+                        <div
+                            class="px-3 py-2 flex items-center gap-x-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="size-4 flex-shrink-0">
+                                <path
+                                    d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Z" />
+                                <path
+                                    d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                                <path
+                                    d="M19.875 4.5h-3.75c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125h1.875c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125Z"
+                                    opacity="0.7" />
+                            </svg>
+                            <span>Reports</span>
+                        </div>
+                    </li>
+
+                    <!-- BAC Reports -->
+                    <li class="hs-accordion" id="reports-bac-accordion">
+                        <button type="button"
+                            class="hs-accordion-toggle w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
+                            transition-all duration-200 border-l-4
+                            {{ request()->routeIs('reports.bac.*')
+                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
+                            aria-expanded="false" aria-controls="reports-bac-accordion-child">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="size-5 flex-shrink-0">
+                                <path fill-rule="evenodd"
+                                    d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span class="flex-1 text-left">BAC</span>
+                            <svg class="hs-accordion-active:rotate-180 size-4 transition-transform duration-200"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div id="reports-bac-accordion-child"
+                            class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 hidden"
+                            role="region" aria-labelledby="reports-bac-accordion">
+                            <ul class="ps-8 pt-1 space-y-1">
+                                <li>
+                                    <a href="{{ route('reports.bac.prs-received') }}"
+                                        class="flex items-center gap-x-3 py-1.5 px-3 text-xs rounded-lg
+                                        transition-all duration-200
+                                        {{ request()->routeIs('reports.bac.prs-received')
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-emerald-600/20' }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                            class="size-4 flex-shrink-0">
+                                            <path
+                                                d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                                            <path
+                                                d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                                        </svg>
+                                        <span>PRs Received</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
