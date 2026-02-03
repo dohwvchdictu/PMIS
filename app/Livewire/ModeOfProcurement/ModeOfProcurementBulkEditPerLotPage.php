@@ -25,6 +25,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public array $scheduleValidationErrors = [];
     public int $activeTab = 1;
     public bool $showAddForm = false;
+    public array $queryParams = [];
 
     // Post-Procurement Tab Fields
     public ?string $resolutionAwardNumber = null;
@@ -39,6 +40,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     public function mount(): void
     {
+        $this->queryParams = request()->query();
         $this->procurementIds = request()->query('items', []);
 
         if (empty($this->procurementIds)) {
@@ -55,6 +57,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->suppliers = \App\Models\Supplier::all();
         $this->loadProcurementData();
         $this->populateBulkEditData();
+        $this->loadPostProcurementData();
     }
 
     /**
@@ -86,6 +89,70 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             }
         }
         return false;
+    }
+
+    /**
+     * Load existing post-procurement data
+     * If all PRs have identical post data, pre-fill the form
+     * Otherwise, leave fields empty for manual entry
+     */
+    private function loadPostProcurementData(): void
+    {
+        $currentItems = $this->getCurrentItems();
+
+        if (empty($currentItems)) {
+            return;
+        }
+
+        // Get post data from first PR
+        $firstRefId = $currentItems[0]['procurement_type'] === 'perLot'
+            ? $currentItems[0]['procID']
+            : $currentItems[0]['prItemID'];
+
+        $firstPost = \App\Models\PostProcurement::where('ref_id', $firstRefId)->first();
+
+        if (!$firstPost) {
+            return; // No post data exists
+        }
+
+        // Check if ALL PRs have identical post data
+        $allIdentical = true;
+
+        foreach ($currentItems as $item) {
+            $refId = $item['procurement_type'] === 'perLot'
+                ? $item['procID']
+                : $item['prItemID'];
+
+            $itemPost = \App\Models\PostProcurement::where('ref_id', $refId)->first();
+
+            // If any PR is missing post data or has different data, don't pre-fill
+            if (
+                !$itemPost ||
+                $itemPost->resolution_award_number !== $firstPost->resolution_award_number ||
+                $itemPost->resolution_award_date !== $firstPost->resolution_award_date ||
+                $itemPost->notice_of_award_number !== $firstPost->notice_of_award_number ||
+                $itemPost->notice_of_award !== $firstPost->notice_of_award ||
+                $itemPost->awarded_amount !== $firstPost->awarded_amount ||
+                $itemPost->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
+                $itemPost->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
+                $itemPost->supplier_id !== $firstPost->supplier_id
+            ) {
+                $allIdentical = false;
+                break;
+            }
+        }
+
+        // Only pre-fill if all PRs have identical post data
+        if ($allIdentical) {
+            $this->resolutionAwardNumber = $firstPost->resolution_award_number;
+            $this->resolutionAwardDate = $firstPost->resolution_award_date;
+            $this->noticeOfAwardNumber = $firstPost->notice_of_award_number;
+            $this->noticeOfAward = $firstPost->notice_of_award;
+            $this->awardedAmount = $firstPost->awarded_amount;
+            $this->philgepsNoticeOfAwardNo = $firstPost->philgeps_notice_of_award_no;
+            $this->philgepsPostingOfAward = $firstPost->philgeps_posting_of_award;
+            $this->supplier_id = $firstPost->supplier_id;
+        }
     }
 
     /**
@@ -172,12 +239,48 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         $this->scheduleValidationErrors[] = "Competitive Bidding: {$fieldsList} required for SUCCESSFUL bidding result.";
                     }
                 }
+
+                // Validate Resolution Number for Bidding Result
+                if (!$this->hasValue($this->bulkEdit['resolution_number_mop'] ?? '')) {
+                    $this->scheduleValidationErrors[] = 'Competitive Bidding: Resolution Number is required when Bidding Result is set.';
+                }
             }
         }
 
         // SVP/ALTERNATIVE MODES (7-24)
         if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-            // No required field validation for SVP modes during save - all fields are optional
+            // Validate PhilGEPS requirements based on individual PR ABC
+            $currentItems = $this->getCurrentItems();
+            $requiresPhilgeps = false;
+            $prNumbersRequiringPhilgeps = [];
+
+            foreach ($currentItems as $item) {
+                $procurement = Procurement::find($item['procID']);
+                $abc = $procurement ? $procurement->abc : 0;
+
+                if ($abc >= 200000) {
+                    $requiresPhilgeps = true;
+                    $prNumbersRequiringPhilgeps[] = $procurement->pr_number;
+                }
+            }
+
+            // If any PR requires PhilGEPS (ABC >= 200K), validate PhilGEPS fields
+            if ($requiresPhilgeps) {
+                $missingPhilgepsFields = [];
+
+                if (!$this->hasValue($this->bulkEdit['philgeps_posting_ref_no'] ?? '')) {
+                    $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
+                }
+                if (!$this->hasValue($this->bulkEdit['ads_post_ib'] ?? '')) {
+                    $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
+                }
+
+                if (!empty($missingPhilgepsFields)) {
+                    $fieldsList = implode(', ', $missingPhilgepsFields);
+                    $prList = implode(', ', array_unique($prNumbersRequiringPhilgeps));
+                    $this->scheduleValidationErrors[] = "SVP Mode: {$fieldsList} required for PR(s) {$prList} (ABC ≥ ₱200,000).";
+                }
+            }
         }
 
         return empty($this->scheduleValidationErrors);
@@ -848,6 +951,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Reload data instead of redirecting
         $this->loadProcurementData();
         $this->populateBulkEditData();
+        $this->loadPostProcurementData();
         $this->showAddForm = false;
     }
 
@@ -1440,18 +1544,119 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Reload data
         $this->loadProcurementData();
         $this->populateBulkEditData();
+        $this->loadPostProcurementData();
     }
 
     public function cancel()
     {
-        return redirect()->route('mode-of-procurement.index');
+        // Preserve query parameters (filters, pagination) when returning to index
+        $queryParams = $this->queryParams;
+        unset($queryParams['items']); // Remove items param
+
+        return redirect()->route('mode-of-procurement.index', $queryParams);
     }
 
+    /**
+     * Add a new mode/rebid for all selected PRs
+     * Creates new MOP records with proper mode_order indexing
+     */
     public function addItem(): void
     {
-        // Reset mode selection and enable the form
+        // Validate that all PRs can accept a new mode
+        $currentItems = $this->getCurrentItems();
+
+        if (empty($currentItems)) {
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('No procurement items found.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Check if ALL PRs can add rebid
+        foreach ($currentItems as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+
+            // Cannot rebid SVP modes
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                LivewireAlert::title('Cannot Add Rebid')
+                    ->warning()
+                    ->text('Cannot add rebid for SVP/Alternative modes. PR: ' . $item['pr_number'])
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+                return;
+            }
+
+            $bidResult = $item['bidding_result'] ?? '';
+            $hasBiddingData = $this->hasValue($item['ib_number']) &&
+                $this->hasValue($item['bidding_number']) &&
+                $this->hasValue($item['sub_open_bids']);
+            $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
+
+            // Can add if: mode_id = 1 OR (has bidding data/pre-proc AND result is UNSUCCESSFUL)
+            $canAdd = $modeId == 1 ||
+                (($hasBiddingData || $hasPreProcConference) && $bidResult === 'UNSUCCESSFUL');
+
+            if (!$canAdd) {
+                LivewireAlert::title('Cannot Add Rebid')
+                    ->warning()
+                    ->text('PR ' . $item['pr_number'] . ' does not meet requirements for adding a new mode.')
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+                return;
+            }
+        }
+
+        // All validations passed - enable the add form
         $this->bulkEdit['mode_of_procurement_id'] = null;
+        $this->clearBulkEditScheduleFields();
         $this->showAddForm = true;
+    }
+
+    /**
+     * Clear all schedule fields in bulk edit form
+     */
+    private function clearBulkEditScheduleFields(): void
+    {
+        // Clear bidding fields
+        $this->bulkEdit['bidding_number'] = '';
+        $this->bulkEdit['ib_number'] = '';
+        $this->bulkEdit['philgeps_posting_ref_no'] = '';
+        $this->bulkEdit['ads_post_ib'] = '';
+        $this->bulkEdit['pre_proc_conference'] = '';
+        $this->bulkEdit['list_invited_observers'] = '';
+        $this->bulkEdit['obsrvr_prebid_conf'] = '';
+        $this->bulkEdit['obsrvr_eligibility'] = '';
+        $this->bulkEdit['obsrvr_sub_open_of_bid'] = '';
+        $this->bulkEdit['obsrvr_bid'] = '';
+        $this->bulkEdit['obsrvr_post_qual'] = '';
+        $this->bulkEdit['pre_bid_conf'] = '';
+        $this->bulkEdit['eligibility_check'] = '';
+        $this->bulkEdit['sub_open_bids'] = '';
+        $this->bulkEdit['bid_evaluation_date'] = '';
+        $this->bulkEdit['post_qualification_date'] = '';
+        $this->bulkEdit['bidding_result'] = '';
+        $this->bulkEdit['resolution_number_mop'] = '';
+
+        // Clear SVP fields
+        $this->bulkEdit['resolution_number'] = '';
+        $this->bulkEdit['rfq_no'] = '';
+        $this->bulkEdit['canvass_date'] = '';
+        $this->bulkEdit['date_returned_of_canvass'] = '';
+        $this->bulkEdit['abstract_of_canvass_date'] = '';
+    }
+
+    /**
+     * Cancel adding new mode - reset form state
+     */
+    public function cancelAddItem(): void
+    {
+        $this->showAddForm = false;
+        $this->populateBulkEditData();
     }
 
     public function render()

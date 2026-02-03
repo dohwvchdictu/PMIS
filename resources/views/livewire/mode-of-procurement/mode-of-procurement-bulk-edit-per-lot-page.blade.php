@@ -19,8 +19,8 @@
                 </button>
 
                 <span
-                    class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 1 ? 'text-gray-900 dark:text-white' : 'text-gray-500' }}">
-                    Bulk Edit Mode of Procurement
+                    class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 1 ? 'text-gray-900 dark:text-white' : 'text-gray-500' }}">Mode
+                    of Procurement
                 </span>
 
                 <div
@@ -216,7 +216,17 @@
                                     <!-- Actions -->
                                     <td class="px-2 py-2 align-middle">
                                         <div class="flex items-center justify-center gap-1">
-                                            @if ($showAddModeButton)
+                                            @if ($showAddForm)
+                                                <button wire:click.prevent="cancelAddItem"
+                                                    class="inline-flex items-center justify-center w-7 h-7 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Cancel Add Mode">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            @elseif ($showAddModeButton)
                                                 <button wire:click.prevent="addItem"
                                                     class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                                                     title="Add Mode" @disabled($disableInputs)>
