@@ -361,24 +361,42 @@
                                                 placeholder="RES-2025-001" @disabled($disableInputs)>
                                         </td>
                                     @elseif ($showSvpFields)
-                                        {{-- Empty cells for bidding-only fields (17 fields) --}}
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
-                                        <td class="px-2 py-2"></td>
+                                        {{-- Empty cells for bidding-only fields --}}
+                                        <td class="px-2 py-2"></td> {{-- Bidding # --}}
+                                        <td class="px-2 py-2"></td> {{-- IB No. --}}
+
+                                        {{-- PhilGEPS and Ads/Post IB: Show for ABC >= 200k --}}
+                                        @if ($abcThresholdCategory === '₱200,000.00 and Above')
+                                            <!-- PhilGEPS Posting Ref # -->
+                                            <td class="px-2 py-2">
+                                                <input type="text" wire:model="bulkEdit.philgeps_posting_ref_no"
+                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    placeholder="PHL-2025-001" @disabled($disableInputs)>
+                                            </td>
+                                            <!-- Ads/Post IB -->
+                                            <td class="px-2 py-2">
+                                                <input type="date" wire:model="bulkEdit.ads_post_ib"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    @disabled($disableInputs)>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td> {{-- PhilGEPS (below 200k) --}}
+                                            <td class="px-2 py-2"></td> {{-- Ads/Post IB (below 200k) --}}
+                                        @endif
+
+                                        <td class="px-2 py-2"></td> {{-- Pre-Proc Conference --}}
+                                        <td class="px-2 py-2"></td> {{-- List of Invited Observers --}}
+                                        <td class="px-2 py-2"></td> {{-- Observers (Pre-Bid) --}}
+                                        <td class="px-2 py-2"></td> {{-- Observers (Eligibility) --}}
+                                        <td class="px-2 py-2"></td> {{-- Observers (Sub/Open) --}}
+                                        <td class="px-2 py-2"></td> {{-- Observers (Bid) --}}
+                                        <td class="px-2 py-2"></td> {{-- Observers (Post Qual) --}}
+                                        <td class="px-2 py-2"></td> {{-- Pre-Bid Conference --}}
+                                        <td class="px-2 py-2"></td> {{-- Eligibility Check --}}
+                                        <td class="px-2 py-2"></td> {{-- Sub/Open of Bids --}}
+                                        <td class="px-2 py-2"></td> {{-- Bid Evaluation Date --}}
+                                        <td class="px-2 py-2"></td> {{-- Post Qualification Date --}}
+                                        <td class="px-2 py-2"></td> {{-- Bidding Result --}}
 
                                         <!-- Resolution # (MOP) -->
                                         <td class="px-2 py-2">
@@ -667,6 +685,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['bidding_number'] ?: '-' }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- IB No. -->
@@ -676,27 +697,32 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['ib_number'] ?: '-' }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- PhilGEPS Posting Ref # -->
-                                        @if ($showBiddingFields || $showSvpFields)
+                                        @if ($showBiddingFields || ($showSvpFields && $abcThresholdCategory === '₱200,000.00 and Above'))
                                             <td class="px-2 py-2">
                                                 <span
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['philgeps_posting_ref_no'] ?: '-' }}
                                                 </span>
-                                            @else
+                                            </td>
+                                        @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Ads/Post IB -->
-                                        @if ($showBiddingFields || $showSvpFields)
+                                        @if ($showBiddingFields || ($showSvpFields && $abcThresholdCategory === '₱200,000.00 and Above'))
                                             <td class="px-2 py-2">
                                                 <span
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['ads_post_ib']) }}
                                                 </span>
-                                            @else
+                                            </td>
+                                        @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
@@ -707,6 +733,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['pre_proc_conference']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- List of Invited Observers -->
@@ -716,6 +745,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['list_invited_observers']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Observer 1 (Pre-Bid) -->
@@ -725,6 +757,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['obsrvr_prebid_conf']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Observer 2 (Eligibility) -->
@@ -734,6 +769,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['obsrvr_eligibility']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Observer 3 (Sub/Open) -->
@@ -743,6 +781,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['obsrvr_sub_open_of_bid']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Observer 4 (Bid) -->
@@ -752,6 +793,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['obsrvr_bid']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Observer 5 (Post Qual) -->
@@ -761,6 +805,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['obsrvr_post_qual']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Pre-Bid Conference -->
@@ -770,6 +817,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['pre_bid_conf']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Eligibility Check -->
@@ -779,6 +829,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['eligibility_check']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Sub/Open of Bids -->
@@ -788,6 +841,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['sub_open_bids']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Bid Evaluation -->
@@ -797,6 +853,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['bid_evaluation_date']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Post Qualification -->
@@ -806,6 +865,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['post_qualification_date']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Bidding Result -->
@@ -815,6 +877,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['bidding_result'] ?: '-' }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Resolution # (MOP) -->
@@ -824,7 +889,8 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['resolution_number_mop'] ?: '-' }}
                                                 </span>
-                                            @else
+                                            </td>
+                                        @else
                                             <td class="px-2 py-2"></td>
                                         @endif
 
@@ -835,6 +901,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $item['rfq_no'] ?: '-' }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Canvass Date -->
@@ -844,6 +913,9 @@
                                                     class="text-xs {{ $isHead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400' }}">
                                                     {{ $this->formatDate($item['canvass_date']) }}
                                                 </span>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
                                         @endif
 
                                         <!-- Returned of Canvass -->
@@ -881,9 +953,237 @@
         @if ($activeTab == 2)
             <div class="flex flex-col gap-2 pt-2">
                 <div
-                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                    <div class="text-center py-8">
-                        <p class="text-gray-500 dark:text-gray-400">Post Procurement section will be available here</p>
+                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+
+                    <!-- Bulk Edit Section Header -->
+                    <div class="px-2 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b-2 border-emerald-500 mb-2">
+                        <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                            📝 Bulk Edit Post-Procurement - Changes will apply to all selected PRs
+                        </h3>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                        <table class="w-full text-xs min-w-max">
+                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                                <tr>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Number</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Date</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Number
+                                    </th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Date</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Awarded Amount</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Notice of Award No.</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Posting of Award</th>
+
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                        Supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                <tr>
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="resolutionAwardNumber"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="RES-YYYY-NNN">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="resolutionAwardDate"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="noticeOfAwardNumber"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="NOA-YYYY-NNNN">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="noticeOfAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="number" step="0.01" wire:model.defer="awardedAmount"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="text" wire:model.defer="philgepsNoticeOfAwardNo"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="PHL-NOA-YYYY-NNN">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="philgepsPostingOfAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <select wire:model.defer="supplier_id"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="">Select Supplier...</option>
+                                            @foreach ($suppliers as $supplier)
+                                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Divider and PR List Header -->
+                        <div class="my-4">
+                            <div class="h-px bg-gray-300 dark:bg-neutral-600"></div>
+                            <div class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 mt-4 mb-2">
+                                <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                                    📋 Selected PRs - Current Post-Procurement Data
+                                </h3>
+                            </div>
+                        </div>
+
+                        <!-- PR List Table -->
+                        <table class="w-full text-xs min-w-max">
+                            <thead class="bg-gray-200 dark:bg-neutral-800">
+                                <tr>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PR Number</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Procurement Program / Project</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Number</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Date</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Number</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Date</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Awarded Amount</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Notice of Award No.</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Posting of Award</th>
+                                    <th
+                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                @php
+                                    $displayedPRs = [];
+                                @endphp
+
+                                @foreach ($items as $item)
+                                    @php
+                                        // Only show each PR once (the current/latest mode)
+                                        $procKey =
+                                            $item['procurement_type'] === 'perLot'
+                                                ? 'lot_' . $item['procID']
+                                                : 'item_' . $item['prItemID'];
+
+                                        if (in_array($procKey, $displayedPRs)) {
+                                            continue;
+                                        }
+                                        $displayedPRs[] = $procKey;
+
+                                        // Get post-procurement data
+                                        $refId =
+                                            $item['procurement_type'] === 'perLot'
+                                                ? $item['procID']
+                                                : $item['prItemID'];
+                                        $postData = \App\Models\PostProcurement::where('ref_id', $refId)->first();
+                                        $supplier =
+                                            $postData && $postData->supplier_id
+                                                ? \App\Models\Supplier::find($postData->supplier_id)
+                                                : null;
+                                    @endphp
+
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs font-medium text-gray-900 dark:text-white">
+                                                {{ $item['pr_number'] }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ Str::limit($item['procurement_program_project'], 50) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData->resolution_award_number ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData && $postData->resolution_award_date ? $this->formatDate($postData->resolution_award_date) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData->notice_of_award_number ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData && $postData->notice_of_award ? $this->formatDate($postData->notice_of_award) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData && $postData->awarded_amount ? '₱' . number_format($postData->awarded_amount, 2) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData->philgeps_notice_of_award_no ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $postData && $postData->philgeps_posting_of_award ? $this->formatDate($postData->philgeps_posting_of_award) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                {{ $supplier ? $supplier->name : '-' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -899,11 +1199,19 @@
                 Cancel
             </button>
 
-            <button wire:click="save" wire:loading.attr="disabled" type="button"
-                class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span wire:loading.remove wire:target="save">Save</span>
-                <span wire:loading wire:target="save">Saving...</span>
-            </button>
+            @if ($activeTab == 1)
+                <button wire:click="save" wire:loading.attr="disabled" type="button"
+                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span wire:loading.remove wire:target="save">Save</span>
+                    <span wire:loading wire:target="save">Saving...</span>
+                </button>
+            @elseif ($activeTab == 2)
+                <button wire:click="savePost" wire:loading.attr="disabled" type="button"
+                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span wire:loading.remove wire:target="savePost">Save Post-Procurement</span>
+                    <span wire:loading wire:target="savePost">Saving...</span>
+                </button>
+            @endif
         </div>
     </div>
 </div>
