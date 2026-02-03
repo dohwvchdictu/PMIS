@@ -466,18 +466,20 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
 
-                        <!-- Divider and PR List Header -->
-                        <div class="my-4">
-                            <div class="h-px bg-gray-300 dark:bg-neutral-600"></div>
-                            <div class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 mt-4 mb-2">
-                                <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                                    📋 Selected PRs - Current Mode of Procurement Data ({{ $abcThresholdCategory }})
-                                </h3>
-                            </div>
+                    <!-- Divider and PR List Header -->
+                    <div class="my-4">
+                        <div class="h-px bg-gray-300 dark:bg-neutral-600"></div>
+                        <div class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 mt-4 mb-2">
+                            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                                📋 Selected PRs - Current Mode of Procurement Data ({{ $abcThresholdCategory }})
+                            </h3>
                         </div>
+                    </div>
 
-                        <!-- PR List Table -->
+                    <!-- PR List Table -->
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
                             <thead class="bg-gray-200 dark:bg-neutral-800">
                                 <tr>

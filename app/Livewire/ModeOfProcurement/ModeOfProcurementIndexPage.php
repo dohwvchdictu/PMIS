@@ -102,31 +102,48 @@ class ModeOfProcurementIndexPage extends Component
     public function updatingSearch()
     {
         $this->resetPage();
+        $this->selectAll = false;
     }
 
     public function updatingBacCategoryFilter()
     {
         $this->resetPage();
+        $this->selectAll = false;
     }
 
     public function updatingCategoryFilter()
     {
         $this->resetPage();
+        $this->selectAll = false;
     }
 
     public function updatingIbNumberFilter()
     {
         $this->resetPage();
+        $this->selectAll = false;
     }
 
     public function updatingCurrentModeFilter()
     {
         $this->resetPage();
+        $this->selectAll = false;
     }
 
     public function updatingPerPage()
     {
         $this->resetPage();
+        $this->selectAll = false;
+    }
+
+    public function updatedPaginators()
+    {
+        $this->selectAll = false;
+    }
+
+    public function clearSelections()
+    {
+        $this->selectedItems = [];
+        $this->selectAll = false;
     }
 
     public function updatedSelectAll($value)
