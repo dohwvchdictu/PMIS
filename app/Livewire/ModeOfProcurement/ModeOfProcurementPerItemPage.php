@@ -1783,7 +1783,70 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
     }
+    public function bulkAddMode(): void
+    {
+        if (empty($this->selectedItems)) {
+            return;
+        }
 
+        // Get the mode ID from bulk edit data
+        $modeId = $this->bulkEditData['mode_of_procurement_id'] ?? null;
+
+        // Check if mode allows adding
+        $canAdd = $modeId == 1 ||
+            (in_array($modeId, [2, 3, 4, 5, 6]) &&
+                ($this->bulkEditData['bidding_result'] ?? '') === 'UNSUCCESSFUL');
+
+        if (!$canAdd) {
+            LivewireAlert::title('Cannot Add Mode')
+                ->warning()
+                ->text('New modes can only be added for Shopping mode or UNSUCCESSFUL competitive bidding.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // First, apply the current bulk edit changes
+        $this->applyBulkEdit();
+
+        // Then add new mode to each selected item
+        foreach ($this->selectedItems as $index) {
+            $this->addItem($index);
+        }
+
+        LivewireAlert::title('Modes Added Successfully')
+            ->success()
+            ->text('New modes added to ' . count($this->selectedItems) . ' items.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+
+        // Reload data
+        $this->mount($this->procurement);
+
+        // Close modal and clear selection
+        $this->closeBulkEditModal();
+    }
+    public function applyBulkEditAndAddMode(): void
+    {
+        // First apply the bulk edit
+        $this->applyBulkEdit();
+
+        // Then add new mode to all selected items
+        foreach ($this->selectedItems as $index) {
+            $this->addItem($index);
+        }
+
+        LivewireAlert::title('Changes Applied & Modes Added')
+            ->success()
+            ->text('Bulk edit applied and new modes added to ' . count($this->selectedItems) . ' items.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+
+        $this->closeBulkEditModal();
+    }
     public function closeBulkEditModal(): void
     {
         $this->showBulkEditModal = false;
