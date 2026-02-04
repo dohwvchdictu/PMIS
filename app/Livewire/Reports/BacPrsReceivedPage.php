@@ -6,6 +6,8 @@ use App\Models\BacType;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Procurement;
+use App\Exports\BacPrsReceivedExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BacPrsReceivedPage extends Component
 {
@@ -87,6 +89,35 @@ class BacPrsReceivedPage extends Component
         $this->resetPage();
     }
 
+    /**
+     * Export to Excel
+     */
+    public function exportToExcel()
+    {
+        $dateRange = '';
+        if (!empty($this->startDate) && !empty($this->endDate)) {
+            $dateRange = '_' . $this->startDate . '_to_' . $this->endDate;
+        } elseif (!empty($this->startDate)) {
+            $dateRange = '_from_' . $this->startDate;
+        } elseif (!empty($this->endDate)) {
+            $dateRange = '_to_' . $this->endDate;
+        } else {
+            $dateRange = '_' . now()->format('Y-m-d');
+        }
+
+        $fileName = 'BAC_PRs_Received' . $dateRange . '.xlsx';
+
+        return Excel::download(
+            new BacPrsReceivedExport(
+                $this->search,
+                $this->startDate,
+                $this->endDate,
+                $this->bacCategoryFilter
+            ),
+            $fileName
+        );
+    }
+
     public function render()
     {
         $query = Procurement::query()
@@ -109,11 +140,11 @@ class BacPrsReceivedPage extends Component
         }
 
         // Apply period covered filter
-        if (!empty($this->startDate)) {
+        if (!empty($this->startDate) && !empty($this->endDate)) {
+            $query->whereBetween('date_receipt', [$this->startDate, $this->endDate]);
+        } elseif (!empty($this->startDate)) {
             $query->whereDate('date_receipt', '>=', $this->startDate);
-        }
-
-        if (!empty($this->endDate)) {
+        } elseif (!empty($this->endDate)) {
             $query->whereDate('date_receipt', '<=', $this->endDate);
         }
 
