@@ -1029,7 +1029,8 @@
     </div>
 
     {{-- Edit History Modal --}}
-    <x-forms.modal wire:model="showModal" title="Edit History Record" size="max-w-6xl">
+    <x-forms.modal wire:model="showModal" title="Edit History Record" size="max-w-6xl" model="showModal"
+        closeMethod="closeModal">
         @if ($editingItem)
             <div class="px-4 py-3">
 

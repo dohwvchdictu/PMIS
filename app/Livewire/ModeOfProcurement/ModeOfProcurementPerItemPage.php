@@ -43,6 +43,12 @@ class ModeOfProcurementPerItemPage extends Component
     public array $scheduleValidationErrors = [];
     public $queryParams = [];
 
+    // Bulk Edit Properties
+    public bool $showBulkEditModal = false;
+    public array $selectedItems = [];
+    public array $bulkEditData = [];
+    public array $bulkEditErrors = [];
+
     public function mount(Procurement $procurement): void
     {
         $this->queryParams = request()->query();
@@ -1280,6 +1286,510 @@ class ModeOfProcurementPerItemPage extends Component
     private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
+    }
+
+    public function toggleItemSelection($index): void
+    {
+        if (in_array($index, $this->selectedItems)) {
+            $this->selectedItems = array_values(array_diff($this->selectedItems, [$index]));
+        } else {
+            $this->selectedItems[] = $index;
+        }
+    }
+
+    public function selectAll(): void
+    {
+        $this->selectedItems = [];
+        foreach ($this->form['items'] as $index => $item) {
+            // Only select items that are head records (not history)
+            $currentPrID = $item['prItemID'] ?? null;
+            $prevPrID = $this->form['items'][$index - 1]['prItemID'] ?? null;
+            $isHead = $index === 0 || $currentPrID !== $prevPrID;
+
+            if ($isHead) {
+                $this->selectedItems[] = $index;
+            }
+        }
+    }
+
+    public function deselectAll(): void
+    {
+        $this->selectedItems = [];
+    }
+
+    public function openBulkEditModal(): void
+    {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one item to edit.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Validate selected items
+        $validation = $this->validateBulkEditSelection();
+
+        if (!$validation['valid']) {
+            $this->bulkEditErrors = $validation['errors'];
+            LivewireAlert::title('Bulk Edit Validation Failed')
+                ->error()
+                ->text($this->formatValidationErrors($validation['errors']))
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Initialize bulk edit data based on the common mode
+        $firstItem = $this->form['items'][$this->selectedItems[0]];
+        $modeId = $firstItem['mode_of_procurement_id'];
+        $amountThreshold = $validation['amountThreshold'];
+
+        $this->bulkEditData = [
+            'mode_of_procurement_id' => $modeId,
+            'amount_threshold' => $amountThreshold,
+            'items_count' => count($this->selectedItems),
+            'item_numbers' => $validation['itemNumbers'],
+        ];
+
+        // Initialize fields based on mode type with existing data
+        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            $this->bulkEditData = array_merge($this->bulkEditData, [
+                'bidding_number' => $firstItem['bidding_number'] ?? '',
+                'ib_number' => $firstItem['ib_number'] ?? '',
+                'philgeps_posting_ref_no' => $firstItem['philgeps_posting_ref_no'] ?? '',
+                'ads_post_ib' => $firstItem['ads_post_ib'] ?? '',
+                'pre_proc_conference' => $firstItem['pre_proc_conference'] ?? '',
+                'list_invited_observers' => $firstItem['list_invited_observers'] ?? '',
+                'obsrvr_prebid_conf' => $firstItem['obsrvr_prebid_conf'] ?? '',
+                'obsrvr_eligibility' => $firstItem['obsrvr_eligibility'] ?? '',
+                'obsrvr_sub_open_of_bid' => $firstItem['obsrvr_sub_open_of_bid'] ?? '',
+                'obsrvr_bid' => $firstItem['obsrvr_bid'] ?? '',
+                'obsrvr_post_qual' => $firstItem['obsrvr_post_qual'] ?? '',
+                'pre_bid_conf' => $firstItem['pre_bid_conf'] ?? '',
+                'eligibility_check' => $firstItem['eligibility_check'] ?? '',
+                'sub_open_bids' => $firstItem['sub_open_bids'] ?? '',
+                'bid_evaluation_date' => $firstItem['bid_evaluation_date'] ?? '',
+                'post_qualification_date' => $firstItem['post_qualification_date'] ?? '',
+                'bidding_result' => $firstItem['bidding_result'] ?? '',
+                'resolution_number_mop' => $firstItem['resolution_number_mop'] ?? '',
+            ]);
+        } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            $this->bulkEditData = array_merge($this->bulkEditData, [
+                'rfq_no' => $firstItem['rfq_no'] ?? '',
+                'canvass_date' => $firstItem['canvass_date'] ?? '',
+                'date_returned_of_canvass' => $firstItem['date_returned_of_canvass'] ?? '',
+                'abstract_of_canvass_date' => $firstItem['abstract_of_canvass_date'] ?? '',
+                'resolution_number_mop' => $firstItem['resolution_number_mop'] ?? '',
+            ]);
+
+            // Add PhilGEPS fields if threshold is >= 200k
+            if ($amountThreshold === '>=200k') {
+                $this->bulkEditData['philgeps_posting_ref_no'] = $firstItem['philgeps_posting_ref_no'] ?? '';
+                $this->bulkEditData['ads_post_ib'] = $firstItem['ads_post_ib'] ?? '';
+            }
+        }
+
+        $this->bulkEditErrors = [];
+        $this->showBulkEditModal = true;
+    }
+
+    private function validateBulkEditSelection(): array
+    {
+        $errors = [];
+        $itemNumbers = [];
+        $modes = [];
+        $amounts = [];
+        $scheduleData = [];
+
+        foreach ($this->selectedItems as $index) {
+            $item = $this->form['items'][$index];
+            $itemNumber = $item['item_no'];
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $amount = (float) ($item['amount'] ?? 0);
+
+            $itemNumbers[] = $itemNumber;
+
+            if ($modeId) {
+                $modes[$modeId][] = $itemNumber;
+            }
+
+            $amounts[$itemNumber] = $amount;
+
+            // Collect schedule data for consistency check
+            $schedule = [];
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                // Bidding schedule fields
+                $schedule = [
+                    'bidding_number' => $item['bidding_number'] ?? null,
+                    'ib_number' => $item['ib_number'] ?? null,
+                    'philgeps_posting_ref_no' => $item['philgeps_posting_ref_no'] ?? null,
+                    'ads_post_ib' => $item['ads_post_ib'] ?? null,
+                    'pre_proc_conference' => $item['pre_proc_conference'] ?? null,
+                    'list_invited_observers' => $item['list_invited_observers'] ?? null,
+                    'obsrvr_prebid_conf' => $item['obsrvr_prebid_conf'] ?? null,
+                    'obsrvr_eligibility' => $item['obsrvr_eligibility'] ?? null,
+                    'obsrvr_sub_open_of_bid' => $item['obsrvr_sub_open_of_bid'] ?? null,
+                    'obsrvr_bid' => $item['obsrvr_bid'] ?? null,
+                    'obsrvr_post_qual' => $item['obsrvr_post_qual'] ?? null,
+                    'pre_bid_conf' => $item['pre_bid_conf'] ?? null,
+                    'eligibility_check' => $item['eligibility_check'] ?? null,
+                    'sub_open_bids' => $item['sub_open_bids'] ?? null,
+                    'bid_evaluation_date' => $item['bid_evaluation_date'] ?? null,
+                    'post_qualification_date' => $item['post_qualification_date'] ?? null,
+                    'bidding_result' => $item['bidding_result'] ?? null,
+                    'resolution_number_mop' => $item['resolution_number_mop'] ?? null,
+                ];
+            } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                // SVP schedule fields
+                $schedule = [
+                    'rfq_no' => $item['rfq_no'] ?? null,
+                    'canvass_date' => $item['canvass_date'] ?? null,
+                    'date_returned_of_canvass' => $item['date_returned_of_canvass'] ?? null,
+                    'abstract_of_canvass_date' => $item['abstract_of_canvass_date'] ?? null,
+                    'resolution_number_mop' => $item['resolution_number_mop'] ?? null,
+                ];
+            }
+
+            $scheduleData[$index] = $schedule;
+        }
+
+        // Check if all items have the same mode
+        if (count($modes) > 1) {
+            $errorMsg = "<strong>Items have different modes:</strong><br>";
+            foreach ($modes as $modeId => $items) {
+                $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Unknown';
+                $errorMsg .= "• {$modeName}: Items " . implode(', ', $items) . "<br>";
+            }
+            $errors[] = $errorMsg;
+        }
+
+        if (empty($modes)) {
+            $errors[] = "<strong>No valid mode selected for items:</strong> " . implode(', ', $itemNumbers);
+        }
+
+        // Check if all items have identical schedule data
+        if (!empty($modes) && count($modes) === 1) {
+            $scheduleHashes = [];
+            $itemNumbersByHash = [];
+
+            foreach ($this->selectedItems as $index) {
+                $hash = md5(json_encode($scheduleData[$index]));
+                $scheduleHashes[$index] = $hash;
+
+                $itemNumber = $this->form['items'][$index]['item_no'];
+                if (!isset($itemNumbersByHash[$hash])) {
+                    $itemNumbersByHash[$hash] = [];
+                }
+                $itemNumbersByHash[$hash][] = $itemNumber;
+            }
+
+            $uniqueHashes = array_unique($scheduleHashes);
+
+            if (count($uniqueHashes) > 1) {
+                // Find the minority group (items with different data)
+                $hashCounts = array_count_values($scheduleHashes);
+                arsort($hashCounts);
+                $majorityHash = array_key_first($hashCounts);
+
+                $differentItems = [];
+                foreach ($scheduleHashes as $index => $hash) {
+                    if ($hash !== $majorityHash) {
+                        $itemNumber = $this->form['items'][$index]['item_no'];
+                        $differentItems[] = $itemNumber;
+                    }
+                }
+
+                $itemList = implode(', ', $differentItems);
+
+                $errors[] = "<strong>Field Mismatch:</strong><br>Item{$this->pluralize(count($differentItems))} {$itemList} " .
+                    (count($differentItems) > 1 ? 'have' : 'has') . " different field values from the others";
+            }
+        }
+
+        // Check amount threshold consistency
+        $below200k = [];
+        $above200k = [];
+
+        foreach ($amounts as $itemNum => $amount) {
+            if ($amount < 200000) {
+                $below200k[] = $itemNum;
+            } else {
+                $above200k[] = $itemNum;
+            }
+        }
+
+        $amountThreshold = null;
+        if (!empty($below200k) && !empty($above200k)) {
+            $errors[] = "<strong>Mixed amount thresholds:</strong><br>" .
+                "• Below ₱200,000: Items " . implode(', ', $below200k) . "<br>" .
+                "• ₱200,000 and above: Items " . implode(', ', $above200k);
+        } elseif (!empty($below200k)) {
+            $amountThreshold = '<200k';
+        } elseif (!empty($above200k)) {
+            $amountThreshold = '>=200k';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'itemNumbers' => $itemNumbers,
+            'amountThreshold' => $amountThreshold,
+            'commonMode' => empty($modes) ? null : array_key_first($modes),
+        ];
+    }
+
+    private function pluralize(int $count): string
+    {
+        return $count > 1 ? 's' : '';
+    }
+
+    public function applyBulkEdit(): void
+    {
+        if (empty($this->selectedItems)) {
+            $this->closeBulkEditModal();
+            return;
+        }
+
+        // Validate bulk edit data before applying
+        if (!$this->validateBulkEditData()) {
+            LivewireAlert::title('Validation Failed')
+                ->error()
+                ->text($this->formatValidationErrors($this->bulkEditErrors))
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Validate that at least one field is filled
+        $modeId = $this->bulkEditData['mode_of_procurement_id'];
+        $hasData = false;
+
+        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            $biddingFields = [
+                'bidding_number',
+                'ib_number',
+                'philgeps_posting_ref_no',
+                'ads_post_ib',
+                'pre_proc_conference',
+                'list_invited_observers',
+                'obsrvr_prebid_conf',
+                'obsrvr_eligibility',
+                'obsrvr_sub_open_of_bid',
+                'obsrvr_bid',
+                'obsrvr_post_qual',
+                'pre_bid_conf',
+                'eligibility_check',
+                'sub_open_bids',
+                'bid_evaluation_date',
+                'post_qualification_date',
+                'bidding_result',
+                'resolution_number_mop'
+            ];
+
+            foreach ($biddingFields as $field) {
+                if (!empty($this->bulkEditData[$field])) {
+                    $hasData = true;
+                    break;
+                }
+            }
+        } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            $svpFields = [
+                'rfq_no',
+                'canvass_date',
+                'date_returned_of_canvass',
+                'abstract_of_canvass_date',
+                'resolution_number_mop'
+            ];
+
+            if ($this->bulkEditData['amount_threshold'] === '>=200k') {
+                $svpFields[] = 'philgeps_posting_ref_no';
+                $svpFields[] = 'ads_post_ib';
+            }
+
+            foreach ($svpFields as $field) {
+                if (!empty($this->bulkEditData[$field])) {
+                    $hasData = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$hasData) {
+            LivewireAlert::title('No Changes')
+                ->warning()
+                ->text('Please fill in at least one field to update.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Apply changes to selected items
+        foreach ($this->selectedItems as $index) {
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                // Update bidding fields
+                $this->updateBiddingFields($index);
+            } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                // Update SVP fields
+                $this->updateSvpFields($index);
+            }
+        }
+
+        LivewireAlert::title('Bulk Edit Applied')
+            ->success()
+            ->text(count($this->selectedItems) . ' items updated successfully.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+
+        $this->closeBulkEditModal();
+    }
+
+    private function validateBulkEditData(): bool
+    {
+        $this->bulkEditErrors = [];
+        $modeId = $this->bulkEditData['mode_of_procurement_id'] ?? null;
+
+        if (!$modeId) {
+            $this->bulkEditErrors[] = 'Mode of Procurement is required.';
+            return false;
+        }
+
+        // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
+        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            // Validate Bidding Result dependencies
+            $biddingResult = $this->bulkEditData['bidding_result'] ?? null;
+
+            if ($this->hasValue($biddingResult)) {
+                $missingFields = [];
+                $hasPreProcConference = $this->hasValue($this->bulkEditData['pre_proc_conference'] ?? '');
+
+                if (!$hasPreProcConference) {
+                    if (!$this->hasValue($this->bulkEditData['bidding_number'] ?? '')) {
+                        $missingFields[] = 'Bidding #';
+                    }
+                    if (!$this->hasValue($this->bulkEditData['ib_number'] ?? '')) {
+                        $missingFields[] = 'IB No.';
+                    }
+                    if (!$this->hasValue($this->bulkEditData['sub_open_bids'] ?? '')) {
+                        $missingFields[] = 'Submission & Opening of Bids';
+                    }
+
+                    if (!empty($missingFields)) {
+                        $fieldsList = implode(', ', $missingFields);
+                        $this->bulkEditErrors[] = "Competitive Bidding: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                    }
+                }
+
+                if ($biddingResult === 'SUCCESSFUL') {
+                    $successMissingFields = [];
+
+                    if (!$this->hasValue($this->bulkEditData['bid_evaluation_date'] ?? '')) {
+                        $successMissingFields[] = 'Bid Evaluation Date';
+                    }
+                    if (!$this->hasValue($this->bulkEditData['post_qualification_date'] ?? '')) {
+                        $successMissingFields[] = 'Post Qualification Date';
+                    }
+
+                    if (!empty($successMissingFields)) {
+                        $fieldsList = implode(', ', $successMissingFields);
+                        $this->bulkEditErrors[] = "Competitive Bidding: {$fieldsList} required for SUCCESSFUL bidding result.";
+                    }
+                }
+
+                // Validate Resolution Number for Bidding Result
+                if (!$this->hasValue($this->bulkEditData['resolution_number_mop'] ?? '')) {
+                    $this->bulkEditErrors[] = 'Competitive Bidding: Resolution Number is required when Bidding Result is set.';
+                }
+            }
+        }
+
+        // SVP/ALTERNATIVE MODES (7-24)
+        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            // Validate PhilGEPS requirements based on amount threshold
+            if ($this->bulkEditData['amount_threshold'] === '>=200k') {
+                $missingPhilgepsFields = [];
+
+                if (!$this->hasValue($this->bulkEditData['philgeps_posting_ref_no'] ?? '')) {
+                    $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
+                }
+                if (!$this->hasValue($this->bulkEditData['ads_post_ib'] ?? '')) {
+                    $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
+                }
+
+                if (!empty($missingPhilgepsFields)) {
+                    $fieldsList = implode(', ', $missingPhilgepsFields);
+                    $this->bulkEditErrors[] = "SVP Mode: {$fieldsList} required for items with ABC ≥ ₱200,000.";
+                }
+            }
+        }
+
+        return empty($this->bulkEditErrors);
+    }
+
+    private function updateBiddingFields($index): void
+    {
+        $fields = [
+            'bidding_number',
+            'ib_number',
+            'philgeps_posting_ref_no',
+            'ads_post_ib',
+            'pre_proc_conference',
+            'list_invited_observers',
+            'obsrvr_prebid_conf',
+            'obsrvr_eligibility',
+            'obsrvr_sub_open_of_bid',
+            'obsrvr_bid',
+            'obsrvr_post_qual',
+            'pre_bid_conf',
+            'eligibility_check',
+            'sub_open_bids',
+            'bid_evaluation_date',
+            'post_qualification_date',
+            'bidding_result',
+            'resolution_number_mop'
+        ];
+
+        foreach ($fields as $field) {
+            if (!empty($this->bulkEditData[$field])) {
+                $this->form['items'][$index][$field] = $this->bulkEditData[$field];
+            }
+        }
+    }
+
+    private function updateSvpFields($index): void
+    {
+        $fields = [
+            'rfq_no',
+            'canvass_date',
+            'date_returned_of_canvass',
+            'abstract_of_canvass_date',
+            'resolution_number_mop'
+        ];
+
+        if ($this->bulkEditData['amount_threshold'] === '>=200k') {
+            $fields[] = 'philgeps_posting_ref_no';
+            $fields[] = 'ads_post_ib';
+        }
+
+        foreach ($fields as $field) {
+            if (!empty($this->bulkEditData[$field])) {
+                $this->form['items'][$index][$field] = $this->bulkEditData[$field];
+            }
+        }
+    }
+
+    public function closeBulkEditModal(): void
+    {
+        $this->showBulkEditModal = false;
+        $this->bulkEditData = [];
+        $this->bulkEditErrors = [];
+        $this->deselectAll();
     }
 
     public function render()

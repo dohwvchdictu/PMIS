@@ -94,9 +94,53 @@
                 <div
                     class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mt-4">
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                        <div
+                            class="mb-4 flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-3 rounded-lg">
+                            <div class="flex items-center gap-3">
+
+
+                                @if (count($selectedItems) > 0)
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ count($selectedItems) }} item(s) selected
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if (count($selectedItems) > 0)
+                                <button type="button" wire:click="openBulkEditModal"
+                                    class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Bulk Edit
+                                </button>
+                            @endif
+                        </div>
                         <table class="w-full text-xs min-w-max">
                             <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                 <tr>
+                                    <th
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
+                                        <input type="checkbox" id="select-all-checkbox"
+                                            class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700"
+                                            title="Select all" onclick="toggleAllCheckboxes(this)">
+                                        @push('scripts')
+                                            <script>
+                                                function toggleAllCheckboxes(source) {
+                                                    const checkboxes = document.querySelectorAll('input[type=checkbox][data-row-checkbox]');
+                                                    checkboxes.forEach(cb => {
+                                                        if (!cb.disabled) {
+                                                            cb.checked = source.checked;
+                                                            cb.dispatchEvent(new Event('click', {
+                                                                bubbles: true
+                                                            }));
+                                                        }
+                                                    });
+                                                }
+                                            </script>
+                                        @endpush
+                                    </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
                                     </th>
@@ -248,7 +292,17 @@
 
                                     <tr wire:key="row-{{ $currentPrID }}"
                                         class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
-
+                                        @if ($isHead)
+                                            <td class="px-2 py-2 text-center align-middle">
+                                                <input type="checkbox"
+                                                    wire:click="toggleItemSelection({{ $itemIndex }})"
+                                                    @checked(in_array($itemIndex, $selectedItems))
+                                                    class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700"
+                                                    data-row-checkbox>
+                                            </td>
+                                        @else
+                                            <td class="px-2 py-2"></td>
+                                        @endif
                                         {{-- Action Buttons (History & Add) --}}
                                         <td class="px-2 py-2 align-middle">
                                             <div class="flex items-center justify-center gap-1">
@@ -264,7 +318,8 @@
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
                                                                     stroke-width="2">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round"
                                                                         d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                                                 </svg>
                                                             @else
@@ -273,7 +328,8 @@
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
                                                                     stroke-width="2">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round"
                                                                         d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                                                 </svg>
                                                             @endif
@@ -1138,14 +1194,13 @@
         </div>
     </div>
     {{-- Edit History Modal --}}
-    <x-forms.modal title="Edit History Record" size="max-w-6xl" wire:model="showModal">
+    <x-forms.modal title="Edit History Record" size="max-w-6xl" wire:model="showModal" model="showModal"
+        closeMethod="closeEditModal">
         @if ($editingItem)
             <div class="px-4 py-3">
-
                 @php
                     $editModeId = $editingItem['mode_of_procurement_id'] ?? null;
                 @endphp
-
                 <div class="overflow-x-auto max-h-[70vh] overflow-y-auto">
                     <table class="w-full text-xs min-w-max">
                         <thead class="sticky top-0 bg-gray-100 dark:bg-neutral-700 z-10">
@@ -1394,6 +1449,365 @@
                     </button>
                 </div>
 
+            </div>
+        @endif
+    </x-forms.modal>
+
+    <x-forms.modal title="Bulk Edit Items" size="max-w-7xl" wire:model="showBulkEditModal" model="showBulkEditModal"
+        closeMethod="closeBulkEditModal">
+        @if ($bulkEditData)
+            <div class="px-4 py-3">
+                {{-- Summary Section --}}
+                <div
+                    class="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p class="text-sm text-blue-900 dark:text-blue-100">
+                        <span class="font-semibold">{{ $bulkEditData['items_count'] ?? 0 }}</span> items selected
+                        <span
+                            class="text-gray-600 dark:text-gray-400">({{ $bulkEditData['amount_threshold'] === '<200k' ? 'Below ₱200,000' : '₱200,000 and above' }})</span>
+                    </p>
+                </div>
+
+                {{-- Bulk Edit Form Table --}}
+                <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                    @php
+                        $modeId = $bulkEditData['mode_of_procurement_id'] ?? null;
+                        $showBiddingFields = $modeId && in_array($modeId, [2, 3, 4, 5, 6]);
+                        $showSvpFields =
+                            $modeId &&
+                            in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]);
+                        $abcThresholdCategory =
+                            $bulkEditData['amount_threshold'] === '>=200k'
+                                ? '₱200,000.00 and Above'
+                                : 'Below ₱200,000.00';
+                    @endphp
+
+                    <table class="w-full text-xs min-w-max">
+                        <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                            <tr>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
+                                    Mode of Procurement
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
+                                    Bidding #
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    IB No.
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    PhilGEPS Posting Ref #
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Ads/Post IB
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Pre-Proc Conference
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    List of Invited Observers
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Observers (Pre-Bid)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Observers (Eligibility)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Observers (Sub/Open)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Observers (Bid)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Observers (Post Qual)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Pre-Bid Conference
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Eligibility Check
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Sub/Open of Bids
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Bid Evaluation Date
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Post Qualification Date
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Bidding Result
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Resolution # (MOP)
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    RFQ No.
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Canvass Date
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Returned of Canvass
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Abstract of Canvass
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white dark:bg-neutral-700">
+                                <!-- Mode of Procurement -->
+                                <td class="px-2 py-2">
+                                    <select wire:model.defer="bulkEditData.mode_of_procurement_id"
+                                        class="w-full max-w-xs px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                        <option value="">Select Mode...</option>
+                                        @foreach ($modeOfProcurements as $mode)
+                                            <option value="{{ $mode->id }}"
+                                                title="{{ $mode->modeofprocurements }}">
+                                                {{ Str::limit($mode->modeofprocurements, 35, '...') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+
+                                @if ($showBiddingFields)
+                                    <!-- Bidding # -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.bidding_number" maxlength="2"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+                                    <!-- IB No. -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.ib_number"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="IB-2025-002">
+                                    </td>
+                                    <!-- PhilGEPS Posting Ref # -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.philgeps_posting_ref_no"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="PHL-2025-001">
+                                    </td>
+                                    <!-- Ads/Post IB -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.ads_post_ib"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Pre-Proc Conference -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.pre_proc_conference"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- List of Invited Observers -->
+                                    <td class="px-2 py-2">
+                                        <textarea wire:model="bulkEditData.list_invited_observers" rows="1"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="List observers..."></textarea>
+                                    </td>
+                                    <!-- Observers (Pre-Bid) -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.obsrvr_prebid_conf"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Observers (Eligibility) -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.obsrvr_eligibility"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Observers (Sub/Open) -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.obsrvr_sub_open_of_bid"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Observers (Bid) -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.obsrvr_bid"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Observers (Post Qual) -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.obsrvr_post_qual"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Pre-Bid Conference -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.pre_bid_conf"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Eligibility Check -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.eligibility_check"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Sub/Open of Bids -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.sub_open_bids"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Bid Evaluation Date -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.bid_evaluation_date"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Post Qualification Date -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.post_qualification_date"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Bidding Result -->
+                                    <td class="px-2 py-2">
+                                        <select wire:model="bulkEditData.bidding_result"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                            <option value="">Select...</option>
+                                            <option value="SUCCESSFUL">SUCCESSFUL</option>
+                                            <option value="UNSUCCESSFUL">UNSUCCESSFUL</option>
+                                        </select>
+                                    </td>
+                                    <!-- Resolution # (MOP) -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.resolution_number_mop"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
+                                            placeholder="RES-2025-001">
+                                    </td>
+                                    {{-- Empty cells for SVP fields --}}
+                                    <td class="px-2 py-2"></td> {{-- RFQ No. --}}
+                                    <td class="px-2 py-2"></td> {{-- Canvass Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Returned of Canvass --}}
+                                    <td class="px-2 py-2"></td> {{-- Abstract of Canvass --}}
+                                @elseif ($showSvpFields)
+                                    {{-- Empty cells for bidding-only fields --}}
+                                    <td class="px-2 py-2"></td> {{-- Bidding # --}}
+                                    <td class="px-2 py-2"></td> {{-- IB No. --}}
+
+                                    {{-- PhilGEPS and Ads/Post IB: Show for ABC >= 200k --}}
+                                    @if ($abcThresholdCategory === '₱200,000.00 and Above')
+                                        <!-- PhilGEPS Posting Ref # -->
+                                        <td class="px-2 py-2">
+                                            <input type="text" wire:model="bulkEditData.philgeps_posting_ref_no"
+                                                class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                                placeholder="PHL-2025-001">
+                                        </td>
+                                        <!-- Ads/Post IB -->
+                                        <td class="px-2 py-2">
+                                            <input type="date" wire:model="bulkEditData.ads_post_ib"
+                                                class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                        </td>
+                                    @else
+                                        <td class="px-2 py-2"></td> {{-- PhilGEPS (below 200k) --}}
+                                        <td class="px-2 py-2"></td> {{-- Ads/Post IB (below 200k) --}}
+                                    @endif
+
+                                    <td class="px-2 py-2"></td> {{-- Pre-Proc Conference --}}
+                                    <td class="px-2 py-2"></td> {{-- List of Invited Observers --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Pre-Bid) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Eligibility) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Sub/Open) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Bid) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Post Qual) --}}
+                                    <td class="px-2 py-2"></td> {{-- Pre-Bid Conference --}}
+                                    <td class="px-2 py-2"></td> {{-- Eligibility Check --}}
+                                    <td class="px-2 py-2"></td> {{-- Sub/Open of Bids --}}
+                                    <td class="px-2 py-2"></td> {{-- Bid Evaluation Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Post Qualification Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Bidding Result --}}
+                                    <!-- Resolution # (MOP) -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.resolution_number_mop"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600"
+                                            placeholder="RES-2025-001">
+                                    </td>
+                                    <!-- RFQ No. -->
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model="bulkEditData.rfq_no"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="RFQ-2025-001">
+                                    </td>
+                                    <!-- Canvass Date -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.canvass_date"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Returned of Canvass -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.date_returned_of_canvass"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                    <!-- Abstract of Canvass -->
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model="bulkEditData.abstract_of_canvass_date"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    </td>
+                                @else
+                                    {{-- Empty cells for all fields when no mode is selected --}}
+                                    <td class="px-2 py-2"></td> {{-- Bidding # --}}
+                                    <td class="px-2 py-2"></td> {{-- IB No. --}}
+                                    <td class="px-2 py-2"></td> {{-- PhilGEPS Posting Ref # --}}
+                                    <td class="px-2 py-2"></td> {{-- Ads/Post IB --}}
+                                    <td class="px-2 py-2"></td> {{-- Pre-Proc Conference --}}
+                                    <td class="px-2 py-2"></td> {{-- List of Invited Observers --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Pre-Bid) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Eligibility) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Sub/Open) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Bid) --}}
+                                    <td class="px-2 py-2"></td> {{-- Observers (Post Qual) --}}
+                                    <td class="px-2 py-2"></td> {{-- Pre-Bid Conference --}}
+                                    <td class="px-2 py-2"></td> {{-- Eligibility Check --}}
+                                    <td class="px-2 py-2"></td> {{-- Sub/Open of Bids --}}
+                                    <td class="px-2 py-2"></td> {{-- Bid Evaluation Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Post Qualification Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Bidding Result --}}
+                                    <td class="px-2 py-2"></td> {{-- Resolution # (MOP) --}}
+                                    <td class="px-2 py-2"></td> {{-- RFQ No. --}}
+                                    <td class="px-2 py-2"></td> {{-- Canvass Date --}}
+                                    <td class="px-2 py-2"></td> {{-- Returned of Canvass --}}
+                                    <td class="px-2 py-2"></td> {{-- Abstract of Canvass --}}
+                                @endif
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Modal Footer Actions --}}
+                <div
+                    class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="closeBulkEditModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="applyBulkEdit"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 13l4 4L19 7" />
+                        </svg>
+                        Apply to {{ $bulkEditData['items_count'] ?? 0 }} Items
+                    </button>
+                </div>
             </div>
         @endif
     </x-forms.modal>
