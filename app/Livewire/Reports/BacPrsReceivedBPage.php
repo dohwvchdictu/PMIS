@@ -13,7 +13,7 @@ use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use App\Models\ModeOfProcurement;
 
-class BacPrsReceivedPage extends Component
+class BacPrsReceivedBPage extends Component
 {
     use WithPagination;
 
@@ -101,7 +101,7 @@ class BacPrsReceivedPage extends Component
             $dateRange = '_' . now()->format('Y-m-d');
         }
 
-        $fileName = 'BAC_PRs_Received_Category_A' . $dateRange . '.xlsx';
+        $fileName = 'BAC_PRs_Received_Category_B' . $dateRange . '.xlsx';
 
         return Excel::download(
             new BacPrsReceivedExport(
@@ -109,7 +109,7 @@ class BacPrsReceivedPage extends Component
                 $this->startDate,
                 $this->endDate,
                 $this->currentModeFilter,
-                1
+                2
             ),
             $fileName
         );
@@ -125,10 +125,11 @@ class BacPrsReceivedPage extends Component
                 'category.bacType',
                 'fundSource',
                 'mopLots.modeOfProcurement',
-                'pr_items.mopItems.modeOfProcurement'
+                'pr_items.mopItems.modeOfProcurement',
+                'pr_items'
             ])
             ->whereHas('category', function ($q) {
-                $q->where('bac_type_id', 1);
+                $q->where('bac_type_id', 2);
             })
             ->latest('date_receipt');
 
@@ -159,21 +160,47 @@ class BacPrsReceivedPage extends Component
                         $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
                             ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_lot WHERE procID = procurements.procID)');
                     });
+                // Per-item procurements
+                $q->orWhere('procurement_type', 'perItem')
+                    ->whereHas('pr_items.mopItems', function ($subQ) {
+                        $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
+                            ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_item WHERE prItemID = pr_items.prItemID)');
+                    });
             });
         }
 
         $procurements = $query->paginate($this->perPage);
 
-        // Add current mode and status to each procurement
-        foreach ($procurements as $procurement) {
-            $modeStatus = $this->getCurrentModeAndStatus($procurement);
-            $procurement->currentMode = $modeStatus['mode'];
-            $procurement->currentStatus = $modeStatus['status'];
-        }
+        // Calculate row counts for accurate pagination display
+        $perPage = $this->perPage;
+        $currentPage = $procurements->currentPage();
+        $skip = ($currentPage - 1) * $perPage;
 
-        return view('livewire.reports.bac-prs-received-page', [
+        $previousQuery = clone $query;
+        $previousProcurements = $previousQuery->limit($skip)->get();
+        $previousRows = $previousProcurements->sum(function ($p) {
+            return $p->procurement_type === 'perLot' ? 1 : $p->pr_items->count();
+        });
+
+        $currentRows = collect($procurements->items())->sum(function ($p) {
+            return $p->procurement_type === 'perLot' ? 1 : $p->pr_items->count();
+        });
+
+        $startRow = $previousRows + 1;
+        $endRow = $previousRows + $currentRows;
+
+        $totalQuery = clone $query;
+        $totalProcurements = $totalQuery->get();
+        $totalRows = $totalProcurements->sum(function ($p) {
+            return $p->procurement_type === 'perLot' ? 1 : $p->pr_items->count();
+        });
+
+        return view('livewire.reports.bac-prs-received-b-page', [
             'procurements' => $procurements,
             'modes' => $this->modes,
+            'startRow' => $startRow,
+            'endRow' => $endRow,
+            'totalRows' => $totalRows,
         ]);
     }
 

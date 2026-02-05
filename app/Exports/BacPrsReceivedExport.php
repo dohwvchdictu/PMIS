@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Procurement;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -14,22 +14,24 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
+class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
 {
     protected $search;
     protected $startDate;
     protected $endDate;
     protected $currentModeFilter;
+    protected $bacTypeId;
 
-    public function __construct($search, $startDate, $endDate, $currentModeFilter)
+    public function __construct($search, $startDate, $endDate, $currentModeFilter, $bacTypeId)
     {
         $this->search = $search;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->currentModeFilter = $currentModeFilter;
+        $this->bacTypeId = $bacTypeId;
     }
 
-    public function query()
+    public function collection()
     {
         $query = Procurement::query()
             ->with([
@@ -38,10 +40,12 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
                 'clusterCommittee',
                 'category.bacType',
                 'fundSource',
-                'mopLots.modeOfProcurement'
+                'mopLots.modeOfProcurement',
+                'pr_items.mopItems.modeOfProcurement',
+                'pr_items'
             ])
             ->whereHas('category', function ($q) {
-                $q->where('bac_type_id', 1);
+                $q->where('bac_type_id', $this->bacTypeId);
             })
             ->latest('date_receipt');
 
@@ -72,10 +76,29 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
                         $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
                             ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_lot WHERE procID = procurements.procID)');
                     });
+                // Per-item procurements
+                $q->orWhere('procurement_type', 'perItem')
+                    ->whereHas('pr_items.mopItems', function ($subQ) {
+                        $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
+                            ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_item WHERE prItemID = pr_items.prItemID)');
+                    });
             });
         }
 
-        return $query;
+        $procurements = $query->get();
+        $rows = collect();
+
+        foreach ($procurements as $procurement) {
+            if ($procurement->procurement_type === 'perLot') {
+                $rows->push($this->mapProcurement($procurement));
+            } else {
+                foreach ($procurement->pr_items as $item) {
+                    $rows->push($this->mapItem($procurement, $item));
+                }
+            }
+        }
+
+        return $rows;
     }
 
     public function headings(): array
@@ -94,7 +117,12 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
         ];
     }
 
-    public function map($procurement): array
+    public function map($row): array
+    {
+        return $row;
+    }
+
+    private function mapProcurement($procurement): array
     {
         // Helper function to safely format dates
         $formatDate = function ($date) {
@@ -121,6 +149,37 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($procurement->abc ?? 0, 2),
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
+            $currentMode,
+        ];
+    }
+
+    private function mapItem($procurement, $item): array
+    {
+        // Helper function to safely format dates
+        $formatDate = function ($date) {
+            if (!$date)
+                return 'N/A';
+            try {
+                return \Carbon\Carbon::parse($date)->format('M d, Y');
+            } catch (\Exception $e) {
+                return $date; // Return original value if not a valid date
+            }
+        };
+
+        // Get current mode for the item
+        $latestMop = $item->mopItems->sortByDesc('mode_order')->first();
+        $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
+
+        return [
+            $procurement->pr_number,
+            $item->description,
+            $formatDate($procurement->date_receipt),
+            $procurement->clusterCommittee?->clustercommittee ?? 'N/A',
+            $procurement->category?->category ?? 'N/A',
+            $formatDate($procurement->immediate_date_needed),
+            $procurement->fundSource?->fundsources ?? 'N/A',
+            number_format($item->amount ?? 0, 2),
+            $item->prstage?->stage?->procurementstage ?? 'No Stage',
             $currentMode,
         ];
     }
