@@ -9,7 +9,6 @@ use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
 use App\Models\Procurement;
-use App\Models\MopItem;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -105,9 +104,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         }
 
         // Get post data from first PR
-        $firstRefId = $currentItems[0]['procurement_type'] === 'perLot'
-            ? $currentItems[0]['procID']
-            : $currentItems[0]['prItemID'];
+        $firstRefId = $currentItems[0]['procID'];
 
         $firstPost = \App\Models\PostProcurement::where('ref_id', $firstRefId)->first();
 
@@ -119,9 +116,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $allIdentical = true;
 
         foreach ($currentItems as $item) {
-            $refId = $item['procurement_type'] === 'perLot'
-                ? $item['procID']
-                : $item['prItemID'];
+            $refId = $item['procID'];
 
             $itemPost = \App\Models\PostProcurement::where('ref_id', $refId)->first();
 
@@ -369,9 +364,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $biddingResult = $item['bidding_result'] ?? '';
 
                 if ($biddingResult === 'SUCCESSFUL') {
-                    $refId = $item['procurement_type'] === 'perLot'
-                        ? $item['procID']
-                        : $item['prItemID'];
+                    $refId = $item['procID'];
 
                     $hasPostData = \App\Models\PostProcurement::where('ref_id', $refId)->exists();
 
@@ -392,9 +385,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $groupedByProc = [];
 
         foreach ($this->items as $item) {
-            $key = $item['procurement_type'] === 'perLot' ?
-                'lot_' . $item['procID'] :
-                'item_' . $item['prItemID'];
+            $key = 'lot_' . $item['procID'];
 
             if (!isset($groupedByProc[$key]) || $item['mode_order'] > $groupedByProc[$key]['mode_order']) {
                 $groupedByProc[$key] = $item;
@@ -472,25 +463,18 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     private function loadProcurementData(): void
     {
-        $procurements = Procurement::with(['pr_items', 'mopLots', 'mopItems'])
+        $procurements = Procurement::with(['pr_items', 'mopLots'])
             ->whereIn('procID', $this->procurementIds)
+            ->where('procurement_type', 'perLot')  // Only load perLot procurements
             ->orderBy('pr_number')
             ->get();
 
-        // Get all prItemIDs and procIDs for schedules
-        $prItemIds = [];
-        $procIds = [];
-
-        foreach ($procurements as $procurement) {
-            $procIds[] = $procurement->procID;
-            if ($procurement->procurement_type === 'perItem') {
-                $prItemIds = array_merge($prItemIds, $procurement->pr_items->pluck('prItemID')->toArray());
-            }
-        }
+        // Get all procIDs for schedules
+        $procIds = $procurements->pluck('procID')->toArray();
 
         // Fetch all schedules at once
-        $bidSchedules = BidSchedule::whereIn('ref_id', array_merge($prItemIds, $procIds))->get();
-        $prSvps = PrSvp::whereIn('ref_id', array_merge($prItemIds, $procIds))->get();
+        $bidSchedules = BidSchedule::whereIn('ref_id', $procIds)->get();
+        $prSvps = PrSvp::whereIn('ref_id', $procIds)->get();
 
         // Build schedule maps
         $scheduleMap = $this->buildScheduleMap($bidSchedules, $prSvps);
@@ -498,28 +482,14 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->items = [];
 
         foreach ($procurements as $procurement) {
-            if ($procurement->procurement_type === 'perLot') {
-                // Load all modes for perLot, not just the latest
-                $mopLots = $procurement->mopLots()
-                    ->with('modeOfProcurement')
-                    ->orderBy('mode_order', 'desc')
-                    ->get();
+            // Load all modes for perLot, not just the latest
+            $mopLots = $procurement->mopLots()
+                ->with('modeOfProcurement')
+                ->orderBy('mode_order', 'desc')
+                ->get();
 
-                foreach ($mopLots as $mopLot) {
-                    $this->items[] = $this->buildPerLotRowFromMop($procurement, $mopLot, $scheduleMap);
-                }
-            } else {
-                // For perItem, load all modes for each item
-                foreach ($procurement->pr_items->sortBy('prItemID') as $prItem) {
-                    $mopItems = MopItem::where('prItemID', $prItem->prItemID)
-                        ->with('modeOfProcurement')
-                        ->orderBy('mode_order', 'desc')
-                        ->get();
-
-                    foreach ($mopItems as $mopItem) {
-                        $this->items[] = $this->buildPerItemRowFromMop($procurement, $prItem, $mopItem, $scheduleMap);
-                    }
-                }
+            foreach ($mopLots as $mopLot) {
+                $this->items[] = $this->buildPerLotRowFromMop($procurement, $mopLot, $scheduleMap);
             }
         }
     }
@@ -622,50 +592,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         ];
     }
 
-    private function buildPerItemRowFromMop(Procurement $procurement, $prItem, $mopItem, Collection $scheduleMap): array
-    {
-        $schedule = [];
-        if ($mopItem && $scheduleMap->has($prItem->prItemID)) {
-            $schedule = $scheduleMap[$prItem->prItemID][$mopItem->uid] ?? [];
-        }
 
-        return [
-            'procID' => $procurement->procID,
-            'prItemID' => $prItem->prItemID,
-            'pr_number' => $procurement->pr_number,
-            'procurement_program_project' => $prItem->description ?? $procurement->procurement_program_project,
-            'procurement_type' => 'perItem',
-            'mop_id' => $mopItem?->id,
-            'mop_uid' => $mopItem?->uid,
-            'mode_of_procurement_id' => $mopItem?->mode_of_procurement_id,
-            'mode_order' => $mopItem?->mode_order ?? 0,
-
-            // Schedule fields
-            'bidding_number' => $schedule['bidding_number'] ?? '',
-            'ib_number' => $schedule['ib_number'] ?? '',
-            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? '',
-            'ads_post_ib' => $schedule['ads_post_ib'] ?? '',
-            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? '',
-            'list_invited_observers' => $schedule['list_invited_observers'] ?? '',
-            'obsrvr_prebid_conf' => $schedule['obsrvr_prebid_conf'] ?? '',
-            'obsrvr_eligibility' => $schedule['obsrvr_eligibility'] ?? '',
-            'obsrvr_sub_open_of_bid' => $schedule['obsrvr_sub_open_of_bid'] ?? '',
-            'obsrvr_bid' => $schedule['obsrvr_bid'] ?? '',
-            'obsrvr_post_qual' => $schedule['obsrvr_post_qual'] ?? '',
-            'pre_bid_conf' => $schedule['pre_bid_conf'] ?? '',
-            'eligibility_check' => $schedule['eligibility_check'] ?? '',
-            'sub_open_bids' => $schedule['sub_open_bids'] ?? '',
-            'bid_evaluation_date' => $schedule['bid_evaluation_date'] ?? '',
-            'post_qualification_date' => $schedule['post_qualification_date'] ?? '',
-            'bidding_result' => $schedule['bidding_result'] ?? '',
-            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? '',
-            'resolution_number' => $schedule['resolution_number'] ?? '',
-            'rfq_no' => $schedule['rfq_no'] ?? '',
-            'canvass_date' => $schedule['canvass_date'] ?? '',
-            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? '',
-            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? '',
-        ];
-    }
 
     private function buildPerLotRow(Procurement $procurement, Collection $scheduleMap): array
     {
@@ -717,55 +644,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         ];
     }
 
-    private function buildPerItemRow(Procurement $procurement, $prItem, Collection $scheduleMap): array
-    {
-        $latestMop = MopItem::where('prItemID', $prItem->prItemID)
-            ->with('modeOfProcurement')
-            ->orderBy('mode_order', 'desc')
-            ->first();
 
-        $schedule = [];
-        if ($latestMop && $scheduleMap->has($prItem->prItemID)) {
-            $schedule = $scheduleMap[$prItem->prItemID][$latestMop->uid] ?? [];
-        }
-
-        return [
-            'procID' => $procurement->procID,
-            'prItemID' => $prItem->prItemID,
-            'pr_number' => $procurement->pr_number,
-            'procurement_program_project' => $prItem->description ?? $procurement->procurement_program_project,
-            'procurement_type' => 'perItem',
-            'mop_id' => $latestMop?->id,
-            'mop_uid' => $latestMop?->uid,
-            'mode_of_procurement_id' => $latestMop?->mode_of_procurement_id,
-            'mode_order' => $latestMop?->mode_order ?? 0,
-
-            // Schedule fields
-            'bidding_number' => $schedule['bidding_number'] ?? '',
-            'ib_number' => $schedule['ib_number'] ?? '',
-            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? '',
-            'ads_post_ib' => $schedule['ads_post_ib'] ?? '',
-            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? '',
-            'list_of_invited_observers' => $schedule['list_of_invited_observers'] ?? '',
-            'observer_1' => $schedule['observer_1'] ?? '',
-            'observer_2' => $schedule['observer_2'] ?? '',
-            'observer_3' => $schedule['observer_3'] ?? '',
-            'observer_4' => $schedule['observer_4'] ?? '',
-            'observer_5' => $schedule['observer_5'] ?? '',
-            'pre_bid_conference' => $schedule['pre_bid_conference'] ?? '',
-            'eligibility_check' => $schedule['eligibility_check'] ?? '',
-            'submission_opening_of_bids' => $schedule['submission_opening_of_bids'] ?? '',
-            'bid_evaluation' => $schedule['bid_evaluation'] ?? '',
-            'post_qualification' => $schedule['post_qualification'] ?? '',
-            'bidding_result' => $schedule['bidding_result'] ?? '',
-            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? '',
-            'resolution_number' => $schedule['resolution_number'] ?? '',
-            'rfq_no' => $schedule['rfq_no'] ?? '',
-            'canvass_date' => $schedule['canvass_date'] ?? '',
-            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? '',
-            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? '',
-        ];
-    }
 
     private function validateAbcThreshold(): bool
     {
@@ -876,61 +755,28 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                 if ($canUpdateMode) {
                     // Update existing mode_of_procurement_id (no schedule data yet)
-                    if ($procurement->procurement_type === 'perLot') {
-                        MopLot::where('id', $currentItem['mop_id'])->update([
-                            'mode_of_procurement_id' => $modeId,
-                        ]);
-                        $isMopUpdated = true;
-                    } else {
-                        // For perItem, update all items for this procurement
-                        foreach ($procurement->pr_items as $prItem) {
-                            $itemMop = MopItem::where('prItemID', $prItem->prItemID)
-                                ->orderBy('mode_order', 'desc')
-                                ->first();
-                            if ($itemMop) {
-                                $itemMop->update(['mode_of_procurement_id' => $modeId]);
-                            }
-                        }
-                        $isMopUpdated = true;
-                    }
+                    MopLot::where('id', $currentItem['mop_id'])->update([
+                        'mode_of_procurement_id' => $modeId,
+                    ]);
+                    $isMopUpdated = true;
                 } elseif ($isAddingNewMode && $modeId && $modeId != 1) {
                     $modeOrder = ($currentItem['mode_order'] ?? 0) + 1;
                     $generatedUid = "MOP-{$modeId}-{$modeOrder}";
 
-                    if ($procurement->procurement_type === 'perLot') {
-                        $savedMop = MopLot::create([
-                            'procID' => $procurement->procID,
-                            'uid' => $generatedUid,
-                            'mode_of_procurement_id' => $modeId,
-                            'mode_order' => $modeOrder,
-                        ]);
-                        $isMopAdded = true;
+                    $savedMop = MopLot::create([
+                        'procID' => $procurement->procID,
+                        'uid' => $generatedUid,
+                        'mode_of_procurement_id' => $modeId,
+                        'mode_order' => $modeOrder,
+                    ]);
+                    $isMopAdded = true;
 
-                        // Save schedules for the new mode
-                        $this->updatePerLotSchedules([
-                            'mop_uid' => $generatedUid,
-                            'procID' => $procurement->procID,
-                            'mode_of_procurement_id' => $modeId,
-                        ]);
-                    } else {
-                        // For perItem, create MopItem for each PR item
-                        foreach ($procurement->pr_items as $prItem) {
-                            $savedMop = MopItem::create([
-                                'prItemID' => $prItem->prItemID,
-                                'uid' => $generatedUid,
-                                'mode_of_procurement_id' => $modeId,
-                                'mode_order' => $modeOrder,
-                            ]);
-                            $isMopAdded = true;
-
-                            // Save schedules for the new mode
-                            $this->updatePerItemSchedules([
-                                'mop_uid' => $generatedUid,
-                                'prItemID' => $prItem->prItemID,
-                                'mode_of_procurement_id' => $modeId,
-                            ]);
-                        }
-                    }
+                    // Save schedules for the new mode
+                    $this->updatePerLotSchedules([
+                        'mop_uid' => $generatedUid,
+                        'procID' => $procurement->procID,
+                        'mode_of_procurement_id' => $modeId,
+                    ]);
                 } else {
                     // Update existing mode schedules
                     $this->updateItem($currentItem);
@@ -957,11 +803,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     private function updateItem(array $item): void
     {
-        if ($item['procurement_type'] === 'perLot') {
-            $this->updatePerLotSchedules($item);
-        } else {
-            $this->updatePerItemSchedules($item);
-        }
+        $this->updatePerLotSchedules($item);
     }
 
     private function updatePerLotSchedules(array $item): void
@@ -1033,75 +875,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         }
     }
 
-    private function updatePerItemSchedules(array $item): void
-    {
-        if (!$item['mop_uid'] || !$item['prItemID']) {
-            return;
-        }
 
-        $modeId = $item['mode_of_procurement_id'];
-        $refId = $item['prItemID'];
-        $mopUid = $item['mop_uid'];
-
-        // COMPETITIVE BIDDING MODES (2-6): Only save BidSchedule
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
-            BidSchedule::updateOrCreate(
-                ['mop_uid' => $mopUid, 'ref_id' => $refId],
-                [
-                    'bidding_number' => $this->bulkEdit['bidding_number'] ?? null,
-                    'ib_number' => $this->bulkEdit['ib_number'] ?? null,
-                    'philgeps_posting_ref_no' => $this->bulkEdit['philgeps_posting_ref_no'] ?? null,
-                    'ads_post_ib' => $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? ''),
-                    'pre_proc_conference' => $this->nullableDate($this->bulkEdit['pre_proc_conference'] ?? ''),
-                    'list_invited_observers' => $this->nullableDate($this->bulkEdit['list_invited_observers'] ?? ''),
-                    'obsrvr_prebid_conf' => $this->nullableDate($this->bulkEdit['obsrvr_prebid_conf'] ?? ''),
-                    'obsrvr_eligibility' => $this->nullableDate($this->bulkEdit['obsrvr_eligibility'] ?? ''),
-                    'obsrvr_sub_open_of_bid' => $this->nullableDate($this->bulkEdit['obsrvr_sub_open_of_bid'] ?? ''),
-                    'obsrvr_bid' => $this->nullableDate($this->bulkEdit['obsrvr_bid'] ?? ''),
-                    'obsrvr_post_qual' => $this->nullableDate($this->bulkEdit['obsrvr_post_qual'] ?? ''),
-                    'pre_bid_conf' => $this->nullableDate($this->bulkEdit['pre_bid_conf'] ?? ''),
-                    'eligibility_check' => $this->nullableDate($this->bulkEdit['eligibility_check'] ?? ''),
-                    'sub_open_bids' => $this->nullableDate($this->bulkEdit['sub_open_bids'] ?? ''),
-                    'bid_evaluation_date' => $this->nullableDate($this->bulkEdit['bid_evaluation_date'] ?? ''),
-                    'post_qualification_date' => $this->nullableDate($this->bulkEdit['post_qualification_date'] ?? ''),
-                    'bidding_result' => $this->bulkEdit['bidding_result'] ?? null,
-                    'resolution_number_mop' => $this->bulkEdit['resolution_number_mop'] ?? null,
-                ]
-            );
-            // Delete any SVP records for this item (mode changed from SVP to bidding)
-            PrSvp::where('mop_uid', $mopUid)->where('ref_id', $refId)->delete();
-        }
-
-        // SVP/ALTERNATIVE MODES (7-24): Only save PrSvp
-        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-            // Get ABC from procurement to determine required fields
-            $prItem = \App\Models\PrItem::find($refId);
-            $procurement = $prItem ? Procurement::find($prItem->procID) : null;
-            $abc = $procurement ? $procurement->abc : 0;
-
-            // Base SVP data
-            $svpData = [
-                'resolution_number_mop' => $this->bulkEdit['resolution_number_mop'] ?? null,
-                'rfq_no' => $this->bulkEdit['rfq_no'] ?? null,
-                'canvass_date' => $this->nullableDate($this->bulkEdit['canvass_date'] ?? ''),
-                'date_returned_of_canvass' => $this->nullableDate($this->bulkEdit['date_returned_of_canvass'] ?? ''),
-                'abstract_of_canvass_date' => $this->nullableDate($this->bulkEdit['abstract_of_canvass_date'] ?? ''),
-            ];
-
-            // For ABC 200k and above, also save PhilGEPS fields
-            if ($abc >= 200000) {
-                $svpData['philgeps_posting_ref_no'] = $this->bulkEdit['philgeps_posting_ref_no'] ?? null;
-                $svpData['ads_post_ib'] = $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? '');
-            }
-
-            PrSvp::updateOrCreate(
-                ['mop_uid' => $mopUid, 'ref_id' => $refId],
-                $svpData
-            );
-            // Delete any BidSchedule records for this item (mode changed from bidding to SVP)
-            BidSchedule::where('mop_uid', $mopUid)->where('ref_id', $refId)->delete();
-        }
-    }
 
     private function nullableDate($value)
     {
@@ -1125,19 +899,15 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return collect();
         }
 
-        // Parse the key to get procID or prItemID
+        // Parse the key to get procID
         $parts = explode('_', $this->historyForKey);
-        $type = $parts[0]; // 'lot' or 'item'
+        $type = $parts[0]; // 'lot'
         $id = $parts[1];
 
         // Get all items for this PR except the first (current) one
         return collect($this->items)
-            ->filter(function ($item) use ($type, $id) {
-                if ($type === 'lot') {
-                    return $item['procurement_type'] === 'perLot' && $item['procID'] == $id;
-                } else {
-                    return $item['procurement_type'] === 'perItem' && $item['prItemID'] == $id;
-                }
+            ->filter(function ($item) use ($id) {
+                return $item['procurement_type'] === 'perLot' && $item['procID'] == $id;
             })
             ->skip(1) // Skip the current/first mode
             ->values();
@@ -1219,7 +989,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
             // SVP/ALTERNATIVE MODES (7-24)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                // Get ABC from the first procurement
+                // Get ABC from the procurement
                 $procurement = \App\Models\Procurement::where('procID', $item['procID'])->first();
                 $abc = $procurement ? $procurement->abc : 0;
 
@@ -1648,15 +1418,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->bulkEdit['canvass_date'] = '';
         $this->bulkEdit['date_returned_of_canvass'] = '';
         $this->bulkEdit['abstract_of_canvass_date'] = '';
-    }
-
-    /**
-     * Cancel adding new mode - reset form state
-     */
-    public function cancelAddItem(): void
-    {
-        $this->showAddForm = false;
-        $this->populateBulkEditData();
     }
 
     public function render()
