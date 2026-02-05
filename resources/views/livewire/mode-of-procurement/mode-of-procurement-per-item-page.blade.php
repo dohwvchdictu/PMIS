@@ -1020,7 +1020,7 @@
                                 $this->hasValue($item['date_returned_of_canvass']) &&
                                 $this->hasValue($item['abstract_of_canvass_date'])
                             ) {
-                                return true;
+                                $postAvailableItems[$index] = $item;
                             }
                         }
                     }
@@ -1030,9 +1030,39 @@
                     <div
                         class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                         <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                            <div
+                                class="mb-4 flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-3 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    @if (count($selectedPostItems) > 0)
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ count($selectedPostItems) }} of {{ count($postAvailableItems) }}
+                                            selected
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if (count($selectedPostItems) > 0)
+                                    <button type="button" wire:click="openPostBulkEditModal"
+                                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Bulk Edit ({{ count($selectedPostItems) }})
+                                    </button>
+                                @endif
+                            </div>
                             <table class="w-full text-xs min-w-max">
                                 <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
                                     <tr>
+                                        <th
+                                            class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
+                                            <input type="checkbox" id="select-all-post-checkbox"
+                                                wire:click="toggleAllPostItems"
+                                                class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                title="Select all">
+                                        </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white w-16 border-b border-gray-300 dark:border-neutral-600">
                                             No.
@@ -1082,6 +1112,12 @@
                                         @endphp
 
                                         <tr class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
+                                            <td class="px-2 py-2 text-center">
+                                                <input type="checkbox" wire:model.live="selectedPostItems"
+                                                    value="{{ $prItemID }}"
+                                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                    data-row-checkbox>
+                                            </td>
                                             <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                                 {{ $item['item_no'] }}
                                             </td>
@@ -1176,19 +1212,18 @@
 
 
     <div
-        class="fixed bottom-5 right-0 left-0 lg:ml-[13.75rem] flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 z-49">
-        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-x-2">
-
-            <a href="{{ route('mode-of-procurement.index') }}"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-700">
+        class="fixed bottom-4 right-0 left-0 lg:left-48  flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 z-49">
+        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-3">
+            <button wire:click="cancel"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">
                 Cancel
-            </a>
-
-            <button wire:click="save" wire:loading.attr="disabled"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
-                <div wire:loading wire:target="save"
-                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white">
-                </div>
+            </button>
+            <button wire:click="save"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 Save
             </button>
         </div>
@@ -1637,10 +1672,10 @@
                                     </div>
                                 </td>
 
-                                {{-- Mode of Procurement (Read-only in bulk edit) --}}
+                                {{-- Mode of Procurement (Editable in bulk edit) --}}
                                 <td class="px-2 py-2">
-                                    <select wire:model.live="bulkEditData.mode_of_procurement_id" disabled
-                                        class="w-full px-2 py-1 text-xs border-0 bg-gray-100 dark:bg-neutral-600 dark:text-white rounded cursor-not-allowed opacity-75">
+                                    <select wire:model.live="bulkEditData.mode_of_procurement_id"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                         <option value="">Select Mode...</option>
                                         @foreach ($modeOfProcurements as $mode)
                                             <option value="{{ $mode->id }}">
@@ -1928,4 +1963,155 @@
             </div>
         @endif
     </x-forms.modal>
+
+    <x-forms.modal title="Bulk Edit Post Procurement" size="max-w-7xl" wire:model="showPostBulkEditModal"
+        model="showPostBulkEditModal" closeMethod="closePostBulkEditModal">
+        @if ($postBulkEditData)
+            <div class="px-4 py-3">
+                {{-- Summary Section --}}
+                <div
+                    class="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p class="text-sm text-blue-900 dark:text-blue-100">
+                        <span class="font-semibold">{{ $postBulkEditData['items_count'] ?? 0 }}</span> post
+                        procurement items selected
+                    </p>
+                    @if (!empty($postBulkEditData['item_numbers']))
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            Items: {{ implode(', ', $postBulkEditData['item_numbers']) }}
+                        </p>
+                    @endif
+                </div>
+
+                {{-- Post Procurement Bulk Edit Form Table --}}
+                <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                    <table class="w-full text-xs min-w-max">
+                        <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                            <tr>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Resolution Award Number
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Resolution Award Date
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Notice of Award Number
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Notice of Award
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Awarded Amount
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    PhilGEPS Notice of Award No.
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    PhilGEPS Posting of Award
+                                </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                    Supplier
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            <tr class="bg-white dark:bg-neutral-700 hover:bg-emerald-50 dark:hover:bg-neutral-800">
+
+                                <td class="px-2 py-2">
+                                    <input type="text" wire:model.defer="postBulkEditData.resolutionAwardNumber"
+                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white
+                                            {{ $errors->has('postBulkEditData.resolutionAwardNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
+                                        placeholder="RES-YYYY-NNN">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" wire:model.defer="postBulkEditData.resolutionAwardDate"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="text" wire:model.defer="postBulkEditData.noticeOfAwardNumber"
+                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                        placeholder="NOA-YYYY-NNN">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" wire:model.defer="postBulkEditData.noticeOfAward"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="number" step="0.01"
+                                        wire:model.defer="postBulkEditData.awardedAmount"
+                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                        placeholder="0.00">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="text" wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"
+                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                        placeholder="PHL-NOA-YYYY-NNN">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" wire:model.defer="postBulkEditData.philgepsPostingOfAward"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                </td>
+                                <td class="px-2 py-2">
+                                    <select wire:model.defer="postBulkEditData.supplier_id"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                        <option value="">Select Supplier...</option>
+                                        @foreach ($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}">{{ $supplier->supplier_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Validation Errors Display --}}
+                @if (!empty($postBulkEditErrors))
+                    <div
+                        class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p class="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">Validation Errors:</p>
+                        <ul class="text-xs text-red-800 dark:text-red-200 space-y-1">
+                            @foreach ($postBulkEditErrors as $error)
+                                <li>• {!! $error !!}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                {{-- Modal Footer Actions --}}
+                <div
+                    class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="closePostBulkEditModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="applyPostBulkEdit"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        wire:loading.attr="disabled">
+                        <div wire:loading wire:target="applyPostBulkEdit"
+                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" wire:loading.remove wire:target="applyPostBulkEdit">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span wire:loading.remove wire:target="applyPostBulkEdit">Apply to
+                            {{ $postBulkEditData['items_count'] ?? 0 }} Items</span>
+                        <span wire:loading wire:target="applyPostBulkEdit">Applying...</span>
+                    </button>
+                </div>
+            </div>
+        @endif
+    </x-forms.modal>
+
+
 </div>

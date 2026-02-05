@@ -49,6 +49,12 @@ class ModeOfProcurementPerItemPage extends Component
     public array $bulkEditData = [];
     public array $bulkEditErrors = [];
 
+    // Post Procurement Bulk Edit Properties
+    public bool $showPostBulkEditModal = false;
+    public array $selectedPostItems = [];
+    public array $postBulkEditData = [];
+    public array $postBulkEditErrors = [];
+
     public function mount(Procurement $procurement): void
     {
         $this->queryParams = request()->query();
@@ -777,27 +783,18 @@ class ModeOfProcurementPerItemPage extends Component
                     $modeChanged = $existingRecord->mode_of_procurement_id != $modeId;
 
                     if ($modeChanged) {
-                        // MODE CHANGED: Create a NEW record (leave old one as history)
-                        $maxModeOrder = MopItem::where('procID', $this->procID)
-                            ->where('prItemID', $prItemID)
-                            ->max('mode_order') ?? 0;
-
-                        $newModeOrder = $maxModeOrder + 1;
-                        $generatedUid = "MOP-{$modeId}-{$newModeOrder}";
-
-                        $savedParentModel = MopItem::create([
-                            'uid' => $generatedUid,
+                        // MODE CHANGED: Update the existing record instead of creating new one for bulk edits
+                        $existingRecord->update([
                             'mode_of_procurement_id' => $modeId,
-                            'mode_order' => $newModeOrder,
-                            'procID' => $this->procID,
-                            'prItemID' => $prItemID,
+                            // Update UID to reflect new mode
+                            'uid' => "MOP-{$modeId}-{$existingRecord->mode_order}",
                         ]);
 
-                        $isMopAdded = true;
+                        $isMopUpdated = true;
 
-                        // Save related schedules for new record
+                        // Save related schedules for updated record
                         $this->saveRelatedSchedules(
-                            $savedParentModel,
+                            $existingRecord,
                             $item,
                             $isScheduleAdded,
                             $isScheduleUpdated
@@ -1334,9 +1331,10 @@ class ModeOfProcurementPerItemPage extends Component
 
         if (!$validation['valid']) {
             $this->bulkEditErrors = $validation['errors'];
+            $errorMessage = implode(' ', $validation['errors']);
             LivewireAlert::title('Bulk Edit Validation Failed')
                 ->error()
-                ->text($this->formatValidationErrors($validation['errors']))
+                ->text($errorMessage)
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -1345,7 +1343,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Initialize bulk edit data based on the common mode
         $firstItem = $this->form['items'][$this->selectedItems[0]];
-        $modeId = $firstItem['mode_of_procurement_id'];
+        $modeId = $validation['commonMode'] ?? $firstItem['mode_of_procurement_id'] ?? 1;
         $amountThreshold = $validation['amountThreshold'];
 
         $this->bulkEditData = [
@@ -1354,6 +1352,33 @@ class ModeOfProcurementPerItemPage extends Component
             'items_count' => count($this->selectedItems),
             'item_numbers' => $validation['itemNumbers'],
         ];
+
+        // Initialize fields based on mode type with existing data
+        $this->initializeBulkEditFields($modeId, $firstItem, $amountThreshold);
+
+        $this->bulkEditErrors = [];
+        $this->showBulkEditModal = true;
+    }
+
+    public function updatedBulkEditDataModeOfProcurementId()
+    {
+        // When mode changes, reinitialize fields based on new mode
+        $modeId = $this->bulkEditData['mode_of_procurement_id'];
+        $firstItem = $this->form['items'][$this->selectedItems[0]];
+        $amountThreshold = $this->bulkEditData['amount_threshold'];
+
+        $this->initializeBulkEditFields($modeId, $firstItem, $amountThreshold);
+    }
+
+    private function initializeBulkEditFields($modeId, $firstItem, $amountThreshold)
+    {
+        // Clear existing mode-specific fields
+        $this->bulkEditData = array_intersect_key($this->bulkEditData, array_flip([
+            'mode_of_procurement_id',
+            'amount_threshold',
+            'items_count',
+            'item_numbers'
+        ]));
 
         // Initialize fields based on mode type with existing data
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
@@ -1392,9 +1417,6 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->bulkEditData['ads_post_ib'] = $firstItem['ads_post_ib'] ?? '';
             }
         }
-
-        $this->bulkEditErrors = [];
-        $this->showBulkEditModal = true;
     }
 
     private function validateBulkEditSelection(): array
@@ -1459,19 +1481,19 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Check if all items have the same mode
         if (count($modes) > 1) {
-            $errorMsg = "<strong>Items have different modes:</strong><br>";
+            $modeDetails = [];
             foreach ($modes as $modeId => $items) {
                 $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Unknown';
-                $errorMsg .= "• {$modeName}: Items " . implode(', ', $items) . "<br>";
+                $modeDetails[] = "{$modeName}: Items " . implode(', ', $items);
             }
-            $errors[] = $errorMsg;
+            $errors[] = "Items have different modes: " . implode('; ', $modeDetails) . ". Bulk edit requires all selected items to have the same mode of procurement.";
         }
 
         if (empty($modes)) {
-            $errors[] = "<strong>No valid mode selected for items:</strong> " . implode(', ', $itemNumbers);
+            $errors[] = "No valid mode selected for items: " . implode(', ', $itemNumbers);
         }
 
-        // Check if all items have identical schedule data
+        // Check if all items have identical schedule data (only when all have same mode)
         if (!empty($modes) && count($modes) === 1) {
             $scheduleHashes = [];
             $itemNumbersByHash = [];
@@ -1504,9 +1526,8 @@ class ModeOfProcurementPerItemPage extends Component
                 }
 
                 $itemList = implode(', ', $differentItems);
-
-                $errors[] = "<strong>Field Mismatch:</strong><br>Item{$this->pluralize(count($differentItems))} {$itemList} " .
-                    (count($differentItems) > 1 ? 'have' : 'has') . " different field values from the others";
+                $errors[] = "Field mismatch: Item" . (count($differentItems) > 1 ? 's' : '') . " {$itemList} " .
+                    (count($differentItems) > 1 ? 'have' : 'has') . " different field values from the others. Bulk edit requires all selected items to have identical field values.";
             }
         }
 
@@ -1524,9 +1545,8 @@ class ModeOfProcurementPerItemPage extends Component
 
         $amountThreshold = null;
         if (!empty($below200k) && !empty($above200k)) {
-            $errors[] = "<strong>Mixed amount thresholds:</strong><br>" .
-                "• Below ₱200,000: Items " . implode(', ', $below200k) . "<br>" .
-                "• ₱200,000 and above: Items " . implode(', ', $above200k);
+            $errors[] = "Mixed amount thresholds: Below ₱200,000: Items " . implode(', ', $below200k) .
+                "; ₱200,000 and above: Items " . implode(', ', $above200k) . ". Bulk edit requires all items to have the same amount threshold.";
         } elseif (!empty($below200k)) {
             $amountThreshold = '<200k';
         } elseif (!empty($above200k)) {
@@ -1556,12 +1576,28 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Validate bulk edit data before applying
         if (!$this->validateBulkEditData()) {
+            $errorMessage = implode(' ', $this->bulkEditErrors);
             LivewireAlert::title('Validation Failed')
                 ->error()
-                ->text($this->formatValidationErrors($this->bulkEditErrors))
+                ->text($errorMessage)
                 ->toast()
                 ->position('top-end')
                 ->show();
+            return;
+        }
+
+        // Validate ABC threshold consistency (MISSING from per-item!)
+        if (!$this->validateBulkEditAbcThreshold()) {
+            return;
+        }
+
+        // Check permissions for modifying successful bids (MISSING from per-item!)
+        if (!$this->canModifySuccessfulBidsInBulk()) {
+            return;
+        }
+
+        // Validate against clearing existing schedule data (MISSING from per-item!)
+        if (!$this->validateBulkEditScheduleDeletion()) {
             return;
         }
 
@@ -1631,6 +1667,14 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Apply changes to selected items
         foreach ($this->selectedItems as $index) {
+            // Update mode if changed
+            $originalMode = $this->form['items'][$index]['mode_of_procurement_id'];
+            if ($originalMode != $modeId) {
+                $this->form['items'][$index]['mode_of_procurement_id'] = $modeId;
+                // Clear fields from old mode when mode changes
+                $this->clearFieldsForModeChange($index, $originalMode, $modeId);
+            }
+
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 // Update bidding fields
                 $this->updateBiddingFields($index);
@@ -1640,6 +1684,9 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
+        // SAVE TO DATABASE - This was missing!
+        $this->saveTab1();
+
         LivewireAlert::title('Bulk Edit Applied')
             ->success()
             ->text(count($this->selectedItems) . ' items updated successfully.')
@@ -1648,6 +1695,52 @@ class ModeOfProcurementPerItemPage extends Component
             ->show();
 
         $this->closeBulkEditModal();
+    }
+
+    private function clearFieldsForModeChange($index, $oldMode, $newMode)
+    {
+        // Clear bidding fields if switching from bidding to SVP
+        if (in_array($oldMode, [2, 3, 4, 5, 6]) && in_array($newMode, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            $biddingFields = [
+                'bidding_number',
+                'ib_number',
+                'philgeps_posting_ref_no',
+                'ads_post_ib',
+                'pre_proc_conference',
+                'list_invited_observers',
+                'obsrvr_prebid_conf',
+                'obsrvr_eligibility',
+                'obsrvr_sub_open_of_bid',
+                'obsrvr_bid',
+                'obsrvr_post_qual',
+                'pre_bid_conf',
+                'eligibility_check',
+                'sub_open_bids',
+                'bid_evaluation_date',
+                'post_qualification_date',
+                'bidding_result',
+                'resolution_number_mop'
+            ];
+            foreach ($biddingFields as $field) {
+                $this->form['items'][$index][$field] = '';
+            }
+        }
+
+        // Clear SVP fields if switching from SVP to bidding
+        if (in_array($oldMode, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]) && in_array($newMode, [2, 3, 4, 5, 6])) {
+            $svpFields = [
+                'rfq_no',
+                'canvass_date',
+                'date_returned_of_canvass',
+                'abstract_of_canvass_date',
+                'resolution_number_mop',
+                'philgeps_posting_ref_no',
+                'ads_post_ib'
+            ];
+            foreach ($svpFields as $field) {
+                $this->form['items'][$index][$field] = '';
+            }
+        }
     }
 
     private function validateBulkEditData(): bool
@@ -1732,6 +1825,131 @@ class ModeOfProcurementPerItemPage extends Component
         return empty($this->bulkEditErrors);
     }
 
+    private function validateBulkEditAbcThreshold(): bool
+    {
+        // Check if all selected items have consistent ABC thresholds
+        $below200k = [];
+        $above200k = [];
+
+        foreach ($this->selectedItems as $index) {
+            $item = $this->form['items'][$index];
+            $amount = (float) ($item['amount'] ?? 0);
+
+            if ($amount < 200000) {
+                $below200k[] = $item['item_no'] ?? ($index + 1);
+            } else {
+                $above200k[] = $item['item_no'] ?? ($index + 1);
+            }
+        }
+
+        // If we have both below and above 200k, it's inconsistent
+        if (!empty($below200k) && !empty($above200k)) {
+            $belowList = implode(', ', $below200k);
+            $aboveList = implode(', ', $above200k);
+
+            LivewireAlert::title('Inconsistent ABC Thresholds')
+                ->error()
+                ->text("Cannot bulk edit items with different ABC thresholds. Items {$belowList} are below ₱200,000, while items {$aboveList} are ₱200,000 and above.")
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private function canModifySuccessfulBidsInBulk(): bool
+    {
+        // Check if user has permission to modify items with post-procurement data
+        if (!auth()->user()->can('edit_mode::of::procurement')) {
+            foreach ($this->selectedItems as $index) {
+                $item = $this->form['items'][$index];
+                $biddingResult = $item['bidding_result'] ?? '';
+
+                if ($biddingResult === 'SUCCESSFUL') {
+                    $prItemID = $item['prItemID'];
+
+                    $hasPostData = \App\Models\PostProcurement::where('ref_id', $prItemID)->exists();
+
+                    if ($hasPostData) {
+                        $itemNo = $item['item_no'] ?? ($index + 1);
+                        LivewireAlert::title('Permission Required')
+                            ->error()
+                            ->text("Cannot modify Item #{$itemNo} - it has a SUCCESSFUL bidding result with post-procurement data. This requires 'Edit Mode of Procurement' permission.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function validateBulkEditScheduleDeletion(): bool
+    {
+        // Check if we're trying to clear existing schedules without providing new data
+        $modeId = $this->bulkEditData['mode_of_procurement_id'];
+
+        foreach ($this->selectedItems as $index) {
+            $item = $this->form['items'][$index];
+            $currentModeId = $item['mode_of_procurement_id'] ?? null;
+
+            // Only check if mode is staying the same (not adding new mode)
+            if ($currentModeId == $modeId) {
+                // For competitive bidding
+                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                    $hasExistingBiddingData = $this->hasValue($item['bidding_number']) ||
+                        $this->hasValue($item['ib_number']) ||
+                        $this->hasValue($item['sub_open_bids']);
+
+                    $clearingBiddingData = !$this->hasValue($this->bulkEditData['bidding_number'] ?? '') &&
+                        !$this->hasValue($this->bulkEditData['ib_number'] ?? '') &&
+                        !$this->hasValue($this->bulkEditData['sub_open_bids'] ?? '') &&
+                        !$this->hasValue($this->bulkEditData['pre_proc_conference'] ?? '');
+
+                    if ($hasExistingBiddingData && $clearingBiddingData) {
+                        $itemNo = $item['item_no'] ?? ($index + 1);
+                        LivewireAlert::title('Cannot Clear Existing Data')
+                            ->error()
+                            ->text("Cannot clear existing bidding data for Item #{$itemNo} without providing replacement data or Pre-Proc Conference.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+
+                // For SVP/Alternative modes
+                if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                    $hasExistingSvpData = $this->hasValue($item['rfq_no']) ||
+                        $this->hasValue($item['canvass_date']) ||
+                        $this->hasValue($item['abstract_of_canvass_date']);
+
+                    $clearingSvpData = !$this->hasValue($this->bulkEditData['rfq_no'] ?? '') &&
+                        !$this->hasValue($this->bulkEditData['canvass_date'] ?? '') &&
+                        !$this->hasValue($this->bulkEditData['abstract_of_canvass_date'] ?? '');
+
+                    if ($hasExistingSvpData && $clearingSvpData) {
+                        $itemNo = $item['item_no'] ?? ($index + 1);
+                        LivewireAlert::title('Cannot Clear Existing Data')
+                            ->error()
+                            ->text("Cannot clear existing SVP data for Item #{$itemNo} without providing replacement data.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     private function updateBiddingFields($index): void
     {
         $fields = [
@@ -1789,6 +2007,16 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
+        // Validate ABC threshold consistency (MISSING!)
+        if (!$this->validateBulkEditAbcThreshold()) {
+            return;
+        }
+
+        // Check permissions for modifying successful bids (MISSING!)
+        if (!$this->canModifySuccessfulBidsInBulk()) {
+            return;
+        }
+
         // Get the mode ID from bulk edit data
         $modeId = $this->bulkEditData['mode_of_procurement_id'] ?? null;
 
@@ -1815,6 +2043,9 @@ class ModeOfProcurementPerItemPage extends Component
             $this->addItem($index);
         }
 
+        // SAVE THE NEW MODES TO DATABASE - This was missing!
+        $this->saveTab1();
+
         LivewireAlert::title('Modes Added Successfully')
             ->success()
             ->text('New modes added to ' . count($this->selectedItems) . ' items.')
@@ -1830,6 +2061,16 @@ class ModeOfProcurementPerItemPage extends Component
     }
     public function applyBulkEditAndAddMode(): void
     {
+        // Validate ABC threshold consistency (MISSING!)
+        if (!$this->validateBulkEditAbcThreshold()) {
+            return;
+        }
+
+        // Check permissions for modifying successful bids (MISSING!)
+        if (!$this->canModifySuccessfulBidsInBulk()) {
+            return;
+        }
+
         // First apply the bulk edit
         $this->applyBulkEdit();
 
@@ -1837,6 +2078,9 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($this->selectedItems as $index) {
             $this->addItem($index);
         }
+
+        // SAVE EVERYTHING TO DATABASE - This was missing!
+        $this->saveTab1();
 
         LivewireAlert::title('Changes Applied & Modes Added')
             ->success()
@@ -1853,6 +2097,196 @@ class ModeOfProcurementPerItemPage extends Component
         $this->bulkEditData = [];
         $this->bulkEditErrors = [];
         $this->deselectAll();
+    }
+
+    // Post Procurement Bulk Edit Methods
+    public function openPostBulkEditModal(): void
+    {
+        if (empty($this->selectedPostItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one item to edit.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Get item numbers for display
+        $itemNumbers = [];
+        foreach ($this->selectedPostItems as $prItemID) {
+            foreach ($this->form['items'] as $item) {
+                if (($item['prItemID'] ?? null) === $prItemID) {
+                    $itemNumbers[] = $item['item_no'] ?? $prItemID;
+                    break;
+                }
+            }
+        }
+
+        // Initialize post bulk edit data with single set of fields (like Tab 1 bulk edit)
+        $this->postBulkEditData = [
+            'items_count' => count($this->selectedPostItems),
+            'item_numbers' => $itemNumbers,
+            'selected_items' => [], // Will hold item info for display
+            'resolutionAwardNumber' => '',
+            'noticeOfAwardNumber' => '',
+            'noticeOfAward' => '',
+            'resolutionAwardDate' => '',
+            'awardedAmount' => '',
+            'philgepsNoticeOfAwardNo' => '',
+            'philgepsPostingOfAward' => '',
+            'supplier_id' => '',
+        ];
+
+        // Populate selected_items for display in the table
+        foreach ($this->selectedPostItems as $prItemID) {
+            foreach ($this->form['items'] as $item) {
+                if (($item['prItemID'] ?? null) === $prItemID) {
+                    $this->postBulkEditData['selected_items'][] = [
+                        'prItemID' => $prItemID,
+                        'item_no' => $item['item_no'] ?? '',
+                        'description' => $item['description'] ?? '',
+                    ];
+                    break;
+                }
+            }
+        }
+
+        $this->postBulkEditErrors = [];
+        $this->showPostBulkEditModal = true;
+    }
+
+    public function applyPostBulkEdit(): void
+    {
+        if (empty($this->selectedPostItems)) {
+            $this->closePostBulkEditModal();
+            return;
+        }
+
+        // Validate post bulk edit data (like Tab 1 bulk edit)
+        $this->postBulkEditErrors = [];
+        $hasData = false;
+
+        $fields = [
+            'resolutionAwardNumber',
+            'noticeOfAwardNumber',
+            'noticeOfAward',
+            'resolutionAwardDate',
+            'awardedAmount',
+            'philgepsNoticeOfAwardNo',
+            'philgepsPostingOfAward',
+            'supplier_id'
+        ];
+
+        foreach ($fields as $field) {
+            if (!empty($this->postBulkEditData[$field])) {
+                $hasData = true;
+                break;
+            }
+        }
+
+        if (!$hasData) {
+            LivewireAlert::title('No Changes')
+                ->warning()
+                ->text('Please fill in at least one field to update.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Apply changes to selected post items (like Tab 1 bulk edit)
+        DB::transaction(function () {
+            foreach ($this->selectedPostItems as $prItemID) {
+                $postData = [
+                    'ref_id' => $prItemID,
+                    'resolution_award_number' => $this->postBulkEditData['resolutionAwardNumber'] ?: null,
+                    'notice_of_award_number' => $this->postBulkEditData['noticeOfAwardNumber'] ?: null,
+                    'notice_of_award' => $this->postBulkEditData['noticeOfAward'] ?: null,
+                    'resolution_award_date' => $this->nullableDate($this->postBulkEditData['resolutionAwardDate']),
+                    'awarded_amount' => $this->postBulkEditData['awardedAmount'] ?: null,
+                    'philgeps_notice_of_award_no' => $this->postBulkEditData['philgepsNoticeOfAwardNo'] ?: null,
+                    'philgeps_posting_of_award' => $this->nullableDate($this->postBulkEditData['philgepsPostingOfAward']),
+                    'supplier_id' => $this->postBulkEditData['supplier_id'] ?: null,
+                ];
+
+                PostProcurement::updateOrCreate(
+                    ['ref_id' => $prItemID],
+                    $postData
+                );
+            }
+        });
+
+        // Reload post procurement data
+        $this->loadPostProcurementData($this->procurement);
+
+        LivewireAlert::title('Post Procurement Bulk Edit Applied')
+            ->success()
+            ->text(count($this->selectedPostItems) . ' items updated successfully.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+
+        $this->closePostBulkEditModal();
+    }
+
+    public function closePostBulkEditModal(): void
+    {
+        $this->showPostBulkEditModal = false;
+        $this->postBulkEditData = [];
+        $this->postBulkEditErrors = [];
+        $this->deselectAllPostItems();
+    }
+
+    public function toggleAllPostItems(): void
+    {
+        $availablePrItemIDs = [];
+        foreach ($this->form['items'] ?? [] as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $prItemID = $item['prItemID'] ?? null;
+
+            if (!$prItemID)
+                continue;
+
+            // Check for SUCCESSFUL bidding in competitive modes
+            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                $bidResult = $item['bidding_result'] ?? '';
+                if ($bidResult === 'SUCCESSFUL') {
+                    $availablePrItemIDs[] = $prItemID;
+                    continue;
+                }
+            }
+
+            // Check for complete SVP data in alternative modes
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                if (
+                    !empty($item['resolution_number_mop']) &&
+                    !empty($item['rfq_no']) &&
+                    !empty($item['canvass_date']) &&
+                    !empty($item['date_returned_of_canvass']) &&
+                    !empty($item['abstract_of_canvass_date'])
+                ) {
+                    $availablePrItemIDs[] = $prItemID;
+                }
+            }
+        }
+
+        if (count($this->selectedPostItems) === count($availablePrItemIDs)) {
+            // All are selected, deselect all
+            $this->selectedPostItems = [];
+        } else {
+            // Select all available items
+            $this->selectedPostItems = $availablePrItemIDs;
+        }
+    }
+
+    public function togglePostItemSelection($prItemID): void
+    {
+        if (in_array($prItemID, $this->selectedPostItems)) {
+            $this->selectedPostItems = array_diff($this->selectedPostItems, [$prItemID]);
+        } else {
+            $this->selectedPostItems[] = $prItemID;
+        }
     }
 
     public function render()
