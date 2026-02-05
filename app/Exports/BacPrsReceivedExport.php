@@ -19,14 +19,14 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
     protected $search;
     protected $startDate;
     protected $endDate;
-    protected $bacCategoryFilter;
+    protected $currentModeFilter;
 
-    public function __construct($search, $startDate, $endDate, $bacCategoryFilter)
+    public function __construct($search, $startDate, $endDate, $currentModeFilter)
     {
         $this->search = $search;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
-        $this->bacCategoryFilter = $bacCategoryFilter;
+        $this->currentModeFilter = $currentModeFilter;
     }
 
     public function query()
@@ -37,8 +37,12 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
                 'division',
                 'clusterCommittee',
                 'category.bacType',
-                'fundSource'
+                'fundSource',
+                'mopLots.modeOfProcurement'
             ])
+            ->whereHas('category', function ($q) {
+                $q->where('bac_type_id', 1);
+            })
             ->latest('date_receipt');
 
         // Apply search filter
@@ -59,10 +63,15 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             $query->whereDate('date_receipt', '<=', $this->endDate);
         }
 
-        // Apply BAC category filter
-        if (!empty($this->bacCategoryFilter)) {
-            $query->whereHas('category', function ($q) {
-                $q->where('bac_type_id', $this->bacCategoryFilter);
+        // Current Mode filter
+        if ($this->currentModeFilter) {
+            $query->where(function ($q) {
+                // Per-lot procurements
+                $q->where('procurement_type', 'perLot')
+                    ->whereHas('mopLots', function ($subQ) {
+                        $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
+                            ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_lot WHERE procID = procurements.procID)');
+                    });
             });
         }
 
@@ -81,6 +90,7 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             'Fund Source',
             'ABC Amount',
             'Procurement Stage',
+            'Current Mode',
         ];
     }
 
@@ -97,6 +107,10 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             }
         };
 
+        // Get current mode
+        $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
+        $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
+
         return [
             $procurement->pr_number,
             $procurement->procurement_program_project,
@@ -107,6 +121,7 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($procurement->abc ?? 0, 2),
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
+            $currentMode,
         ];
     }
 
@@ -115,7 +130,7 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('1:1')->applyFromArray([
+        $sheet->getStyle('A1:J1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -138,8 +153,8 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             ],
         ]);
 
-        // Center align all data cells (A to I)
-        $sheet->getStyle('A2:I' . $highestRow)->applyFromArray([
+        // Center align all data cells (A to J)
+        $sheet->getStyle('A2:J' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -172,6 +187,24 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             ],
         ]);
 
+        // Wrap text for Procurement Stage column (I)
+        $sheet->getStyle('I2:I' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Wrap text for Current Mode column (J)
+        $sheet->getStyle('J2:J' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
         return [];
     }
 
@@ -187,6 +220,7 @@ class BacPrsReceivedExport implements FromQuery, WithHeadings, WithMapping, With
             'G' => 25, // Fund Source
             'H' => 18, // ABC Amount
             'I' => 30, // Procurement Stage
+            'J' => 25, // Current Mode
         ];
     }
 }

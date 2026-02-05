@@ -13,7 +13,7 @@
                     <path
                         d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
                 </svg>
-                <h2 class="text-lg font-bold text-gray-800 dark:text-white">PR's Received Report</h2>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white">PR's Received (Category A) Report</h2>
             </div>
         </div>
 
@@ -37,12 +37,12 @@
                             class="w-36 px-2.5 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-800 dark:text-white dark:border-neutral-600" />
                     </div>
 
-                    <!-- BAC Category -->
+                    <!-- Current Mode -->
                     <div class="relative z-50 w-56">
-                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">BAC
-                            Category</label>
-                        <x-forms.searchable-select wire:model.live="bacCategoryFilter" :options="$bacCategories" labelKey="name"
-                            valueKey="id" placeholder="All Categories" />
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Current
+                            Mode</label>
+                        <x-forms.searchable-select wire:model.live="currentModeFilter" :options="$modes" labelKey="name"
+                            valueKey="id" placeholder="All Modes" />
                     </div>
                 </div>
 
@@ -115,6 +115,10 @@
                     <th
                         class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                         Procurement Stage
+                    </th>
+                    <th
+                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        Current Mode
                     </th>
                 </tr>
             </thead>
@@ -209,10 +213,22 @@
                                 <span class="text-gray-400 italic text-xs">No Stage</span>
                             @endif
                         </td>
+
+                        <!-- Current Mode -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($procurement->currentMode)
+                                <span
+                                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300 dark:from-purple-900/40 dark:to-purple-800/40 dark:text-purple-200 dark:border-purple-700 shadow-sm">
+                                    {{ $procurement->currentMode->modeofprocurements }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">No Mode</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="10" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
