@@ -5,15 +5,13 @@
         <div class="grid grid-cols-7 md:grid-cols-10 gap-6">
 
             {{-- PR Number Dropdown --}}
-
-            <x-forms.select id="pr_number" label="PR No." model="form.pr_number" :options="$procurements" optionValue="id"
+            <x-forms.select id="pr_number" label="PR No." model="form.pr_number" :options="$procurements" optionValue="procID"
                 optionLabel="pr_number" :required="true" wireModifier="live" colspan="col-span-1" :searchable="true" />
 
             {{-- Procurement Program / Project --}}
-
             <x-forms.textarea id="procurement_program_project" label="Procurement Program / Project"
                 model="form.procurement_program_project" :required="true" :rows="$textareaRows" colspan="col-span-9"
-                :readonly="true" :autoResize="true" />
+                :readonly="true" :autoResize="true" wireModifier="live" />
 
             <x-forms.input id="document_url" type="text" label="Approved PR Document URL" model="form.filepath"
                 placeholder="http://example.com/path/to/document.pdf" :required="true" colspan="col-span-5" />

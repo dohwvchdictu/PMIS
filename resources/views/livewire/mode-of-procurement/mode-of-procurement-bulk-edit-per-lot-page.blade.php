@@ -712,8 +712,16 @@
                                                             value="{{ $item['procID'] }}"
                                                             class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                                         @if (in_array($item['procID'], $selectedItems ?? []))
-                                                            <span class="inline-flex items-center px-2 py-0.5 bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 rounded text-xs font-semibold ml-1">
-                                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-0.5 bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 rounded text-xs font-semibold ml-1">
+                                                                <svg class="w-4 h-4 mr-1" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    viewBox="0 0 24 24"
+                                                                    xmlns="http://www.w3.org/2000/svg">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" d="M5 13l4 4L19 7">
+                                                                    </path>
+                                                                </svg>
                                                                 Selected
                                                             </span>
                                                         @endif
