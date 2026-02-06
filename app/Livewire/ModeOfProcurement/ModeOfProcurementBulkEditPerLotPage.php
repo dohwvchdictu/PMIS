@@ -26,6 +26,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public bool $showAddForm = false;
     public array $queryParams = [];
 
+    // Selection functionality
+    public array $selectedItems = [];
+    public bool $selectAll = false;
+    public bool $showBulkEditModal = false;
+
     // Post-Procurement Tab Fields
     public ?string $resolutionAwardNumber = null;
     public ?string $noticeOfAwardNumber = null;
@@ -57,6 +62,57 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->loadProcurementData();
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
+    }
+
+    // Selection methods
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedItems = collect($this->getCurrentItems())
+                ->pluck('procID')
+                ->toArray();
+        } else {
+            $this->selectedItems = [];
+        }
+        $this->dispatch('$refresh');
+    }
+
+    public function updatedSelectedItems()
+    {
+        $currentProcIds = collect($this->getCurrentItems())->pluck('procID')->toArray();
+        $selectedUnique = array_unique($this->selectedItems);
+        $this->selectAll = !empty($currentProcIds) &&
+            count($selectedUnique) === count($currentProcIds) &&
+            empty(array_diff($selectedUnique, $currentProcIds));
+        $this->dispatch('$refresh');
+    }
+
+    public function clearSelections()
+    {
+        $this->selectedItems = [];
+        $this->selectAll = false;
+    }
+
+    public function openBulkEditModal()
+    {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one procurement to edit.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        $this->populateBulkEditData();
+        $this->showBulkEditModal = true;
+    }
+
+    public function closeBulkEditModal()
+    {
+        $this->showBulkEditModal = false;
+        $this->clearBulkEditScheduleFields();
     }
 
     /**
@@ -245,7 +301,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // SVP/ALTERNATIVE MODES (7-24)
         if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
             // Validate PhilGEPS requirements based on individual PR ABC
-            $currentItems = $this->getCurrentItems();
+            $currentItems = collect($this->getCurrentItems())
+                ->whereIn('procID', $this->selectedItems)
+                ->values()
+                ->toArray();
             $requiresPhilgeps = false;
             $prNumbersRequiringPhilgeps = [];
 
@@ -284,7 +343,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     private function validateExistingScheduleDeletion(): bool
     {
         // Check if user is trying to clear existing schedules without providing new data
-        $currentItems = $this->getCurrentItems();
+        $currentItems = collect($this->getCurrentItems())
+            ->whereIn('procID', $this->selectedItems)
+            ->values()
+            ->toArray();
 
         foreach ($currentItems as $item) {
             $modeId = $item['mode_of_procurement_id'];
@@ -358,7 +420,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     {
         // Check if user has permission to modify items with post-procurement data
         if (!auth()->user()->can('edit_mode::of::procurement')) {
-            $currentItems = $this->getCurrentItems();
+            $currentItems = collect($this->getCurrentItems())
+                ->whereIn('procID', $this->selectedItems)
+                ->values()
+                ->toArray();
 
             foreach ($currentItems as $item) {
                 $biddingResult = $item['bidding_result'] ?? '';
@@ -400,19 +465,24 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Clear existing data first to prevent leftover data from previous transactions
         $this->bulkEdit = [];
 
-        // Get all current items (highest mode_order) from all selected PRs
-        if (empty($this->items)) {
+        // Get current items (highest mode_order) from selected PRs only
+        if (empty($this->items) || empty($this->selectedItems)) {
             return;
         }
 
-        $currentItems = $this->getCurrentItems();
+        $currentItems = collect($this->getCurrentItems())
+            ->whereIn('procID', $this->selectedItems)
+            ->values();
 
         if (empty($currentItems)) {
-            \Log::warning('No current items found', ['total_items' => count($this->items)]);
+            \Log::warning('No current items found for selected procurements', [
+                'total_items' => count($this->items),
+                'selected_items' => $this->selectedItems
+            ]);
             return;
         }
 
-        \Log::info('Found current items', ['count' => count($currentItems)]);
+        \Log::info('Found current items for selected', ['count' => count($currentItems)]);
 
         // Fields to check for identical values
         $fields = [
@@ -444,7 +514,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // For each field, check if all items have the same value
         foreach ($fields as $field) {
-            $values = array_map(fn($item) => $item[$field] ?? '', $currentItems);
+            $values = $currentItems->map(fn($item) => $item[$field] ?? '')->toArray();
             $uniqueValues = array_unique($values);
 
             // If all values are identical, use that value; otherwise leave empty
@@ -559,6 +629,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'prItemID' => null,
             'pr_number' => $procurement->pr_number,
             'procurement_program_project' => $procurement->procurement_program_project,
+            'abc' => $procurement->abc,
             'procurement_type' => 'perLot',
             'mop_id' => $mopLot?->id,
             'mop_uid' => $mopLot?->uid,
@@ -648,8 +719,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     private function validateAbcThreshold(): bool
     {
-        // Get all procurements
-        $procurements = Procurement::whereIn('procID', $this->procurementIds)->get();
+        // Get selected procurements
+        $procurements = Procurement::whereIn('procID', $this->selectedItems)->get();
 
         $hasBelow200k = false;
         $hasAbove200k = false;
@@ -688,6 +759,16 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     public function save()
     {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one procurement to edit.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
         // Validate ABC threshold first
         if (!$this->validateAbcThreshold()) {
             return;
@@ -727,8 +808,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $isMopUpdated = false;
 
         DB::transaction(function () use (&$isMopAdded, &$isMopUpdated) {
-            // Get all procurements
-            $procurements = Procurement::whereIn('procID', $this->procurementIds)->get();
+            // Get selected procurements
+            $procurements = Procurement::whereIn('procID', $this->selectedItems)->get();
 
             foreach ($procurements as $procurement) {
                 $currentItems = collect($this->items)
@@ -799,6 +880,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
         $this->showAddForm = false;
+        $this->showBulkEditModal = false;
+        $this->clearSelections();
     }
 
     private function updateItem(array $item): void
