@@ -204,12 +204,6 @@
                                         <span>PR's Received (A)</span>
                                     </a>
                                 </li>
-                            </ul>
-                        </div>
-                        <div id="reports-bac-accordion-child"
-                            class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 {{ request()->routeIs('reports.bac.*') ? '' : 'hidden' }}"
-                            role="region" aria-labelledby="reports-bac-accordion">
-                            <ul class="ps-1 pt-1 space-y-1">
                                 <li>
                                     <a href="{{ route('reports.bac.prs-received-b') }}"
                                         class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg

@@ -6,7 +6,7 @@ use App\Models\BacType;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Procurement;
-use App\Exports\BacPrsReceivedExport;
+use App\Exports\BacPrsReceivedBExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\MopLot;
 use App\Models\BidSchedule;
@@ -104,7 +104,7 @@ class BacPrsReceivedBPage extends Component
         $fileName = 'BAC_PRs_Received_Category_B' . $dateRange . '.xlsx';
 
         return Excel::download(
-            new BacPrsReceivedExport(
+            new BacPrsReceivedBExport(
                 $this->search,
                 $this->startDate,
                 $this->endDate,

@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
+class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
 {
     protected $search;
     protected $startDate;
@@ -70,11 +70,16 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         // Current Mode filter
         if ($this->currentModeFilter) {
             $query->where(function ($q) {
-                // For Category A, only filter per-lot procurements
+                // For Category B, filter both per-lot and per-item procurements
                 $q->where('procurement_type', 'perLot')
                     ->whereHas('mopLots', function ($subQ) {
                         $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
                             ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_lot WHERE procID = procurements.procID)');
+                    });
+                $q->orWhere('procurement_type', 'perItem')
+                    ->whereHas('pr_items.mopItems', function ($subQ) {
+                        $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
+                            ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_item WHERE prItemID = pr_items.prItemID)');
                     });
             });
         }
