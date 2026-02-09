@@ -1054,8 +1054,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
         $this->showAddForm = false;
-        $this->showBulkEditModal = false;
-        $this->clearSelections();
+        // Modal will remain open after save
+        // $this->showBulkEditModal = false;
+        // Keep selections so user can continue editing
+        // $this->clearSelections();
     }
 
     private function updateItem(array $item): void
@@ -1874,7 +1876,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 ->position('top-end')
                 ->show();
 
-            $this->closePostBulkEditModal();
+            // Modal will remain open after save
+            // $this->closePostBulkEditModal();
             $this->loadProcurementData();
 
         } catch (\Exception $e) {

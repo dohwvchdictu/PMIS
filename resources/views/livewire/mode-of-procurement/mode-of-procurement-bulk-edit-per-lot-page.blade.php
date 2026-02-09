@@ -1263,9 +1263,10 @@
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                         Cancel
                     </button>
-                    <button type="button" wire:click="save"
+                    <button type="button"
+                        onclick="confirmBulkEditSave()"
                         class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Save
+                        Save Changes
                     </button>
                 </div>
             </div>
@@ -1402,9 +1403,10 @@
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                             Cancel
                         </button>
-                        <button type="button" wire:click="savePostBulkEdit"
+                        <button type="button"
+                            onclick="confirmPostBulkEditSave()"
                             class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                            Save
+                            Apply Bulk Edit
                         </button>
                     </div>
             @endif
@@ -1421,5 +1423,49 @@
                     z-index: 9999999 !important;
                 }
             </style>
+
+            <script>
+                function confirmBulkEditSave() {
+                    Swal.fire({
+                        title: 'Apply Changes?',
+                        text: 'Apply changes to selected items?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#059669',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Yes, Apply',
+                        cancelButtonText: 'No, Cancel',
+                        reverseButtons: true,
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            @this.call('save').then(() => {
+                                // Modal will stay open, backend will handle success notification
+                            });
+                        }
+                    });
+                }
+
+                function confirmPostBulkEditSave() {
+                    Swal.fire({
+                        title: 'Apply Changes?',
+                        text: 'Apply changes to selected items?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#059669',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Yes, Apply',
+                        cancelButtonText: 'No, Cancel',
+                        reverseButtons: true,
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            @this.call('savePostBulkEdit').then(() => {
+                                // Modal will stay open, backend will handle success notification
+                            });
+                        }
+                    });
+                }
+            </script>
         @endonce
     </div>
