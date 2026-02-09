@@ -166,7 +166,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $procId = $item['procID'];
             $prNumbers[] = $item['pr_number'];
             $modeId = $item['mode_of_procurement_id'] ?? null;
-            
+
             // Track ABC amounts
             $amounts[$item['pr_number']] = $item['abc'] ?? 0;
 
