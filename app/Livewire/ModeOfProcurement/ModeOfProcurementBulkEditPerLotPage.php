@@ -31,6 +31,12 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public bool $selectAll = false;
     public bool $showBulkEditModal = false;
 
+    // Post-Procurement Selection & Bulk Edit
+    public array $selectedPostItems = [];
+    public bool $selectAllPost = false;
+    public bool $showPostBulkEditModal = false;
+    public array $postBulkEditData = [];
+
     // Post-Procurement Tab Fields
     public ?string $resolutionAwardNumber = null;
     public ?string $noticeOfAwardNumber = null;
@@ -105,6 +111,20 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
+        // Validate selected items before opening modal
+        $validation = $this->validateBulkEditSelection();
+
+        if (!$validation['valid']) {
+            $errorMessage = implode(' ', $validation['errors']);
+            LivewireAlert::title('Bulk Edit Validation Failed')
+                ->error()
+                ->text($errorMessage)
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
         $this->populateBulkEditData();
         $this->showBulkEditModal = true;
     }
@@ -113,6 +133,160 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     {
         $this->showBulkEditModal = false;
         $this->clearBulkEditScheduleFields();
+    }
+
+    /**
+     * Validate bulk edit selection before opening modal
+     * Ensures all selected items have same mode and identical field values
+     */
+    private function validateBulkEditSelection(): array
+    {
+        $errors = [];
+        $modes = [];
+        $scheduleData = [];
+        $prNumbers = [];
+        $amounts = [];
+
+        // Get current items that match selected IDs
+        $selectedItemsData = collect($this->items)
+            ->filter(function ($item) {
+                return in_array($item['procID'], $this->selectedItems);
+            })
+            ->unique('procID')
+            ->values();
+
+        if ($selectedItemsData->isEmpty()) {
+            return [
+                'valid' => false,
+                'errors' => ['No valid items found in selection.']
+            ];
+        }
+
+        foreach ($selectedItemsData as $item) {
+            $procId = $item['procID'];
+            $prNumbers[] = $item['pr_number'];
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            
+            // Track ABC amounts
+            $amounts[$item['pr_number']] = $item['abc'] ?? 0;
+
+            // Track modes
+            if ($modeId) {
+                if (!isset($modes[$modeId])) {
+                    $modes[$modeId] = [];
+                }
+                $modes[$modeId][] = $item['pr_number'];
+            }
+
+            // Extract schedule data for comparison
+            $scheduleData[$procId] = [
+                'mode_of_procurement_id' => $modeId,
+                'bidding_number' => $item['bidding_number'] ?? null,
+                'ib_number' => $item['ib_number'] ?? null,
+                'philgeps_posting_ref_no' => $item['philgeps_posting_ref_no'] ?? null,
+                'ads_post_ib' => $item['ads_post_ib'] ?? null,
+                'pre_proc_conference' => $item['pre_proc_conference'] ?? null,
+                'list_invited_observers' => $item['list_invited_observers'] ?? null,
+                'obsrvr_prebid_conf' => $item['obsrvr_prebid_conf'] ?? null,
+                'obsrvr_eligibility' => $item['obsrvr_eligibility'] ?? null,
+                'obsrvr_sub_open_of_bid' => $item['obsrvr_sub_open_of_bid'] ?? null,
+                'obsrvr_bid' => $item['obsrvr_bid'] ?? null,
+                'obsrvr_post_qual' => $item['obsrvr_post_qual'] ?? null,
+                'pre_bid_conf' => $item['pre_bid_conf'] ?? null,
+                'eligibility_check' => $item['eligibility_check'] ?? null,
+                'sub_open_bids' => $item['sub_open_bids'] ?? null,
+                'bid_evaluation_date' => $item['bid_evaluation_date'] ?? null,
+                'post_qualification_date' => $item['post_qualification_date'] ?? null,
+                'bidding_result' => $item['bidding_result'] ?? null,
+                'resolution_number_mop' => $item['resolution_number_mop'] ?? null,
+                'rfq_no' => $item['rfq_no'] ?? null,
+                'canvass_date' => $item['canvass_date'] ?? null,
+                'date_returned_of_canvass' => $item['date_returned_of_canvass'] ?? null,
+                'abstract_of_canvass_date' => $item['abstract_of_canvass_date'] ?? null,
+            ];
+        }
+
+        // Check if all items have the same mode
+        if (count($modes) > 1) {
+            $modeDetails = [];
+            foreach ($modes as $modeId => $prs) {
+                $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Unknown';
+                $modeDetails[] = "{$modeName}: " . implode(', ', $prs);
+            }
+            $errors[] = "Items have different modes: " . implode('; ', $modeDetails) . ". Bulk edit requires all selected PRs to have the same mode of procurement.";
+        }
+
+        if (empty($modes)) {
+            $errors[] = "No valid mode selected for PRs: " . implode(', ', $prNumbers);
+        }
+
+        // Check if all items have identical schedule data (only when all have same mode)
+        if (!empty($modes) && count($modes) === 1) {
+            $scheduleHashes = [];
+            $prNumbersByHash = [];
+
+            foreach ($scheduleData as $procId => $schedule) {
+                $hash = md5(json_encode($schedule));
+                $scheduleHashes[$procId] = $hash;
+
+                $prNumber = $selectedItemsData->firstWhere('procID', $procId)['pr_number'];
+                if (!isset($prNumbersByHash[$hash])) {
+                    $prNumbersByHash[$hash] = [];
+                }
+                $prNumbersByHash[$hash][] = $prNumber;
+            }
+
+            $uniqueHashes = array_unique($scheduleHashes);
+
+            if (count($uniqueHashes) > 1) {
+                // Find the minority group (items with different data)
+                $hashCounts = array_count_values($scheduleHashes);
+                arsort($hashCounts);
+                $majorityHash = array_key_first($hashCounts);
+
+                $differentPRs = [];
+                foreach ($scheduleHashes as $procId => $hash) {
+                    if ($hash !== $majorityHash) {
+                        $prNumber = $selectedItemsData->firstWhere('procID', $procId)['pr_number'];
+                        $differentPRs[] = $prNumber;
+                    }
+                }
+
+                $prList = implode(', ', $differentPRs);
+                $errors[] = "Field mismatch: PR" . (count($differentPRs) > 1 ? 's' : '') . " {$prList} " .
+                    (count($differentPRs) > 1 ? 'have' : 'has') . " different field values from the others. Bulk edit requires all selected PRs to have identical field values.";
+            }
+        }
+
+        // Check amount threshold consistency
+        $below200k = [];
+        $above200k = [];
+
+        foreach ($amounts as $prNum => $amount) {
+            if ($amount < 200000) {
+                $below200k[] = $prNum;
+            } else {
+                $above200k[] = $prNum;
+            }
+        }
+
+        $amountThreshold = null;
+        if (!empty($below200k) && !empty($above200k)) {
+            $errors[] = "Mixed amount thresholds: Below ₱200,000: " . implode(', ', $below200k) .
+                "; ₱200,000 and above: " . implode(', ', $above200k) . ". Bulk edit requires all PRs to have the same amount threshold.";
+        } elseif (!empty($below200k)) {
+            $amountThreshold = 'Below ₱200,000.00';
+        } else {
+            $amountThreshold = '₱200,000.00 and Above';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'commonMode' => count($modes) === 1 ? array_key_first($modes) : null,
+            'prNumbers' => $prNumbers,
+            'amountThreshold' => $amountThreshold
+        ];
     }
 
     /**
@@ -1501,6 +1675,218 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->bulkEdit['canvass_date'] = '';
         $this->bulkEdit['date_returned_of_canvass'] = '';
         $this->bulkEdit['abstract_of_canvass_date'] = '';
+    }
+
+    // Post-Procurement Bulk Edit Methods
+    public function updatedSelectAllPost($value)
+    {
+        if ($value) {
+            $eligibleItems = [];
+            $processed = [];
+
+            foreach ($this->items as $item) {
+                $refId = $item['procurement_type'] === 'perLot'
+                    ? $item['procID']
+                    : $item['prItemID'];
+
+                // Skip duplicates
+                if (in_array($refId, $processed)) {
+                    continue;
+                }
+                $processed[] = $refId;
+
+                // Check eligibility
+                $bidSchedule = \App\Models\BidSchedule::where('ref_id', $refId)->first();
+                $prSvp = \App\Models\PrSvp::where('ref_id', $refId)->first();
+                $isBiddingSuccessful = $bidSchedule && $bidSchedule->bidding_result === 'SUCCESSFUL';
+                $hasSvpData = $prSvp && ($prSvp->negotiated_contract_amount || $prSvp->canvasser_id);
+
+                if ($isBiddingSuccessful || $hasSvpData) {
+                    $eligibleItems[] = $refId;
+                }
+            }
+
+            $this->selectedPostItems = $eligibleItems;
+        } else {
+            $this->selectedPostItems = [];
+        }
+        $this->dispatch('$refresh');
+    }
+
+    public function updatedSelectedPostItems()
+    {
+        $eligibleItems = [];
+        $processed = [];
+
+        foreach ($this->items as $item) {
+            $refId = $item['procurement_type'] === 'perLot'
+                ? $item['procID']
+                : $item['prItemID'];
+
+            if (in_array($refId, $processed)) {
+                continue;
+            }
+            $processed[] = $refId;
+
+            $bidSchedule = \App\Models\BidSchedule::where('ref_id', $refId)->first();
+            $prSvp = \App\Models\PrSvp::where('ref_id', $refId)->first();
+            $isBiddingSuccessful = $bidSchedule && $bidSchedule->bidding_result === 'SUCCESSFUL';
+            $hasSvpData = $prSvp && ($prSvp->negotiated_contract_amount || $prSvp->canvasser_id);
+
+            if ($isBiddingSuccessful || $hasSvpData) {
+                $eligibleItems[] = $refId;
+            }
+        }
+
+        $selectedUnique = array_unique($this->selectedPostItems);
+        $this->selectAllPost = !empty($eligibleItems) &&
+            count($selectedUnique) === count($eligibleItems) &&
+            empty(array_diff($selectedUnique, $eligibleItems));
+        $this->dispatch('$refresh');
+    }
+
+    public function clearPostSelections()
+    {
+        $this->selectedPostItems = [];
+        $this->selectAllPost = false;
+    }
+
+    public function openPostBulkEditModal()
+    {
+        if (empty($this->selectedPostItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one procurement to bulk edit.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Prepare selected items data for display
+        $selectedItemsData = [];
+        foreach ($this->items as $item) {
+            $refId = $item['procurement_type'] === 'perLot'
+                ? $item['procID']
+                : $item['prItemID'];
+
+            if (in_array($refId, $this->selectedPostItems)) {
+                $selectedItemsData[] = [
+                    'ref_id' => $refId,
+                    'pr_number' => $item['pr_number'],
+                    'procurement_program_project' => $item['procurement_program_project'],
+                ];
+            }
+        }
+
+        $this->postBulkEditData = [
+            'selected_items' => array_values(array_unique($selectedItemsData, SORT_REGULAR)),
+            'resolutionAwardNumber' => '',
+            'resolutionAwardDate' => '',
+            'noticeOfAwardNumber' => '',
+            'noticeOfAward' => '',
+            'awardedAmount' => null,
+            'philgepsNoticeOfAwardNo' => '',
+            'philgepsPostingOfAward' => '',
+            'supplier_id' => null,
+        ];
+
+        $this->showPostBulkEditModal = true;
+    }
+
+    public function closePostBulkEditModal()
+    {
+        $this->showPostBulkEditModal = false;
+        $this->postBulkEditData = [];
+    }
+
+    public function savePostBulkEdit()
+    {
+        if (empty($this->postBulkEditData['selected_items'])) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select items to update.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        $updatedCount = 0;
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($this->postBulkEditData['selected_items'] as $item) {
+                $refId = $item['ref_id'];
+
+                // Find or create post-procurement record
+                $postProc = \App\Models\PostProcurement::firstOrNew(['ref_id' => $refId]);
+
+                $hasChanges = false;
+
+                // Update only non-empty fields
+                if (!empty($this->postBulkEditData['resolutionAwardNumber'])) {
+                    $postProc->resolution_award_number = $this->postBulkEditData['resolutionAwardNumber'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['resolutionAwardDate'])) {
+                    $postProc->resolution_award_date = $this->postBulkEditData['resolutionAwardDate'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['noticeOfAwardNumber'])) {
+                    $postProc->notice_of_award_number = $this->postBulkEditData['noticeOfAwardNumber'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['noticeOfAward'])) {
+                    $postProc->notice_of_award = $this->postBulkEditData['noticeOfAward'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['awardedAmount'])) {
+                    $postProc->awarded_amount = $this->postBulkEditData['awardedAmount'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['philgepsNoticeOfAwardNo'])) {
+                    $postProc->philgeps_notice_of_award_no = $this->postBulkEditData['philgepsNoticeOfAwardNo'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['philgepsPostingOfAward'])) {
+                    $postProc->philgeps_posting_of_award = $this->postBulkEditData['philgepsPostingOfAward'];
+                    $hasChanges = true;
+                }
+                if (!empty($this->postBulkEditData['supplier_id'])) {
+                    $postProc->supplier_id = $this->postBulkEditData['supplier_id'];
+                    $hasChanges = true;
+                }
+
+                if ($hasChanges) {
+                    $postProc->save();
+                    $updatedCount++;
+                }
+            }
+
+            DB::commit();
+
+            LivewireAlert::title('Success!')
+                ->success()
+                ->text("{$updatedCount} post-procurement record(s) updated successfully.")
+                ->toast()
+                ->position('top-end')
+                ->show();
+
+            $this->closePostBulkEditModal();
+            $this->loadProcurementData();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            LivewireAlert::title('Error!')
+                ->error()
+                ->text('Failed to update post-procurement data: ' . $e->getMessage())
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
     }
 
     public function render()

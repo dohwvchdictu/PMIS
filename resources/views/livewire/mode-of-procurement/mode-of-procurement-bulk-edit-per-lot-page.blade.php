@@ -55,6 +55,46 @@
         @if ($activeTab == 1)
             <!-- Combined Bulk Edit Form and PR Table -->
             <div class="flex flex-col gap-4">
+
+                <!-- Bulk Edit Button Section (shown when items are selected) -->
+                @if (count($selectedItems) > 0)
+                    <div
+                        class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 dark:border-emerald-600 rounded-lg shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                                        {{ count($selectedItems) }} procurement(s) selected for bulk edit
+                                    </span>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        Click Bulk Edit to update mode of procurement data for all selected PRs
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button wire:click="clearSelections" type="button"
+                                    class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                                    Clear Selection
+                                </button>
+                                <button wire:click="openBulkEditModal" type="button"
+                                    class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Bulk Edit
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- PR Table Section -->
                 <div
                     class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
@@ -62,34 +102,22 @@
                     <!-- Header Section -->
                     <div
                         class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-2">
-                                <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
-                                        Selected Purchase Requests
-                                    </h3>
-                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                        Select PRs and use Bulk Edit to update multiple records
-                                    </p>
-                                </div>
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
                             </div>
-                            <button type="button" wire:click="openBulkEditModal"
-                                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Bulk Edit
-                                </span>
-                            </button>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                    Selected Purchase Requests
+                                </h3>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Select PRs and use Bulk Edit to update multiple records
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -611,123 +639,79 @@
         @endif
 
         @if ($activeTab == 2)
-            <div class="flex flex-col gap-2 pt-2">
-                <div
-                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+            <div class="flex flex-col gap-4">
 
-                    <!-- Bulk Edit Section Header -->
-                    <div class="px-2 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b-2 border-emerald-500 mb-2">
-                        <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                            📝 Bulk Edit Post-Procurement - Changes will apply to all selected PRs
-                        </h3>
-                    </div>
-
-                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                        <table class="w-full text-xs min-w-max">
-                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Resolution Award Number</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Resolution Award Date</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Notice of Award Number
-                                    </th>
-
-                                    <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Notice of Award Date</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Awarded Amount</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        PhilGEPS Notice of Award No.</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        PhilGEPS Posting of Award</th>
-
-                                    <th
-                                        class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
-                                        Supplier</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                <tr>
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="text" wire:model.defer="resolutionAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="RES-YYYY-NNN">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="date" wire:model.defer="resolutionAwardDate"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="text" wire:model.defer="noticeOfAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="NOA-YYYY-NNNN">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="date" wire:model.defer="noticeOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="number" step="0.01" wire:model.defer="awardedAmount"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="text" wire:model.defer="philgepsNoticeOfAwardNo"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="PHL-NOA-YYYY-NNN">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <input type="date" wire:model.defer="philgepsPostingOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                    </td>
-
-                                    <td class="px-4 py-3 align-top">
-                                        <select wire:model.defer="supplier_id"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            <option value="">Select Supplier...</option>
-                                            @foreach ($suppliers as $supplier)
-                                                <option value="{{ $supplier->id }}">{{ $supplier->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <!-- Divider and PR List Header -->
-                        <div class="my-4">
-                            <div class="h-px bg-gray-300 dark:bg-neutral-600"></div>
-                            <div class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500 mt-4 mb-2">
-                                <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                                    📋 Selected PRs - Current Post-Procurement Data
-                                </h3>
+                <!-- Bulk Edit Button Section (shown when items are selected) -->
+                @if (count($selectedPostItems) > 0)
+                    <div
+                        class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 dark:border-emerald-600 rounded-lg shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                                        {{ count($selectedPostItems) }} procurement(s) selected for bulk edit
+                                    </span>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        Click Bulk Edit to update post-procurement data for all selected PRs
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button wire:click="clearPostSelections" type="button"
+                                    class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                                    Clear Selection
+                                </button>
+                                <button wire:click="openPostBulkEditModal" type="button"
+                                    class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Bulk Edit
+                                    </span>
+                                </button>
                             </div>
                         </div>
+                    </div>
+                @endif
 
-                        <!-- PR List Table -->
-                        <table class="w-full text-xs min-w-max">
-                            <thead class="bg-gray-200 dark:bg-neutral-800">
+                <!-- Current Data Table Card -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 overflow-hidden">
+
+                    <!-- Header Section -->
+                    <div class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                    Post-Procurement Data - Eligible PRs
+                                </h3>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Select PRs with SUCCESSFUL bidding or complete SVP data to bulk edit
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                            <table class="w-full text-xs min-w-max">
+                                <thead class="sticky top-0 bg-gray-100 dark:bg-neutral-700/50 z-10">
                                 <tr>
+                                    <th class="px-4 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
+                                        <input type="checkbox" wire:model.live="selectAllPost"
+                                            class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    </th>
                                     <th
                                         class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         PR Number</th>
@@ -788,9 +772,34 @@
                                             $postData && $postData->supplier_id
                                                 ? \App\Models\Supplier::find($postData->supplier_id)
                                                 : null;
+
+                                        // Check eligibility: bidding must be SUCCESSFUL or SVP data must exist
+                                        $bidSchedule = \App\Models\BidSchedule::where('ref_id', $refId)->first();
+                                        $prSvp = \App\Models\PrSvp::where('ref_id', $refId)->first();
+                                        $isBiddingSuccessful = $bidSchedule && $bidSchedule->bidding_result === 'SUCCESSFUL';
+                                        $hasSvpData = $prSvp && ($prSvp->negotiated_contract_amount || $prSvp->canvasser_id);
+                                        $isEligible = $isBiddingSuccessful || $hasSvpData;
+
+                                        $isSelected = in_array($refId, $selectedPostItems);
                                     @endphp
 
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                                    <tr wire:key="post-item-{{ $refId }}"
+                                        class="hover:bg-gray-50 dark:hover:bg-neutral-800 {{ $isSelected ? 'bg-emerald-50 dark:bg-emerald-900/20' : '' }}">
+                                        <td class="px-4 py-3 text-center">
+                                            @if ($isEligible)
+                                                <input type="checkbox"
+                                                    wire:model.live="selectedPostItems"
+                                                    value="{{ $refId }}"
+                                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                            @else
+                                                <svg class="w-4 h-4 mx-auto text-gray-400" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <title>Not eligible - must have SUCCESSFUL bidding or SVP data</title>
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-3">
                                             <span class="text-xs font-medium text-gray-900 dark:text-white">
                                                 {{ $item['pr_number'] }}
@@ -845,28 +854,11 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
         @endif
-    </div>
-    <div
-        class="fixed bottom-2 right-0 left-0 lg:left-48  flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 z-49">
-        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-3">
-            <button wire:click="cancel"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">
-                Cancel
-            </button>
-            <button wire:click="save"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Save
-            </button>
-        </div>
-    </div>
 
     <!-- Bulk Edit Modal -->
     <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" :title="'Bulk Edit Mode of Procurement'" size="max-w-7xl">
@@ -1281,7 +1273,7 @@
                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                            Editing {{ $postBulkEditData['items_count'] ?? 0 }} procurement(s)
+                            Editing {{ count($postBulkEditData['selected_items'] ?? []) }} procurement(s)
                         </span>
                     </div>
                 </div>
@@ -1409,7 +1401,7 @@
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                     Cancel
                 </button>
-                <button type="button" wire:click="applyPostBulkEdit"
+                <button type="button" wire:click="savePostBulkEdit"
                     class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                     Apply Bulk Edit
                 </button>
