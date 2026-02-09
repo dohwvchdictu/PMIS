@@ -135,6 +135,9 @@
                                             class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     </th>
                                     <th
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
+                                    </th>
+                                    <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
                                         PR Number
                                     </th>
@@ -301,37 +304,37 @@
                                                 </div>
                                             @endif
                                         </td>
+                                        <!-- Actions -->
+                                        <td class="px-2 py-2 text-center">
+                                            @if ($isHead)
+                                                <!-- History Toggle Button -->
+                                                <button type="button" wire:click="toggleHistory('{{ $itemKey }}')"
+                                                    class="p-1 text-xs rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors
+                                                {{ $showHistory && $historyForKey === $itemKey ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                                                    title="Toggle History">
+                                                    @if ($showHistory && $historyForKey === $itemKey)
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    @else
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    @endif
+                                                </button>
+                                            @endif
+                                        </td>
                                         <!-- PR Number -->
                                         <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
                                             @if ($isHead)
-                                                <div class="flex items-center gap-1">
-                                                    <!-- History Toggle Button -->
-                                                    <button type="button"
-                                                        wire:click="toggleHistory('{{ $itemKey }}')"
-                                                        class="p-1 text-xs rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors
-                                                    {{ $showHistory && $historyForKey === $itemKey ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
-                                                        title="Toggle History">
-                                                        @if ($showHistory && $historyForKey === $itemKey)
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                                fill="none" viewBox="0 0 24 24"
-                                                                stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        @else
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                                fill="none" viewBox="0 0 24 24"
-                                                                stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        @endif
-                                                    </button>
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                        {{ $item['pr_number'] }}
-                                                    </span>
-                                                </div>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                    {{ $item['pr_number'] }}
+                                                </span>
                                             @endif
                                         </td>
 
@@ -1263,8 +1266,7 @@
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                         Cancel
                     </button>
-                    <button type="button"
-                        onclick="confirmBulkEditSave()"
+                    <button type="button" onclick="confirmBulkEditSave()"
                         class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                         Save Changes
                     </button>
@@ -1403,8 +1405,7 @@
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                             Cancel
                         </button>
-                        <button type="button"
-                            onclick="confirmPostBulkEditSave()"
+                        <button type="button" onclick="confirmPostBulkEditSave()"
                             class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                             Apply Bulk Edit
                         </button>

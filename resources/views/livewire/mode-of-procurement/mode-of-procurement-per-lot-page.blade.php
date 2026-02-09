@@ -85,16 +85,42 @@
             <div class="flex flex-col">
 
                 <div
-                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                    class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+
+                    <!-- Header Section -->
+                    <div
+                        class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                    Mode of Procurement Details
+                                </h3>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Manage procurement methods and bidding information
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
-                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                            <thead class="bg-gray-200 dark:bg-neutral-800">
 
                                 <tr>
 
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white w-12 border-b border-gray-300 dark:border-neutral-600">
+                                    </th>
+
+                                    <th
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white w-16 border-b border-gray-300 dark:border-neutral-600">
                                     </th>
 
                                     <th
@@ -218,72 +244,76 @@
                                         $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
                                         $disableInputs = $isHistory || ($isCurrentRow && $hasPostData && !$canEditMop);
                                         $showFields = $isSavedRecord;
-                                        $isVisible = $loop->first;
+
+                                        // Show current row always, history rows only when $showHistory is true
+                                        if ($isHistory && !$showHistory) {
+                                            continue;
+                                        }
                                     @endphp
 
                                     <tr wire:key="row-{{ $rowUid }}"
-                                        class="{{ $isVisible ? '' : 'hidden' }} hover:bg-emerald-100 dark:hover:bg-neutral-800">
+                                        class="hover:bg-gray-50 dark:hover:bg-neutral-700 {{ $isHistory ? 'bg-amber-50 dark:bg-amber-900/10' : '' }}">
 
-                                        <td class="px-2 py-2 align-middle">
-                                            <div class="flex items-center justify-center gap-1">
-
-                                                @if ($loop->first)
-                                                    @if ($rowUid !== 'MOP-1-1')
-                                                        <button type="button" wire:click="toggleHistory"
-                                                            class="inline-flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors text-gray-500 dark:text-gray-400"
-                                                            title="{{ $showHistory ? 'Hide History' : 'Show History' }}">
-                                                            @if ($showHistory)
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-4 w-4 text-emerald-600" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor"
-                                                                    stroke-width="2">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                                                </svg>
-                                                            @else
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-4 w-4 text-emerald-600" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor"
-                                                                    stroke-width="2">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                                </svg>
-                                                            @endif
-                                                        </button>
+                                        <!-- History Button Column -->
+                                        <td class="px-2 py-2 text-center">
+                                            @if ($loop->first && $rowUid !== 'MOP-1-1')
+                                                <button type="button" wire:click="toggleHistory"
+                                                    class="p-1 text-xs rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors
+                                                    {{ $showHistory ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}"
+                                                    title="Toggle History">
+                                                    @if ($showHistory)
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
                                                     @else
-                                                        <div class="w-7 h-7"></div>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
                                                     @endif
+                                                </button>
+                                            @elseif ($isHistory)
+                                                <span
+                                                    class="text-xs text-gray-400 dark:text-gray-500 italic">History</span>
+                                            @endif
+                                        </td>
 
-                                                    @php
-                                                        $canAddRebid = $this->canAddRebidForItem($item, $modeId);
-                                                    @endphp
+                                        <!-- Actions Column -->
+                                        <td class="px-2 py-2 text-center">
+                                            @if ($loop->first)
+                                                @php
+                                                    $canAddRebid = $this->canAddRebidForItem($item, $modeId);
+                                                @endphp
 
-                                                    @if ($canAddRebid)
-                                                        <button wire:click.prevent="addItem"
-                                                            class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                                                            title="Add New Row">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                                viewBox="0 0 24 24" stroke-width="2">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    d="M12 4.5v15m7.5-7.5h-15" />
-                                                            </svg>
-                                                        </button>
-                                                    @else
-                                                        <div class="w-7 h-7"></div>
-                                                    @endif
-                                                @else
-                                                    <span
-                                                        class="inline-flex items-center justify-center w-7 h-7 text-gray-300 dark:text-neutral-600 cursor-not-allowed"
-                                                        title="History Record">
+                                                @if ($canAddRebid)
+                                                    <button wire:click.prevent="addItem"
+                                                        class="inline-flex items-center justify-center w-7 h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                                        title="Add New Row">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                             viewBox="0 0 24 24" stroke-width="2">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                                d="M12 4.5v15m7.5-7.5h-15" />
                                                         </svg>
-                                                    </span>
+                                                    </button>
                                                 @endif
-
-                                            </div>
+                                            @elseif ($isHistory && $modeId != 1)
+                                                @can('edit_mode::of::procurement')
+                                                    <button type="button"
+                                                        wire:click="editHistoryItem({{ $itemIndex }})"
+                                                        class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                                                        title="Edit History Record">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                        </svg>
+                                                    </button>
+                                                @endcan
+                                            @endif
                                         </td>
 
                                         <td class="px-2 py-2">
@@ -600,298 +630,10 @@
 
                                     </tr>
 
-                                    @if ($loop->first && $showHistory)
-                                        <tr
-                                            class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-500 dark:border-emerald-900">
-                                            <td colspan="24" class="px-0 py-0">
-                                                <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                                                    <table class="w-full text-xs min-w-max">
-                                                        <thead
-                                                            class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                                            <tr>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Mode of Procurement</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
-                                                                    Bidding #</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    IB No.</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    PhilGEPS Posting Ref #</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Ads/Post IB</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Proc Conference</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    List of Invited Observers</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Pre-Bid)</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Eligibility)</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Sub/Open)</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Bid)</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Post Qual)</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Bid Conference</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Eligibility Check</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Sub/Open of Bids</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bid Evaluation Date
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Post Qualification Date
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bidding Result</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Resolution # (MOP)
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    RFQ No.</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Canvass Date</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Returned of Canvass</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Abstract of Canvass</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody
-                                                            class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                                            @forelse (array_reverse($form['items'] ?? [], true) as $historyIndex => $historyItem)
-                                                                @if (!$loop->first)
-                                                                    @php
-                                                                        $historyModeId =
-                                                                            $historyItem['mode_of_procurement_id'] ??
-                                                                            null;
-                                                                    @endphp
-
-                                                                    <tr
-                                                                        class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-
-                                                                        @if ($historyModeId == 1)
-                                                                            <td class="px-2 py-2 align-middle"></td>
-                                                                        @else
-                                                                            <td class="px-2 py-2 align-middle">
-                                                                                @can('edit_mode::of::procurement')
-                                                                                    <button type="button"
-                                                                                        wire:click="editHistoryItem({{ $historyIndex }})"
-                                                                                        class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                                                                                        title="Edit History Record">
-                                                                                        <x-heroicon-o-pencil
-                                                                                            class="w-4 h-4" />
-                                                                                    </button>
-                                                                                @endcan
-                                                                            </td>
-                                                                        @endif
-
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            @php
-                                                                                $mode = (
-                                                                                    $modeOfProcurements ?? collect()
-                                                                                )->firstWhere('id', $historyModeId);
-                                                                            @endphp
-                                                                            {{ $mode?->modeofprocurements ?? 'N/A' }}
-                                                                        </td>
-
-                                                                        {{-- Competitive Bidding Modes (2-6) --}}
-                                                                        @if ($historyModeId && in_array($historyModeId, [2, 3, 4, 5, 6]))
-                                                                            <td
-                                                                                class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['bidding_number'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['ib_number'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['philgeps_posting_ref_no'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['ads_post_ib'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['pre_proc_conference'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['list_invited_observers'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['obsrvr_prebid_conf'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['obsrvr_eligibility'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['obsrvr_sub_open_of_bid'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['obsrvr_bid'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['obsrvr_post_qual'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['pre_bid_conf'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['eligibility_check'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['sub_open_bids'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['bid_evaluation_date'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['post_qualification_date'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['bidding_result'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['resolution_number_mop'] ?? '-' }}
-                                                                            </td>
-                                                                            {{-- Empty SVP columns --}}
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                        @elseif ($historyModeId && in_array($historyModeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
-                                                                            {{-- SVP Modes (7-24) --}}
-                                                                            {{-- Empty competitive bidding columns --}}
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['philgeps_posting_ref_no'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['ads_post_ib'] ?? '-' }}
-                                                                            </td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            {{-- SVP specific columns --}}
-                                                                            <td
-                                                                                class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['resolution_number_mop'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['rfq_no'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['canvass_date'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['date_returned_of_canvass'] ?? '-' }}
-                                                                            </td>
-                                                                            <td
-                                                                                class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                                {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
-                                                                            </td>
-                                                                        @else
-                                                                            {{-- Mode 1 or no mode - show all empty --}}
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                            <td class="px-2 py-2">-</td>
-                                                                        @endif
-
-                                                                    </tr>
-                                                                @endif
-                                                            @empty
-                                                            @endforelse
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endif
-
                                 @empty
 
                                     <tr>
-                                        <td colspan="24"
+                                        <td colspan="26"
                                             class="px-2 py-8 text-center text-gray-500 dark:text-gray-400">
                                             No items available
                                         </td>
@@ -908,23 +650,45 @@
         @if ($activeTab == 2)
             <div class="flex flex-col gap-2 pt-2">
                 <div
-                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 ">
+                    class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+
+                    <!-- Header Section -->
+                    <div
+                        class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                    Post-Procurement Data
+                                </h3>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Award information and supplier details
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="overflow-x-auto overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
-                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                            <thead class="bg-gray-200 dark:bg-neutral-800">
                                 <tr>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Resolution Award Number</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Resolution Award Date</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Notice of Award Number
                                     </th>
 
@@ -933,19 +697,19 @@
                                         Notice of Award Date</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Awarded Amount</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        PhilGEPS| Notice of Award No.</th>
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Notice of Award No.</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        PhilGEPS| Posting of Award</th>
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Posting of Award</th>
 
                                     <th
-                                        class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
                                         Supplier</th>
                                 </tr>
 
