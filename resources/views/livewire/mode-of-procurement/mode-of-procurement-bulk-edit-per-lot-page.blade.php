@@ -140,7 +140,7 @@
                                     </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
-                                        PR Title / Item Description
+                                        Procurement Program / Project
                                     </th>
                                     <th
                                         class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
@@ -687,9 +687,9 @@
                     </div>
                 @endif
 
-                <!-- Current Data Table Card -->
+                <!-- Post Procurement Table Card -->
                 <div
-                    class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-800 dark:border-neutral-700 overflow-hidden">
+                    class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
 
                     <!-- Header Section -->
                     <div
@@ -699,7 +699,7 @@
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
                             <div>
@@ -713,45 +713,46 @@
                         </div>
                     </div>
 
-                    <div class="p-4">
+                    <!-- Post Procurement Table -->
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                             <table class="w-full text-xs min-w-max">
-                                <thead class="sticky top-0 bg-gray-100 dark:bg-neutral-700/50 z-10">
+                                <thead class="bg-gray-200 dark:bg-neutral-800">
                                     <tr>
                                         <th
-                                            class="px-4 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
+                                            class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
                                             <input type="checkbox" wire:model.live="selectAllPost"
-                                                class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                                class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700">
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
                                             PR Number</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
                                             Procurement Program / Project</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Resolution Award Number</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Resolution Award Date</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Notice of Award Number</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Notice of Award Date</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Awarded Amount</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             PhilGEPS Notice of Award No.</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             PhilGEPS Posting of Award</th>
                                         <th
-                                            class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                             Supplier</th>
                                     </tr>
                                 </thead>
@@ -802,59 +803,61 @@
                                         @endphp
 
                                         <tr wire:key="post-item-{{ $refId }}"
-                                            class="hover:bg-gray-50 dark:hover:bg-neutral-800 {{ $isSelected ? 'bg-emerald-50 dark:bg-emerald-900/20' : '' }}">
-                                            <td class="px-4 py-3 text-center">
+                                            class="hover:bg-gray-50 dark:hover:bg-neutral-700 {{ $isSelected ? 'bg-emerald-100 dark:bg-emerald-900/30 border-2 border-emerald-400' : '' }}">
+                                            <td class="px-2 py-2 text-center">
                                                 <input type="checkbox" wire:model.live="selectedPostItems"
                                                     value="{{ $refId }}"
                                                     class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs font-medium text-gray-900 dark:text-white">
+                                            <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
+                                                <span
+                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
                                                     {{ $item['pr_number'] }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
-                                                    {{ Str::limit($item['procurement_program_project'], 50) }}
-                                                </span>
+                                            <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                                <div class="max-w-xs truncate"
+                                                    title="{{ $item['procurement_program_project'] }}">
+                                                    {{ $item['procurement_program_project'] }}
+                                                </div>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData->resolution_award_number ?? '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData && $postData->resolution_award_date ? $this->formatDate($postData->resolution_award_date) : '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData->notice_of_award_number ?? '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData && $postData->notice_of_award ? $this->formatDate($postData->notice_of_award) : '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2 text-right">
+                                                <span class="text-xs text-gray-900 dark:text-white font-medium">
                                                     {{ $postData && $postData->awarded_amount ? '₱' . number_format($postData->awarded_amount, 2) : '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData->philgeps_notice_of_award_no ?? '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $postData && $postData->philgeps_posting_of_award ? $this->formatDate($postData->philgeps_posting_of_award) : '-' }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-3">
-                                                <span class="text-xs text-gray-600 dark:text-gray-400">
+                                            <td class="px-2 py-2">
+                                                <span class="text-xs text-gray-700 dark:text-gray-300">
                                                     {{ $supplier ? $supplier->name : '-' }}
                                                 </span>
                                             </td>
@@ -865,7 +868,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
         @endif
 
         <!-- Bulk Edit Modal -->
@@ -1263,130 +1265,148 @@
                     </button>
                     <button type="button" wire:click="save"
                         class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Save Changes
+                        Save
                     </button>
                 </div>
             </div>
         </x-forms.modal>
 
         <!-- Post Procurement Bulk Edit Modal -->
-        <x-forms.modal :model="'showPostBulkEditModal'" :closeMethod="'closePostBulkEditModal'" :title="'Bulk Edit Post Procurement'" size="max-w-6xl">
+        <x-forms.modal :model="'showPostBulkEditModal'" :closeMethod="'closePostBulkEditModal'" :title="'Bulk Edit Post Procurement'" size="max-w-7xl">
             @if (!empty($postBulkEditData))
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                    <!-- Header Info -->
+                <div class="px-4 py-3">
+                    {{-- Summary Section --}}
                     <div
-                        class="mb-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                                Editing {{ count($postBulkEditData['selected_items'] ?? []) }} procurement(s)
-                            </span>
-                        </div>
+                        class="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p class="text-sm text-blue-900 dark:text-blue-100">
+                            <span class="font-semibold">{{ count($postBulkEditData['selected_items'] ?? []) }}</span>
+                            procurement(s) selected for post-procurement bulk edit
+                        </p>
+                        @if (!empty($postBulkEditData['selected_items']))
+                            @php
+                                $postPrNumbers = collect($items)
+                                    ->filter(function ($item) {
+                                        $refId =
+                                            $item['procurement_type'] === 'perLot'
+                                                ? $item['procID'] . '-' . ($item['lot_num'] ?? '')
+                                                : $item['prItemID'];
+                                        return in_array($refId, $selectedPostItems ?? []);
+                                    })
+                                    ->pluck('pr_number')
+                                    ->unique()
+                                    ->take(10);
+                            @endphp
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                PRs:
+                                {{ $postPrNumbers->implode(', ') }}{{ $postPrNumbers->count() >= 10 ? '...' : '' }}
+                            </p>
+                        @endif
                     </div>
 
-                    <!-- Form Fields -->
-                    <table class="w-full text-xs min-w-max mb-4">
-                        <thead class="bg-gray-200 dark:bg-neutral-800">
-                            <tr>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Resolution Award Number
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Resolution Award Date
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Notice of Award Number
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Notice of Award Date
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Awarded Amount
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    PhilGEPS Notice of Award No.
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    PhilGEPS Posting Date
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                    Supplier
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="bg-white dark:bg-neutral-700">
-                                <td class="px-4 py-3">
-                                    <input type="text" wire:model.defer="postBulkEditData.resolutionAwardNumber"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                        placeholder="RES-YYYY-NNN">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="date" wire:model.defer="postBulkEditData.resolutionAwardDate"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="text" wire:model.defer="postBulkEditData.noticeOfAwardNumber"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                        placeholder="NOA-YYYY-NNNN">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="date" wire:model.defer="postBulkEditData.noticeOfAward"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="number" step="0.01"
-                                        wire:model.defer="postBulkEditData.awardedAmount"
-                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="text" wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                        placeholder="PHL-NOA-YYYY-NNN">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="date" wire:model.defer="postBulkEditData.philgepsPostingOfAward"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <select wire:model.defer="postBulkEditData.supplier_id"
-                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                        <option value="">Select Supplier...</option>
-                                        @foreach ($suppliers as $supplier)
-                                            <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {{-- Post Procurement Bulk Edit Form Table --}}
+                    <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                        <table class="w-full text-xs min-w-max">
+                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                                <tr>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Number
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Date
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Number
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Date
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Awarded Amount
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Notice of Award No.
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Posting Date
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Supplier
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white dark:bg-neutral-700 hover:bg-emerald-50 dark:hover:bg-neutral-800">
+                                    <td class="px-2 py-2">
+                                        <input type="text"
+                                            wire:model.defer="postBulkEditData.resolutionAwardNumber"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="Enter resolution award number">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model.defer="postBulkEditData.resolutionAwardDate"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="text" wire:model.defer="postBulkEditData.noticeOfAwardNumber"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="Enter notice of award number">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="date" wire:model.defer="postBulkEditData.noticeOfAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="number" step="0.01"
+                                            wire:model.defer="postBulkEditData.awardedAmount"
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="0.00">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="text"
+                                            wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="PhilGEPS award number">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <input type="date"
+                                            wire:model.defer="postBulkEditData.philgepsPostingOfAward"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <select wire:model.defer="postBulkEditData.supplier_id"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="">Select Supplier...</option>
+                                            @foreach ($suppliers ?? [] as $supplier)
+                                                <option value="{{ $supplier->id }}">{{ $supplier->supplier_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                </div>
-
-                <!-- Modal Footer -->
-                <div
-                    class="bg-gray-50 dark:bg-neutral-700 px-4 py-3 flex justify-end gap-3 border-t border-gray-200 dark:border-neutral-600">
-                    <button type="button" wire:click="closePostBulkEditModal"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="savePostBulkEdit"
-                        class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Apply Bulk Edit
-                    </button>
-                </div>
+                    <!-- Modal Footer -->
+                    <div
+                        class="bg-gray-50 dark:bg-neutral-700 px-4 py-3 flex justify-end gap-3 border-t border-gray-200 dark:border-neutral-600">
+                        <button type="button" wire:click="closePostBulkEditModal"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                            Cancel
+                        </button>
+                        <button type="button" wire:click="savePostBulkEdit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            Save
+                        </button>
+                    </div>
             @endif
         </x-forms.modal>
 
