@@ -1505,25 +1505,25 @@
                                                 23,
                                                 24,
                                             ]) &&
-                                            ($currentMode['bidding_number'] ||
-                                                $currentMode['ib_number'] ||
-                                                $currentMode['philgeps_posting_ref_no'] ||
-                                                $currentMode['ads_post_ib'] ||
-                                                $currentMode['pre_proc_conference'] ||
-                                                $currentMode['list_invited_observerspre_bid_conf'] ||
-                                                $currentMode['obsrvr_prebid_conf'] ||
-                                                $currentMode['obsrvr_eligibility'] ||
-                                                $currentMode['obsrvr_sub_open_of_bid'] ||
-                                                $currentMode['obsrvr_bid'] ||
-                                                $currentMode['obsrvr_post_qual'] ||
-                                                $currentMode['obsrvr_post_qual'] ||
-                                                $currentMode['pre_bid_conf'] ||
-                                                $currentMode['eligibility_check'] ||
-                                                $currentMode['sub_open_bids'] ||
-                                                $currentMode['bid_evaluation_date'] ||
-                                                $currentMode['post_qualification_date'] ||
-                                                $currentMode['bidding_result'] ||
-                                                $currentMode['resolution_number_mop']);
+                                            ($currentItem['bidding_number'] ||
+                                                $currentItem['ib_number'] ||
+                                                $currentItem['philgeps_posting_ref_no'] ||
+                                                $currentItem['ads_post_ib'] ||
+                                                $currentItem['pre_proc_conference'] ||
+                                                $currentItem['list_invited_observerspre_bid_conf'] ||
+                                                $currentItem['obsrvr_prebid_conf'] ||
+                                                $currentItem['obsrvr_eligibility'] ||
+                                                $currentItem['obsrvr_sub_open_of_bid'] ||
+                                                $currentItem['obsrvr_bid'] ||
+                                                $currentItem['obsrvr_post_qual'] ||
+                                                $currentItem['obsrvr_post_qual'] ||
+                                                $currentItem['pre_bid_conf'] ||
+                                                $currentItem['eligibility_check'] ||
+                                                $currentItem['sub_open_bids'] ||
+                                                $currentItem['bid_evaluation_date'] ||
+                                                $currentItem['post_qualification_date'] ||
+                                                $currentItem['bidding_result'] ||
+                                                $currentItem['resolution_number_mop']);
 
                                         $hasSvpData =
                                             in_array($modeId, [
@@ -1546,13 +1546,13 @@
                                                 23,
                                                 24,
                                             ]) &&
-                                            ($currentMode['philgeps_posting_ref_no'] ||
-                                                $currentMode['ads_post_ib'] ||
-                                                $currentMode['resolution_number_mop'] ||
-                                                $currentMode['rfq_no'] ||
-                                                $currentMode['canvass_date'] ||
-                                                $currentMode['date_returned_of_canvass'] ||
-                                                $currentMode['abstract_of_canvass_date']);
+                                            ($currentItem['philgeps_posting_ref_no'] ||
+                                                $currentItem['ads_post_ib'] ||
+                                                $currentItem['resolution_number_mop'] ||
+                                                $currentItem['rfq_no'] ||
+                                                $currentItem['canvass_date'] ||
+                                                $currentItem['date_returned_of_canvass'] ||
+                                                $currentItem['abstract_of_canvass_date']);
                                     @endphp
 
                                     {{-- Mode Information --}}
