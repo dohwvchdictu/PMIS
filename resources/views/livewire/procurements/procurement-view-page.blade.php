@@ -1,5 +1,5 @@
 <div>
-    <div class="space-y-4">
+    <div class="space-y-6">
         <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
             <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
@@ -138,7 +138,7 @@
         <div>
             @if ($activeTab == 1)
                 {{-- Basic Details Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
 
                     @if ($form['procurement_type'] === 'perItem')
                         <div
@@ -530,7 +530,7 @@
 
             @if ($activeTab == 2)
                 {{-- Mode of Procurement Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
                     @if ($form['procurement_type'] === 'perLot')
                         {{-- PER LOT DISPLAY with History Toggle --}}
                         @php
@@ -2323,7 +2323,7 @@
 
             @if ($activeTab == 3)
                 {{-- Post Procurement Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
                     @if ($form['procurement_type'] === 'perLot')
                         {{-- PER LOT POST PROCUREMENT --}}
                         @if ($this->hasPostData)

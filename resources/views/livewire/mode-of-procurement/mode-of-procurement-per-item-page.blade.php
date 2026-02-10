@@ -1,20 +1,21 @@
-<div class="space-y-4">
+<div class="space-y-6">
     <div
-        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
+        class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
         <!-- PR Number Badge - Top Left Corner -->
         <div class="absolute top-0 left-0 z-10">
             <span
-                class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md">
+                class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-sm font-semibold bg-emerald-600 text-white shadow-md">
                 PR #{{ $form['pr_number'] ?? 'N/A' }}
             </span>
         </div>
 
         <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
-        <div class="p-6 pt-8">
+        <div class="px-6 py-5 pt-10">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Procurement Program / Project</p>
-                    <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Procurement Program / Project
+                    </p>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                         {{ $form['procurement_program_project'] ?? 'No project description available' }}
                     </h1>
                 </div>
@@ -22,7 +23,7 @@
         </div>
     </div>
     <div
-        class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+        class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
 
         <ul class="flex items-center w-full max-w-7xl px-4 py-3 bg-white dark:bg-neutral-700 mx-auto"
             data-hs-stepper='{"isCompleted": true}'>
@@ -74,40 +75,84 @@
 
     <div>
         @if ($activeTab == 1)
-            <div class="flex flex-col">
-                <div
-                    class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 mt-4">
-                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                        <div
-                            class="mb-4 flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-3 rounded-lg">
+            <div class="flex flex-col gap-6">
+                <!-- Bulk Edit Button Section (shown when items are selected) -->
+                @if (count($selectedItems) > 0)
+                    <div
+                        class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 dark:border-emerald-600 rounded-lg shadow-sm">
+                        <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-
-
-                                @if (count($selectedItems) > 0)
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {{ count($selectedItems) }} item(s) selected
+                                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                    <path fill-rule="evenodd"
+                                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <div>
+                                    <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                                        {{ count($selectedItems) }} item(s) selected for bulk edit
                                     </span>
-                                @endif
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        Click Bulk Edit to update mode of procurement data for all selected items
+                                    </p>
+                                </div>
                             </div>
-
-                            @if (count($selectedItems) > 0)
-                                <button type="button" wire:click="openBulkEditModal"
-                                    class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Bulk Edit
+                            <div class="flex gap-2">
+                                <button wire:click="$set('selectedItems', [])" type="button"
+                                    class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                                    Clear Selection
                                 </button>
-                            @endif
+                                <button wire:click="openBulkEditModal" type="button"
+                                    class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Bulk Edit
+                                    </span>
+                                </button>
+                            </div>
                         </div>
+                    </div>
+                @endif
+
+                <!-- Items Table Section -->
+                <div
+                    class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+
+                    <!-- Header Section -->
+                    <div
+                        class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                    Mode of Procurement Items
+                                </h3>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Select items and use Bulk Edit to update multiple records
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items List Table -->
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
-                            <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                            <thead class="bg-gray-200 dark:bg-neutral-800">
                                 <tr>
                                     <th
-                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
                                         <input type="checkbox" id="select-all-checkbox"
-                                            class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700"
+                                            class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                             title="Select all" onclick="toggleAllCheckboxes(this)">
                                         @push('scripts')
                                             <script>
@@ -126,17 +171,20 @@
                                         @endpush
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
                                     </th>
                                     <th
-                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
-                                        No.</th>
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
+                                        Item No.
+                                    </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
-                                        Description</th>
+                                        Item Description
+                                    </th>
                                     <th
-                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                        Amount</th>
+                                        class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
+                                        ABC Amount
+                                    </th>
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
                                         Mode of Procurement</th>
@@ -302,7 +350,8 @@
                                                                     class="h-4 w-4 text-emerald-600" fill="none"
                                                                     viewBox="0 0 24 24" stroke="currentColor"
                                                                     stroke-width="2">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round"
                                                                         d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                                                 </svg>
                                                             @else
@@ -1139,23 +1188,32 @@
     </div>
 
 
+    <!-- Fixed Action Buttons -->
     <div
-        class="fixed bottom-4 right-0 left-0 lg:left-48  flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 z-49">
-        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-3">
+        class="fixed bottom-4 right-0 left-0 lg:left-48 flex justify-end px-4 py-3 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 shadow-lg z-30">
+        <div class="w-full max-w-[110rem] mx-auto flex justify-end gap-3">
             <button wire:click="cancel"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600 transition-colors shadow-md hover:shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 Cancel
             </button>
             <button wire:click="save"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-md hover:shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
                 Save
             </button>
         </div>
     </div>
+
+    <!-- Bottom Spacer to prevent content hiding under fixed footer and overall footer -->
+    <div class="h-32"></div>
+
     {{-- Edit History Modal --}}
     <x-forms.modal title="Edit History Record" size="max-w-6xl" wire:model="showModal" model="showModal"
         closeMethod="closeEditModal">

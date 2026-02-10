@@ -234,7 +234,7 @@
         @can('view_any_administrator')
             <div class=" p-4 bg-white border-t border-gray-200 dark:bg-neutral-700 dark:border-neutral-800">
                 <a href="{{ url('/administrator') }}" target="_blank" rel="noopener noreferrer"
-                    class="flex items-center gap-x-3 py-2.5 px-3 text-xs font-medium rounded-lg
+                    class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg mt-4 mb-4
                             transition-all duration-200 border-l-4
                             {{ request()->is('administrator*')
                                 ? 'bg-indigo-50 text-indigo-700 border-l-indigo-600 dark:bg-indigo-900/30 dark:text-white dark:border-l-indigo-400'

@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-6">
     <div
         class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
         <!-- PR Number Badge - Top Left Corner -->
