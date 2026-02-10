@@ -460,6 +460,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     /**
      * Validate bulk schedule data based on procurement mode
      * Different validation rules for bidding vs SVP modes
+     * Includes per-PR error messages for better user feedback
      *
      * @return bool True if validation passes
      */
@@ -471,6 +472,18 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         if (!$modeId) {
             $this->scheduleValidationErrors[] = 'Mode of Procurement is required.';
             return false;
+        }
+
+        // Get selected PR numbers for better error messages
+        $currentItems = collect($this->getCurrentItems())
+            ->whereIn('procID', $this->selectedItems)
+            ->values()
+            ->toArray();
+
+        $prNumbers = collect($currentItems)->pluck('pr_number')->unique()->take(5)->toArray();
+        $prList = implode(', ', $prNumbers);
+        if (count($prNumbers) >= 5 && count($currentItems) > 5) {
+            $prList .= '...';
         }
 
         // COMPETITIVE BIDDING MODES
@@ -495,7 +508,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     if (!empty($missingFields)) {
                         $fieldsList = implode(', ', $missingFields);
-                        $this->scheduleValidationErrors[] = "Competitive Bidding: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                        $this->scheduleValidationErrors[] = "PR(s) {$prList}: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
                     }
                 }
 
@@ -511,13 +524,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     if (!empty($successMissingFields)) {
                         $fieldsList = implode(', ', $successMissingFields);
-                        $this->scheduleValidationErrors[] = "Competitive Bidding: {$fieldsList} required for SUCCESSFUL bidding result.";
+                        $this->scheduleValidationErrors[] = "PR(s) {$prList}: {$fieldsList} required for SUCCESSFUL bidding result.";
                     }
                 }
 
                 // Validate Resolution Number for Bidding Result
                 if (!$this->hasValue($this->bulkEdit['resolution_number_mop'] ?? '')) {
-                    $this->scheduleValidationErrors[] = 'Competitive Bidding: Resolution Number is required when Bidding Result is set.';
+                    $this->scheduleValidationErrors[] = "PR(s) {$prList}: Resolution Number is required when Bidding Result is set.";
                 }
             }
         }
@@ -525,10 +538,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // SVP/ALTERNATIVE MODES
         if (in_array($modeId, self::SVP_MODES)) {
             // Validate PhilGEPS requirements based on individual PR ABC
-            $currentItems = collect($this->getCurrentItems())
-                ->whereIn('procID', $this->selectedItems)
-                ->values()
-                ->toArray();
             $requiresPhilgeps = false;
             $prNumbersRequiringPhilgeps = [];
 
@@ -555,100 +564,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                 if (!empty($missingPhilgepsFields)) {
                     $fieldsList = implode(', ', $missingPhilgepsFields);
-                    $prList = implode(', ', array_unique($prNumbersRequiringPhilgeps));
-                    $this->scheduleValidationErrors[] = "SVP Mode: {$fieldsList} required for PR(s) {$prList} (ABC ≥ ₱200,000).";
+                    $prListPhilgeps = implode(', ', array_unique($prNumbersRequiringPhilgeps));
+                    $this->scheduleValidationErrors[] = "PR(s) {$prListPhilgeps}: {$fieldsList} required (ABC ≥ ₱200,000).";
                 }
             }
         }
 
         return empty($this->scheduleValidationErrors);
-    }
-
-    /**
-     * Validate that user isn't accidentally clearing existing schedule data
-     * Prevents data loss from incomplete bulk edits
-     *
-     * @return bool True if validation passes
-     */
-    private function validateExistingScheduleDeletion(): bool
-    {
-        // Skip this validation when adding a new mode - we're creating new records, not editing existing ones
-        if ($this->showAddForm) {
-            return true;
-        }
-
-        // Check if user is trying to clear existing schedules without providing new data
-        $currentItems = collect($this->getCurrentItems())
-            ->whereIn('procID', $this->selectedItems)
-            ->values()
-            ->toArray();
-
-        foreach ($currentItems as $item) {
-            $modeId = $item['mode_of_procurement_id'];
-
-            // For competitive bidding
-            if (in_array($modeId, self::BIDDING_MODES)) {
-                $existingFields = [
-                    'bidding_number',
-                    'ib_number',
-                    'philgeps_posting_ref_no',
-                    'ads_post_ib',
-                    'pre_proc_conference',
-                    'list_invited_observers',
-                    'obsrvr_prebid_conf',
-                    'obsrvr_eligibility',
-                    'obsrvr_sub_open_of_bid',
-                    'obsrvr_bid',
-                    'obsrvr_post_qual',
-                    'pre_bid_conf',
-                    'eligibility_check',
-                    'sub_open_bids',
-                    'bid_evaluation_date',
-                    'post_qualification_date',
-                    'bidding_result',
-                    'resolution_number_mop'
-                ];
-
-                $hasExistingData = false;
-                foreach ($existingFields as $field) {
-                    if ($this->hasValue($item[$field] ?? '')) {
-                        $hasExistingData = true;
-                        break;
-                    }
-                }
-
-                if ($hasExistingData && !$this->hasAnyValue($existingFields)) {
-                    $this->scheduleValidationErrors[] = "Cannot clear all existing bidding schedule data for PR #{$item['pr_number']}.";
-                    return false;
-                }
-            }
-
-            // For SVP/Alternative modes
-            if (in_array($modeId, self::SVP_MODES)) {
-                $existingFields = [
-                    'resolution_number_mop',
-                    'rfq_no',
-                    'canvass_date',
-                    'date_returned_of_canvass',
-                    'abstract_of_canvass_date'
-                ];
-
-                $hasExistingData = false;
-                foreach ($existingFields as $field) {
-                    if ($this->hasValue($item[$field] ?? '')) {
-                        $hasExistingData = true;
-                        break;
-                    }
-                }
-
-                if ($hasExistingData && !$this->hasAnyValue($existingFields)) {
-                    $this->scheduleValidationErrors[] = "Cannot clear all existing SVP schedule data for PR #{$item['pr_number']}.";
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -1048,16 +970,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // Check for permission to modify successful bids
         if (!$this->canModifySuccessfulBids()) {
-            $errorMessage = implode(' ', $this->scheduleValidationErrors);
-            LivewireAlert::title('Validation Failed')
-                ->error()
-                ->text($errorMessage)
-                ->toast()->position('top-end')->show();
-            return;
-        }
-
-        // Validate against clearing existing data
-        if (!$this->validateExistingScheduleDeletion()) {
             $errorMessage = implode(' ', $this->scheduleValidationErrors);
             LivewireAlert::title('Validation Failed')
                 ->error()
