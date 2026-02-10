@@ -167,6 +167,68 @@
                                                         }
                                                     });
                                                 }
+
+                                                function updateSelectAllCheckbox() {
+                                                    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+                                                    const checkboxes = document.querySelectorAll('input[type=checkbox][data-row-checkbox]:not(:disabled)');
+                                                    const checkedCheckboxes = document.querySelectorAll(
+                                                        'input[type=checkbox][data-row-checkbox]:not(:disabled):checked');
+
+                                                    if (checkboxes.length === 0) {
+                                                        selectAllCheckbox.checked = false;
+                                                        return;
+                                                    }
+
+                                                    // Only check if ALL are selected, otherwise uncheck
+                                                    if (checkedCheckboxes.length === checkboxes.length && checkboxes.length > 0) {
+                                                        selectAllCheckbox.checked = true;
+                                                    } else {
+                                                        selectAllCheckbox.checked = false;
+                                                    }
+                                                }
+
+                                                // Listen for Livewire updates
+                                                document.addEventListener('livewire:init', () => {
+                                                    Livewire.hook('morph.updated', () => {
+                                                        updateSelectAllCheckbox();
+                                                    });
+                                                });
+
+                                                // Update on page load
+                                                document.addEventListener('DOMContentLoaded', updateSelectAllCheckbox);
+
+                                                // Post Procurement checkbox synchronization
+                                                function updatePostSelectAllCheckbox() {
+                                                    const selectAllCheckbox = document.getElementById('select-all-post-checkbox');
+                                                    if (!selectAllCheckbox) return;
+
+                                                    const checkboxes = document.querySelectorAll(
+                                                        'input[type=checkbox][data-post-row-checkbox]:not(:disabled)');
+                                                    const checkedCheckboxes = document.querySelectorAll(
+                                                        'input[type=checkbox][data-post-row-checkbox]:not(:disabled):checked');
+
+                                                    if (checkboxes.length === 0) {
+                                                        selectAllCheckbox.checked = false;
+                                                        return;
+                                                    }
+
+                                                    // Only check if ALL are selected, otherwise uncheck
+                                                    if (checkedCheckboxes.length === checkboxes.length && checkboxes.length > 0) {
+                                                        selectAllCheckbox.checked = true;
+                                                    } else {
+                                                        selectAllCheckbox.checked = false;
+                                                    }
+                                                }
+
+                                                // Update post checkboxes on Livewire updates
+                                                document.addEventListener('livewire:init', () => {
+                                                    Livewire.hook('morph.updated', () => {
+                                                        updatePostSelectAllCheckbox();
+                                                    });
+                                                });
+
+                                                // Update on page load
+                                                document.addEventListener('DOMContentLoaded', updatePostSelectAllCheckbox);
                                             </script>
                                         @endpush
                                     </th>
@@ -320,17 +382,21 @@
                                         $disableSelect = $hasSchedule || $modeId == 1;
 
                                         $canAddNewMode = $this->canAddNewModeForItem($item, $modeId);
+                                        $isSelectedItem = in_array($itemIndex, $selectedItems ?? []) && $isHead;
                                     @endphp
 
                                     <tr wire:key="row-{{ $currentPrID }}"
-                                        class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
+                                        class="hover:bg-emerald-50 dark:hover:bg-neutral-800 {{ $isSelectedItem ? 'bg-emerald-100 dark:bg-emerald-900/30' : '' }}"
+                                        style="{{ $isSelectedItem ? 'box-shadow: inset 4px 0 0 0 rgb(52 211 153);' : '' }}">
                                         @if ($isHead)
-                                            <td class="px-2 py-2 text-center align-middle">
+                                            <td
+                                                class="px-2 py-2 text-center align-middle {{ $isSelectedItem ? 'border-l-4 border-emerald-400' : '' }}">
                                                 <input type="checkbox"
                                                     wire:click="toggleItemSelection({{ $itemIndex }})"
                                                     @checked(in_array($itemIndex, $selectedItems))
                                                     class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700"
-                                                    data-row-checkbox>
+                                                    data-row-checkbox
+                                                    onclick="setTimeout(updateSelectAllCheckbox, 100)">
                                             </td>
                                         @else
                                             <td class="px-2 py-2"></td>
@@ -1004,157 +1070,212 @@
                 @endphp
 
                 @if (count($postAvailableItems) > 0)
-                    <div
-                        class="bg-white rounded-xl p-2 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
-                        <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <div class="flex flex-col gap-6">
+                        <!-- Bulk Edit Button Section (shown when items are selected) -->
+                        @if (count($selectedPostItems) > 0)
                             <div
-                                class="mb-4 flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-3 rounded-lg">
-                                <div class="flex items-center gap-3">
-                                    @if (count($selectedPostItems) > 0)
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ count($selectedPostItems) }} of {{ count($postAvailableItems) }}
-                                            selected
-                                        </span>
-                                    @endif
-                                </div>
-
-                                @if (count($selectedPostItems) > 0)
-                                    <button type="button" wire:click="openPostBulkEditModal"
-                                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 dark:border-emerald-600 rounded-lg shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400"
+                                            fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                            <path fill-rule="evenodd"
+                                                d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                                                clip-rule="evenodd" />
                                         </svg>
-                                        Bulk Edit ({{ count($selectedPostItems) }})
-                                    </button>
-                                @endif
+                                        <div>
+                                            <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                                                {{ count($selectedPostItems) }}
+                                                item{{ count($selectedPostItems) > 1 ? 's' : '' }}
+                                                selected
+                                            </p>
+                                            <p class="text-xs text-emerald-700 dark:text-emerald-300">
+                                                Click "Bulk Edit" to update multiple items at once
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button wire:click="deselectAllPostItems" type="button"
+                                            class="px-3 py-2 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-white dark:bg-neutral-700 border border-emerald-300 dark:border-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-neutral-600 transition-colors">
+                                            Clear Selection
+                                        </button>
+                                        <button wire:click="openPostBulkEditModal" type="button"
+                                            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Bulk Edit ({{ count($selectedPostItems) }})
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <table class="w-full text-xs min-w-max">
-                                <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                    <tr>
-                                        <th
-                                            class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
-                                            <input type="checkbox" id="select-all-post-checkbox"
-                                                wire:click="toggleAllPostItems"
-                                                class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                                title="Select all">
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white w-16 border-b border-gray-300 dark:border-neutral-600">
-                                            No.
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Description
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution Award Number
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution Award Date
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Notice of Award Number
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Notice of Award
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Awarded Amount
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS| Notice of Award No.
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS| Posting of Award
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
-                                            Supplier
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                    @foreach ($postAvailableItems as $itemIndex => $item)
-                                        @php
-                                            $prItemID = $item['prItemID'] ?? null;
-                                        @endphp
+                        @endif
 
-                                        <tr class="hover:bg-emerald-50 dark:hover:bg-neutral-800">
-                                            <td class="px-2 py-2 text-center">
-                                                <input type="checkbox" wire:model.live="selectedPostItems"
-                                                    value="{{ $prItemID }}"
+                        <!-- Post Procurement Table Section -->
+                        <div
+                            class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
+
+                            <!-- Header Section -->
+                            <div
+                                class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
+                                <div class="flex items-center gap-2">
+                                    <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                            Post Procurement Details
+                                        </h3>
+                                        <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                            {{ count($postAvailableItems) }}
+                                            item{{ count($postAvailableItems) > 1 ? 's' : '' }}
+                                            available for post-procurement
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Post Procurement Table -->
+                            <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                                <table class="w-full text-xs min-w-max">
+                                    <thead class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
+                                        <tr>
+                                            <th
+                                                class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
+                                                <input type="checkbox" id="select-all-post-checkbox"
+                                                    wire:click="toggleAllPostItems"
                                                     class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                                    data-row-checkbox>
-                                            </td>
-                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                                                {{ $item['item_no'] }}
-                                            </td>
-                                            <td class="px-2 py-2 text-gray-900 dark:text-gray-100">
-                                                {{ $item['description'] }}
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="text"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardNumber"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white
-                                            {{ $errors->has('postItems.' . $prItemID . '.resolutionAwardNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
-                                                    placeholder="RES-YYYY-NNN">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardDate"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="text"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.noticeOfAwardNumber"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="NOA-YYYY-NNN">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.noticeOfAward"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="number" step="0.01"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="0.00">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="text"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.philgepsNoticeOfAwardNo"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="PHL-NOA-YYYY-NNN">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <input type="date"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.philgepsPostingOfAward"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <select wire:model.defer="postItems.{{ $prItemID }}.supplier_id"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
-                                                    <option value="">Select Supplier...</option>
-                                                    @foreach ($suppliers as $supplier)
-                                                        <option value="{{ $supplier->id }}">{{ $supplier->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </td>
+                                                    title="Select all">
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white w-16 border-b border-gray-300 dark:border-neutral-600">
+                                                No.
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Description
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Resolution Award Number
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Resolution Award Date
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Notice of Award Number
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Notice of Award
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                Awarded Amount
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                PhilGEPS| Notice of Award No.
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                                PhilGEPS| Posting of Award
+                                            </th>
+                                            <th
+                                                class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
+                                                Supplier
+                                            </th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                        @foreach ($postAvailableItems as $itemIndex => $item)
+                                            @php
+                                                $prItemID = $item['prItemID'] ?? null;
+                                                $isSelectedPost = in_array($prItemID, $selectedPostItems ?? []);
+                                            @endphp
+
+                                            <tr class="hover:bg-emerald-50 dark:hover:bg-neutral-800 {{ $isSelectedPost ? 'bg-emerald-100 dark:bg-emerald-900/30' : '' }}"
+                                                style="{{ $isSelectedPost ? 'box-shadow: inset 4px 0 0 0 rgb(52 211 153);' : '' }}">
+                                                <td
+                                                    class="px-2 py-2 text-center {{ $isSelectedPost ? 'border-l-4 border-emerald-400' : '' }}">
+                                                    <input type="checkbox" wire:model.live="selectedPostItems"
+                                                        value="{{ $prItemID }}"
+                                                        class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                        data-post-row-checkbox onclick="updatePostSelectAllCheckbox()">
+                                                </td>
+                                                <td
+                                                    class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                                                    {{ $item['item_no'] }}
+                                                </td>
+                                                <td class="px-2 py-2 text-gray-900 dark:text-gray-100">
+                                                    {{ $item['description'] }}
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="text"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardNumber"
+                                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white
+                                                {{ $errors->has('postItems.' . $prItemID . '.resolutionAwardNumber') ? 'border-red-500 focus:ring-red-500' : '' }}"
+                                                        placeholder="RES-YYYY-NNN">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="date"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.resolutionAwardDate"
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="text"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.noticeOfAwardNumber"
+                                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                                        placeholder="NOA-YYYY-NNN">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="date"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.noticeOfAward"
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="number" step="0.01"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
+                                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                                        placeholder="0.00">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="text"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.philgepsNoticeOfAwardNo"
+                                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                                        placeholder="PHL-NOA-YYYY-NNN">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <input type="date"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.philgepsPostingOfAward"
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                </td>
+                                                <td class="px-2 py-2">
+                                                    <select
+                                                        wire:model.defer="postItems.{{ $prItemID }}.supplier_id"
+                                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                                        <option value="">Select Supplier...</option>
+                                                        @foreach ($suppliers as $supplier)
+                                                            <option value="{{ $supplier->id }}">
+                                                                {{ $supplier->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 @else
@@ -2085,8 +2206,9 @@
                         wire:loading.attr="disabled">
                         <div wire:loading wire:target="applyPostBulkEdit"
                             class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" wire:loading.remove wire:target="applyPostBulkEdit">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove
+                            wire:target="applyPostBulkEdit">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>

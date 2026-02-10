@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\DB;
 
 class ModeOfProcurementPerItemPage extends Component
 {
+    // Constants for mode types
+    const BIDDING_MODES = [2, 3, 4, 5, 6];
+    const SVP_MODES = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+    const ABC_THRESHOLD = 200000;
+    const MODE_PENDING = 1;
     public Procurement $procurement;
     public array $form = [];
     public Collection $modeOfProcurements;
@@ -2287,6 +2292,11 @@ class ModeOfProcurementPerItemPage extends Component
         } else {
             $this->selectedPostItems[] = $prItemID;
         }
+    }
+
+    public function deselectAllPostItems(): void
+    {
+        $this->selectedPostItems = [];
     }
 
     public function render()
