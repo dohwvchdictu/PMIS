@@ -153,9 +153,14 @@ class ModeOfProcurementPerLotPage extends Component
                     $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bid_evaluation_date']) &&
                     $this->hasValue($item['post_qualification_date']) &&
+                    $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bidding_result']) &&
-                    ($item['bidding_result'] === 'SUCCESSFUL') &&
-                    $this->hasValue($item['resolution_number_mop']);
+                    ($item['bidding_result'] === 'SUCCESSFUL');
+
+                // For modes 2-6, also require resolution_number_mop
+                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                    $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
+                }
 
                 if ($allBiddingFieldsFilled) {
                     return true;

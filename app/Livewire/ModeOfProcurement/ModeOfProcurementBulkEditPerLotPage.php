@@ -1068,8 +1068,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         $isMopAdded = false;
         $isMopUpdated = false;
+        $isScheduleAdded = false;
+        $isScheduleUpdated = false;
 
-        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated) {
+        DB::transaction(function () use (&$isMopAdded, &$isMopUpdated, &$isScheduleAdded, &$isScheduleUpdated) {
             // Get selected procurements
             $procurements = Procurement::whereIn('procID', $this->selectedItems)->get();
 
@@ -1115,14 +1117,23 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     $isMopAdded = true;
 
                     // Save schedules for the new mode
-                    $this->updatePerLotSchedules([
-                        'mop_uid' => $generatedUid,
-                        'procID' => $procurement->procID,
-                        'mode_of_procurement_id' => $modeId,
-                    ]);
+                    $this->saveRelatedSchedules(
+                        $savedMop,
+                        array_merge($this->bulkEdit, ['procID' => $procurement->procID]),
+                        $isScheduleAdded,
+                        $isScheduleUpdated
+                    );
                 } else {
-                    // Update existing mode schedules
-                    $this->updateItem($currentItem);
+                    // Update existing mode schedules - get the MopLot model
+                    $mopLot = MopLot::find($currentItem['mop_id']);
+                    if ($mopLot) {
+                        $this->saveRelatedSchedules(
+                            $mopLot,
+                            array_merge($this->bulkEdit, ['procID' => $procurement->procID]),
+                            $isScheduleAdded,
+                            $isScheduleUpdated
+                        );
+                    }
                     $isMopUpdated = true;
                 }
             }
@@ -1131,7 +1142,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Show appropriate success message
         if ($isMopAdded) {
             LivewireAlert::title('Mode Added Successfully!')->success()->text('The mode of procurement has been added.')->toast()->position('top-end')->show();
-        } elseif ($isMopUpdated) {
+        } elseif ($isScheduleAdded) {
+            LivewireAlert::title('Schedule Added!')->success()->text('A new bidding schedule has been created.')->toast()->position('top-end')->show();
+        } elseif ($isMopUpdated || $isScheduleUpdated) {
             LivewireAlert::title('Updates Saved!')->success()->text('Changes have been saved successfully.')->toast()->position('top-end')->show();
         } else {
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
@@ -1148,87 +1161,117 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     }
 
     /**
-     * Update a single procurement item's schedule data
+     * Save schedule data to appropriate table (BidSchedule or PrSvp)
+     * Uses complex UID generation and status tracking
      *
-     * @param array $item The item to update
+     * @param MopLot $parentModel The parent MopLot model
+     * @param array $itemData The schedule data from bulkEdit
+     * @param bool $isScheduleAdded Reference to track if schedule was created
+     * @param bool $isScheduleUpdated Reference to track if schedule was updated
      */
-    private function updateItem(array $item): void
-    {
-        $this->updatePerLotSchedules($item);
-    }
+    protected function saveRelatedSchedules(
+        $parentModel,
+        array $itemData,
+        bool &$isScheduleAdded,
+        bool &$isScheduleUpdated
+    ): void {
+        $modeId = $itemData['mode_of_procurement_id'];
+        $refId = $itemData['procID'];
+        $parentUid = $parentModel->uid;
 
-    /**
-     * Update schedule data for a per-lot procurement
-     * Routes to appropriate table based on mode type
-     *
-     * @param array $item The item with schedule data to save
-     */
-    private function updatePerLotSchedules(array $item): void
-    {
-        if (!$item['mop_uid']) {
-            return;
-        }
+        $matchCriteria = [
+            'ref_id' => $refId,
+            'mop_uid' => $parentUid
+        ];
 
-        $modeId = $item['mode_of_procurement_id'];
-        $refId = $item['procID'];
-        $mopUid = $item['mop_uid'];
+        $checkStatus = function ($model) use (&$isScheduleAdded, &$isScheduleUpdated) {
+            if ($model->wasRecentlyCreated) {
+                $isScheduleAdded = true;
+            } elseif ($model->wasChanged()) {
+                $isScheduleUpdated = true;
+            }
+        };
 
-        // COMPETITIVE BIDDING MODES: Only save BidSchedule
         if (in_array($modeId, self::BIDDING_MODES)) {
-            BidSchedule::updateOrCreate(
-                ['mop_uid' => $mopUid, 'ref_id' => $refId],
-                [
-                    'bidding_number' => $this->bulkEdit['bidding_number'] ?? null,
-                    'ib_number' => $this->bulkEdit['ib_number'] ?? null,
-                    'philgeps_posting_ref_no' => $this->bulkEdit['philgeps_posting_ref_no'] ?? null,
-                    'ads_post_ib' => $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? ''),
-                    'pre_proc_conference' => $this->nullableDate($this->bulkEdit['pre_proc_conference'] ?? ''),
-                    'list_invited_observers' => $this->nullableDate($this->bulkEdit['list_invited_observers'] ?? ''),
-                    'obsrvr_prebid_conf' => $this->nullableDate($this->bulkEdit['obsrvr_prebid_conf'] ?? ''),
-                    'obsrvr_eligibility' => $this->nullableDate($this->bulkEdit['obsrvr_eligibility'] ?? ''),
-                    'obsrvr_sub_open_of_bid' => $this->nullableDate($this->bulkEdit['obsrvr_sub_open_of_bid'] ?? ''),
-                    'obsrvr_bid' => $this->nullableDate($this->bulkEdit['obsrvr_bid'] ?? ''),
-                    'obsrvr_post_qual' => $this->nullableDate($this->bulkEdit['obsrvr_post_qual'] ?? ''),
-                    'pre_bid_conf' => $this->nullableDate($this->bulkEdit['pre_bid_conf'] ?? ''),
-                    'eligibility_check' => $this->nullableDate($this->bulkEdit['eligibility_check'] ?? ''),
-                    'sub_open_bids' => $this->nullableDate($this->bulkEdit['sub_open_bids'] ?? ''),
-                    'bid_evaluation_date' => $this->nullableDate($this->bulkEdit['bid_evaluation_date'] ?? ''),
-                    'post_qualification_date' => $this->nullableDate($this->bulkEdit['post_qualification_date'] ?? ''),
-                    'bidding_result' => $this->bulkEdit['bidding_result'] ?? null,
-                    'resolution_number_mop' => $this->bulkEdit['resolution_number_mop'] ?? null,
-                ]
-            );
-            // Delete any SVP records for this procurement (mode changed from SVP to bidding)
-            PrSvp::where('mop_uid', $mopUid)->where('ref_id', $refId)->delete();
-        }
+            $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
-        // SVP/ALTERNATIVE MODES: Only save PrSvp
-        if (in_array($modeId, self::SVP_MODES)) {
-            // Get ABC to determine required fields
-            $procurement = Procurement::find($refId);
-            $abc = $procurement ? $procurement->abc : 0;
+            if (!$existingBidSchedule) {
+                $relatedMopUids = MopLot::where('procID', $refId)
+                    ->where('mode_of_procurement_id', $modeId)
+                    ->pluck('uid');
 
-            // Base SVP data
-            $svpData = [
-                'resolution_number_mop' => $this->bulkEdit['resolution_number_mop'] ?? null,
-                'rfq_no' => $this->bulkEdit['rfq_no'] ?? null,
-                'canvass_date' => $this->nullableDate($this->bulkEdit['canvass_date'] ?? ''),
-                'date_returned_of_canvass' => $this->nullableDate($this->bulkEdit['date_returned_of_canvass'] ?? ''),
-                'abstract_of_canvass_date' => $this->nullableDate($this->bulkEdit['abstract_of_canvass_date'] ?? ''),
-            ];
+                $count = BidSchedule::where('ref_id', $refId)
+                    ->whereIn('mop_uid', $relatedMopUids)
+                    ->count();
 
-            // For ABC threshold and above, also save PhilGEPS fields
-            if ($abc >= self::ABC_THRESHOLD) {
-                $svpData['philgeps_posting_ref_no'] = $this->bulkEdit['philgeps_posting_ref_no'] ?? null;
-                $svpData['ads_post_ib'] = $this->nullableDate($this->bulkEdit['ads_post_ib'] ?? '');
+                $uid = $parentUid . '-' . ($count + 1);
+            } else {
+                $uid = $existingBidSchedule->uid;
             }
 
-            PrSvp::updateOrCreate(
-                ['mop_uid' => $mopUid, 'ref_id' => $refId],
-                $svpData
+            $model = BidSchedule::updateOrCreate(
+                $matchCriteria,
+                [
+                    'uid' => $uid,
+                    'ref_id' => $refId,
+                    'mop_uid' => $parentUid,
+                    'bidding_number' => $itemData['bidding_number'] ?? null,
+                    'ib_number' => $itemData['ib_number'] ?? null,
+                    'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
+                    'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                    'pre_proc_conference' => $this->nullableDate($itemData['pre_proc_conference'] ?? null),
+                    'list_invited_observers' => $itemData['list_invited_observers'] ?? null,
+                    'obsrvr_prebid_conf' => $this->nullableDate($itemData['obsrvr_prebid_conf'] ?? null),
+                    'obsrvr_eligibility' => $this->nullableDate($itemData['obsrvr_eligibility'] ?? null),
+                    'obsrvr_sub_open_of_bid' => $this->nullableDate($itemData['obsrvr_sub_open_of_bid'] ?? null),
+                    'obsrvr_bid' => $this->nullableDate($itemData['obsrvr_bid'] ?? null),
+                    'obsrvr_post_qual' => $this->nullableDate($itemData['obsrvr_post_qual'] ?? null),
+                    'pre_bid_conf' => $this->nullableDate($itemData['pre_bid_conf'] ?? null),
+                    'eligibility_check' => $this->nullableDate($itemData['eligibility_check'] ?? null),
+                    'sub_open_bids' => $this->nullableDate($itemData['sub_open_bids'] ?? null),
+                    'bid_evaluation_date' => $this->nullableDate($itemData['bid_evaluation_date'] ?? null),
+                    'post_qualification_date' => $this->nullableDate($itemData['post_qualification_date'] ?? null),
+                    'bidding_result' => $itemData['bidding_result'] ?? null,
+                    'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
+                ]
             );
-            // Delete any BidSchedule records for this procurement (mode changed from bidding to SVP)
-            BidSchedule::where('mop_uid', $mopUid)->where('ref_id', $refId)->delete();
+            $checkStatus($model);
+        }
+
+        if (in_array($modeId, self::SVP_MODES)) {
+            // Save SVP fields to PrSvp for modes 7-24
+            $existingSvp = PrSvp::where($matchCriteria)->first();
+
+            if (!$existingSvp) {
+                $relatedMopUids = MopLot::where('procID', $refId)
+                    ->where('mode_of_procurement_id', $modeId)
+                    ->pluck('uid');
+
+                $count = PrSvp::where('ref_id', $refId)
+                    ->whereIn('mop_uid', $relatedMopUids)
+                    ->count();
+
+                $uid = $parentUid . '-' . ($count + 1);
+            } else {
+                $uid = $existingSvp->uid;
+            }
+
+            $model = PrSvp::updateOrCreate(
+                $matchCriteria,
+                [
+                    'uid' => $uid,
+                    'ref_id' => $refId,
+                    'mop_uid' => $parentUid,
+                    'philgeps_posting_ref_no' => $itemData['philgeps_posting_ref_no'] ?? null,
+                    'ads_post_ib' => $this->nullableDate($itemData['ads_post_ib'] ?? null),
+                    'resolution_number_mop' => $itemData['resolution_number_mop'] ?? null,
+                    'rfq_no' => $itemData['rfq_no'] ?? null,
+                    'canvass_date' => $this->nullableDate($itemData['canvass_date'] ?? null),
+                    'date_returned_of_canvass' => $this->nullableDate($itemData['date_returned_of_canvass'] ?? null),
+                    'abstract_of_canvass_date' => $this->nullableDate($itemData['abstract_of_canvass_date'] ?? null),
+                ]
+            );
+            $checkStatus($model);
         }
     }
 
