@@ -694,271 +694,216 @@
                                     </tr>
 
                                     @if ($isHead && $showHistory && $historyForPrItemId === $currentPrID)
-                                        <tr
-                                            class="bg-gray-50 dark:bg-neutral-800/30 border-t-2 border-emerald-500 dark:border-emerald-900">
-                                            <td colspan="27" class="px-0 py-0">
-                                                <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                                                    <table class="w-full text-xs min-w-max">
-                                                        <thead
-                                                            class="sticky top-0 bg-gray-200 dark:bg-neutral-800 z-20">
-                                                            <tr>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white w-20 border-b border-gray-300 dark:border-neutral-600">
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-16">
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-21">
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-44">
-                                                                    Mode of Procurement</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-20">
-                                                                    Bidding #</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    IB No.</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    PhilGEPS Ref #
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Ads/Post IB</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Proc Conference</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    List of Invited Observers
-                                                                </th>
+                                        @if ($this->historyItems->count() > 0)
+                                            @foreach ($this->historyItems as $histIndex => $historyItem)
+                                                @php
+                                                    $actualIndex = collect($form['items'])->search(
+                                                        fn($item) => $item['uid'] === $historyItem['uid'],
+                                                    );
+                                                    $historyModeId = $historyItem['mode_of_procurement_id'] ?? null;
+                                                @endphp
+                                                <tr
+                                                    class="bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20">
+                                                    {{-- Checkbox Column --}}
+                                                    <td class="px-2 py-2 text-center"></td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Pre-Bid)
-                                                                </th>
+                                                    {{-- Actions Column --}}
+                                                    @if ($historyModeId == 1)
+                                                        <td class="px-2 py-2 align-middle"></td>
+                                                    @else
+                                                        <td class="px-2 py-2 align-middle">
+                                                            @can('edit_mode::of::procurement')
+                                                                <button type="button"
+                                                                    wire:click="editHistoryItem({{ $actualIndex }})"
+                                                                    class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                                                                    title="Edit History Record">
+                                                                    <x-heroicon-o-pencil class="w-4 h-4" />
+                                                                </button>
+                                                            @endcan
+                                                        </td>
+                                                    @endif
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Eligibility)
-                                                                </th>
+                                                    {{-- Item No Column --}}
+                                                    <td class="px-2 py-2"></td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Sub/Open)
-                                                                </th>
+                                                    {{-- Description with History Label --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-400 dark:text-gray-500 italic">
+                                                            History
+                                                        </span>
+                                                    </td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Bid)
-                                                                </th>
+                                                    {{-- Amount Column --}}
+                                                    <td class="px-2 py-2 text-right">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ isset($historyItem['amount']) ? '₱' . number_format($historyItem['amount'], 2) : '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Observers (Post Qual)
-                                                                </th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Pre-Bid Conference</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Eligibility Check</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Sub/Open of Bids</th>
+                                                    {{-- Mode of Procurement --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            @php $mode = $modeOfProcurements->firstWhere('id', $historyModeId); @endphp
+                                                            {{ $mode?->modeofprocurements ?? 'N/A' }}
+                                                        </span>
+                                                    </td>
 
-                                                                <!-- NEW: Add these two columns -->
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bid Evaluation Date</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Post Qualification Date</th>
+                                                    {{-- Bidding # --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['bidding_number'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Bidding Result</th>
+                                                    {{-- IB No. --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['ib_number'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Resolution # (MOP)</th>
+                                                    {{-- PhilGEPS Ref # --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['philgeps_posting_ref_no'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    RFQ No.</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Canvass Date</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Returned of Canvass</th>
-                                                                <th
-                                                                    class="px-2 py-2 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                                                    Abstract of Canvass</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody
-                                                            class="divide-y divide-gray-200 dark:divide-neutral-800">
-                                                            @if ($this->historyItems->count() > 0)
-                                                                @foreach ($this->historyItems as $histIndex => $historyItem)
-                                                                    @php
-                                                                        $actualIndex = collect($form['items'])->search(
-                                                                            fn($item) => $item['uid'] ===
-                                                                                $historyItem['uid'],
-                                                                        );
-                                                                        $historyModeId =
-                                                                            $historyItem['mode_of_procurement_id'] ??
-                                                                            null;
-                                                                    @endphp
-                                                                    <tr
-                                                                        class="hover:bg-gray-100 dark:hover:bg-neutral-700 border-b border-gray-200 dark:border-neutral-700">
-                                                                        @if ($historyModeId == 1)
-                                                                            <td class="px-2 py-2 align-middle"></td>
-                                                                        @else
-                                                                            <td class="px-2 py-2 align-middle">
-                                                                                @can('edit_mode::of::procurement')
-                                                                                    <button type="button"
-                                                                                        wire:click="editHistoryItem({{ $actualIndex }})"
-                                                                                        class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                                                                                        title="Edit History Record">
-                                                                                        <x-heroicon-o-pencil
-                                                                                            class="w-4 h-4" />
-                                                                                    </button>
-                                                                                @endcan
-                                                                            </td>
-                                                                        @endif
+                                                    {{-- Ads/Post IB --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['ads_post_ib'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td class="px-2 py-2"></td>
-                                                                        <td class="px-2 py-2"></td>
-                                                                        <td class="px-2 py-2"></td>
+                                                    {{-- Pre-Proc Conference --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['pre_proc_conference'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            @php $mode = $modeOfProcurements->firstWhere('id', $historyModeId); @endphp
-                                                                            {{ $mode?->modeofprocurements ?? 'N/A' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bidding_number'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ib_number'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['philgeps_posting_ref_no'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['ads_post_ib'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['pre_proc_conference'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['list_invited_observers'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- List of Invited Observers --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['list_invited_observers'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['obsrvr_prebid_conf'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Observers (Pre-Bid) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['obsrvr_prebid_conf'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['obsrvr_eligibility'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Observers (Eligibility) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['obsrvr_eligibility'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['obsrvr_sub_open_of_bid'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Observers (Sub/Open) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['obsrvr_sub_open_of_bid'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['obsrvr_bid'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Observers (Bid) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['obsrvr_bid'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['obsrvr_post_qual'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['pre_bid_conf'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['eligibility_check'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['sub_open_bids'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Observers (Post Qual) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['obsrvr_post_qual'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <!-- NEW: Add these two cells -->
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bid_evaluation_date'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['post_qualification_date'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Pre-Bid Conference --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['pre_bid_conf'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['bidding_result'] ?? '-' }}
-                                                                        </td>
+                                                    {{-- Eligibility Check --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['eligibility_check'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            @if (in_array($historyModeId, [2, 3, 4, 5, 6]))
-                                                                                {{ $historyItem['resolution_number_mop'] ?? '-' }}
-                                                                            @else
-                                                                                -
-                                                                            @endif
-                                                                        </td>
+                                                    {{-- Sub/Open of Bids --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['sub_open_bids'] ?? '-' }}
+                                                        </span>
+                                                    </td>
 
-                                                                        <td
-                                                                            class="px-2 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['rfq_no'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['canvass_date'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['date_returned_of_canvass'] ?? '-' }}
-                                                                        </td>
-                                                                        <td
-                                                                            class="px-2 py-2 text-gray-700 dark:text-gray-200">
-                                                                            {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
-                                                                        </td>
-                                                                    </tr>
-                                                                @endforeach
-                                                            @else
-                                                                <tr>
-                                                                    <td colspan="27"
-                                                                        class="px-2 py-4 text-center text-gray-500">
-                                                                        No history available for this item
-                                                                    </td>
-                                                                </tr>
-                                                            @endif
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                    {{-- Bid Evaluation Date --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['bid_evaluation_date'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Post Qualification Date --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['post_qualification_date'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Bidding Result --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['bidding_result'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Resolution # (MOP) --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['resolution_number_mop'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- RFQ No. --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['rfq_no'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Canvass Date --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['canvass_date'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Returned of Canvass --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['date_returned_of_canvass'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+
+                                                    {{-- Abstract of Canvass --}}
+                                                    <td class="px-2 py-2">
+                                                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                                                            {{ $historyItem['abstract_of_canvass_date'] ?? '-' }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
                                     @endif
 
                                 @empty
