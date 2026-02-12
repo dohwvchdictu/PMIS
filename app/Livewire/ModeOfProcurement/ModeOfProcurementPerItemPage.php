@@ -467,10 +467,51 @@ class ModeOfProcurementPerItemPage extends Component
         });
 
         $this->form['items'] = array_values($this->form['items']);
+        $this->reindexModeOrder();
+    }
+
+    private function reindexModeOrder(): void
+    {
+        // Group items by prItemID to reindex mode_order within each group
+        $grouped = [];
+        foreach ($this->form['items'] as $index => $item) {
+            $prItemID = $item['prItemID'] ?? null;
+            if ($prItemID) {
+                if (!isset($grouped[$prItemID])) {
+                    $grouped[$prItemID] = [];
+                }
+                $grouped[$prItemID][] = $index;
+            }
+        }
+
+        // Reindex mode_order for each prItemID group
+        foreach ($grouped as $prItemID => $indices) {
+            $modeOrder = 1;
+            foreach ($indices as $index) {
+                $this->form['items'][$index]['mode_order'] = $modeOrder++;
+            }
+        }
     }
 
     public function setStep(int $step): void
     {
+        if ($step == 2 && !$this->isPostAvailable) {
+            LivewireAlert::title('Cannot Access Post Tab')
+                ->warning()
+                ->text('Please complete the Mode of Procurement details first. A SUCCESSFUL bidding result or complete SVP data is required.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Validate ABC threshold when activating Post tab
+        if ($step == 2) {
+            if (!$this->validateAbcThreshold()) {
+                return; // Validation failed, stay on current tab
+            }
+        }
+
         $this->activeTab = $step;
     }
 
@@ -482,6 +523,23 @@ class ModeOfProcurementPerItemPage extends Component
             LivewireAlert::title('Error')
                 ->error()
                 ->text('History record not found.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Check permissions before opening modal for successful bids
+        $item = $this->form['items'][$index];
+        $biddingResult = $item['bidding_result'] ?? null;
+        $prItemID = $item['prItemID'] ?? null;
+        $hasPostData = $prItemID && PostProcurement::where('ref_id', $prItemID)->exists();
+        $canEditMop = auth()->user()->can('edit_mode::of::procurement');
+
+        if ($biddingResult === 'SUCCESSFUL' && $hasPostData && !$canEditMop) {
+            LivewireAlert::title('Permission Denied')
+                ->warning()
+                ->text('You do not have permission to edit successful bids with post-procurement data.')
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -1315,6 +1373,78 @@ class ModeOfProcurementPerItemPage extends Component
     private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
+    }
+
+    /**
+     * Validate ABC threshold requirements when ABC or mode changes
+     * Ensures PhilGEPS fields are filled when ABC >= ₱200,000
+     *
+     * @return bool True if validation passes
+     */
+    private function validateAbcThreshold(): bool
+    {
+        // Get all current (non-historical) items for validation
+        $currentItems = [];
+        $prItemsSeen = [];
+
+        // Group items by prItemID and get only the first occurrence (current mode)
+        foreach ($this->form['items'] as $item) {
+            $prItemID = $item['prItemID'] ?? null;
+            if ($prItemID && !isset($prItemsSeen[$prItemID])) {
+                $currentItems[] = $item;
+                $prItemsSeen[$prItemID] = true;
+            }
+        }
+
+        $errors = [];
+
+        foreach ($currentItems as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
+            $itemNo = $item['item_no'] ?? 'Unknown';
+
+            // Skip validation if no mode is selected
+            if (empty($modeId)) {
+                continue;
+            }
+
+            // Skip validation for empty new items (new_ UIDs with no data)
+            if (str_starts_with($item['uid'] ?? '', 'new_')) {
+                $hasAnyData = $this->hasValue($item['ib_number']) ||
+                    $this->hasValue($item['philgeps_posting_ref_no']) ||
+                    $this->hasValue($item['rfq_no']);
+                if (!$hasAnyData) {
+                    continue;
+                }
+            }
+
+            // Only validate for modes that require PhilGEPS
+            if (in_array($modeId, array_merge(self::BIDDING_MODES, self::SVP_MODES))) {
+                // ABC threshold check: ₱200,000.00 and above
+                if ($amount >= self::ABC_THRESHOLD) {
+                    $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
+                    $adsPostIb = $item['ads_post_ib'] ?? null;
+
+                    if (empty($philgepsRef) || empty($adsPostIb)) {
+                        $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
+                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when amount is ₱" . number_format($amount, 2) . " (>= ₱200,000.00).";
+                    }
+                }
+            }
+        }
+
+        if (!empty($errors)) {
+            $errorMessage = implode(' ', $errors);
+            LivewireAlert::title('Validation Failed')
+                ->warning()
+                ->text($errorMessage)
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return false;
+        }
+
+        return true;
     }
 
     public function toggleItemSelection($index): void

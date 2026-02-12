@@ -1300,31 +1300,6 @@
                     </div>
                 @endif
             </div>
-        @else
-            <div
-                class="bg-white rounded-xl p-8 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 text-center">
-                <div class="flex flex-col items-center gap-4">
-                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            No Items Available for Post-Procurement
-                        </h3>
-                        <p class="text-gray-500 dark:text-gray-400">
-                            Complete procurement details in Tab 1 first. Items with SUCCESSFUL bidding results
-                            or
-                            complete SVP data will appear here.
-                        </p>
-                    </div>
-                    <button wire:click="setStep(1)"
-                        class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
-                        Go to Tab 1
-                    </button>
-                </div>
-            </div>
         @endif
     </div>
 
@@ -2208,9 +2183,8 @@
                         wire:loading.attr="disabled">
                         <div wire:loading wire:target="applyPostBulkEdit"
                             class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove
-                            wire:target="applyPostBulkEdit">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" wire:loading.remove wire:target="applyPostBulkEdit">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>
