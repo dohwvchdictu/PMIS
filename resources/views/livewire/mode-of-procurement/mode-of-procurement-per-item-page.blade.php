@@ -170,6 +170,8 @@
 
                                                 function updateSelectAllCheckbox() {
                                                     const selectAllCheckbox = document.getElementById('select-all-checkbox');
+                                                    if (!selectAllCheckbox) return; // Exit if checkbox doesn't exist
+                                                    
                                                     const checkboxes = document.querySelectorAll('input[type=checkbox][data-row-checkbox]:not(:disabled)');
                                                     const checkedCheckboxes = document.querySelectorAll(
                                                         'input[type=checkbox][data-row-checkbox]:not(:disabled):checked');
@@ -200,7 +202,7 @@
                                                 // Post Procurement checkbox synchronization
                                                 function updatePostSelectAllCheckbox() {
                                                     const selectAllCheckbox = document.getElementById('select-all-post-checkbox');
-                                                    if (!selectAllCheckbox) return;
+                                                    if (!selectAllCheckbox) return; // Exit if checkbox doesn't exist
 
                                                     const checkboxes = document.querySelectorAll(
                                                         'input[type=checkbox][data-post-row-checkbox]:not(:disabled)');
@@ -229,6 +231,19 @@
 
                                                 // Update on page load
                                                 document.addEventListener('DOMContentLoaded', updatePostSelectAllCheckbox);
+
+                                                // Toggle all post checkboxes function
+                                                function toggleAllPostCheckboxes(source) {
+                                                    const checkboxes = document.querySelectorAll('input[type=checkbox][data-post-row-checkbox]');
+                                                    checkboxes.forEach(cb => {
+                                                        if (!cb.disabled) {
+                                                            cb.checked = source.checked;
+                                                            cb.dispatchEvent(new Event('click', {
+                                                                bubbles: true
+                                                            }));
+                                                        }
+                                                    });
+                                                }
                                             </script>
                                         @endpush
                                     </th>
@@ -1037,7 +1052,7 @@
         @endif
 
         @if ($activeTab == 2)
-            <div class="flex flex-col">
+            <div class="flex flex-col gap-6">
                 @php
                     // Filter items that meet post-procurement criteria
                     $postAvailableItems = [];
@@ -1092,7 +1107,7 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button wire:click="deselectAllPostItems" type="button"
+                                <button wire:click="$set('selectedPostItems', [])" type="button"
                                     class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
                                     Clear Selection
                                 </button>
@@ -1148,9 +1163,8 @@
                                         <th
                                             class="px-2 py-3 text-center font-semibold text-black dark:text-white w-10 border-b border-gray-300 dark:border-neutral-600">
                                             <input type="checkbox" id="select-all-post-checkbox"
-                                                wire:click="toggleAllPostItems"
                                                 class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                                title="Select all">
+                                                title="Select all" onclick="toggleAllPostCheckboxes(this)">
                                         </th>
                                         <th
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white w-16 border-b border-gray-300 dark:border-neutral-600">
@@ -1201,14 +1215,17 @@
                                             $isSelectedPost = in_array($prItemID, $selectedPostItems ?? []);
                                         @endphp
 
-                                        <tr class="hover:bg-emerald-50 dark:hover:bg-neutral-800 {{ $isSelectedPost ? 'bg-emerald-100 dark:bg-emerald-900/30' : '' }}"
+                                        <tr wire:key="post-row-{{ $prItemID }}"
+                                            class="hover:bg-emerald-50 dark:hover:bg-neutral-800 {{ $isSelectedPost ? 'bg-emerald-100 dark:bg-emerald-900/30' : '' }}"
                                             style="{{ $isSelectedPost ? 'box-shadow: inset 4px 0 0 0 rgb(52 211 153);' : '' }}">
                                             <td
-                                                class="px-2 py-2 text-center {{ $isSelectedPost ? 'border-l-4 border-emerald-400' : '' }}">
-                                                <input type="checkbox" wire:model.live="selectedPostItems"
-                                                    value="{{ $prItemID }}"
-                                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                                    data-post-row-checkbox onclick="updatePostSelectAllCheckbox()">
+                                                class="px-2 py-2 text-center align-middle {{ $isSelectedPost ? 'border-l-4 border-emerald-400' : '' }}">
+                                                <input type="checkbox"
+                                                    wire:click="togglePostItemSelection('{{ $prItemID }}')"
+                                                    @checked(in_array($prItemID, $selectedPostItems))
+                                                    class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700"
+                                                    data-post-row-checkbox
+                                                    onclick="setTimeout(updatePostSelectAllCheckbox, 100)">
                                             </td>
                                             <td class="px-2 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                                 {{ $item['item_no'] }}
