@@ -21,6 +21,33 @@ class ModeOfProcurementPerItemPage extends Component
     const SVP_MODES = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
     const ABC_THRESHOLD = 200000;
     const MODE_PENDING = 1;
+
+    // Helper methods to eliminate magic numbers
+    public function isCompetitiveBidding(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::BIDDING_MODES);
+    }
+
+    public function isSvpMode(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::SVP_MODES);
+    }
+
+    public function isPendingMode(?int $modeId): bool
+    {
+        return $modeId === self::MODE_PENDING;
+    }
+
+    public function meetsAbcThreshold(?float $amount): bool
+    {
+        return $amount && $amount >= self::ABC_THRESHOLD;
+    }
+
+    public function requiresPhilgeps(?int $modeId, ?float $amount): bool
+    {
+        return $this->isSvpMode($modeId) && $this->meetsAbcThreshold($amount);
+    }
+
     public Procurement $procurement;
     public array $form = [];
     public Collection $modeOfProcurements;
@@ -116,7 +143,7 @@ class ModeOfProcurementPerItemPage extends Component
             // Check if item is eligible for post-procurement
             $isEligible = false;
 
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 $bidResult = $item['bidding_result'] ?? '';
 
                 if ($bidResult === 'SUCCESSFUL') {
@@ -165,8 +192,8 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($this->form['items'] as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            // COMPETITIVE BIDDING MODES
+            if ($this->isCompetitiveBidding($modeId)) {
                 // Check all required bidding fields are filled
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
@@ -1251,7 +1278,7 @@ class ModeOfProcurementPerItemPage extends Component
     public function canAddNewModeForItem(array $item, ?int $modeId): bool
     {
         // SVP/Alternative modes cannot add new modes
-        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        if ($this->isSvpMode($modeId)) {
             return false;
         }
 
@@ -1268,7 +1295,7 @@ class ModeOfProcurementPerItemPage extends Component
         $hasPostDataForThisItem = $prItemID && isset($this->postItems[$prItemID]) &&
             !empty(array_filter($this->postItems[$prItemID] ?? []));
 
-        return $modeId == 1 ||
+        return $this->isPendingMode($modeId) ||
             (($hasBiddingData || $hasPreProcConference) &&
                 $bidResult === 'UNSUCCESSFUL' &&
                 !$hasPostDataForThisItem);
@@ -1386,7 +1413,7 @@ class ModeOfProcurementPerItemPage extends Component
         ]));
 
         // Initialize fields based on mode type with existing data
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+        if ($this->isCompetitiveBidding($modeId)) {
             $this->bulkEditData = array_merge($this->bulkEditData, [
                 'bidding_number' => $firstItem['bidding_number'] ?? '',
                 'ib_number' => $firstItem['ib_number'] ?? '',
@@ -1407,7 +1434,7 @@ class ModeOfProcurementPerItemPage extends Component
                 'bidding_result' => $firstItem['bidding_result'] ?? '',
                 'resolution_number_mop' => $firstItem['resolution_number_mop'] ?? '',
             ]);
-        } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        } elseif ($this->isSvpMode($modeId)) {
             $this->bulkEditData = array_merge($this->bulkEditData, [
                 'rfq_no' => $firstItem['rfq_no'] ?? '',
                 'canvass_date' => $firstItem['canvass_date'] ?? '',
@@ -1705,7 +1732,7 @@ class ModeOfProcurementPerItemPage extends Component
     private function clearFieldsForModeChange($index, $oldMode, $newMode)
     {
         // Clear bidding fields if switching from bidding to SVP
-        if (in_array($oldMode, [2, 3, 4, 5, 6]) && in_array($newMode, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        if ($this->isCompetitiveBidding($oldMode) && $this->isSvpMode($newMode)) {
             $biddingFields = [
                 'bidding_number',
                 'ib_number',
@@ -1732,7 +1759,7 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Clear SVP fields if switching from SVP to bidding
-        if (in_array($oldMode, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]) && in_array($newMode, [2, 3, 4, 5, 6])) {
+        if ($this->isSvpMode($oldMode) && $this->isCompetitiveBidding($newMode)) {
             $svpFields = [
                 'rfq_no',
                 'canvass_date',
@@ -1758,8 +1785,8 @@ class ModeOfProcurementPerItemPage extends Component
             return false;
         }
 
-        // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+        // COMPETITIVE BIDDING MODES
+        if ($this->isCompetitiveBidding($modeId)) {
             // Validate Bidding Result dependencies
             $biddingResult = $this->bulkEditData['bidding_result'] ?? null;
 
@@ -1807,8 +1834,8 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        // SVP/ALTERNATIVE MODES (7-24)
-        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        // SVP/ALTERNATIVE MODES
+        if ($this->isSvpMode($modeId)) {
             // Validate PhilGEPS requirements based on amount threshold
             if ($this->bulkEditData['amount_threshold'] === '>=200k') {
                 $missingPhilgepsFields = [];
@@ -2026,7 +2053,7 @@ class ModeOfProcurementPerItemPage extends Component
         $modeId = $this->bulkEditData['mode_of_procurement_id'] ?? null;
 
         // Check if mode allows adding
-        $canAdd = $modeId == 1 ||
+        $canAdd = $this->isPendingMode($modeId) ||
             (in_array($modeId, [2, 3, 4, 5, 6]) &&
                 ($this->bulkEditData['bidding_result'] ?? '') === 'UNSUCCESSFUL');
 
