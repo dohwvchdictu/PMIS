@@ -92,7 +92,15 @@ class ModeOfProcurementPerItemPage extends Component
     {
         $this->queryParams = request()->query();
 
-        $procurement->load('pr_items', 'mopItems.modeOfProcurement', 'mopItems.item');
+        // ✅ Eager load all necessary relationships upfront to prevent N+1 queries
+        $procurement->load([
+            'pr_items',
+            'mopItems' => function ($query) {
+                $query->orderBy('mode_order', 'desc');
+            },
+            'mopItems.modeOfProcurement',
+            'mopItems.item'
+        ]);
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
 
@@ -253,13 +261,16 @@ class ModeOfProcurementPerItemPage extends Component
 
         return false;
     }
+    /**
+     * Load per-item data with all schedules
+     *
+     * OPTIMIZED: Uses already eager-loaded relationships to prevent N+1 queries
+     */
     protected function loadPerItemData(Procurement $procurement): void
     {
-        // Load MOP Items grouped strictly by PR Item ID
-        $mopItemsGrouped = $procurement->mopItems()
-            ->with(['item', 'modeOfProcurement'])
-            ->orderBy('mode_order', 'desc')
-            ->get()
+        // ✅ Use already loaded mopItems from mount (no additional query)
+        $mopItemsGrouped = $procurement->mopItems
+            ->sortByDesc('mode_order')
             ->groupBy('prItemID');
 
         // Get prItemIDs for schedules

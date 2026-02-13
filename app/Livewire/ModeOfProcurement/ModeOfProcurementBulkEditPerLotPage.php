@@ -21,6 +21,50 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     const ABC_THRESHOLD = 200000;
     const MODE_PENDING = 1;
 
+    // ============================================================================
+    // HELPER METHODS: Eliminate magic numbers and improve code readability
+    // ============================================================================
+
+    /**
+     * Check if mode is Competitive Bidding
+     */
+    public function isCompetitiveBidding(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::BIDDING_MODES);
+    }
+
+    /**
+     * Check if mode is SVP/Alternative mode
+     */
+    public function isSvpMode(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::SVP_MODES);
+    }
+
+    /**
+     * Check if mode is Pending
+     */
+    public function isPendingMode(?int $modeId): bool
+    {
+        return $modeId === self::MODE_PENDING;
+    }
+
+    /**
+     * Check if ABC amount meets threshold
+     */
+    public function meetsAbcThreshold(?float $amount): bool
+    {
+        return $amount && $amount >= self::ABC_THRESHOLD;
+    }
+
+    /**
+     * Check if mode requires PhilGEPS posting
+     */
+    public function requiresPhilgeps(?int $modeId, ?float $amount): bool
+    {
+        return $this->isSvpMode($modeId) && $this->meetsAbcThreshold($amount);
+    }
+
     public array $items = [];
     public Collection $modeOfProcurements;
     public array $procurementIds = [];
@@ -853,10 +897,20 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     /**
      * Load procurement data with all mode history (including rebids)
      * Fetches schedules from both BidSchedule and PrSvp tables
+     *
+     * OPTIMIZED: Uses eager loading to prevent N+1 query problem
+     * Instead of 100+ queries for 50 PRs, this executes only 3-4 queries total
      */
     private function loadProcurementData(): void
     {
-        $procurements = Procurement::with(['pr_items', 'mopLots'])
+        // ✅ Eager load ALL relationships upfront to prevent N+1 queries
+        $procurements = Procurement::with([
+            'pr_items',
+            'mopLots' => function ($query) {
+                $query->orderBy('mode_order', 'desc');
+            },
+            'mopLots.modeOfProcurement' // Eager load nested relationship
+        ])
             ->whereIn('procID', $this->procurementIds)
             ->where('procurement_type', 'perLot')
             ->orderBy('pr_number')
@@ -875,13 +929,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->items = [];
 
         foreach ($procurements as $procurement) {
-            // Load all modes for perLot, not just the latest
-            $mopLots = $procurement->mopLots()
-                ->with('modeOfProcurement')
-                ->orderBy('mode_order', 'desc')
-                ->get();
-
-            foreach ($mopLots as $mopLot) {
+            // ✅ Use already loaded relationships - NO additional database queries
+            foreach ($procurement->mopLots as $mopLot) {
                 $this->items[] = $this->buildPerLotRowFromMop($procurement, $mopLot, $scheduleMap);
             }
         }

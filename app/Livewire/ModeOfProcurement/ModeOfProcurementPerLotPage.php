@@ -22,6 +22,50 @@ class ModeOfProcurementPerLotPage extends Component
     const ABC_THRESHOLD = 200000;
     const MODE_PENDING = 1;
 
+    // ============================================================================
+    // HELPER METHODS: Eliminate magic numbers and improve code readability
+    // ============================================================================
+
+    /**
+     * Check if mode is Competitive Bidding
+     */
+    public function isCompetitiveBidding(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::BIDDING_MODES);
+    }
+
+    /**
+     * Check if mode is SVP/Alternative mode
+     */
+    public function isSvpMode(?int $modeId): bool
+    {
+        return $modeId && in_array($modeId, self::SVP_MODES);
+    }
+
+    /**
+     * Check if mode is Pending
+     */
+    public function isPendingMode(?int $modeId): bool
+    {
+        return $modeId === self::MODE_PENDING;
+    }
+
+    /**
+     * Check if ABC amount meets threshold
+     */
+    public function meetsAbcThreshold(?float $amount): bool
+    {
+        return $amount && $amount >= self::ABC_THRESHOLD;
+    }
+
+    /**
+     * Check if mode requires PhilGEPS posting
+     */
+    public function requiresPhilgeps(?int $modeId, ?float $amount): bool
+    {
+        return $this->isSvpMode($modeId) && $this->meetsAbcThreshold($amount);
+    }
+
     public Procurement $procurement;
     public array $form = [];
 
@@ -30,6 +74,7 @@ class ModeOfProcurementPerLotPage extends Component
     public string $procID = '';
     public int $activeTab = 1;
     public bool $showHistory = false;
+    public ?string $historyForKey = null;  // Track which procurement's history is shown
 
     // Post-Procurement Tab Fields
     public ?string $resolutionAwardNumber = null;
@@ -53,7 +98,13 @@ class ModeOfProcurementPerLotPage extends Component
     {
         $this->queryParams = request()->query();
 
-        $procurement->load('mopLots.modeOfProcurement');
+        // ✅ Eager load all necessary relationships upfront
+        $procurement->load([
+            'mopLots' => function ($query) {
+                $query->orderBy('mode_order');
+            },
+            'mopLots.modeOfProcurement'
+        ]);
         $this->procurement = $procurement;
         $this->procID = $procurement->procID ?? '';
 
@@ -140,7 +191,7 @@ class ModeOfProcurementPerLotPage extends Component
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
             // COMPETITIVE BIDDING MODES
-            if (in_array($modeId, self::BIDDING_MODES)) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 // Check all required bidding fields are filled
                 $allBiddingFieldsFilled =
                     $this->hasValue($item['bidding_number']) &&
@@ -163,8 +214,8 @@ class ModeOfProcurementPerLotPage extends Component
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
-                // For modes 2-6, also require resolution_number_mop
-                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                // For bidding modes, also require resolution_number_mop
+                if ($this->isCompetitiveBidding($modeId)) {
                     $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
                 }
 
@@ -174,7 +225,7 @@ class ModeOfProcurementPerLotPage extends Component
             }
 
             // SVP/ALTERNATIVE MODES
-            if (in_array($modeId, self::SVP_MODES)) {
+            if ($this->isSvpMode($modeId)) {
                 // Base required SVP fields
                 $allSvpFieldsFilled =
                     $this->hasValue($item['resolution_number_mop']) &&
@@ -199,12 +250,26 @@ class ModeOfProcurementPerLotPage extends Component
         return false;
     }
 
+    /**
+     * Load per-lot data with all schedules
+     *
+     * OPTIMIZED: Eager loads relationships to prevent N+1 queries
+     */
     protected function loadPerLotData(Procurement $procurement): void
     {
-        $mopLots = $procurement->mopLots()
-            ->with('modeOfProcurement')
-            ->orderBy('mode_order')
-            ->get();
+        // ✅ Eager load mopLots with modeOfProcurement to prevent N+1 query
+        $mopLots = $procurement->mopLots;
+
+        // If mopLots weren't loaded in mount, load them now with relationship
+        if (!$mopLots->isNotEmpty() || !$mopLots->first()?->relationLoaded('modeOfProcurement')) {
+            $procurement->load([
+                'mopLots' => function ($query) {
+                    $query->orderBy('mode_order');
+                },
+                'mopLots.modeOfProcurement'
+            ]);
+            $mopLots = $procurement->mopLots;
+        }
 
         $uids = $mopLots->pluck('uid')->filter()->toArray();
         $procID = $procurement->procID;
@@ -361,9 +426,25 @@ class ModeOfProcurementPerLotPage extends Component
         }
     }
 
-    public function toggleHistory()
+    /**
+     * Toggle history display for a specific procurement
+     * Unified implementation across all modules
+     */
+    public function toggleHistory(?string $key = null)
     {
-        $this->showHistory = !$this->showHistory;
+        if ($key && $this->historyForKey === $key && $this->showHistory) {
+            // Clicking same item - close history
+            $this->showHistory = false;
+            $this->historyForKey = null;
+        } elseif ($key) {
+            // Open history for this specific item
+            $this->showHistory = true;
+            $this->historyForKey = $key;
+        } else {
+            // Legacy support: toggle all history
+            $this->showHistory = !$this->showHistory;
+            $this->historyForKey = null;
+        }
     }
 
     public function removeItem(string $uid): void
@@ -578,8 +659,8 @@ class ModeOfProcurementPerLotPage extends Component
                 continue;
             }
 
-            // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            // COMPETITIVE BIDDING MODES
+            if ($this->isCompetitiveBidding($modeId)) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
                 $hasBiddingData = $this->hasAnyValue($biddingFields);
@@ -634,8 +715,8 @@ class ModeOfProcurementPerLotPage extends Component
                 }
             }
 
-            // SVP/ALTERNATIVE MODES (7-24)
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            // SVP/ALTERNATIVE MODES
+            if ($this->isSvpMode($modeId)) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
 
                 // FIX #5: Using hasAnyValue() for consistent checking
@@ -696,7 +777,7 @@ class ModeOfProcurementPerLotPage extends Component
         }
 
         // Only validate for modes that require PhilGEPS
-        if (in_array($modeId, array_merge(self::BIDDING_MODES, self::SVP_MODES))) {
+        if ($this->isCompetitiveBidding($modeId) || $this->isSvpMode($modeId)) {
             // ABC >= ₱200,000 requires PhilGEPS posting
             if ($abc >= self::ABC_THRESHOLD) {
                 $philgepsRef = trim($currentItem['philgeps_posting_ref_no'] ?? '');
@@ -777,7 +858,7 @@ class ModeOfProcurementPerLotPage extends Component
             }
         };
 
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+        if ($this->isCompetitiveBidding($modeId)) {
             $biddingFields = [
                 $itemData['bidding_number'] ?? null,
                 $itemData['ib_number'] ?? null,
@@ -858,8 +939,8 @@ class ModeOfProcurementPerLotPage extends Component
             }
         }
 
-        if (in_array($modeId, self::SVP_MODES)) {
-            // Save SVP fields to PrSvp for modes 7-24
+        if ($this->isSvpMode($modeId)) {
+            // Save SVP fields to PrSvp for SVP modes
             $svpFields = [
                 $itemData['philgeps_posting_ref_no'] ?? null,
                 $itemData['ads_post_ib'] ?? null,
@@ -1194,7 +1275,7 @@ class ModeOfProcurementPerLotPage extends Component
     }
     public function canAddRebidForItem(array $item, ?int $modeId): bool
     {
-        if (in_array($modeId, self::SVP_MODES)) {
+        if ($this->isSvpMode($modeId)) {
             return false;
         }
 
@@ -1206,7 +1287,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         $hasPreProcConference = $this->hasValue($item['pre_proc_conference']);
 
-        return $modeId == self::MODE_PENDING ||
+        return $this->isPendingMode($modeId) ||
             (($hasBiddingData || $hasPreProcConference) &&
                 $bidResult === 'UNSUCCESSFUL' &&
                 !$this->isPostAvailable);
