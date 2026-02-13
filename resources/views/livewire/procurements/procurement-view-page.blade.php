@@ -121,7 +121,7 @@
                 </li>
 
                 {{-- Step 3: Post Procurement --}}
-                <li class="flex items-center">
+                <li class="flex items-center flex-1">
                     <button type="button" wire:click="setStep(3)" @if (!$this->hasPostData) disabled @endif
                         class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 3 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPostData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                         3
@@ -129,6 +129,21 @@
                     <span
                         class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 3 || $this->hasPostData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                         Post Procurement
+                    </span>
+                    <div
+                        class="h-px flex-1 mx-3 transition-all duration-300 {{ $activeTab > 3 || $this->hasPmuData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
+                    </div>
+                </li>
+
+                {{-- Step 4: PMU --}}
+                <li class="flex items-center">
+                    <button type="button" wire:click="setStep(4)" @if (!$this->hasPmuData) disabled @endif
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 4 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPmuData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
+                        4
+                    </button>
+                    <span
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 4 || $this->hasPmuData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
+                        PMU
                     </span>
                 </li>
             </ul>
@@ -2791,6 +2806,264 @@
                                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No post-procurement data
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+            @endif
+
+            @if ($activeTab == 4)
+                {{-- PMU Tab --}}
+                <div class="space-y-6 mb-6">
+                    @if ($form['procurement_type'] === 'perLot')
+                        {{-- PER LOT PMU --}}
+                        @if ($supplier_id)
+                            @php
+                                $supplier = $suppliers->firstWhere('id', $supplier_id);
+                            @endphp
+
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                                    <h4
+                                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        Supplier Information
+                                    </h4>
+                                </div>
+
+                                @if ($supplier)
+                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Supplier Name</p>
+                                        <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                            {{ $supplier->name ?? 'N/A' }}
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="text-center py-8">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Supplier not found</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No supplier information
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @elseif ($form['procurement_type'] === 'perItem')
+                        {{-- PER ITEM PMU WITH SEARCH AND PAGINATION --}}
+                        @php
+                            // Filter items that have supplier_id in postItems
+                            $itemsWithSuppliers = collect($postItems)
+                                ->filter(fn($item) => !empty($item['supplier_id']))
+                                ->values();
+
+                            // Apply search filter
+                            if (!empty($postSearchTerm)) {
+                                $itemsWithSuppliers = $itemsWithSuppliers->filter(function ($postItem) use (
+                                    $postSearchTerm,
+                                ) {
+                                    $searchLower = strtolower($postSearchTerm);
+                                    $item = collect($form['items'] ?? [])->firstWhere('prItemID', $postItem['ref_id']);
+
+                                    if (!$item) {
+                                        return false;
+                                    }
+
+                                    return str_contains(strtolower($item['description'] ?? ''), $searchLower) ||
+                                        str_contains(strtolower($item['item_no'] ?? ''), $searchLower);
+                                });
+                            }
+
+                            $totalPostItems = $itemsWithSuppliers->count();
+
+                            // Pagination
+                            $currentPostPage = $postPage ?? 1;
+                            $itemsPerPostPage = $postPerPage ?? 10;
+                            $totalPostPages = max(1, ceil($totalPostItems / $itemsPerPostPage));
+
+                            // Paginate
+                            $paginatedPostItems = $itemsWithSuppliers->slice(
+                                ($currentPostPage - 1) * $itemsPerPostPage,
+                                $itemsPerPostPage,
+                            );
+                        @endphp
+
+                        @if ($totalPostItems > 0)
+                            {{-- Search and Pagination Controls --}}
+                            <div
+                                class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex-1 max-w-md">
+                                        <input type="text" wire:model.live.debounce.300ms="postSearchTerm"
+                                            placeholder="Search items..."
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-sm text-gray-600 dark:text-gray-400">Show:</label>
+                                        <select wire:model.live="postPerPage"
+                                            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="5">5</option>
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Item Cards with Supplier Info --}}
+                            @foreach ($paginatedPostItems as $postItem)
+                                @php
+                                    $item = collect($form['items'] ?? [])->firstWhere('prItemID', $postItem['ref_id']);
+                                    $supplier = $suppliers->firstWhere('id', $postItem['supplier_id']);
+                                @endphp
+
+                                @if ($item)
+                                    <div
+                                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                        {{-- Item Header --}}
+                                        <div class="mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                                                            Item #{{ $item['item_no'] ?? 'N/A' }}
+                                                        </span>
+                                                    </div>
+                                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        {{ $item['description'] ?? 'No description' }}
+                                                    </h3>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        Amount: ₱{{ number_format($item['amount'] ?? 0, 2) }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Supplier Information --}}
+                                        <div class="mb-4">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                                Supplier Information
+                                            </h4>
+
+                                            @if ($supplier)
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Supplier
+                                                        Name</p>
+                                                    <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {{ $supplier->name ?? 'N/A' }}
+                                                    </p>
+                                                </div>
+                                            @else
+                                                <div
+                                                    class="text-center py-6 bg-gray-50 dark:bg-neutral-800 rounded-lg">
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Supplier
+                                                        information not available</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+
+                            {{-- Pagination Controls --}}
+                            @if ($totalPostPages > 1)
+                                <div
+                                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    <div class="flex items-center justify-between flex-wrap gap-3">
+                                        {{-- Page info --}}
+                                        <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                            Showing <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalPostItems > 0 ? ($currentPostPage - 1) * $itemsPerPostPage + 1 : 0 }}</span>
+                                            to
+                                            <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ min($currentPostPage * $itemsPerPostPage, $totalPostItems) }}</span>
+                                            of
+                                            <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalPostItems }}</span>
+                                            items
+                                        </div>
+
+                                        {{-- Pagination buttons --}}
+                                        <div class="flex items-center gap-2">
+                                            <button type="button"
+                                                wire:click="$set('postPage', {{ max(1, $currentPostPage - 1) }})"
+                                                @if ($currentPostPage <= 1) disabled @endif
+                                                class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {{ $currentPostPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800' : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                Previous
+                                            </button>
+
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                                Page {{ $currentPostPage }} of {{ $totalPostPages }}
+                                            </span>
+
+                                            <button type="button"
+                                                wire:click="$set('postPage', {{ min($totalPostPages, $currentPostPage + 1) }})"
+                                                @if ($currentPostPage >= $totalPostPages) disabled @endif
+                                                class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {{ $currentPostPage >= $totalPostPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800' : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @elseif (!empty($postSearchTerm))
+                            {{-- No Results Found --}}
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No items found matching
+                                        "{{ $postSearchTerm }}"</p>
+                                    <button wire:click="$set('postSearchTerm', '')"
+                                        class="mt-4 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                                        Clear Search
+                                    </button>
+                                </div>
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No supplier information
                                         available</p>
                                 </div>
                             </div>

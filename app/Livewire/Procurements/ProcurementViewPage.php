@@ -532,6 +532,32 @@ class ProcurementViewPage extends Component
             return !empty($this->postItems);
         }
     }
+
+    public function getHasPmuDataProperty(): bool
+    {
+        // Check if post data exists first
+        if (!$this->hasPostData) {
+            return false;
+        }
+
+        // Check if procurement stage is "Forwarded to PMU" or id is 7
+        if ($this->form['procurement_type'] === 'perLot') {
+            $currentStage = $this->procurement->currentPrStage?->procurementStage;
+            if ($currentStage) {
+                return $currentStage->procurementstage === 'Forwarded to PMU' || $currentStage->id === 7;
+            }
+        } else {
+            // For perItem, check if any item has stage "Forwarded to PMU" or id 7
+            $items = $this->form['items'] ?? [];
+            foreach ($items as $item) {
+                if (isset($item['stage']) && ($item['stage'] === 'Forwarded to PMU')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
     public function toggleMopSection($index)
     {
         if (isset($this->mopToggles[$index])) {

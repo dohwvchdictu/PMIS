@@ -1,4 +1,4 @@
-<div class="space-y-6 p-2 pb-[5rem]">
+<div class="space-y-6">
 
     {{-- First Box --}}
     <div
@@ -152,7 +152,7 @@
                 <x-forms.textarea id="lotNotes" label="Notes" model="lotNotes" :form="[]" :required="false"
                     :maxlength="5000" :rows="1" colspan="col-span-5" placeholder="Notes here"
                     :autoResize="true" />
-
+            </div>
         @endif
     </div>
 
