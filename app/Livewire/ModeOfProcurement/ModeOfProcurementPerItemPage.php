@@ -2261,6 +2261,93 @@ class ModeOfProcurementPerItemPage extends Component
         $this->deselectAll();
     }
 
+    private function validatePostBulkEditSelection(): array
+    {
+        $errors = [];
+        $itemNumbers = [];
+        $postData = [];
+
+        foreach ($this->selectedPostItems as $prItemID) {
+            // Find the item to get item_no
+            $itemNumber = null;
+            foreach ($this->form['items'] as $item) {
+                if (($item['prItemID'] ?? null) === $prItemID) {
+                    $itemNumber = $item['item_no'] ?? $prItemID;
+                    break;
+                }
+            }
+
+            $itemNumbers[] = $itemNumber;
+
+            // Collect post procurement data for consistency check
+            $postItem = $this->postItems[$prItemID] ?? [];
+            $postData[$prItemID] = [
+                'resolutionAwardNumber' => $postItem['resolutionAwardNumber'] ?? null,
+                'noticeOfAwardNumber' => $postItem['noticeOfAwardNumber'] ?? null,
+                'noticeOfAward' => $postItem['noticeOfAward'] ?? null,
+                'resolutionAwardDate' => $postItem['resolutionAwardDate'] ?? null,
+                'awardedAmount' => $postItem['awardedAmount'] ?? null,
+                'philgepsNoticeOfAwardNo' => $postItem['philgepsNoticeOfAwardNo'] ?? null,
+                'philgepsPostingOfAward' => $postItem['philgepsPostingOfAward'] ?? null,
+                'supplier_id' => $postItem['supplier_id'] ?? null,
+            ];
+        }
+
+        // Check if all items have identical post procurement data
+        $postDataHashes = [];
+        $itemNumbersByHash = [];
+
+        foreach ($this->selectedPostItems as $prItemID) {
+            $hash = md5(json_encode($postData[$prItemID]));
+            $postDataHashes[$prItemID] = $hash;
+
+            $itemNumber = null;
+            foreach ($this->form['items'] as $item) {
+                if (($item['prItemID'] ?? null) === $prItemID) {
+                    $itemNumber = $item['item_no'] ?? $prItemID;
+                    break;
+                }
+            }
+
+            if (!isset($itemNumbersByHash[$hash])) {
+                $itemNumbersByHash[$hash] = [];
+            }
+            $itemNumbersByHash[$hash][] = $itemNumber;
+        }
+
+        $uniqueHashes = array_unique($postDataHashes);
+
+        if (count($uniqueHashes) > 1) {
+            // Find the minority group (items with different data)
+            $hashCounts = array_count_values($postDataHashes);
+            arsort($hashCounts);
+            $majorityHash = array_key_first($hashCounts);
+
+            $differentItems = [];
+            foreach ($postDataHashes as $prItemID => $hash) {
+                if ($hash !== $majorityHash) {
+                    foreach ($this->form['items'] as $item) {
+                        if (($item['prItemID'] ?? null) === $prItemID) {
+                            $itemNumber = $item['item_no'] ?? $prItemID;
+                            $differentItems[] = $itemNumber;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $itemList = implode(', ', $differentItems);
+            $errors[] = "Field mismatch: Item" . (count($differentItems) > 1 ? 's' : '') . " {$itemList} " .
+                (count($differentItems) > 1 ? 'have' : 'has') . " different post procurement field values from the others. Bulk edit requires all selected items to have identical field values.";
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'itemNumbers' => $itemNumbers,
+        ];
+    }
+
     // Post Procurement Bulk Edit Methods
     public function openPostBulkEditModal(): void
     {
@@ -2274,30 +2361,44 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
-        // Get item numbers for display
-        $itemNumbers = [];
-        foreach ($this->selectedPostItems as $prItemID) {
-            foreach ($this->form['items'] as $item) {
-                if (($item['prItemID'] ?? null) === $prItemID) {
-                    $itemNumbers[] = $item['item_no'] ?? $prItemID;
-                    break;
-                }
-            }
+        // Validate selected items (like Tab 1)
+        $validation = $this->validatePostBulkEditSelection();
+
+        if (!$validation['valid']) {
+            $this->postBulkEditErrors = $validation['errors'];
+            $errorMessage = implode(' ', $validation['errors']);
+            LivewireAlert::title('Bulk Edit Validation Failed')
+                ->error()
+                ->text($errorMessage)
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
         }
 
+        // Get item numbers for display
+        $itemNumbers = $validation['itemNumbers'];
+
+        // Get existing data from first selected item (like Tab 1 does)
+        $firstPrItemID = $this->selectedPostItems[0] ?? null;
+        $firstPostItem = $firstPrItemID && isset($this->postItems[$firstPrItemID])
+            ? $this->postItems[$firstPrItemID]
+            : [];
+
         // Initialize post bulk edit data with single set of fields (like Tab 1 bulk edit)
+        // Populate with existing data from first item (using camelCase field names from postItems)
         $this->postBulkEditData = [
             'items_count' => count($this->selectedPostItems),
             'item_numbers' => $itemNumbers,
             'selected_items' => [], // Will hold item info for display
-            'resolutionAwardNumber' => '',
-            'noticeOfAwardNumber' => '',
-            'noticeOfAward' => '',
-            'resolutionAwardDate' => '',
-            'awardedAmount' => '',
-            'philgepsNoticeOfAwardNo' => '',
-            'philgepsPostingOfAward' => '',
-            'supplier_id' => '',
+            'resolutionAwardNumber' => $firstPostItem['resolutionAwardNumber'] ?? '',
+            'noticeOfAwardNumber' => $firstPostItem['noticeOfAwardNumber'] ?? '',
+            'noticeOfAward' => $firstPostItem['noticeOfAward'] ?? '',
+            'resolutionAwardDate' => $firstPostItem['resolutionAwardDate'] ?? '',
+            'awardedAmount' => $firstPostItem['awardedAmount'] ?? '',
+            'philgepsNoticeOfAwardNo' => $firstPostItem['philgepsNoticeOfAwardNo'] ?? '',
+            'philgepsPostingOfAward' => $firstPostItem['philgepsPostingOfAward'] ?? '',
+            'supplier_id' => $firstPostItem['supplier_id'] ?? '',
         ];
 
         // Populate selected_items for display in the table
