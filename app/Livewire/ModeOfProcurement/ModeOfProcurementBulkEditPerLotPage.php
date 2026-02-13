@@ -144,6 +144,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
+        // Pre-validate ABC threshold consistency
+        if (!$this->validateBulkEditAbcThreshold()) {
+            return; // Error already shown in method
+        }
+
         $this->populateBulkEditData();
         $this->showBulkEditModal = true;
     }
@@ -574,6 +579,162 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     }
 
     /**
+     * Validate ABC threshold consistency before opening bulk edit modal
+     * Prevents bulk editing PRs with different ABC thresholds
+     *
+     * @return bool True if validation passes
+     */
+    private function validateBulkEditAbcThreshold(): bool
+    {
+        $below200k = [];
+        $above200k = [];
+
+        // Get selected procurements
+        $selectedProcurements = Procurement::whereIn('procID', $this->selectedItems)->get();
+
+        foreach ($selectedProcurements as $procurement) {
+            $abc = $procurement->abc ?? 0;
+            $prNumber = $procurement->pr_number;
+
+            if ($abc < self::ABC_THRESHOLD) {
+                $below200k[] = $prNumber;
+            } else {
+                $above200k[] = $prNumber;
+            }
+        }
+
+        // If we have both below and above 200k, it's inconsistent
+        if (!empty($below200k) && !empty($above200k)) {
+            $belowList = implode(', ', array_slice($below200k, 0, 5));
+            if (count($below200k) > 5) {
+                $belowList .= '...';
+            }
+            $aboveList = implode(', ', array_slice($above200k, 0, 5));
+            if (count($above200k) > 5) {
+                $aboveList .= '...';
+            }
+
+            LivewireAlert::title('Inconsistent ABC Thresholds')
+                ->error()
+                ->text("Cannot bulk edit PRs with different ABC thresholds. Below ₱200,000: {$belowList}; ₱200,000 and above: {$aboveList}. Bulk edit requires all PRs to have the same amount threshold.")
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if user has permission to modify successful bids in bulk
+     * Users without edit permission cannot modify PRs with post-procurement data
+     *
+     * @return bool True if user can modify or PRs don't have post data
+     */
+    private function canModifySuccessfulBidsInBulk(): bool
+    {
+        // Check if user has permission to modify items with post-procurement data
+        if (!auth()->user()->can('edit_mode::of::procurement')) {
+            // Get selected procurements
+            $currentItems = collect($this->getCurrentItems())
+                ->whereIn('procID', $this->selectedItems)
+                ->values();
+
+            foreach ($currentItems as $item) {
+                $biddingResult = $item['bidding_result'] ?? '';
+
+                if ($biddingResult === 'SUCCESSFUL') {
+                    $procID = $item['procID'];
+                    $hasPostData = \App\Models\PostProcurement::where('ref_id', $procID)->exists();
+
+                    if ($hasPostData) {
+                        $prNumber = $item['pr_number'] ?? 'Unknown';
+                        LivewireAlert::title('Permission Required')
+                            ->error()
+                            ->text("Cannot modify PR {$prNumber} - it has a SUCCESSFUL bidding result with post-procurement data. This requires 'Edit Mode of Procurement' permission.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate that bulk edit is not clearing existing schedule data without replacement
+     * Prevents accidental data loss
+     *
+     * @return bool True if validation passes
+     */
+    private function validateBulkEditScheduleDeletion(): bool
+    {
+        $modeId = $this->bulkEdit['mode_of_procurement_id'] ?? null;
+
+        // Get current items for selected PRs
+        $currentItems = collect($this->getCurrentItems())
+            ->whereIn('procID', $this->selectedItems)
+            ->values();
+
+        foreach ($currentItems as $item) {
+            $currentModeId = $item['mode_of_procurement_id'] ?? null;
+            $prNumber = $item['pr_number'] ?? 'Unknown';
+
+            // Only check if mode is staying the same (not adding new mode)
+            if ($currentModeId == $modeId) {
+                // For competitive bidding
+                if (in_array($modeId, self::BIDDING_MODES)) {
+                    $hasExistingBiddingData = $this->hasValue($item['bidding_number']) ||
+                        $this->hasValue($item['ib_number']) ||
+                        $this->hasValue($item['sub_open_bids']);
+
+                    $clearingBiddingData = !$this->hasValue($this->bulkEdit['bidding_number'] ?? '') &&
+                        !$this->hasValue($this->bulkEdit['ib_number'] ?? '') &&
+                        !$this->hasValue($this->bulkEdit['sub_open_bids'] ?? '') &&
+                        !$this->hasValue($this->bulkEdit['pre_proc_conference'] ?? '');
+
+                    if ($hasExistingBiddingData && $clearingBiddingData) {
+                        LivewireAlert::title('Cannot Clear Existing Data')
+                            ->error()
+                            ->text("Cannot clear existing bidding data for PR {$prNumber} without providing replacement data or Pre-Proc Conference.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+
+                // For SVP/Alternative modes
+                if (in_array($modeId, self::SVP_MODES)) {
+                    $hasExistingSvpData = $this->hasValue($item['rfq_no']) ||
+                        $this->hasValue($item['canvass_date']) ||
+                        $this->hasValue($item['abstract_of_canvass_date']);
+
+                    $clearingSvpData = !$this->hasValue($this->bulkEdit['rfq_no'] ?? '') &&
+                        !$this->hasValue($this->bulkEdit['canvass_date'] ?? '') &&
+                        !$this->hasValue($this->bulkEdit['abstract_of_canvass_date'] ?? '');
+
+                    if ($hasExistingSvpData && $clearingSvpData) {
+                        LivewireAlert::title('Cannot Clear Existing Data')
+                            ->error()
+                            ->text("Cannot clear existing SVP data for PR {$prNumber} without providing replacement data.")
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Check if user has permission to modify successful bids
      * Users without edit permission cannot modify items with post-procurement data
      *
@@ -958,18 +1119,18 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        // Validate before starting transaction
-        if (!$this->validateBulkSchedules()) {
-            $errorMessage = implode(' ', $this->scheduleValidationErrors);
-            LivewireAlert::title('Validation Failed')
-                ->error()
-                ->text($errorMessage)
-                ->toast()->position('top-end')->show();
-            return;
+        // Check for permission to modify successful bids
+        if (!$this->canModifySuccessfulBidsInBulk()) {
+            return; // Error already shown in method
         }
 
-        // Check for permission to modify successful bids
-        if (!$this->canModifySuccessfulBids()) {
+        // Check if we're trying to clear existing schedule data
+        if (!$this->validateBulkEditScheduleDeletion()) {
+            return; // Error already shown in method
+        }
+
+        // Validate schedule data before starting transaction
+        if (!$this->validateBulkSchedules()) {
             $errorMessage = implode(' ', $this->scheduleValidationErrors);
             LivewireAlert::title('Validation Failed')
                 ->error()
