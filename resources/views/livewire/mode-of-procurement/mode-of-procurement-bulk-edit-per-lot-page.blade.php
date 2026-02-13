@@ -896,7 +896,7 @@
     <div class="h-32"></div>
 
     <!-- Bulk Edit Modal -->
-    <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" :title="'Bulk Edit Mode of Procurement'" size="max-w-7xl">
+    <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" :title="'Bulk Edit Mode of Procurement'" size="max-w-screen-2xl">
         <div class="px-4 py-3">
             {{-- Summary Section --}}
             <div
@@ -1267,7 +1267,7 @@
     </x-forms.modal>
 
     <!-- Post Procurement Bulk Edit Modal -->
-    <x-forms.modal :model="'showPostBulkEditModal'" :closeMethod="'closePostBulkEditModal'" :title="'Bulk Edit Post Procurement'" size="max-w-7xl">
+    <x-forms.modal :model="'showPostBulkEditModal'" :closeMethod="'closePostBulkEditModal'" :title="'Bulk Edit Post Procurement'" size="max-w-screen-2xl">
         @if (!empty($postBulkEditData))
             <div class="px-4 py-3">
                 {{-- Summary Section --}}
@@ -1378,7 +1378,7 @@
                                         <option value="">Select Supplier...</option>
                                         @foreach ($suppliers ?? [] as $supplier)
                                             <option value="{{ $supplier->id }}">
-                                                {{ $supplier->supplier_name }}
+                                                {{ $supplier->name }}
                                             </option>
                                         @endforeach
                                     </select>
