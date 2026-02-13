@@ -188,9 +188,12 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        // Pre-validate ABC threshold consistency
-        if (!$this->validateBulkEditAbcThreshold()) {
-            return; // Error already shown in method
+        // Pre-validate ABC threshold consistency (ONLY for SVP modes 7-24)
+        $commonMode = $validation['commonMode'] ?? null;
+        if ($commonMode && in_array($commonMode, self::SVP_MODES)) {
+            if (!$this->validateBulkEditAbcThreshold()) {
+                return; // Error already shown in method
+            }
         }
 
         $this->populateBulkEditData();
@@ -220,12 +223,12 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $prNumbers = [];
         $amounts = [];
 
-        // Get current items that match selected IDs
-        $selectedItemsData = collect($this->items)
+        // Get CURRENT items only (highest mode_order) that match selected IDs
+        $currentItems = $this->getCurrentItems();
+        $selectedItemsData = collect($currentItems)
             ->filter(function ($item) {
                 return in_array($item['procID'], $this->selectedItems);
             })
-            ->unique('procID')
             ->values();
 
         if ($selectedItemsData->isEmpty()) {
@@ -279,7 +282,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             ];
         }
 
-        // Check if all items have the same mode
+        // Check if all items have the same mode (ALWAYS required)
         if (count($modes) > 1) {
             $modeDetails = [];
             foreach ($modes as $modeId => $prs) {
@@ -293,8 +296,36 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $errors[] = "No valid mode selected for PRs: " . implode(', ', $prNumbers);
         }
 
-        // Check if all items have identical schedule data (only when all have same mode)
+        // Check if items have schedule data - separate PRs with data vs without data
+        $prsWithData = [];
+        $prsWithoutData = [];
+
+        foreach ($scheduleData as $procId => $schedule) {
+            $scheduleFieldsOnly = $schedule;
+            unset($scheduleFieldsOnly['mode_of_procurement_id']); // Exclude mode from check
+
+            $prNumber = $selectedItemsData->firstWhere('procID', $procId)['pr_number'];
+
+            if ($this->hasAnyValue(array_values($scheduleFieldsOnly))) {
+                $prsWithData[] = $prNumber;
+            } else {
+                $prsWithoutData[] = $prNumber;
+            }
+        }
+
+        // STRICT CHECK: If same mode but mixed (some have data, some don't), block bulk edit
         if (!empty($modes) && count($modes) === 1) {
+            if (!empty($prsWithData) && !empty($prsWithoutData)) {
+                $withDataList = implode(', ', $prsWithData);
+                $withoutDataList = implode(', ', $prsWithoutData);
+                $errors[] = "Data mismatch: PR(s) {$withDataList} have schedule data, but PR(s) {$withoutDataList} have no data. All selected PRs must either all have data or all be empty for bulk editing.";
+            }
+        }
+
+        // Check if all items have identical schedule data (only when all have same mode AND all have data)
+        $hasAnyScheduleData = !empty($prsWithData);
+
+        if (!empty($modes) && count($modes) === 1 && $hasAnyScheduleData && empty($prsWithoutData)) {
             $scheduleHashes = [];
             $prNumbersByHash = [];
 
@@ -331,26 +362,30 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             }
         }
 
-        // Check amount threshold consistency
+        // Check amount threshold consistency (ONLY for SVP modes 7-24)
         $below200k = [];
         $above200k = [];
-
-        foreach ($amounts as $prNum => $amount) {
-            if ($amount < self::ABC_THRESHOLD) {
-                $below200k[] = $prNum;
-            } else {
-                $above200k[] = $prNum;
-            }
-        }
-
         $amountThreshold = null;
-        if (!empty($below200k) && !empty($above200k)) {
-            $errors[] = "Mixed amount thresholds: Below ₱200,000: " . implode(', ', $below200k) .
-                "; ₱200,000 and above: " . implode(', ', $above200k) . ". Bulk edit requires all PRs to have the same amount threshold.";
-        } elseif (!empty($below200k)) {
-            $amountThreshold = 'Below ₱200,000.00';
-        } else {
-            $amountThreshold = '₱200,000.00 and Above';
+        $commonMode = count($modes) === 1 ? array_key_first($modes) : null;
+
+        // Only validate ABC threshold for SVP modes (7-24)
+        if ($commonMode && in_array($commonMode, self::SVP_MODES)) {
+            foreach ($amounts as $prNum => $amount) {
+                if ($amount < self::ABC_THRESHOLD) {
+                    $below200k[] = $prNum;
+                } else {
+                    $above200k[] = $prNum;
+                }
+            }
+
+            if (!empty($below200k) && !empty($above200k)) {
+                $errors[] = "Mixed amount thresholds: Below ₱200,000: " . implode(', ', $below200k) .
+                    "; ₱200,000 and above: " . implode(', ', $above200k) . ". Bulk edit requires all PRs to have the same amount threshold for SVP modes.";
+            } elseif (!empty($below200k)) {
+                $amountThreshold = 'Below ₱200,000.00';
+            } else {
+                $amountThreshold = '₱200,000.00 and Above';
+            }
         }
 
         return [
@@ -398,9 +433,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     private function hasAnyValue(array $fields): bool
     {
         foreach ($fields as $field) {
-            // Handle both string keys (for bulkEdit array) and direct values (for post fields)
-            $value = is_string($field) ? ($this->bulkEdit[$field] ?? '') : $field;
-            if ($this->hasValue($value)) {
+            if ($this->hasValue($field)) {
                 return true;
             }
         }
@@ -601,20 +634,27 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             }
 
             // If any PR requires PhilGEPS (ABC >= 200K), validate PhilGEPS fields
+            // Only validate if at least one field has data (to allow mode-only changes)
             if ($requiresPhilgeps) {
-                $missingPhilgepsFields = [];
+                $hasPhilgeps = $this->hasValue($this->bulkEdit['philgeps_posting_ref_no'] ?? '');
+                $hasAdsPost = $this->hasValue($this->bulkEdit['ads_post_ib'] ?? '');
 
-                if (!$this->hasValue($this->bulkEdit['philgeps_posting_ref_no'] ?? '')) {
-                    $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
-                }
-                if (!$this->hasValue($this->bulkEdit['ads_post_ib'] ?? '')) {
-                    $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
-                }
+                // If either field has data, both must be filled
+                if ($hasPhilgeps || $hasAdsPost) {
+                    $missingPhilgepsFields = [];
 
-                if (!empty($missingPhilgepsFields)) {
-                    $fieldsList = implode(', ', $missingPhilgepsFields);
-                    $prListPhilgeps = implode(', ', array_unique($prNumbersRequiringPhilgeps));
-                    $this->scheduleValidationErrors[] = "PR(s) {$prListPhilgeps}: {$fieldsList} required (ABC ≥ ₱200,000).";
+                    if (!$hasPhilgeps) {
+                        $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
+                    }
+                    if (!$hasAdsPost) {
+                        $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
+                    }
+
+                    if (!empty($missingPhilgepsFields)) {
+                        $fieldsList = implode(', ', $missingPhilgepsFields);
+                        $prListPhilgeps = implode(', ', array_unique($prNumbersRequiringPhilgeps));
+                        $this->scheduleValidationErrors[] = "PR(s) {$prListPhilgeps}: {$fieldsList} required (ABC ≥ ₱200,000).";
+                    }
                 }
             }
         }
@@ -660,7 +700,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
             LivewireAlert::title('Inconsistent ABC Thresholds')
                 ->error()
-                ->text("Cannot bulk edit PRs with different ABC thresholds. Below ₱200,000: {$belowList}; ₱200,000 and above: {$aboveList}. Bulk edit requires all PRs to have the same amount threshold.")
+                ->text("Cannot bulk edit SVP mode PRs with different ABC thresholds. Below ₱200,000: {$belowList}; ₱200,000 and above: {$aboveList}. For SVP modes, bulk edit requires all PRs to have the same amount threshold.")
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -1141,7 +1181,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $prList = implode(', ', $differentPRs);
             LivewireAlert::title('ABC Threshold Mismatch')
                 ->warning()
-                ->text("PR {$prList} " . (count($differentPRs) > 1 ? 'have' : 'has') . " different ABC threshold. All PRs must be below ₱200K or ₱200K and above.")
+                ->text("PR {$prList} " . (count($differentPRs) > 1 ? 'have' : 'has') . " different ABC threshold. For SVP and Other modes, all PRs must be below ₱200K or ₱200K and above.")
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -1163,9 +1203,12 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        // Validate ABC threshold first
-        if (!$this->validateAbcThreshold()) {
-            return;
+        // Validate ABC threshold first (ONLY for SVP modes 7-24)
+        $modeId = $this->bulkEdit['mode_of_procurement_id'] ?? null;
+        if ($modeId && in_array($modeId, self::SVP_MODES)) {
+            if (!$this->validateAbcThreshold()) {
+                return;
+            }
         }
 
         // Check for permission to modify successful bids
@@ -1576,6 +1619,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     /**
      * Determine if mode selection dropdown should be disabled
      * Disabled when items have existing schedule data (to prevent data loss)
+     * OR when Add Mode workflow is required (failed bidding needs rebid)
      *
      * @return bool True if mode select should be disabled
      */
@@ -1586,19 +1630,31 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return false;
         }
 
-        $currentItems = $this->getCurrentItems();
+        $currentItems = collect($this->getCurrentItems())
+            ->whereIn('procID', $this->selectedItems)
+            ->values()
+            ->toArray();
 
         if (empty($currentItems)) {
             return false;
         }
 
-        // Disable if ANY item has schedule data
+        // Check if ANY item has actual schedule data (not just mode)
+        $hasAnyScheduleData = false;
         foreach ($currentItems as $item) {
             if ($this->itemHasSchedule($item)) {
-                return true;
+                $hasAnyScheduleData = true;
+                break;
             }
         }
 
+        // If items have schedule data, disable mode select
+        // This prevents accidental overwriting of existing schedule data
+        if ($hasAnyScheduleData) {
+            return true;
+        }
+
+        // If no schedule data exists, allow mode changes freely
         return false;
     }
 

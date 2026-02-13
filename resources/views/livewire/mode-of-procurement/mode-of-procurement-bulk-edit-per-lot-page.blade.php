@@ -902,8 +902,7 @@
             <div
                 class="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <p class="text-sm text-blue-900 dark:text-blue-100">
-                    <span class="font-semibold">{{ count($selectedItems) }}</span> procurement(s) selected
-                    <span class="text-gray-600 dark:text-gray-400">({{ $abcThresholdCategory }})</span>
+                    <span class="font-semibold">{{ count($selectedItems) }}</span> procurement(s) selected.
                 </p>
                 @if (!empty($selectedItems))
                     @php
