@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-6">
     <div
         class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
         <!-- PR Number Badge - Top Left Corner -->
@@ -109,8 +109,9 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
                         <table class="w-full text-xs min-w-max">
+                            <caption class="sr-only">Mode of Procurement Details - Per Lot View</caption>
                             <thead class="bg-gray-200 dark:bg-neutral-800">
 
                                 <tr>
@@ -345,7 +346,7 @@
                                             </select>
                                         </td>
 
-                                        @if ($showFields && in_array($modeId, [2, 3, 4, 5, 6]))
+                                        @if ($showFields && $this->isCompetitiveBidding($modeId))
                                             <td class="px-2 py-2">
                                                 <input type="text" wire:key="bid-num-{{ $rowUid }}"
                                                     wire:model.defer="form.items.{{ $itemIndex }}.bidding_number"
