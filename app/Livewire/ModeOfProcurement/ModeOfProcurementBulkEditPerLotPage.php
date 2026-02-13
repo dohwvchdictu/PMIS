@@ -1800,19 +1800,34 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
      */
     public function getAbcThresholdCategoryProperty(): string
     {
-        $procurements = Procurement::whereIn('procID', $this->procurementIds)->get();
+        // Check SELECTED items for bulk edit, not all initial procurements
+        $itemsToCheck = !empty($this->selectedItems) ? $this->selectedItems : $this->procurementIds;
+
+        $procurements = Procurement::whereIn('procID', $itemsToCheck)->get();
 
         if ($procurements->isEmpty()) {
             return 'N/A';
         }
 
-        // Check the first procurement's ABC to determine category
-        $firstAbc = $procurements->first()->abc ?? 0;
+        // Check if all selected PRs have the same threshold category
+        $belowThreshold = 0;
+        $aboveThreshold = 0;
 
-        if ($firstAbc < self::ABC_THRESHOLD) {
-            return 'Below ₱200,000.00';
-        } else {
+        foreach ($procurements as $procurement) {
+            $abc = $procurement->abc ?? 0;
+            if ($abc < self::ABC_THRESHOLD) {
+                $belowThreshold++;
+            } else {
+                $aboveThreshold++;
+            }
+        }
+
+        // Return category based on what the majority are
+        // (validation prevents mixing, so they should all be the same)
+        if ($aboveThreshold > 0) {
             return '₱200,000.00 and Above';
+        } else {
+            return 'Below ₱200,000.00';
         }
     }
 
