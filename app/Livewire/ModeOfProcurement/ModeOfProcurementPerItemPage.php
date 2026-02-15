@@ -517,12 +517,18 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
-        // Validate ABC threshold when activating Post tab
+        // Validate ABC threshold only for items that will appear in Post tab
         if ($step == 2) {
-            if (!$this->validateAbcThreshold()) {
+            if (!$this->validateAbcThresholdForPostItems()) {
                 return; // Validation failed, stay on current tab
             }
         }
+
+        // Clear selections when changing tabs
+        $this->selectedItems = [];
+        $this->selectedPostItems = [];
+        $this->dispatch('bulk-edit-closed');
+        $this->dispatch('post-bulk-edit-closed');
 
         $this->activeTab = $step;
     }
@@ -1473,6 +1479,71 @@ class ModeOfProcurementPerItemPage extends Component
         return true;
     }
 
+    /**
+     * Validate ABC threshold requirements for items eligible for post procurement
+     * Only validates items with SUCCESSFUL bidding or complete SVP data
+     *
+     * @return bool True if validation passes
+     */
+    private function validateAbcThresholdForPostItems(): bool
+    {
+        // Get items eligible for post procurement
+        $postAvailableItems = $this->getPostAvailableItemsProperty();
+
+        if (empty($postAvailableItems)) {
+            return true; // No items to validate
+        }
+
+        $errors = [];
+
+        foreach ($postAvailableItems as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
+            $itemNo = $item['item_no'] ?? 'Unknown';
+
+            // For competitive bidding modes (2-6): Check per-item ABC
+            if ($this->isCompetitiveBidding($modeId)) {
+                if ($amount >= self::ABC_THRESHOLD) {
+                    $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
+                    $adsPostIb = $item['ads_post_ib'] ?? null;
+
+                    if (empty($philgepsRef) || empty($adsPostIb)) {
+                        $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
+                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when item amount is ₱" . number_format($amount, 2) . " (>= ₱200,000.00).";
+                    }
+                }
+            }
+
+            // For SVP modes (7-24): Check whole procurement ABC
+            if ($this->isSvpMode($modeId)) {
+                $procurementAbc = (float) ($this->procurement->abc ?? 0);
+
+                if ($procurementAbc >= self::ABC_THRESHOLD) {
+                    $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
+                    $adsPostIb = $item['ads_post_ib'] ?? null;
+
+                    if (empty($philgepsRef) || empty($adsPostIb)) {
+                        $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
+                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when procurement ABC is ₱" . number_format($procurementAbc, 2) . " (>= ₱200,000.00).";
+                    }
+                }
+            }
+        }
+
+        if (!empty($errors)) {
+            $errorMessage = implode(' ', $errors);
+            LivewireAlert::title('Validation Failed')
+                ->warning()
+                ->text($errorMessage)
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return false;
+        }
+
+        return true;
+    }
+
     public function toggleItemSelection($index): void
     {
         if (in_array($index, $this->selectedItems)) {
@@ -1500,6 +1571,9 @@ class ModeOfProcurementPerItemPage extends Component
     public function deselectAll(): void
     {
         $this->selectedItems = [];
+
+        // Dispatch event to uncheck all checkboxes via JavaScript
+        $this->dispatch('bulk-edit-closed');
     }
 
     /**
@@ -2508,7 +2582,7 @@ class ModeOfProcurementPerItemPage extends Component
         $this->showAddForm = false;
         $this->clearBulkEditScheduleFields();
         $this->bulkEditErrors = [];
-        $this->deselectAll();
+        // Keep items selected when modal closes
     }
 
     /**
@@ -2790,7 +2864,7 @@ class ModeOfProcurementPerItemPage extends Component
         $this->showPostBulkEditModal = false;
         $this->postBulkEditData = [];
         $this->postBulkEditErrors = [];
-        $this->deselectAllPostItems();
+        // Keep items selected when modal closes
     }
 
     public function toggleAllPostItems(): void
@@ -2847,6 +2921,43 @@ class ModeOfProcurementPerItemPage extends Component
     public function deselectAllPostItems(): void
     {
         $this->selectedPostItems = [];
+
+        // Dispatch event to uncheck all post checkboxes via JavaScript
+        $this->dispatch('post-bulk-edit-closed');
+    }
+
+    public function getPostAvailableItemsProperty(): array
+    {
+        $postAvailableItems = [];
+
+        foreach ($this->form['items'] ?? [] as $index => $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+
+            // Check for SUCCESSFUL bidding in competitive modes
+            if ($this->isCompetitiveBidding($modeId)) {
+                $bidResult = $item['bidding_result'] ?? '';
+
+                if ($bidResult === 'SUCCESSFUL') {
+                    $postAvailableItems[$index] = $item;
+                    continue;
+                }
+            }
+
+            // Check for complete SVP data in alternative modes
+            if ($this->isSvpMode($modeId)) {
+                if (
+                    $this->hasValue($item['resolution_number_mop']) &&
+                    $this->hasValue($item['rfq_no']) &&
+                    $this->hasValue($item['canvass_date']) &&
+                    $this->hasValue($item['date_returned_of_canvass']) &&
+                    $this->hasValue($item['abstract_of_canvass_date'])
+                ) {
+                    $postAvailableItems[$index] = $item;
+                }
+            }
+        }
+
+        return $postAvailableItems;
     }
 
     public function render()
