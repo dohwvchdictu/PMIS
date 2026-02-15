@@ -2253,33 +2253,6 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        // SVP/ALTERNATIVE MODES
-        if ($this->isSvpMode($modeId)) {
-            // Only validate PhilGEPS fields if either PhilGEPS field has data
-            // This allows users to fill other SVP fields without being forced to complete PhilGEPS
-            if ($this->bulkEditData['amount_threshold'] === '>=200k') {
-                $hasPhilgeps = $this->hasValue($this->bulkEditData['philgeps_posting_ref_no'] ?? '');
-                $hasAdsPost = $this->hasValue($this->bulkEditData['ads_post_ib'] ?? '');
-
-                // If either field has data, both must be filled
-                if ($hasPhilgeps || $hasAdsPost) {
-                    $missingPhilgepsFields = [];
-
-                    if (!$hasPhilgeps) {
-                        $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
-                    }
-                    if (!$hasAdsPost) {
-                        $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
-                    }
-
-                    if (!empty($missingPhilgepsFields)) {
-                        $fieldsList = implode(', ', $missingPhilgepsFields);
-                        $this->bulkEditErrors[] = "SVP Mode: {$fieldsList} required for items with ABC ≥ ₱200,000.";
-                    }
-                }
-            }
-        }
-
         return empty($this->bulkEditErrors);
     }
 

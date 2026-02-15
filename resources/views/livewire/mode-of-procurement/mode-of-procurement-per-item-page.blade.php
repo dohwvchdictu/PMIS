@@ -2044,19 +2044,6 @@
                         </table>
                     </div>
 
-                    {{-- Validation Errors Display --}}
-                    @if (!empty($bulkEditErrors))
-                        <div
-                            class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p class="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">Validation Errors:</p>
-                            <ul class="text-xs text-red-800 dark:text-red-200 space-y-1">
-                                @foreach ($bulkEditErrors as $error)
-                                    <li>• {!! $error !!}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                     {{-- Modal Footer Actions --}}
                     <div
                         class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
@@ -2244,19 +2231,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    {{-- Validation Errors Display --}}
-                    @if (!empty($postBulkEditErrors))
-                        <div
-                            class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p class="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">Validation Errors:</p>
-                            <ul class="text-xs text-red-800 dark:text-red-200 space-y-1">
-                                @foreach ($postBulkEditErrors as $error)
-                                    <li>• {!! $error !!}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
 
                     {{-- Modal Footer Actions --}}
                     <div
