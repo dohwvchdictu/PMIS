@@ -904,19 +904,32 @@
                 <p class="text-sm text-blue-900 dark:text-blue-100">
                     <span class="font-semibold">{{ count($selectedItems) }}</span> procurement(s) selected.
                 </p>
-                @if (!empty($selectedItems))
-                    @php
-                        $prNumbers = collect($items)
-                            ->whereIn('procID', $selectedItems)
-                            ->pluck('pr_number')
-                            ->unique()
-                            ->take(10);
-                    @endphp
-                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        PRs: {{ $prNumbers->implode(', ') }}{{ $prNumbers->count() >= 10 ? '...' : '' }}
-                    </p>
-                @endif
             </div>
+
+            {{-- Validation Errors Section --}}
+            @if (!empty($scheduleValidationErrors))
+                <div
+                    class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-600 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor"
+                            viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
+                                Validation Errors
+                            </h4>
+                            <ul class="space-y-1">
+                                @foreach ($scheduleValidationErrors as $error)
+                                    <li class="text-sm text-red-700 dark:text-red-300">{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- Bulk Edit Form Table --}}
             <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
@@ -1255,12 +1268,20 @@
             <div
                 class="bg-gray-50 dark:bg-neutral-700 px-4 py-3 flex justify-end gap-3 border-t border-gray-200 dark:border-neutral-600">
                 <button type="button" wire:click="closeBulkEditModal"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     Cancel
                 </button>
                 <button type="button" onclick="confirmBulkEditSave()"
-                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                    Save Changes
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save
                 </button>
             </div>
         </div>
@@ -1277,26 +1298,32 @@
                         <span class="font-semibold">{{ count($postBulkEditData['selected_items'] ?? []) }}</span>
                         procurement(s) selected for post-procurement bulk edit
                     </p>
-                    @if (!empty($postBulkEditData['selected_items']))
-                        @php
-                            $postPrNumbers = collect($items)
-                                ->filter(function ($item) {
-                                    $refId =
-                                        $item['procurement_type'] === 'perLot'
-                                            ? $item['procID'] . '-' . ($item['lot_num'] ?? '')
-                                            : $item['prItemID'];
-                                    return in_array($refId, $selectedPostItems ?? []);
-                                })
-                                ->pluck('pr_number')
-                                ->unique()
-                                ->take(10);
-                        @endphp
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            PRs:
-                            {{ $postPrNumbers->implode(', ') }}{{ $postPrNumbers->count() >= 10 ? '...' : '' }}
-                        </p>
-                    @endif
                 </div>
+
+                {{-- Validation Errors Section --}}
+                @if (!empty($postBulkEditErrors))
+                    <div
+                        class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-600 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                                fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
+                                    Validation Errors
+                                </h4>
+                                <ul class="space-y-1">
+                                    @foreach ($postBulkEditErrors as $error)
+                                        <li class="text-sm text-red-700 dark:text-red-300">{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Post Procurement Bulk Edit Form Table --}}
                 <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
@@ -1392,12 +1419,20 @@
                 <div
                     class="bg-gray-50 dark:bg-neutral-700 px-4 py-3 flex justify-end gap-3 border-t border-gray-200 dark:border-neutral-600">
                     <button type="button" wire:click="closePostBulkEditModal"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                         Cancel
                     </button>
                     <button type="button" onclick="confirmPostBulkEditSave()"
-                        class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Apply Bulk Edit
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save
                     </button>
                 </div>
         @endif

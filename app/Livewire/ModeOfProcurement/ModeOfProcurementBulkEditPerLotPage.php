@@ -72,6 +72,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public ?string $historyForKey = null;
     public array $bulkEdit = [];
     public array $scheduleValidationErrors = [];
+    public array $postBulkEditErrors = [];
     public int $activeTab = 1;
     public bool $showAddForm = false;
     public array $queryParams = [];
@@ -296,7 +297,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $errors[] = "No valid mode selected for PRs: " . implode(', ', $prNumbers);
         }
 
-        // Check if items have schedule data - separate PRs with data vs without data
+        // Check if items have schedule data - separate items with data vs without data
         $prsWithData = [];
         $prsWithoutData = [];
 
@@ -304,21 +305,17 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $scheduleFieldsOnly = $schedule;
             unset($scheduleFieldsOnly['mode_of_procurement_id']); // Exclude mode from check
 
-            $prNumber = $selectedItemsData->firstWhere('procID', $procId)['pr_number'];
-
             if ($this->hasAnyValue(array_values($scheduleFieldsOnly))) {
-                $prsWithData[] = $prNumber;
+                $prsWithData[] = $procId;
             } else {
-                $prsWithoutData[] = $prNumber;
+                $prsWithoutData[] = $procId;
             }
         }
 
         // STRICT CHECK: If same mode but mixed (some have data, some don't), block bulk edit
         if (!empty($modes) && count($modes) === 1) {
             if (!empty($prsWithData) && !empty($prsWithoutData)) {
-                $withDataList = implode(', ', $prsWithData);
-                $withoutDataList = implode(', ', $prsWithoutData);
-                $errors[] = "Data mismatch: PR(s) {$withDataList} have schedule data, but PR(s) {$withoutDataList} have no data. All selected PRs must either all have data or all be empty for bulk editing.";
+                $errors[] = "Data mismatch: Some items have schedule data while others do not. All selected items must either all have data or all be empty for bulk editing.";
             }
         }
 
@@ -556,17 +553,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return false;
         }
 
-        // Get selected PR numbers for better error messages
+        // Get selected items for validation
         $currentItems = collect($this->getCurrentItems())
             ->whereIn('procID', $this->selectedItems)
             ->values()
             ->toArray();
-
-        $prNumbers = collect($currentItems)->pluck('pr_number')->unique()->take(5)->toArray();
-        $prList = implode(', ', $prNumbers);
-        if (count($prNumbers) >= 5 && count($currentItems) > 5) {
-            $prList .= '...';
-        }
 
         // COMPETITIVE BIDDING MODES
         if (in_array($modeId, self::BIDDING_MODES)) {
@@ -590,7 +581,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     if (!empty($missingFields)) {
                         $fieldsList = implode(', ', $missingFields);
-                        $this->scheduleValidationErrors[] = "PR(s) {$prList}: Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
+                        $this->scheduleValidationErrors[] = "Cannot set Bidding Result without {$fieldsList} or Pre-Proc Conference.";
                     }
                 }
 
@@ -606,13 +597,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     if (!empty($successMissingFields)) {
                         $fieldsList = implode(', ', $successMissingFields);
-                        $this->scheduleValidationErrors[] = "PR(s) {$prList}: {$fieldsList} required for SUCCESSFUL bidding result.";
+                        $this->scheduleValidationErrors[] = "{$fieldsList} required for SUCCESSFUL bidding result.";
                     }
                 }
 
                 // Validate Resolution Number for Bidding Result
                 if (!$this->hasValue($this->bulkEdit['resolution_number_mop'] ?? '')) {
-                    $this->scheduleValidationErrors[] = "PR(s) {$prList}: Resolution Number is required when Bidding Result is set.";
+                    $this->scheduleValidationErrors[] = "Resolution Number is required when Bidding Result is set.";
                 }
             }
         }
@@ -621,7 +612,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         if (in_array($modeId, self::SVP_MODES)) {
             // Validate PhilGEPS requirements based on individual PR ABC
             $requiresPhilgeps = false;
-            $prNumbersRequiringPhilgeps = [];
 
             foreach ($currentItems as $item) {
                 $procurement = Procurement::find($item['procID']);
@@ -629,7 +619,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                 if ($abc >= self::ABC_THRESHOLD) {
                     $requiresPhilgeps = true;
-                    $prNumbersRequiringPhilgeps[] = $procurement->pr_number;
+                    break; // We only need to know if any item requires it
                 }
             }
 
@@ -652,8 +642,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     if (!empty($missingPhilgepsFields)) {
                         $fieldsList = implode(', ', $missingPhilgepsFields);
-                        $prListPhilgeps = implode(', ', array_unique($prNumbersRequiringPhilgeps));
-                        $this->scheduleValidationErrors[] = "PR(s) {$prListPhilgeps}: {$fieldsList} required (ABC ≥ ₱200,000).";
+                        $this->scheduleValidationErrors[] = "{$fieldsList} required (ABC ≥ ₱200,000).";
                     }
                 }
             }
@@ -842,7 +831,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     $hasPostData = \App\Models\PostProcurement::where('ref_id', $refId)->exists();
 
                     if ($hasPostData) {
-                        $this->scheduleValidationErrors[] = "Cannot modify PR #{$item['pr_number']} - it has a SUCCESSFUL bidding result with post-procurement data. This requires 'Edit Mode of Procurement' permission.";
+                        $this->scheduleValidationErrors[] = "Cannot modify item - it has a SUCCESSFUL bidding result with post-procurement data. This requires 'Edit Mode of Procurement' permission.";
                         return false;
                     }
                 }
@@ -1522,6 +1511,12 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
+        // Clear selections when changing tabs
+        $this->selectedItems = [];
+        $this->selectedPostItems = [];
+        $this->selectAll = false;
+        $this->selectAllPost = false;
+
         $this->activeTab = $step;
     }
 
@@ -2170,20 +2165,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // If some items have post data and some don't, show which ones don't
         if ($postProcurements->count() < count($refIds)) {
-            $existingRefIds = $postProcurements->pluck('ref_id')->toArray();
-            $missingRefIds = array_diff($refIds, $existingRefIds);
-            $missingPRs = [];
-
-            foreach ($selectedItems as $item) {
-                if (in_array($item['ref_id'], $missingRefIds)) {
-                    $missingPRs[] = $item['pr_number'];
-                }
-            }
-
-            $prList = implode(', ', $missingPRs);
             return [
                 'valid' => false,
-                'message' => "The following PR(s) do not have post-procurement data yet: {$prList}. All selected items must have post-procurement data for bulk editing. Please add data to these PRs first or deselect them."
+                'message' => "Some items do not have post-procurement data yet. All selected items must have post-procurement data for bulk editing. Please add data to these items first or deselect them."
             ];
         }
 

@@ -1976,13 +1976,13 @@ class ModeOfProcurementPerItemPage extends Component
             $modeDetails = [];
             foreach ($modes as $modeId => $items) {
                 $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Unknown';
-                $modeDetails[] = "{$modeName}: Items " . implode(', ', $items);
+                $modeDetails[] = $modeName;
             }
-            $errors[] = "Items have different modes: " . implode('; ', $modeDetails) . ". Bulk edit requires all selected items to have the same mode of procurement.";
+            $errors[] = "Items have different modes: " . implode(', ', $modeDetails) . ". Bulk edit requires all selected items to have the same mode of procurement.";
         }
 
         if (empty($modes)) {
-            $errors[] = "No valid mode selected for items: " . implode(', ', $itemNumbers);
+            $errors[] = "No valid mode selected. Please ensure all selected items have a mode of procurement.";
         }
 
         // Check if all items have identical schedule data (only when all have same mode)
@@ -2004,22 +2004,7 @@ class ModeOfProcurementPerItemPage extends Component
             $uniqueHashes = array_unique($scheduleHashes);
 
             if (count($uniqueHashes) > 1) {
-                // Find the minority group (items with different data)
-                $hashCounts = array_count_values($scheduleHashes);
-                arsort($hashCounts);
-                $majorityHash = array_key_first($hashCounts);
-
-                $differentItems = [];
-                foreach ($scheduleHashes as $index => $hash) {
-                    if ($hash !== $majorityHash) {
-                        $itemNumber = $this->form['items'][$index]['item_no'];
-                        $differentItems[] = $itemNumber;
-                    }
-                }
-
-                $itemList = implode(', ', $differentItems);
-                $errors[] = "Field mismatch: Item" . (count($differentItems) > 1 ? 's' : '') . " {$itemList} " .
-                    (count($differentItems) > 1 ? 'have' : 'has') . " different field values from the others. Bulk edit requires all selected items to have identical field values.";
+                $errors[] = "Selected items have different schedule data. Bulk edit requires all selected items to have identical schedule data.";
             }
         }
 
@@ -2037,8 +2022,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         $amountThreshold = null;
         if (!empty($below200k) && !empty($above200k)) {
-            $errors[] = "Mixed amount thresholds: Below ₱200,000: Items " . implode(', ', $below200k) .
-                "; ₱200,000 and above: Items " . implode(', ', $above200k) . ". Bulk edit requires all items to have the same amount threshold.";
+            $errors[] = "Mixed amount thresholds detected. Bulk edit requires all items to have the same amount threshold (either all below ₱200,000 or all ₱200,000 and above).";
         } elseif (!empty($below200k)) {
             $amountThreshold = '<200k';
         } elseif (!empty($above200k)) {
@@ -2684,27 +2668,7 @@ class ModeOfProcurementPerItemPage extends Component
         $uniqueHashes = array_unique($postDataHashes);
 
         if (count($uniqueHashes) > 1) {
-            // Find the minority group (items with different data)
-            $hashCounts = array_count_values($postDataHashes);
-            arsort($hashCounts);
-            $majorityHash = array_key_first($hashCounts);
-
-            $differentItems = [];
-            foreach ($postDataHashes as $prItemID => $hash) {
-                if ($hash !== $majorityHash) {
-                    foreach ($this->form['items'] as $item) {
-                        if (($item['prItemID'] ?? null) === $prItemID) {
-                            $itemNumber = $item['item_no'] ?? $prItemID;
-                            $differentItems[] = $itemNumber;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            $itemList = implode(', ', $differentItems);
-            $errors[] = "Field mismatch: Item" . (count($differentItems) > 1 ? 's' : '') . " {$itemList} " .
-                (count($differentItems) > 1 ? 'have' : 'has') . " different post procurement field values from the others. Bulk edit requires all selected items to have identical field values.";
+            $errors[] = "Selected items have different post procurement field values. Bulk edit requires all selected items to have identical field values.";
         }
 
         return [

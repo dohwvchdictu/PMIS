@@ -1612,8 +1612,8 @@
         @endif
     </x-forms.modal>
 
-    <x-forms.modal title="Bulk Edit Items" size="max-w-7xl" wire:model="showBulkEditModal" model="showBulkEditModal"
-        closeMethod="closeBulkEditModal">
+    <x-forms.modal title="Bulk Edit Items" size="max-w-screen-2xl" wire:model="showBulkEditModal"
+        model="showBulkEditModal" closeMethod="closeBulkEditModal">
         @if ($bulkEditData)
             <div class="px-4 py-3">
                 {{-- Summary Section --}}
@@ -1621,14 +1621,7 @@
                     class="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <p class="text-sm text-blue-900 dark:text-blue-100">
                         <span class="font-semibold">{{ $bulkEditData['items_count'] ?? 0 }}</span> items selected
-                        <span
-                            class="text-gray-600 dark:text-gray-400">({{ $bulkEditData['amount_threshold'] === '<200k' ? 'Below ₱200,000' : '₱200,000 and above' }})</span>
                     </p>
-                    @if (!empty($bulkEditData['item_numbers']))
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            Items: {{ implode(', ', $bulkEditData['item_numbers']) }}
-                        </p>
-                    @endif
                 </div>
 
                 {{-- Validation Errors Section --}}
@@ -2067,7 +2060,11 @@
                 <div
                     class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
                     <button type="button" wire:click="closeBulkEditModal"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                         Cancel
                     </button>
                     <button type="button" onclick="confirmBulkEditSave()"
@@ -2077,7 +2074,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>Apply to {{ $bulkEditData['items_count'] ?? 0 }} Items</span>
+                        <span>Save</span>
                     </button>
                 </div>
             </div>
@@ -2170,7 +2167,7 @@
         </script>
     @endonce
 
-    <x-forms.modal title="Bulk Edit Post Procurement" size="max-w-7xl" wire:model="showPostBulkEditModal"
+    <x-forms.modal title="Bulk Edit Post Procurement" size="max-w-screen-2xl" wire:model="showPostBulkEditModal"
         model="showPostBulkEditModal" closeMethod="closePostBulkEditModal">
         @if ($postBulkEditData)
             <div class="px-4 py-3">
@@ -2181,11 +2178,6 @@
                         <span class="font-semibold">{{ $postBulkEditData['items_count'] ?? 0 }}</span> post
                         procurement items selected
                     </p>
-                    @if (!empty($postBulkEditData['item_numbers']))
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            Items: {{ implode(', ', $postBulkEditData['item_numbers']) }}
-                        </p>
-                    @endif
                 </div>
 
                 {{-- Validation Errors Section --}}
@@ -2309,7 +2301,11 @@
                 <div
                     class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
                     <button type="button" wire:click="closePostBulkEditModal"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                         Cancel
                     </button>
                     <button type="button" wire:click="applyPostBulkEdit"
@@ -2317,14 +2313,14 @@
                         wire:loading.attr="disabled">
                         <div wire:loading wire:target="applyPostBulkEdit"
                             class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" wire:loading.remove wire:target="applyPostBulkEdit">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove
+                            wire:target="applyPostBulkEdit">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>
-                        <span wire:loading.remove wire:target="applyPostBulkEdit">Apply to
-                            {{ $postBulkEditData['items_count'] ?? 0 }} Items</span>
-                        <span wire:loading wire:target="applyPostBulkEdit">Applying...</span>
+                        <span wire:loading.remove wire:target="applyPostBulkEdit">Save</span>
+                        <span wire:loading wire:target="applyPostBulkEdit">Saving...</span>
                     </button>
                 </div>
             </div>
