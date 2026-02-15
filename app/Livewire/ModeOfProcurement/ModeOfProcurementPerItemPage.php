@@ -66,7 +66,7 @@ class ModeOfProcurementPerItemPage extends Component
     public ?string $resolutionAwardNumber = null;
     public ?string $noticeOfAward = null;
     public ?string $resolutionAwardDate = null;
-    public ?float $awardedAmount = null;
+    public $awardedAmount = null; // Accepts string from Alpine.js money mask, converted to float on save
     public ?string $awardNoticeNumber = null;
     public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
     public ?int $supplier_id = null;
@@ -185,7 +185,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'noticeOfAwardNumber' => $post?->notice_of_award_number ?? null,
                     'noticeOfAward' => $post?->notice_of_award ?? null,
                     'resolutionAwardDate' => $post?->resolution_award_date ?? null,
-                    'awardedAmount' => $post?->awarded_amount ?? null,
+                    'awardedAmount' => $this->formatAmount($post?->awarded_amount), // Format with commas for Alpine mask
                     'philgepsNoticeOfAwardNo' => $post?->philgeps_notice_of_award_no ?? null,
                     'philgepsPostingOfAward' => $post?->philgeps_posting_of_award ?? null,
                     'supplier_id' => $post?->supplier_id ?? null,
@@ -1201,7 +1201,7 @@ class ModeOfProcurementPerItemPage extends Component
                 $rules["postItems.{$prItemID}.resolutionAwardDate"] = 'nullable|date';
                 $rules["postItems.{$prItemID}.noticeOfAwardNumber"] = 'nullable|string|max:255';
                 $rules["postItems.{$prItemID}.noticeOfAward"] = 'nullable|date';
-                $rules["postItems.{$prItemID}.awardedAmount"] = 'nullable|numeric|min:0';
+                $rules["postItems.{$prItemID}.awardedAmount"] = ['nullable', 'regex:/^[0-9,]+\\.?[0-9]{0,2}$/'];
                 $rules["postItems.{$prItemID}.philgepsNoticeOfAwardNo"] = 'nullable|string|max:255';
                 $rules["postItems.{$prItemID}.philgepsPostingOfAward"] = 'nullable|date';
                 $rules["postItems.{$prItemID}.supplier_id"] = 'nullable|integer|exists:suppliers,id';
@@ -1211,10 +1211,8 @@ class ModeOfProcurementPerItemPage extends Component
                 // Custom messages
                 $messages["postItems.{$prItemID}.resolutionAwardNumber.required"] =
                     "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Resolution Award Number is required.";
-                $messages["postItems.{$prItemID}.awardedAmount.numeric"] =
-                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount must be a valid number.";
-                $messages["postItems.{$prItemID}.awardedAmount.min"] =
-                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount cannot be negative.";
+                $messages["postItems.{$prItemID}.awardedAmount.regex"] =
+                    "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Awarded Amount must be a valid number with up to 2 decimal places.";
                 $messages["postItems.{$prItemID}.supplier_id.exists"] =
                     "<strong>Item {$itemNumber}</strong> ({$shortDesc}): Selected supplier is invalid.";
 
@@ -1299,7 +1297,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'resolution_award_date' => $this->nullableDate($postItem['resolutionAwardDate'] ?? null),
                     'notice_of_award_number' => $postItem['noticeOfAwardNumber'] ?? null,
                     'notice_of_award' => $this->nullableDate($postItem['noticeOfAward'] ?? null),
-                    'awarded_amount' => $postItem['awardedAmount'] ?? null,
+                    'awarded_amount' => $this->cleanAmount($postItem['awardedAmount'] ?? null),
                     'philgeps_notice_of_award_no' => $postItem['philgepsNoticeOfAwardNo'] ?? null,
                     'philgeps_posting_of_award' => $this->nullableDate($postItem['philgepsPostingOfAward'] ?? null),
                     'supplier_id' => $postItem['supplier_id'] ?? null,
@@ -1407,6 +1405,34 @@ class ModeOfProcurementPerItemPage extends Component
     private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
+    }
+
+    /**
+     * Clean and convert formatted amount string to float
+     * Removes commas from Alpine.js money mask format
+     */
+    private function cleanAmount($value): ?float
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        // Remove commas and convert to float
+        $cleaned = str_replace(',', '', (string) $value);
+        return (float) $cleaned;
+    }
+
+    /**
+     * Format amount with comma separators and 2 decimal places
+     * Used when loading from database for display
+     */
+    private function formatAmount($value): ?string
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        return number_format((float) $value, 2, '.', ',');
     }
 
     /**
@@ -2744,7 +2770,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'notice_of_award_number' => $this->postBulkEditData['noticeOfAwardNumber'] ?: null,
                     'notice_of_award' => $this->postBulkEditData['noticeOfAward'] ?: null,
                     'resolution_award_date' => $this->nullableDate($this->postBulkEditData['resolutionAwardDate']),
-                    'awarded_amount' => $this->postBulkEditData['awardedAmount'] ?: null,
+                    'awarded_amount' => $this->cleanAmount($this->postBulkEditData['awardedAmount']) ?: null,
                     'philgeps_notice_of_award_no' => $this->postBulkEditData['philgepsNoticeOfAwardNo'] ?: null,
                     'philgeps_posting_of_award' => $this->nullableDate($this->postBulkEditData['philgepsPostingOfAward']),
                     'supplier_id' => $this->postBulkEditData['supplier_id'] ?: null,
@@ -2760,6 +2786,9 @@ class ModeOfProcurementPerItemPage extends Component
         // Reload post procurement data
         $this->loadPostProcurementData($this->procurement);
 
+        // Refresh the modal data with updated values from database
+        $this->refreshPostBulkEditData();
+
         LivewireAlert::title('Post Procurement Bulk Edit Applied')
             ->success()
             ->text(count($this->selectedPostItems) . ' items updated successfully.')
@@ -2767,7 +2796,8 @@ class ModeOfProcurementPerItemPage extends Component
             ->position('top-end')
             ->show();
 
-        $this->closePostBulkEditModal();
+        // Modal remains open to allow user to verify changes or make additional edits
+        // User can manually close modal when done
     }
 
     public function closePostBulkEditModal(): void
@@ -2776,6 +2806,57 @@ class ModeOfProcurementPerItemPage extends Component
         $this->postBulkEditData = [];
         $this->postBulkEditErrors = [];
         // Keep items selected when modal closes
+    }
+
+    /**
+     * Refresh post bulk edit modal data after save
+     * Reloads fresh values from database to show updated data
+     */
+    private function refreshPostBulkEditData(): void
+    {
+        if (empty($this->selectedPostItems)) {
+            return;
+        }
+
+        // Get first item to check if all have same values
+        $firstPrItemID = $this->selectedPostItems[0] ?? null;
+        if (!$firstPrItemID || !isset($this->postItems[$firstPrItemID])) {
+            return;
+        }
+
+        $firstPostItem = $this->postItems[$firstPrItemID];
+        $allIdentical = true;
+
+        // Check if all selected items have identical post data
+        foreach ($this->selectedPostItems as $prItemID) {
+            $postItem = $this->postItems[$prItemID] ?? [];
+
+            if (
+                ($postItem['resolutionAwardNumber'] ?? null) !== ($firstPostItem['resolutionAwardNumber'] ?? null) ||
+                ($postItem['resolutionAwardDate'] ?? null) !== ($firstPostItem['resolutionAwardDate'] ?? null) ||
+                ($postItem['noticeOfAwardNumber'] ?? null) !== ($firstPostItem['noticeOfAwardNumber'] ?? null) ||
+                ($postItem['noticeOfAward'] ?? null) !== ($firstPostItem['noticeOfAward'] ?? null) ||
+                ($postItem['awardedAmount'] ?? null) !== ($firstPostItem['awardedAmount'] ?? null) ||
+                ($postItem['philgepsNoticeOfAwardNo'] ?? null) !== ($firstPostItem['philgepsNoticeOfAwardNo'] ?? null) ||
+                ($postItem['philgepsPostingOfAward'] ?? null) !== ($firstPostItem['philgepsPostingOfAward'] ?? null) ||
+                ($postItem['supplier_id'] ?? null) !== ($firstPostItem['supplier_id'] ?? null)
+            ) {
+                $allIdentical = false;
+                break;
+            }
+        }
+
+        // Update the form with fresh values from database (if all identical)
+        if ($allIdentical && isset($this->postBulkEditData)) {
+            $this->postBulkEditData['resolutionAwardNumber'] = $firstPostItem['resolutionAwardNumber'] ?? '';
+            $this->postBulkEditData['resolutionAwardDate'] = $firstPostItem['resolutionAwardDate'] ?? '';
+            $this->postBulkEditData['noticeOfAwardNumber'] = $firstPostItem['noticeOfAwardNumber'] ?? '';
+            $this->postBulkEditData['noticeOfAward'] = $firstPostItem['noticeOfAward'] ?? '';
+            $this->postBulkEditData['awardedAmount'] = $firstPostItem['awardedAmount'] ?? ''; // Raw value for Alpine mask
+            $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPostItem['philgepsNoticeOfAwardNo'] ?? '';
+            $this->postBulkEditData['philgepsPostingOfAward'] = $firstPostItem['philgepsPostingOfAward'] ?? '';
+            $this->postBulkEditData['supplier_id'] = $firstPostItem['supplier_id'] ?? '';
+        }
     }
 
     public function toggleAllPostItems(): void

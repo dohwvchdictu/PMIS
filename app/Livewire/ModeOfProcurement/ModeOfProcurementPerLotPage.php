@@ -81,7 +81,7 @@ class ModeOfProcurementPerLotPage extends Component
     public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
     public ?string $resolutionAwardDate = null;
-    public ?float $awardedAmount = null;
+    public $awardedAmount = null; // Accepts string from Alpine.js money mask, converted to float on save
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
@@ -170,7 +170,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->noticeOfAwardNumber = $post->notice_of_award_number;
             $this->noticeOfAward = $post->notice_of_award;
             $this->resolutionAwardDate = $post->resolution_award_date;
-            $this->awardedAmount = $post->awarded_amount;
+            $this->awardedAmount = $this->formatAmount($post->awarded_amount); // Format with commas for Alpine mask
             $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
@@ -1122,7 +1122,7 @@ class ModeOfProcurementPerLotPage extends Component
             'resolutionAwardDate' => 'nullable|date',
             'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
-            'awardedAmount' => 'nullable|numeric|min:0',
+            'awardedAmount' => ['nullable', 'regex:/^[0-9,]+\.?[0-9]{0,2}$/'], // Accepts: 1234.56 or 1,234.56
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
@@ -1149,6 +1149,7 @@ class ModeOfProcurementPerLotPage extends Component
         $messages = [
             'resolutionAwardNumber.required' => 'Resolution Award Number is required when entering post-procurement data.',
             'resolutionAwardDate.required' => 'Resolution Award Date is required when entering post-procurement data.',
+            'awardedAmount.regex' => 'Awarded Amount must be a valid number with up to 2 decimal places.',
         ];
 
         try {
@@ -1176,7 +1177,7 @@ class ModeOfProcurementPerLotPage extends Component
                     'resolution_award_date' => $this->resolutionAwardDate,
                     'notice_of_award_number' => $this->noticeOfAwardNumber,
                     'notice_of_award' => $this->noticeOfAward,
-                    'awarded_amount' => $this->awardedAmount,
+                    'awarded_amount' => $this->cleanAmount($this->awardedAmount),
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
@@ -1232,6 +1233,9 @@ class ModeOfProcurementPerLotPage extends Component
                 ->position('top-end')
                 ->show();
         }
+
+        // Reload data to reflect changes from database
+        $this->mount($this->procurement);
     }
 
     public function save()
@@ -1252,7 +1256,8 @@ class ModeOfProcurementPerLotPage extends Component
             $this->saveTab1();
         }
 
-        $this->mount($this->procurement);
+        // Note: mount() is called within saveTab1() and savePost() after successful save
+        // Don't reload here to preserve user input when validation fails
     }
 
     public function editHistoryItem($index): void
@@ -1320,7 +1325,7 @@ class ModeOfProcurementPerLotPage extends Component
                 ->position('top-end')
                 ->show();
 
-            $this->mount($this->procurement);
+            // Don't reload data - keep modal open with user's input so they can fix errors
             return;
         }
 
@@ -1382,6 +1387,34 @@ class ModeOfProcurementPerLotPage extends Component
     private function nullableDate($value)
     {
         return $this->hasValue($value) ? $value : null;
+    }
+
+    /**
+     * Clean and convert formatted amount string to float
+     * Removes commas from Alpine.js money mask format
+     */
+    private function cleanAmount($value): ?float
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        // Remove commas and convert to float
+        $cleaned = str_replace(',', '', (string) $value);
+        return (float) $cleaned;
+    }
+
+    /**
+     * Format amount with comma separators and 2 decimal places
+     * Used when loading from database for display
+     */
+    private function formatAmount($value): ?string
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        return number_format((float) $value, 2, '.', ',');
     }
 
     public function cancel()

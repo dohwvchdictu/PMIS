@@ -1318,10 +1318,15 @@
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                             <td class="px-2 py-2">
-                                                <input type="number" step="0.01"
-                                                    wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
-                                                    class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                    placeholder="0.00">
+                                                <div class="relative">
+                                                    <span
+                                                        class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 pointer-events-none">₱</span>
+                                                    <input type="text"
+                                                        wire:model.defer="postItems.{{ $prItemID }}.awardedAmount"
+                                                        x-data x-mask:dynamic="$money($input, '.', ',', 2)"
+                                                        class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                                        placeholder="0.00">
+                                                </div>
                                             </td>
                                             <td class="px-2 py-2">
                                                 <input type="text"
@@ -2343,10 +2348,14 @@
                                         class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                 </td>
                                 <td class="px-2 py-2">
-                                    <input type="number" step="0.01"
-                                        wire:model.defer="postBulkEditData.awardedAmount"
-                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                        placeholder="0.00">
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 pointer-events-none">₱</span>
+                                        <input type="text" wire:model.defer="postBulkEditData.awardedAmount"
+                                            x-data x-mask:dynamic="$money($input, '.', ',', 2)"
+                                            class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="0.00">
+                                    </div>
                                 </td>
                                 <td class="px-2 py-2">
                                     <input type="text"
@@ -2384,19 +2393,14 @@
                         </svg>
                         Cancel
                     </button>
-                    <button type="button" wire:click="applyPostBulkEdit"
-                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        wire:loading.attr="disabled">
-                        <div wire:loading wire:target="applyPostBulkEdit"
-                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <button type="button" onclick="confirmPostBulkEditSave()"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" wire:loading.remove
-                            wire:target="applyPostBulkEdit">
+                            viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>
-                        <span wire:loading.remove wire:target="applyPostBulkEdit">Save</span>
-                        <span wire:loading wire:target="applyPostBulkEdit">Saving...</span>
+                        <span>Save</span>
                     </button>
                 </div>
             </div>

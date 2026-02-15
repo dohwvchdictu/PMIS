@@ -93,7 +93,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
     public ?string $resolutionAwardDate = null;
-    public ?float $awardedAmount = null;
+    public $awardedAmount = null; // Accepts string from Alpine.js money mask, converted to float on save
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
@@ -492,7 +492,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->resolutionAwardDate = $firstPost->resolution_award_date;
             $this->noticeOfAwardNumber = $firstPost->notice_of_award_number;
             $this->noticeOfAward = $firstPost->notice_of_award;
-            $this->awardedAmount = $firstPost->awarded_amount;
+            $this->awardedAmount = $this->formatAmount($firstPost->awarded_amount); // Format with commas for Alpine mask
             $this->philgepsNoticeOfAwardNo = $firstPost->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $firstPost->philgeps_posting_of_award;
             $this->supplier_id = $firstPost->supplier_id;
@@ -1444,6 +1444,34 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     }
 
     /**
+     * Clean and convert formatted amount string to float
+     * Removes commas from Alpine.js money mask format
+     */
+    private function cleanAmount($value): ?float
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        // Remove commas and convert to float
+        $cleaned = str_replace(',', '', (string) $value);
+        return (float) $cleaned;
+    }
+
+    /**
+     * Format amount with comma separators and 2 decimal places
+     * Used when loading from database for display
+     */
+    private function formatAmount($value): ?string
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        return number_format((float) $value, 2, '.', ',');
+    }
+
+    /**
      * Toggle history display for a specific procurement item
      * Shows/hides rebid history (previous modes)
      *
@@ -1858,7 +1886,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'resolutionAwardDate' => 'nullable|date',
             'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
-            'awardedAmount' => 'nullable|numeric|min:0',
+            'awardedAmount' => ['nullable', 'regex:/^[0-9,]+\\.?[0-9]{0,2}$/'],
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
@@ -1885,6 +1913,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $messages = [
             'resolutionAwardNumber.required' => 'Resolution Award Number is required when entering post-procurement data.',
             'resolutionAwardDate.required' => 'Resolution Award Date is required when entering post-procurement data.',
+            'awardedAmount.regex' => 'Awarded Amount must be a valid number with up to 2 decimal places.',
         ];
 
         try {
@@ -1918,7 +1947,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'resolution_award_date' => $this->resolutionAwardDate,
                     'notice_of_award_number' => $this->noticeOfAwardNumber,
                     'notice_of_award' => $this->noticeOfAward,
-                    'awarded_amount' => $this->awardedAmount,
+                    'awarded_amount' => $this->cleanAmount($this->awardedAmount),
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
@@ -2335,7 +2364,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'resolutionAwardDate' => $firstPost->resolution_award_date ?? '',
                     'noticeOfAwardNumber' => $firstPost->notice_of_award_number ?? '',
                     'noticeOfAward' => $firstPost->notice_of_award ?? '',
-                    'awardedAmount' => $firstPost->awarded_amount,
+                    'awardedAmount' => $this->formatAmount($firstPost->awarded_amount), // Format with commas for Alpine mask
                     'philgepsNoticeOfAwardNo' => $firstPost->philgeps_notice_of_award_no ?? '',
                     'philgepsPostingOfAward' => $firstPost->philgeps_posting_of_award ?? '',
                     'supplier_id' => $firstPost->supplier_id,
@@ -2358,6 +2387,57 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     {
         $this->showPostBulkEditModal = false;
         $this->postBulkEditData = [];
+    }
+
+    /**
+     * Refresh post bulk edit modal data after save
+     * Reloads fresh values from database to show updated data
+     */
+    private function refreshPostBulkEditData(): void
+    {
+        if (empty($this->postBulkEditData['selected_items'])) {
+            return;
+        }
+
+        $refIds = array_column($this->postBulkEditData['selected_items'], 'ref_id');
+        $postProcurements = \App\Models\PostProcurement::whereIn('ref_id', $refIds)->get();
+
+        if ($postProcurements->isEmpty()) {
+            return;
+        }
+
+        // Get first record as reference
+        $firstPost = $postProcurements->first();
+        $allIdentical = true;
+
+        // Check if all records still have identical values after update
+        foreach ($postProcurements as $post) {
+            if (
+                $post->resolution_award_number !== $firstPost->resolution_award_number ||
+                $post->resolution_award_date !== $firstPost->resolution_award_date ||
+                $post->notice_of_award_number !== $firstPost->notice_of_award_number ||
+                $post->notice_of_award !== $firstPost->notice_of_award ||
+                $post->awarded_amount !== $firstPost->awarded_amount ||
+                $post->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
+                $post->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
+                $post->supplier_id !== $firstPost->supplier_id
+            ) {
+                $allIdentical = false;
+                break;
+            }
+        }
+
+        // Update the form with fresh values from database (if all identical)
+        if ($allIdentical) {
+            $this->postBulkEditData['resolutionAwardNumber'] = $firstPost->resolution_award_number ?? '';
+            $this->postBulkEditData['resolutionAwardDate'] = $firstPost->resolution_award_date ?? '';
+            $this->postBulkEditData['noticeOfAwardNumber'] = $firstPost->notice_of_award_number ?? '';
+            $this->postBulkEditData['noticeOfAward'] = $firstPost->notice_of_award ?? '';
+            $this->postBulkEditData['awardedAmount'] = $this->formatAmount($firstPost->awarded_amount); // Format with commas for Alpine mask
+            $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPost->philgeps_notice_of_award_no ?? '';
+            $this->postBulkEditData['philgepsPostingOfAward'] = $firstPost->philgeps_posting_of_award ?? '';
+            $this->postBulkEditData['supplier_id'] = $firstPost->supplier_id;
+        }
     }
 
     /**
@@ -2439,7 +2519,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         $hasChanges = true;
                     }
                     if ($this->hasValue($this->postBulkEditData['awardedAmount'] ?? null)) {
-                        $postProc->awarded_amount = $this->postBulkEditData['awardedAmount'];
+                        $postProc->awarded_amount = $this->cleanAmount($this->postBulkEditData['awardedAmount']);
                         $hasChanges = true;
                     }
                     if ($this->hasValue($this->postBulkEditData['philgepsNoticeOfAwardNo'] ?? null)) {
@@ -2471,6 +2551,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
             // Reload data to reflect changes
             $this->loadProcurementData();
+            $this->loadPostProcurementData();
+
+            // Refresh the modal data with updated values from database
+            $this->refreshPostBulkEditData();
 
         } catch (\Exception $e) {
             LivewireAlert::title('Error!')
