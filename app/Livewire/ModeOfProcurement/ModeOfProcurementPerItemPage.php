@@ -164,7 +164,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 if (
                     !empty($item['resolution_number_mop']) &&
                     !empty($item['rfq_no']) &&
@@ -229,8 +229,8 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
-                // For modes 2-6, also require resolution_number_mop
-                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                // For competitive bidding modes, also require resolution_number_mop
+                if ($this->isCompetitiveBidding($modeId)) {
                     $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
                 }
 
@@ -239,8 +239,8 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            // SVP/ALTERNATIVE MODES (7-24)
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            // SVP/ALTERNATIVE MODES
+            if ($this->isSvpMode($modeId)) {
                 // Base required SVP fields
                 $allSvpFieldsFilled =
                     $this->hasValue($item['resolution_number_mop']) &&
@@ -249,9 +249,9 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['date_returned_of_canvass']) &&
                     $this->hasValue($item['abstract_of_canvass_date']);
 
-                // If amount >= 200k, also require philgeps_posting_ref_no and ads_post_ib
-                $amount = (float) ($item['amount'] ?? 0);
-                if ($amount >= 200000) {
+                // If PR ABC >= 200k, also require philgeps_posting_ref_no and ads_post_ib
+                $procurementAbc = (float) ($this->procurement->abc ?? 0);
+                if ($procurementAbc >= self::ABC_THRESHOLD) {
                     $allSvpFieldsFilled = $allSvpFieldsFilled &&
                         $this->hasValue($item['philgeps_posting_ref_no']) &&
                         $this->hasValue($item['ads_post_ib']);
@@ -665,9 +665,9 @@ class ModeOfProcurementPerItemPage extends Component
             ];
 
             // For SVP modes (7-24) with ABC >= 200k, PhilGEPS and Ads/Post IB should also count as valid SVP data
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 $prAbc = $this->procurement->abc ?? 0;
-                if ($prAbc >= 200000) {
+                if ($prAbc >= self::ABC_THRESHOLD) {
                     $svpFields[] = $item['philgeps_posting_ref_no'] ?? null;
                     $svpFields[] = $item['ads_post_ib'] ?? null;
                 }
@@ -681,11 +681,11 @@ class ModeOfProcurementPerItemPage extends Component
             $existingBidSchedule = null;
             $existingSvp = null;
 
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 $existingSvp = PrSvp::where($matchCriteria)->first();
             }
 
@@ -700,7 +700,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
 
             // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 // If there's an existing record but all data was removed, show error
                 if ($existingBidSchedule && !$hasAnyBiddingData && !$hasResolutionNumber) {
                     $this->scheduleValidationErrors[] = sprintf(
@@ -768,7 +768,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
 
             // SVP/ALTERNATIVE MODES (7-24)
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 // If there's an existing record but all data was removed, show error
                 if ($existingSvp && !$hasAnySvpData && !$hasResolutionNumber) {
                     $this->scheduleValidationErrors[] = sprintf(
@@ -989,7 +989,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         };
 
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+        if ($this->isCompetitiveBidding($modeId)) {
             $biddingFields = [
                 $itemData['ib_number'] ?? null,
                 $itemData['philgeps_posting_ref_no'] ?? null,
@@ -1013,7 +1013,7 @@ class ModeOfProcurementPerItemPage extends Component
             $hasBiddingData = $this->hasAnyValue($biddingFields);
 
             // Add resolution_number_mop check for modes 2-6
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 $hasBiddingData = $hasBiddingData || $this->hasValue($itemData['resolution_number_mop']);
             }
 
@@ -1069,7 +1069,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        if ($this->isSvpMode($modeId)) {
             $svpFields = [
                 $itemData['philgeps_posting_ref_no'] ?? null,
                 $itemData['ads_post_ib'] ?? null,
@@ -1143,14 +1143,14 @@ class ModeOfProcurementPerItemPage extends Component
         $postAvailableItems = array_filter($this->form['items'] ?? [], function ($item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 $bidResult = $item['bidding_result'] ?? '';
                 if ($bidResult === 'SUCCESSFUL') {
                     return true;
                 }
             }
 
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 if (
                     !empty($item['resolution_number_mop']) &&
                     !empty($item['rfq_no']) &&
@@ -1412,6 +1412,7 @@ class ModeOfProcurementPerItemPage extends Component
     /**
      * Validate ABC threshold requirements when ABC or mode changes
      * Ensures PhilGEPS fields are filled when ABC >= ₱200,000
+     * ONLY validates for SVP/Alternative modes (7-24) as competitive bidding always requires PhilGEPS
      *
      * @return bool True if validation passes
      */
@@ -1432,9 +1433,12 @@ class ModeOfProcurementPerItemPage extends Component
 
         $errors = [];
 
+        // Check procurement ABC once (applies to all items)
+        $procurementAbc = (float) ($this->procurement->abc ?? 0);
+        $requiresPhilgeps = $procurementAbc >= self::ABC_THRESHOLD;
+
         foreach ($currentItems as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
-            $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
             $itemNo = $item['item_no'] ?? 'Unknown';
 
             // Skip validation if no mode is selected
@@ -1452,24 +1456,10 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            // For competitive bidding modes (2-6): Check per-item ABC
-            if ($this->isCompetitiveBidding($modeId)) {
-                if ($amount >= self::ABC_THRESHOLD) {
-                    $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
-                    $adsPostIb = $item['ads_post_ib'] ?? null;
-
-                    if (empty($philgepsRef) || empty($adsPostIb)) {
-                        $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
-                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when item amount is ₱" . number_format($amount, 2) . " (>= ₱200,000.00).";
-                    }
-                }
-            }
-
-            // For SVP modes (7-24): Check whole procurement ABC
+            // ONLY validate SVP/Alternative modes (7-24) for ABC threshold
+            // Competitive bidding (2-6) always requires PhilGEPS regardless of ABC
             if ($this->isSvpMode($modeId)) {
-                $procurementAbc = (float) ($this->procurement->abc ?? 0);
-
-                if ($procurementAbc >= self::ABC_THRESHOLD) {
+                if ($requiresPhilgeps) {
                     $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
                     $adsPostIb = $item['ads_post_ib'] ?? null;
 
@@ -1709,8 +1699,8 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($currentItems as $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
-            // Can't add for SVP modes (7,8,9,10)
-            if (in_array($modeId, [7, 8, 9, 10])) {
+            // Can't add for SVP/Alternative modes
+            if ($this->isSvpMode($modeId)) {
                 $allCanAdd = false;
                 break;
             }
@@ -1932,14 +1922,12 @@ class ModeOfProcurementPerItemPage extends Component
         $errors = [];
         $itemNumbers = [];
         $modes = [];
-        $amounts = [];
         $scheduleData = [];
 
         foreach ($this->selectedItems as $index) {
             $item = $this->form['items'][$index];
             $itemNumber = $item['item_no'];
             $modeId = $item['mode_of_procurement_id'] ?? null;
-            $amount = (float) ($item['amount'] ?? 0);
 
             $itemNumbers[] = $itemNumber;
 
@@ -1947,11 +1935,9 @@ class ModeOfProcurementPerItemPage extends Component
                 $modes[$modeId][] = $itemNumber;
             }
 
-            $amounts[$itemNumber] = $amount;
-
             // Collect schedule data for consistency check
             $schedule = [];
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 // Bidding schedule fields
                 $schedule = [
                     'bidding_number' => $item['bidding_number'] ?? null,
@@ -1973,7 +1959,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'bidding_result' => $item['bidding_result'] ?? null,
                     'resolution_number_mop' => $item['resolution_number_mop'] ?? null,
                 ];
-            } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            } elseif ($this->isSvpMode($modeId)) {
                 // SVP schedule fields
                 $schedule = [
                     'rfq_no' => $item['rfq_no'] ?? null,
@@ -2024,38 +2010,10 @@ class ModeOfProcurementPerItemPage extends Component
             }
         }
 
-        // Check amount threshold consistency
-        // For SVP modes (7-24), use PR ABC instead of item amounts
+        // Check amount threshold - ALWAYS use PR ABC for all modes (like Per-Lot)
         $commonMode = empty($modes) ? null : array_key_first($modes);
-        $isSvpMode = $this->isSvpMode($commonMode);
-
-        $amountThreshold = null;
-
-        if ($isSvpMode) {
-            // For SVP modes, check the overall PR ABC
-            $prAbc = $this->procurement->abc ?? 0;
-            $amountThreshold = $prAbc >= 200000 ? '>=200k' : '<200k';
-        } else {
-            // For other modes, check individual item amounts (existing logic)
-            $below200k = [];
-            $above200k = [];
-
-            foreach ($amounts as $itemNum => $amount) {
-                if ($amount < 200000) {
-                    $below200k[] = $itemNum;
-                } else {
-                    $above200k[] = $itemNum;
-                }
-            }
-
-            if (!empty($below200k) && !empty($above200k)) {
-                $errors[] = "Mixed amount thresholds detected. Bulk edit requires all items to have the same amount threshold (either all below ₱200,000 or all ₱200,000 and above).";
-            } elseif (!empty($below200k)) {
-                $amountThreshold = '<200k';
-            } elseif (!empty($above200k)) {
-                $amountThreshold = '>=200k';
-            }
-        }
+        $prAbc = $this->procurement->abc ?? 0;
+        $amountThreshold = $prAbc >= self::ABC_THRESHOLD ? '>=200k' : '<200k';
 
         return [
             'valid' => empty($errors),
@@ -2090,12 +2048,7 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
-        // Validate ABC threshold consistency (MISSING from per-item!)
-        if (!$this->validateBulkEditAbcThreshold()) {
-            return;
-        }
-
-        // Check permissions for modifying successful bids (MISSING from per-item!)
+        // Check permissions for modifying successful bids
         if (!$this->canModifySuccessfulBidsInBulk()) {
             return;
         }
@@ -2120,7 +2073,7 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Check if any schedule fields have data
-        if (in_array($modeId, [2, 3, 4, 5, 6])) {
+        if ($this->isCompetitiveBidding($modeId)) {
             $biddingFields = [
                 'bidding_number',
                 'ib_number',
@@ -2148,7 +2101,7 @@ class ModeOfProcurementPerItemPage extends Component
                     break;
                 }
             }
-        } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+        } elseif ($this->isSvpMode($modeId)) {
             $svpFields = [
                 'rfq_no',
                 'canvass_date',
@@ -2191,10 +2144,10 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->clearFieldsForModeChange($index, $originalMode, $modeId);
             }
 
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 // Update bidding fields
                 $this->updateBiddingFields($index);
-            } elseif (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            } elseif ($this->isSvpMode($modeId)) {
                 // Update SVP fields
                 $this->updateSvpFields($index);
             }
@@ -2342,40 +2295,6 @@ class ModeOfProcurementPerItemPage extends Component
         return empty($this->bulkEditErrors);
     }
 
-    private function validateBulkEditAbcThreshold(): bool
-    {
-        // Check if all selected items have consistent ABC thresholds
-        $below200k = [];
-        $above200k = [];
-
-        foreach ($this->selectedItems as $index) {
-            $item = $this->form['items'][$index];
-            $amount = (float) ($item['amount'] ?? 0);
-
-            if ($amount < 200000) {
-                $below200k[] = $item['item_no'] ?? ($index + 1);
-            } else {
-                $above200k[] = $item['item_no'] ?? ($index + 1);
-            }
-        }
-
-        // If we have both below and above 200k, it's inconsistent
-        if (!empty($below200k) && !empty($above200k)) {
-            $belowList = implode(', ', $below200k);
-            $aboveList = implode(', ', $above200k);
-
-            LivewireAlert::title('Inconsistent ABC Thresholds')
-                ->error()
-                ->text("Cannot bulk edit items with different ABC thresholds. Items {$belowList} are below ₱200,000, while items {$aboveList} are ₱200,000 and above.")
-                ->toast()
-                ->position('top-end')
-                ->show();
-            return false;
-        }
-
-        return true;
-    }
-
     private function canModifySuccessfulBidsInBulk(): bool
     {
         // Check if user has permission to modify items with post-procurement data
@@ -2418,7 +2337,7 @@ class ModeOfProcurementPerItemPage extends Component
             // Only check if mode is staying the same (not adding new mode)
             if ($currentModeId == $modeId) {
                 // For competitive bidding
-                if (in_array($modeId, [2, 3, 4, 5, 6])) {
+                if ($this->isCompetitiveBidding($modeId)) {
                     $hasExistingBiddingData = $this->hasValue($item['bidding_number']) ||
                         $this->hasValue($item['ib_number']) ||
                         $this->hasValue($item['sub_open_bids']);
@@ -2441,7 +2360,7 @@ class ModeOfProcurementPerItemPage extends Component
                 }
 
                 // For SVP/Alternative modes
-                if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                if ($this->isSvpMode($modeId)) {
                     $hasExistingSvpData = $this->hasValue($item['rfq_no']) ||
                         $this->hasValue($item['canvass_date']) ||
                         $this->hasValue($item['abstract_of_canvass_date']);
@@ -2541,7 +2460,7 @@ class ModeOfProcurementPerItemPage extends Component
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
             // Cannot add for SVP modes
-            if (in_array($modeId, [7, 8, 9, 10])) { // SVP modes
+            if ($this->isSvpMode($modeId)) {
                 LivewireAlert::title('Cannot Add Mode')
                     ->warning()
                     ->text('Cannot add new mode for SVP/Alternative modes.')
@@ -2870,7 +2789,7 @@ class ModeOfProcurementPerItemPage extends Component
                 continue;
 
             // Check for SUCCESSFUL bidding in competitive modes
-            if (in_array($modeId, [2, 3, 4, 5, 6])) {
+            if ($this->isCompetitiveBidding($modeId)) {
                 $bidResult = $item['bidding_result'] ?? '';
                 if ($bidResult === 'SUCCESSFUL') {
                     $availablePrItemIDs[] = $prItemID;
@@ -2879,7 +2798,7 @@ class ModeOfProcurementPerItemPage extends Component
             }
 
             // Check for complete SVP data in alternative modes
-            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+            if ($this->isSvpMode($modeId)) {
                 if (
                     !empty($item['resolution_number_mop']) &&
                     !empty($item['rfq_no']) &&

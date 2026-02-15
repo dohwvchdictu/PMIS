@@ -530,7 +530,12 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
-        // STEP 4: ALL validation passed - NOW start the database transaction
+        // STEP 4: Validate against clearing existing schedule data
+        if (!$this->validateScheduleDeletion()) {
+            return; // Error already shown in method
+        }
+
+        // STEP 5: ALL validation passed - NOW start the database transaction
         $isMopAdded = false;
         $isMopUpdated = false;
         $isScheduleAdded = false;
@@ -804,6 +809,74 @@ class ModeOfProcurementPerLotPage extends Component
                     LivewireAlert::title('Validation Error!')
                         ->error()
                         ->text("PR {$prNumber}: Ads/Post IB date is required when ABC is ₱200,000.00 or more.")
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate that editing is not clearing existing schedule data without replacement
+     * Prevents accidental data loss when user edits existing schedules
+     *
+     * @return bool True if validation passes
+     */
+    private function validateScheduleDeletion(): bool
+    {
+        foreach ($this->form['items'] as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $prNumber = $this->form['pr_number'] ?? 'PR';
+
+            // Skip validation for new items (no existing data to protect)
+            if (str_starts_with($item['uid'] ?? '', 'temp_')) {
+                continue;
+            }
+
+            // For competitive bidding modes
+            if ($this->isCompetitiveBidding($modeId)) {
+                // Check if item has existing bidding data
+                $hasExistingBiddingData = $this->hasValue($item['bidding_number']) ||
+                    $this->hasValue($item['ib_number']) ||
+                    $this->hasValue($item['sub_open_bids']);
+
+                // Check if user is trying to clear the data (no replacement values)
+                $clearingBiddingData = !$this->hasValue($item['bidding_number']) &&
+                    !$this->hasValue($item['ib_number']) &&
+                    !$this->hasValue($item['sub_open_bids']) &&
+                    !$this->hasValue($item['pre_proc_conference']);
+
+                if ($hasExistingBiddingData && $clearingBiddingData) {
+                    LivewireAlert::title('Cannot Clear Existing Data')
+                        ->error()
+                        ->text("Cannot clear existing bidding data for {$prNumber} without providing replacement data or Pre-Proc Conference.")
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
+                    return false;
+                }
+            }
+
+            // For SVP/Alternative modes
+            if ($this->isSvpMode($modeId)) {
+                // Check if item has existing SVP data
+                $hasExistingSvpData = $this->hasValue($item['rfq_no']) ||
+                    $this->hasValue($item['canvass_date']) ||
+                    $this->hasValue($item['abstract_of_canvass_date']);
+
+                // Check if user is trying to clear the data (no replacement values)
+                $clearingSvpData = !$this->hasValue($item['rfq_no']) &&
+                    !$this->hasValue($item['canvass_date']) &&
+                    !$this->hasValue($item['abstract_of_canvass_date']);
+
+                if ($hasExistingSvpData && $clearingSvpData) {
+                    LivewireAlert::title('Cannot Clear Existing Data')
+                        ->error()
+                        ->text("Cannot clear existing SVP data for {$prNumber} without providing replacement data.")
                         ->toast()
                         ->position('top-end')
                         ->show();
