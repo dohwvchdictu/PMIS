@@ -1430,16 +1430,30 @@ class ModeOfProcurementPerItemPage extends Component
                 }
             }
 
-            // Only validate for modes that require PhilGEPS
-            if (in_array($modeId, array_merge(self::BIDDING_MODES, self::SVP_MODES))) {
-                // ABC threshold check: ₱200,000.00 and above
+            // For competitive bidding modes (2-6): Check per-item ABC
+            if ($this->isCompetitiveBidding($modeId)) {
                 if ($amount >= self::ABC_THRESHOLD) {
                     $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
                     $adsPostIb = $item['ads_post_ib'] ?? null;
 
                     if (empty($philgepsRef) || empty($adsPostIb)) {
                         $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
-                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when amount is ₱" . number_format($amount, 2) . " (>= ₱200,000.00).";
+                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when item amount is ₱" . number_format($amount, 2) . " (>= ₱200,000.00).";
+                    }
+                }
+            }
+
+            // For SVP modes (7-24): Check whole procurement ABC
+            if ($this->isSvpMode($modeId)) {
+                $procurementAbc = (float) ($this->procurement->abc ?? 0);
+
+                if ($procurementAbc >= self::ABC_THRESHOLD) {
+                    $philgepsRef = $item['philgeps_posting_ref_no'] ?? null;
+                    $adsPostIb = $item['ads_post_ib'] ?? null;
+
+                    if (empty($philgepsRef) || empty($adsPostIb)) {
+                        $modeName = $this->modeOfProcurements->firstWhere('id', $modeId)?->modeofprocurements ?? 'Mode ' . $modeId;
+                        $errors[] = "Item #{$itemNo}: PhilGEPS Posting Ref # and Ads/Post IB are required for {$modeName} when procurement ABC is ₱" . number_format($procurementAbc, 2) . " (>= ₱200,000.00).";
                     }
                 }
             }
@@ -2005,10 +2019,21 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
-        // Validate that at least one field is filled
+        // Check if mode has changed or if any schedule field has data
         $modeId = $this->bulkEditData['mode_of_procurement_id'];
-        $hasData = false;
+        $hasScheduleData = false;
+        $hasModeChange = false;
 
+        // Check if mode is changing for any selected item
+        foreach ($this->selectedItems as $index) {
+            $originalMode = $this->form['items'][$index]['mode_of_procurement_id'] ?? null;
+            if ($originalMode != $modeId) {
+                $hasModeChange = true;
+                break;
+            }
+        }
+
+        // Check if any schedule fields have data
         if (in_array($modeId, [2, 3, 4, 5, 6])) {
             $biddingFields = [
                 'bidding_number',
@@ -2033,7 +2058,7 @@ class ModeOfProcurementPerItemPage extends Component
 
             foreach ($biddingFields as $field) {
                 if (!empty($this->bulkEditData[$field])) {
-                    $hasData = true;
+                    $hasScheduleData = true;
                     break;
                 }
             }
@@ -2053,16 +2078,17 @@ class ModeOfProcurementPerItemPage extends Component
 
             foreach ($svpFields as $field) {
                 if (!empty($this->bulkEditData[$field])) {
-                    $hasData = true;
+                    $hasScheduleData = true;
                     break;
                 }
             }
         }
 
-        if (!$hasData) {
+        // Allow save if mode changed OR schedule fields have data
+        if (!$hasModeChange && !$hasScheduleData) {
             LivewireAlert::title('No Changes')
                 ->warning()
-                ->text('Please fill in at least one field to update.')
+                ->text('Please change the mode or fill in at least one field to update.')
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -2229,20 +2255,27 @@ class ModeOfProcurementPerItemPage extends Component
 
         // SVP/ALTERNATIVE MODES
         if ($this->isSvpMode($modeId)) {
-            // Validate PhilGEPS requirements based on amount threshold
+            // Only validate PhilGEPS fields if either PhilGEPS field has data
+            // This allows users to fill other SVP fields without being forced to complete PhilGEPS
             if ($this->bulkEditData['amount_threshold'] === '>=200k') {
-                $missingPhilgepsFields = [];
+                $hasPhilgeps = $this->hasValue($this->bulkEditData['philgeps_posting_ref_no'] ?? '');
+                $hasAdsPost = $this->hasValue($this->bulkEditData['ads_post_ib'] ?? '');
 
-                if (!$this->hasValue($this->bulkEditData['philgeps_posting_ref_no'] ?? '')) {
-                    $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
-                }
-                if (!$this->hasValue($this->bulkEditData['ads_post_ib'] ?? '')) {
-                    $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
-                }
+                // If either field has data, both must be filled
+                if ($hasPhilgeps || $hasAdsPost) {
+                    $missingPhilgepsFields = [];
 
-                if (!empty($missingPhilgepsFields)) {
-                    $fieldsList = implode(', ', $missingPhilgepsFields);
-                    $this->bulkEditErrors[] = "SVP Mode: {$fieldsList} required for items with ABC ≥ ₱200,000.";
+                    if (!$hasPhilgeps) {
+                        $missingPhilgepsFields[] = 'PhilGEPS Posting Ref No';
+                    }
+                    if (!$hasAdsPost) {
+                        $missingPhilgepsFields[] = 'Advertisement/Posting of IB/REI';
+                    }
+
+                    if (!empty($missingPhilgepsFields)) {
+                        $fieldsList = implode(', ', $missingPhilgepsFields);
+                        $this->bulkEditErrors[] = "SVP Mode: {$fieldsList} required for items with ABC ≥ ₱200,000.";
+                    }
                 }
             }
         }
