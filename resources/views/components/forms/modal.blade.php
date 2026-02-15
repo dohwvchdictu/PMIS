@@ -2,9 +2,10 @@
     'title' => null,
     'size' => 'max-w-6xl',
     'closeMethod' => 'closeModal', // ✅ NEW: Allow custom close method
+    'model' => 'showModal', // ✅ NEW: Allow custom model property
 ])
 
-<div x-data="{ show: @entangle('showModal') }" @keydown.escape.window="show = false" x-cloak>
+<div x-data="{ show: @entangle($model) }" @keydown.escape.window="show = false" x-cloak>
 
     {{-- ✅ CRITICAL FIX: Teleport to body --}}
     <template x-teleport="body">

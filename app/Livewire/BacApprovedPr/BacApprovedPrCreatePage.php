@@ -7,17 +7,14 @@ use App\Models\Procurement;
 use Illuminate\Support\Facades\Validator;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
-// use Livewire\WithFileUploads; // REMOVED: No longer needed
 
 class BacApprovedPrCreatePage extends Component
 {
-    // use WithFileUploads; // REMOVED
-
     public $form = [];
     public $textareaRows = 1;
-    // public $document_file; // REMOVED
     public $procID;
     protected $layout = 'components.layouts.app';
+
     public function mount()
     {
         $this->resetForm();
@@ -29,14 +26,13 @@ class BacApprovedPrCreatePage extends Component
             'pr_number' => '',
             'procurement_program_project' => '',
             'remarks' => '',
-            'filepath' => '', // ADDED: To hold the URL
+            'filepath' => '',
         ];
     }
 
     private function resetForm(): void
     {
         $this->form = $this->defaultForm();
-        // $this->document_file = null; // REMOVED
         $this->resetErrorBag();
     }
 
@@ -45,16 +41,16 @@ class BacApprovedPrCreatePage extends Component
         // 1. Define validation rules
         $rules = [
             'form.pr_number' => 'required',
-            'form.filepath' => 'required|url|max:255', // CHANGED: Validate a URL string
+            'form.filepath' => 'required|url|max:255',
             'form.remarks' => 'nullable|string',
         ];
         $attributes = [
             'form.pr_number' => 'PR Number',
-            'form.filepath' => 'Approved PR Document URL', // CHANGED: Attribute name
+            'form.filepath' => 'Approved PR Document URL',
         ];
 
         // 2. Validate the data
-        $this->validate($rules, [], $attributes); // SIMPLIFIED: Livewire can handle this directly
+        $this->validate($rules, [], $attributes);
 
         // 3. Check for duplicates
         $isAlreadySaved = BacApprovedPr::where('procID', $this->procID)->exists();
@@ -72,7 +68,7 @@ class BacApprovedPrCreatePage extends Component
         // 4. Create the record in the database
         BacApprovedPr::create([
             'procID' => $this->procID,
-            'filepath' => $this->form['filepath'], // CHANGED: Save the URL directly
+            'filepath' => $this->form['filepath'],
             'remarks' => $this->form['remarks'],
         ]);
 
@@ -88,20 +84,28 @@ class BacApprovedPrCreatePage extends Component
 
     public function updatedFormPrNumber($value)
     {
-        $procurement = Procurement::find($value);
+        // Clear the fields first
+        $this->form['procurement_program_project'] = '';
+        $this->procID = null;
+        $this->textareaRows = 1;
+
+        // If no value selected, return early
+        if (empty($value)) {
+            return;
+        }
+
+        // Find the procurement by procID
+        $procurement = Procurement::where('procID', $value)->first();
 
         if ($procurement) {
             $this->form['procurement_program_project'] = $procurement->procurement_program_project;
             $this->procID = $procurement->procID;
 
+            // Calculate textarea rows
             $text = trim($procurement->procurement_program_project ?? '');
             $lineCount = substr_count($text, "\n") + 1;
             $approxExtraLines = ceil(strlen($text) / 150);
             $this->textareaRows = max($lineCount, $approxExtraLines, 1);
-        } else {
-            $this->form['procurement_program_project'] = '';
-            $this->procID = null;
-            $this->textareaRows = 1;
         }
     }
 

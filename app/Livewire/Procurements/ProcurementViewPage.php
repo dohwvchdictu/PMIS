@@ -56,16 +56,15 @@ class ProcurementViewPage extends Component
     public ?string $selectedPrItemID = null;
 
     // Post procurement data
-    public ?string $resolutionNumber = null;
+    public ?string $resolutionAwardNumber = null;
+    public ?string $resolutionAwardDate = null;
     public ?string $bidEvaluationDate = null;
     public ?string $postQualDate = null;
     public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
-    public ?string $recommendingForAward = null;
     public ?float $awardedAmount = null;
-    public ?string $philgepsReferenceNo = null;
-    public ?string $awardNoticeNumber = null;
-    public ?string $dateOfPostingOfAwardOnPhilGEPS = null;
+    public ?string $philgepsNoticeOfAwardNo = null;
+    public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
 
     public function mount(Procurement $procurement): void
@@ -274,11 +273,13 @@ class ProcurementViewPage extends Component
         foreach ($prSvps as $uid => $schedule) {
             $existing = $map->get($uid, []);
             $map[$uid] = array_merge($existing, [
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
+                'ads_post_ib' => $schedule->ads_post_ib,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
                 'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
                 'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
-                'resolution_number' => $schedule->resolution_number,
             ]);
         }
 
@@ -329,11 +330,13 @@ class ProcurementViewPage extends Component
 
             $map[$refId][$mopUid] = array_merge($existing, [
                 'mop_uid' => $schedule->mop_uid,
+                'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
+                'ads_post_ib' => $schedule->ads_post_ib,
+                'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
                 'canvass_date' => $schedule->canvass_date,
                 'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
                 'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
-                'resolution_number' => $schedule->resolution_number,
             ]);
         }
 
@@ -379,7 +382,6 @@ class ProcurementViewPage extends Component
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
             'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-            'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
     }
     private function buildMopItemArray($mopLot, array $schedule): array
@@ -417,7 +419,6 @@ class ProcurementViewPage extends Component
             'canvass_date' => $schedule['canvass_date'] ?? null,
             'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? null,
             'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? null,
-            'resolution_number' => $schedule['resolution_number'] ?? null,
         ];
     }
 
@@ -428,16 +429,16 @@ class ProcurementViewPage extends Component
             $post = PostProcurement::where('ref_id', $procurement->procID)->first();
 
             if ($post) {
-                $this->resolutionNumber = $post->resolution_number;
+                $this->resolutionAwardNumber = $post->resolution_award_number;
+                $this->resolutionAwardDate = $post->resolution_award_date;
                 $this->bidEvaluationDate = $post->bid_evaluation_date;
                 $this->postQualDate = $post->post_qual_date;
                 $this->noticeOfAwardNumber = $post->notice_of_award_number;
                 $this->noticeOfAward = $post->notice_of_award;
                 $this->recommendingForAward = $post->recommending_for_award;
                 $this->awardedAmount = $post->awarded_amount;
-                $this->philgepsReferenceNo = $post->philgeps_reference_no;
-                $this->awardNoticeNumber = $post->award_notice_no;
-                $this->dateOfPostingOfAwardOnPhilGEPS = $post->date_of_posting_of_award_on_philgeps;
+                $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
+                $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
                 $this->supplier_id = $post->supplier_id;
             }
         } else {
@@ -458,16 +459,16 @@ class ProcurementViewPage extends Component
 
                 if ($post) {
                     $this->postItems[$prItemID] = [
-                        'resolutionNumber' => $post->resolution_number,
+                        'resolutionAwardNumber' => $post->resolution_award_number,
+                        'resolutionAwardDate' => $post->resolution_award_date,
                         'bidEvaluationDate' => $post->bid_evaluation_date,
                         'postQualDate' => $post->post_qual_date,
                         'noticeOfAwardNumber' => $post->notice_of_award_number,
                         'noticeOfAward' => $post->notice_of_award,
                         'recommendingForAward' => $post->recommending_for_award,
                         'awardedAmount' => $post->awarded_amount,
-                        'philgepsReferenceNo' => $post->philgeps_reference_no,
-                        'awardNoticeNumber' => $post->award_notice_no,
-                        'dateOfPostingOfAwardOnPhilGEPS' => $post->date_of_posting_of_award_on_philgeps,
+                        'philgepsNoticeOfAwardNo' => $post->philgeps_notice_of_award_no,
+                        'philgepsPostingOfAward' => $post->philgeps_posting_of_award,
                         'supplier_id' => $post->supplier_id,
                     ];
                 }
@@ -530,6 +531,32 @@ class ProcurementViewPage extends Component
             // For perItem, check if any prItemID has post-procurement data
             return !empty($this->postItems);
         }
+    }
+
+    public function getHasPmuDataProperty(): bool
+    {
+        // Check if post data exists first
+        if (!$this->hasPostData) {
+            return false;
+        }
+
+        // Check if procurement stage is "Forwarded to PMU" or id is 7
+        if ($this->form['procurement_type'] === 'perLot') {
+            $currentStage = $this->procurement->currentPrStage?->procurementStage;
+            if ($currentStage) {
+                return $currentStage->procurementstage === 'Forwarded to PMU' || $currentStage->id === 7;
+            }
+        } else {
+            // For perItem, check if any item has stage "Forwarded to PMU" or id 7
+            $items = $this->form['items'] ?? [];
+            foreach ($items as $item) {
+                if (isset($item['stage']) && ($item['stage'] === 'Forwarded to PMU')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
     public function toggleMopSection($index)
     {

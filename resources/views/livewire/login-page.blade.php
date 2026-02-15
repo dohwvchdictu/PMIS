@@ -83,8 +83,11 @@
 
                     <!-- Title -->
                     <div class="mt-4 md:mb-12 max-w-2xl">
-                        <h1 class="mb-4 font-semibold text-gray-800 text-4xl lg:text-5xl">
-                            WV CHD Procurement Monitoring Information System
+                        <span class="mb-4 font-semibold text-gray-800 text-xl lg:text-2xl">
+                            Western Visayas Center for Health Development
+                        </span>
+                        <h1 class="mb-4 font-semibold text-gray-800 text-4xl lg:text-5xl">Procurement Monitoring
+                            Information System
                         </h1>
                         <p class="text-gray-600">
                             Version 1.0

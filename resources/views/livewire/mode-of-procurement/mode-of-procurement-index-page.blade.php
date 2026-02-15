@@ -1,5 +1,5 @@
 <div
-    class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col">
+    class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col mb-6">
 
     <!-- Enhanced Header with Expandable Filters -->
     <div class="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 w-full"
@@ -19,6 +19,18 @@
 
             <!-- Filter Toggle Button -->
             <div class="flex items-center gap-2">
+                <!-- Bulk Edit Button -->
+                @if (count($selectedItems) > 0)
+                    <button wire:click="bulkEdit"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Bulk Edit ({{ count($selectedItems) }})
+                    </button>
+                @endif
+
                 <button @click="showFilters = !showFilters"
                     class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200"
                     :class="showFilters ?
@@ -78,22 +90,310 @@
         </div>
     </div>
 
+    <!-- Selected Items Section -->
+    @if (count($selectedItems) > 0)
+        <div class="mx-6 mt-4 mb-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg overflow-hidden"
+            x-data="{ showSelected: true }">
+            <div class="flex items-center justify-between px-4 py-3 cursor-pointer"
+                @click="showSelected = !showSelected">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                        {{ count($selectedItems) }} PR(s) Selected
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button wire:click.stop="clearSelections"
+                        class="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">
+                        Clear All
+                    </button>
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 transition-transform"
+                        :class="{ 'rotate-180': showSelected }" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div x-show="showSelected" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-screen"
+                x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 max-h-screen"
+                x-transition:leave-end="opacity-0 max-h-0" class="border-t border-emerald-200 dark:border-emerald-700">
+                <div class="overflow-auto max-h-96">
+                    <table class="table-fixed w-full min-w-[1200px] divide-y divide-gray-200 dark:divide-neutral-700">
+                        <thead
+                            class="bg-gradient-to-r from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 sticky top-0 z-30">
+                            <tr>
+                                <th
+                                    class="px-1 py-2 sticky left-0 z-50 bg-emerald-100 dark:bg-emerald-900/40 w-12 text-center align-middle">
+                                    <span class="text-xs font-bold text-emerald-700 dark:text-emerald-200">✓</span>
+                                </th>
+                                <th class="px-2 py-1 sticky left-12 z-50 bg-emerald-100 dark:bg-emerald-900/40 w-16">
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider sticky left-28 z-40 bg-emerald-100 dark:bg-emerald-900/40 w-40">
+                                    PR Number
+                                </th>
+                                <th
+                                    class="px-2 py-1 text-left text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider sticky left-68 z-40 bg-emerald-100 dark:bg-emerald-900/40 w-80">
+                                    Procurement Program / Project
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-28">
+                                    BAC Category
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-36">
+                                    IB Number
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-56">
+                                    Current Mode
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-28">
+                                    Status
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-40">
+                                    Cluster / Committee
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-48">
+                                    Category
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-40">
+                                    Early Procurement
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-48">
+                                    Source of Funds
+                                </th>
+                                <th
+                                    class="px-1 py-1 text-center text-xs font-bold text-emerald-700 dark:text-emerald-200 uppercase tracking-wider w-32">
+                                    ABC Amount
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-neutral-800">
+                            @php
+                                $selectedProcurements = \App\Models\Procurement::whereIn('procID', $selectedItems)
+                                    ->with([
+                                        'currentPrStage.procurementStage',
+                                        'mopLots.modeOfProcurement',
+                                        'pr_items',
+                                        'category.bacType',
+                                        'clusterCommittee',
+                                        'category',
+                                        'fundSource',
+                                    ])
+                                    ->get();
+                            @endphp
+                            @foreach ($selectedProcurements as $procurement)
+                                @php
+                                    $modeStatus = $this->getCurrentModeAndStatus($procurement);
+                                    $procurement->currentMode = $modeStatus['mode'];
+                                    $procurement->currentStatus = $modeStatus['status'];
+                                @endphp
+                                <tr wire:key="selected-procurement-{{ $procurement->procID }}"
+                                    class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/30 dark:hover:to-teal-900/30 transition-all duration-200 group">
+
+                                    <td
+                                        class="px-2 py-4 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-black dark:text-white w-12 align-middle">
+                                        <button
+                                            wire:click.stop="$set('selectedItems', {{ json_encode(array_values(array_diff($selectedItems, [$procurement->procID]))) }})"
+                                            class="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </td>
+
+                                    <td
+                                        class="py-4 pr-2 text-center sticky left-12 z-20 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-black dark:text-white w-16">
+                                    </td>
+
+                                    <td
+                                        class="px-2 py-4 text-center text-sm font-bold sticky left-28 z-20 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-emerald-700 dark:text-emerald-300 w-40">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
+                                            {{ $procurement->pr_number }}
+                                        </span>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-left text-xs sticky left-68 z-20 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-900 dark:text-gray-100 w-80">
+                                        <div class="font-medium truncate"
+                                            title="{{ $procurement->procurement_program_project }}">
+                                            {{ $procurement->procurement_program_project }}
+                                        </div>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        <div class="truncate"
+                                            title="{{ $procurement->category?->bacType?->abbreviation ?? 'N/A' }}">
+                                            {{ $procurement->category?->bacType?->abbreviation ?? 'N/A' }}
+                                        </div>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        @php
+                                            $latestMop = $procurement
+                                                ->mopLots()
+                                                ->orderBy('mode_order', 'desc')
+                                                ->first();
+                                            $ibNumber = null;
+                                            if ($latestMop) {
+                                                $bidSchedule = \App\Models\BidSchedule::where(
+                                                    'mop_uid',
+                                                    $latestMop->uid,
+                                                )
+                                                    ->where('ref_id', $procurement->procID)
+                                                    ->first();
+                                                $ibNumber = $bidSchedule?->ib_number;
+                                            }
+                                        @endphp
+                                        @if ($ibNumber)
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-md font-mono text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                                {{ $ibNumber }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-500 dark:text-gray-400 italic text-xs">N/A</span>
+                                        @endif
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        @if ($procurement->currentMode)
+                                            <span
+                                                class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700 shadow-sm">
+                                                {{ $procurement->currentMode->modeofprocurements }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-500 dark:text-gray-400 italic text-xs">No
+                                                Mode</span>
+                                        @endif
+                                    </td>
+
+                                    @php
+                                        $status = $procurement->currentStatus ?? '';
+                                        $isSuccessful = in_array(strtoupper($status), ['SUCCESSFUL', 'COMPLETED']);
+
+                                        $statusColor = $isSuccessful
+                                            ? 'from-green-100 to-green-200 text-green-800 border-green-300 dark:from-green-900/40 dark:to-green-800/40 dark:text-green-200 dark:border-green-700'
+                                            : 'from-red-100 to-red-200 text-red-800 border-red-300 dark:from-red-900/40 dark:to-red-800/40 dark:text-red-200 dark:border-red-700';
+
+                                        $statusIcon = $isSuccessful
+                                            ? '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>'
+                                            : '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+                                    @endphp
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        @if ($procurement->currentStatus)
+                                            <span
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r {{ $statusColor }} border shadow-sm">
+                                                {!! $statusIcon !!}
+                                                {{ $procurement->currentStatus }}
+                                            </span>
+                                        @else
+                                            <span
+                                                class="text-gray-500 dark:text-gray-400 italic text-xs">Pending</span>
+                                        @endif
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        <div class="truncate"
+                                            title="{{ $procurement->clusterCommittee->clustercommittee }}">
+                                            {{ $procurement->clusterCommittee->clustercommittee }}
+                                        </div>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        <div class="truncate" title="{{ $procurement->category->category }}">
+                                            {{ $procurement->category->category }}
+                                        </div>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-neutral-200">
+                                        @if ($procurement->early_procurement)
+                                            <div
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+                                                <x-heroicon-s-check-circle title="Yes"
+                                                    class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                <span
+                                                    class="text-xs font-medium text-emerald-700 dark:text-emerald-300">Yes</span>
+                                            </div>
+                                        @else
+                                            <div
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
+                                                <x-heroicon-s-x-circle title="No"
+                                                    class="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                <span
+                                                    class="text-xs font-medium text-red-700 dark:text-red-300">No</span>
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 text-center text-sm {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-700 dark:text-gray-200">
+                                        <div class="truncate"
+                                            title="{{ $procurement->fundSource ? $procurement->fundSource->fundsources : 'N/A' }}">
+                                            <span
+                                                class="text-xs font-medium">{{ $procurement->fundSource ? $procurement->fundSource->fundsources : 'N/A' }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td
+                                        class="px-3 py-4 pr-4 text-right text-sm font-bold {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-gray-900 dark:text-white relative">
+                                        <div class="inline-flex items-baseline gap-0.5">
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                            <span
+                                                class="text-emerald-700 dark:text-emerald-400">{{ number_format($procurement->abc ?? 0, 2) }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Enhanced Table Section -->
     <div class="overflow-auto flex-1">
         <table class="table-fixed w-full min-w-[1200px] divide-y divide-gray-200 dark:divide-neutral-700">
             <thead
-                class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-10">
+                class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-30">
                 <tr>
-                    <th class="px-2 py-1 sticky left-0 z-40 bg-gray-100 dark:bg-neutral-900 w-16">
+                    <th
+                        class="px-1 py-2 sticky left-0 z-50 bg-gray-100 dark:bg-neutral-900 w-12 text-center align-middle">
+                        <input type="checkbox" wire:model.live="selectAll"
+                            class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    </th>
+
+                    <th class="px-2 py-1 sticky left-12 z-50 bg-gray-100 dark:bg-neutral-900 w-16">
                     </th>
 
                     <th
-                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[64px]  z-30 bg-gray-100 dark:bg-neutral-900 w-40">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-28 z-40 bg-gray-100 dark:bg-neutral-900 w-40">
                         PR Number
                     </th>
 
                     <th
-                        class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-[224px] z-20 bg-gray-100 dark:bg-neutral-900 w-80">
+                        class="px-2 py-1 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider sticky left-68 z-40 bg-gray-100 dark:bg-neutral-900 w-80">
                         Procurement Program / Project
                     </th>
                     <th
@@ -137,10 +437,20 @@
             <tbody class="bg-white dark:bg-neutral-800">
                 @foreach ($procurements as $procurement)
                     <!-- Enhanced Main Row with Alternating Colors -->
-                    <tr
+                    <tr wire:key="procurement-{{ $procurement->procID }}"
                         class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-gray-50/50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 transition-all duration-200 group">
                         <td
-                            class="py-4 pr-2 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white w-20">
+                            class="px-2 py-4 text-center sticky left-0 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white w-12 align-middle">
+                            <div class="flex items-center justify-center">
+                                <input type="checkbox" wire:key="checkbox-{{ $procurement->procID }}"
+                                    wire:model.live="selectedItems" value="{{ $procurement->procID }}"
+                                    @if ($procurement->procurement_type === 'perItem') disabled @endif
+                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 {{ $procurement->procurement_type === 'perItem' ? 'opacity-50 cursor-not-allowed' : '' }}">
+                            </div>
+                        </td>
+
+                        <td
+                            class="py-4 pr-2 text-center sticky left-12 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-black dark:text-white w-16">
                             <div class="flex items-center justify-end gap-1">
                                 <!-- Enhanced Expand/Collapse Button -->
                                 @if ($procurement->procurement_type === 'perItem')
@@ -158,7 +468,8 @@
                                             <svg xmlns="http://www.w3.org/2000/svg"
                                                 class="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none"
                                                 viewBox="0 0 22 22" stroke="currentColor" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M9 5l7 7-7 7" />
                                             </svg>
                                         @endif
                                     </button>
@@ -219,7 +530,7 @@
                         </td>
 
                         <td
-                            class="px-2 py-4 text-center text-sm font-bold sticky left-[64px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
+                            class="px-2 py-4 text-center text-sm font-bold sticky left-28 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
                             <span
                                 class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
                                 {{ $procurement->pr_number }}
@@ -227,7 +538,7 @@
                         </td>
 
                         <td
-                            class="px-3 py-4 text-left text-xs sticky left-[224px] z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
+                            class="px-3 py-4 text-left text-xs sticky left-68 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-900 dark:text-gray-100 w-80">
                             <div class="font-medium break-words whitespace-normal"
                                 title="{{ $procurement->procurement_program_project }}">
                                 {{ $procurement->procurement_program_project }}

@@ -1,5 +1,5 @@
 <div>
-    <div class="space-y-4">
+    <div class="space-y-6">
         <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
             <div class="h-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500"></div>
@@ -121,7 +121,7 @@
                 </li>
 
                 {{-- Step 3: Post Procurement --}}
-                <li class="flex items-center">
+                <li class="flex items-center flex-1">
                     <button type="button" wire:click="setStep(3)" @if (!$this->hasPostData) disabled @endif
                         class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 3 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPostData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                         3
@@ -129,6 +129,21 @@
                     <span
                         class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 3 || $this->hasPostData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                         Post Procurement
+                    </span>
+                    <div
+                        class="h-px flex-1 mx-3 transition-all duration-300 {{ $activeTab > 3 || $this->hasPmuData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
+                    </div>
+                </li>
+
+                {{-- Step 4: PMU --}}
+                <li class="flex items-center">
+                    <button type="button" wire:click="setStep(4)" @if (!$this->hasPmuData) disabled @endif
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 4 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPmuData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
+                        4
+                    </button>
+                    <span
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 4 || $this->hasPmuData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
+                        PMU
                     </span>
                 </li>
             </ul>
@@ -138,7 +153,7 @@
         <div>
             @if ($activeTab == 1)
                 {{-- Basic Details Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
 
                     @if ($form['procurement_type'] === 'perItem')
                         <div
@@ -530,7 +545,7 @@
 
             @if ($activeTab == 2)
                 {{-- Mode of Procurement Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
                     @if ($form['procurement_type'] === 'perLot')
                         {{-- PER LOT DISPLAY with History Toggle --}}
                         @php
@@ -629,12 +644,23 @@
                                         ]) &&
                                         ($currentMode['bidding_number'] ||
                                             $currentMode['ib_number'] ||
-                                            $currentMode['pre_proc_conference'] ||
+                                            $currentMode['philgeps_posting_ref_no'] ||
                                             $currentMode['ads_post_ib'] ||
+                                            $currentMode['pre_proc_conference'] ||
+                                            $currentMode['list_invited_observerspre_bid_conf'] ||
+                                            $currentMode['obsrvr_prebid_conf'] ||
+                                            $currentMode['obsrvr_eligibility'] ||
+                                            $currentMode['obsrvr_sub_open_of_bid'] ||
+                                            $currentMode['obsrvr_bid'] ||
+                                            $currentMode['obsrvr_post_qual'] ||
+                                            $currentMode['obsrvr_post_qual'] ||
                                             $currentMode['pre_bid_conf'] ||
                                             $currentMode['eligibility_check'] ||
                                             $currentMode['sub_open_bids'] ||
-                                            $currentMode['bidding_date']);
+                                            $currentMode['bid_evaluation_date'] ||
+                                            $currentMode['post_qualification_date'] ||
+                                            $currentMode['bidding_result'] ||
+                                            $currentMode['resolution_number_mop']);
 
                                     $hasSvpData =
                                         in_array($modeId, [
@@ -657,11 +683,13 @@
                                             23,
                                             24,
                                         ]) &&
-                                        ($currentMode['rfq_no'] ||
+                                        ($currentMode['philgeps_posting_ref_no'] ||
+                                            $currentMode['ads_post_ib'] ||
+                                            $currentMode['resolution_number_mop'] ||
+                                            $currentMode['rfq_no'] ||
                                             $currentMode['canvass_date'] ||
                                             $currentMode['date_returned_of_canvass'] ||
-                                            $currentMode['abstract_of_canvass_date'] ||
-                                            $currentMode['resolution_number']);
+                                            $currentMode['abstract_of_canvass_date']);
                                 @endphp
 
                                 {{-- Mode Information --}}
@@ -700,20 +728,20 @@
                                                         {{ $currentMode['philgeps_posting_ref_no'] }}</p>
                                                 </div>
                                             @endif
-                                            @if ($currentMode['pre_proc_conference'])
-                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pre-Proc
-                                                        Conference</p>
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $currentMode['pre_proc_conference'] }}</p>
-                                                </div>
-                                            @endif
                                             @if ($currentMode['ads_post_ib'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Ads/Post
                                                         IB</p>
                                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                         {{ $currentMode['ads_post_ib'] }}</p>
+                                                </div>
+                                            @endif
+                                            @if ($currentMode['pre_proc_conference'])
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pre-Proc
+                                                        Conference</p>
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $currentMode['pre_proc_conference'] }}</p>
                                                 </div>
                                             @endif
                                             {{-- Observer fields only for competitive bidding modes 2-6 --}}
@@ -807,14 +835,6 @@
                                                         {{ $currentMode['post_qualification_date'] }}</p>
                                                 </div>
                                             @endif
-                                            @if ($currentMode['bidding_date'])
-                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bidding
-                                                        Date</p>
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $currentMode['bidding_date'] }}</p>
-                                                </div>
-                                            @endif
                                             @if ($currentMode['resolution_number_mop'])
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
@@ -895,14 +915,6 @@
                                                         {{ $currentMode['abstract_of_canvass_date'] }}</p>
                                                 </div>
                                             @endif
-                                            @if ($currentMode['resolution_number'])
-                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
-                                                        Number</p>
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $currentMode['resolution_number'] }}</p>
-                                                </div>
-                                            @endif
                                         </div>
                                     </div>
                                 @endif
@@ -947,14 +959,25 @@
                                                             23,
                                                             24,
                                                         ]) &&
-                                                        ($historyItem['bidding_number'] ||
-                                                            $historyItem['ib_number'] ||
-                                                            $historyItem['pre_proc_conference'] ||
-                                                            $historyItem['ads_post_ib'] ||
-                                                            $historyItem['pre_bid_conf'] ||
-                                                            $historyItem['eligibility_check'] ||
-                                                            $historyItem['sub_open_bids'] ||
-                                                            $historyItem['bidding_date']);
+                                                        ($currentMode['bidding_number'] ||
+                                                            $currentMode['ib_number'] ||
+                                                            $currentMode['philgeps_posting_ref_no'] ||
+                                                            $currentMode['ads_post_ib'] ||
+                                                            $currentMode['pre_proc_conference'] ||
+                                                            $currentMode['list_invited_observerspre_bid_conf'] ||
+                                                            $currentMode['obsrvr_prebid_conf'] ||
+                                                            $currentMode['obsrvr_eligibility'] ||
+                                                            $currentMode['obsrvr_sub_open_of_bid'] ||
+                                                            $currentMode['obsrvr_bid'] ||
+                                                            $currentMode['obsrvr_post_qual'] ||
+                                                            $currentMode['obsrvr_post_qual'] ||
+                                                            $currentMode['pre_bid_conf'] ||
+                                                            $currentMode['eligibility_check'] ||
+                                                            $currentMode['sub_open_bids'] ||
+                                                            $currentMode['bid_evaluation_date'] ||
+                                                            $currentMode['post_qualification_date'] ||
+                                                            $currentMode['bidding_result'] ||
+                                                            $currentMode['resolution_number_mop']);
 
                                                     $hasHistorySvp =
                                                         in_array($historyModeId, [
@@ -977,11 +1000,13 @@
                                                             23,
                                                             24,
                                                         ]) &&
-                                                        ($historyItem['rfq_no'] ||
-                                                            $historyItem['canvass_date'] ||
-                                                            $historyItem['date_returned_of_canvass'] ||
-                                                            $historyItem['abstract_of_canvass_date'] ||
-                                                            $historyItem['resolution_number']);
+                                                        ($currentMode['philgeps_posting_ref_no'] ||
+                                                            $currentMode['ads_post_ib'] ||
+                                                            $currentMode['resolution_number_mop'] ||
+                                                            $currentMode['rfq_no'] ||
+                                                            $currentMode['canvass_date'] ||
+                                                            $currentMode['date_returned_of_canvass'] ||
+                                                            $currentMode['abstract_of_canvass_date']);
                                                 @endphp
 
                                                 <div
@@ -1032,6 +1057,27 @@
                                                                             {{ $historyItem['ib_number'] }}</p>
                                                                     </div>
                                                                 @endif
+                                                                @if ($historyItem['philgeps_posting_ref_no'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            IB No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['philgeps_posting_ref_no'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['ads_post_ib'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            IB No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['ads_post_ib'] }}</p>
+                                                                    </div>
+                                                                @endif
                                                                 @if ($historyItem['pre_proc_conference'])
                                                                     <div>
                                                                         <p
@@ -1043,14 +1089,81 @@
                                                                         </p>
                                                                     </div>
                                                                 @endif
-                                                                @if ($historyItem['ads_post_ib'])
+                                                                @if ($historyItem['list_invited_observers'])
                                                                     <div>
                                                                         <p
                                                                             class="text-xs text-gray-500 dark:text-gray-400">
-                                                                            Ads/Post IB</p>
+                                                                            Pre-Proc Conf</p>
                                                                         <p
                                                                             class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                            {{ $historyItem['ads_post_ib'] }}</p>
+                                                                            {{ $historyItem['list_invited_observers'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_prebid_conf'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_prebid_conf'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_eligibility'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_eligibility'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_sub_open_of_bid'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_sub_open_of_bid'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_bid'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_bid'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_post_qual'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_post_qual'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['obsrvr_post_qual'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Pre-Proc Conf</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['obsrvr_post_qual'] }}
+                                                                        </p>
                                                                     </div>
                                                                 @endif
                                                                 @if ($historyItem['pre_bid_conf'])
@@ -1083,14 +1196,48 @@
                                                                             {{ $historyItem['sub_open_bids'] }}</p>
                                                                     </div>
                                                                 @endif
-                                                                @if ($historyItem['bidding_date'])
+                                                                @if ($historyItem['bid_evaluation_date'])
                                                                     <div>
                                                                         <p
                                                                             class="text-xs text-gray-500 dark:text-gray-400">
-                                                                            Bidding Date</p>
+                                                                            Sub/Open Bids</p>
                                                                         <p
                                                                             class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                            {{ $historyItem['bidding_date'] }}</p>
+                                                                            {{ $historyItem['bid_evaluation_date'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['post_qualification_date'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Sub/Open Bids</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['post_qualification_date'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['bidding_result'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Sub/Open Bids</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['bidding_result'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['resolution_number_mop'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            Sub/Open Bids</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['resolution_number_mop'] }}
+                                                                        </p>
                                                                     </div>
                                                                 @endif
                                                             </div>
@@ -1104,6 +1251,38 @@
                                                                 Mode Information</p>
                                                             <div
                                                                 class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                @if ($historyItem['philgeps_posting_ref_no'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            RFQ No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['philgeps_posting_ref_no'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['ads_post_ib'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            RFQ No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['ads_post_ib'] }}</p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($historyItem['resolution_number_mop'])
+                                                                    <div>
+                                                                        <p
+                                                                            class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            RFQ No.</p>
+                                                                        <p
+                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                            {{ $historyItem['resolution_number_mop'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
                                                                 @if ($historyItem['rfq_no'])
                                                                     <div>
                                                                         <p
@@ -1143,17 +1322,6 @@
                                                                         <p
                                                                             class="text-xs font-medium text-gray-900 dark:text-white">
                                                                             {{ $historyItem['abstract_of_canvass_date'] }}
-                                                                        </p>
-                                                                    </div>
-                                                                @endif
-                                                                @if ($historyItem['resolution_number'])
-                                                                    <div>
-                                                                        <p
-                                                                            class="text-xs text-gray-500 dark:text-gray-400">
-                                                                            Resolution</p>
-                                                                        <p
-                                                                            class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                            {{ $historyItem['resolution_number'] }}
                                                                         </p>
                                                                     </div>
                                                                 @endif
@@ -1354,12 +1522,23 @@
                                             ]) &&
                                             ($currentItem['bidding_number'] ||
                                                 $currentItem['ib_number'] ||
-                                                $currentItem['pre_proc_conference'] ||
+                                                $currentItem['philgeps_posting_ref_no'] ||
                                                 $currentItem['ads_post_ib'] ||
+                                                $currentItem['pre_proc_conference'] ||
+                                                $currentItem['list_invited_observerspre_bid_conf'] ||
+                                                $currentItem['obsrvr_prebid_conf'] ||
+                                                $currentItem['obsrvr_eligibility'] ||
+                                                $currentItem['obsrvr_sub_open_of_bid'] ||
+                                                $currentItem['obsrvr_bid'] ||
+                                                $currentItem['obsrvr_post_qual'] ||
+                                                $currentItem['obsrvr_post_qual'] ||
                                                 $currentItem['pre_bid_conf'] ||
                                                 $currentItem['eligibility_check'] ||
                                                 $currentItem['sub_open_bids'] ||
-                                                $currentItem['bidding_date']);
+                                                $currentItem['bid_evaluation_date'] ||
+                                                $currentItem['post_qualification_date'] ||
+                                                $currentItem['bidding_result'] ||
+                                                $currentItem['resolution_number_mop']);
 
                                         $hasSvpData =
                                             in_array($modeId, [
@@ -1382,11 +1561,13 @@
                                                 23,
                                                 24,
                                             ]) &&
-                                            ($currentItem['rfq_no'] ||
+                                            ($currentItem['philgeps_posting_ref_no'] ||
+                                                $currentItem['ads_post_ib'] ||
+                                                $currentItem['resolution_number_mop'] ||
+                                                $currentItem['rfq_no'] ||
                                                 $currentItem['canvass_date'] ||
                                                 $currentItem['date_returned_of_canvass'] ||
-                                                $currentItem['abstract_of_canvass_date'] ||
-                                                $currentItem['resolution_number']);
+                                                $currentItem['abstract_of_canvass_date']);
                                     @endphp
 
                                     {{-- Mode Information --}}
@@ -1428,20 +1609,20 @@
                                                             {{ $currentItem['philgeps_posting_ref_no'] }}</p>
                                                     </div>
                                                 @endif
-                                                @if ($currentItem['pre_proc_conference'])
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Pre-Proc Conference</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $currentItem['pre_proc_conference'] }}</p>
-                                                    </div>
-                                                @endif
                                                 @if ($currentItem['ads_post_ib'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                                                             Ads/Post IB</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                             {{ $currentItem['ads_post_ib'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if ($currentItem['pre_proc_conference'])
+                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Pre-Proc Conference</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $currentItem['pre_proc_conference'] }}</p>
                                                     </div>
                                                 @endif
                                                 {{-- Observer fields only for competitive bidding modes 2-6 --}}
@@ -1541,14 +1722,6 @@
                                                             {{ $currentItem['post_qualification_date'] }}</p>
                                                     </div>
                                                 @endif
-                                                @if ($currentItem['bidding_date'])
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Bidding Date</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $currentItem['bidding_date'] }}</p>
-                                                    </div>
-                                                @endif
                                                 @if ($currentItem['resolution_number_mop'])
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -1630,14 +1803,6 @@
                                                             {{ $currentItem['abstract_of_canvass_date'] }}</p>
                                                     </div>
                                                 @endif
-                                                @if ($currentItem['resolution_number'])
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Resolution Number</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $currentItem['resolution_number'] }}</p>
-                                                    </div>
-                                                @endif
                                             </div>
                                         </div>
                                     @endif
@@ -1687,14 +1852,25 @@
                                                                 23,
                                                                 24,
                                                             ]) &&
-                                                            ($historyItem['bidding_number'] ||
-                                                                $historyItem['ib_number'] ||
-                                                                $historyItem['pre_proc_conference'] ||
-                                                                $historyItem['ads_post_ib'] ||
-                                                                $historyItem['pre_bid_conf'] ||
-                                                                $historyItem['eligibility_check'] ||
-                                                                $historyItem['sub_open_bids'] ||
-                                                                $historyItem['bidding_date']);
+                                                            ($currentMode['bidding_number'] ||
+                                                                $currentMode['ib_number'] ||
+                                                                $currentMode['philgeps_posting_ref_no'] ||
+                                                                $currentMode['ads_post_ib'] ||
+                                                                $currentMode['pre_proc_conference'] ||
+                                                                $currentMode['list_invited_observerspre_bid_conf'] ||
+                                                                $currentMode['obsrvr_prebid_conf'] ||
+                                                                $currentMode['obsrvr_eligibility'] ||
+                                                                $currentMode['obsrvr_sub_open_of_bid'] ||
+                                                                $currentMode['obsrvr_bid'] ||
+                                                                $currentMode['obsrvr_post_qual'] ||
+                                                                $currentMode['obsrvr_post_qual'] ||
+                                                                $currentMode['pre_bid_conf'] ||
+                                                                $currentMode['eligibility_check'] ||
+                                                                $currentMode['sub_open_bids'] ||
+                                                                $currentMode['bid_evaluation_date'] ||
+                                                                $currentMode['post_qualification_date'] ||
+                                                                $currentMode['bidding_result'] ||
+                                                                $currentMode['resolution_number_mop']);
 
                                                         $hasHistorySvp =
                                                             in_array($historyModeId, [
@@ -1717,11 +1893,13 @@
                                                                 23,
                                                                 24,
                                                             ]) &&
-                                                            ($historyItem['rfq_no'] ||
-                                                                $historyItem['canvass_date'] ||
-                                                                $historyItem['date_returned_of_canvass'] ||
-                                                                $historyItem['abstract_of_canvass_date'] ||
-                                                                $historyItem['resolution_number']);
+                                                            ($currentMode['philgeps_posting_ref_no'] ||
+                                                                $currentMode['ads_post_ib'] ||
+                                                                $currentMode['resolution_number_mop'] ||
+                                                                $currentMode['rfq_no'] ||
+                                                                $currentMode['canvass_date'] ||
+                                                                $currentMode['date_returned_of_canvass'] ||
+                                                                $currentMode['abstract_of_canvass_date']);
                                                     @endphp
 
                                                     <div
@@ -1767,14 +1945,14 @@
                                                                                 {{ $historyItem['ib_number'] }}</p>
                                                                         </div>
                                                                     @endif
-                                                                    @if ($historyItem['pre_proc_conference'])
+                                                                    @if ($historyItem['philgeps_posting_ref_no'])
                                                                         <div>
                                                                             <p
                                                                                 class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                Pre-Proc Conf</p>
+                                                                                IB No.</p>
                                                                             <p
                                                                                 class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                                {{ $historyItem['pre_proc_conference'] }}
+                                                                                {{ $historyItem['philgeps_posting_ref_no'] }}
                                                                             </p>
                                                                         </div>
                                                                     @endif
@@ -1786,6 +1964,83 @@
                                                                             <p
                                                                                 class="text-xs font-medium text-gray-900 dark:text-white">
                                                                                 {{ $historyItem['ads_post_ib'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['pre_proc_conference'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['pre_proc_conference'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['list_invited_observers'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['list_invited_observers'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['obsrvr_prebid_conf'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['obsrvr_prebid_conf'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['obsrvr_eligibility'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['obsrvr_eligibility'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['obsrvr_sub_open_of_bid'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['obsrvr_sub_open_of_bid'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['obsrvr_bid'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['obsrvr_bid'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['obsrvr_post_qual'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Pre-Proc Conf</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['obsrvr_post_qual'] }}
+                                                                            </p>
                                                                         </div>
                                                                     @endif
                                                                     @if ($historyItem['pre_bid_conf'])
@@ -1820,14 +2075,48 @@
                                                                             </p>
                                                                         </div>
                                                                     @endif
-                                                                    @if ($historyItem['bidding_date'])
+                                                                    @if ($historyItem['bid_evaluation_date'])
                                                                         <div>
                                                                             <p
                                                                                 class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                Bidding Date</p>
+                                                                                Sub/Open Bids</p>
                                                                             <p
                                                                                 class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                                {{ $historyItem['bidding_date'] }}</p>
+                                                                                {{ $historyItem['bid_evaluation_date'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['post_qualification_date'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Sub/Open Bids</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['post_qualification_date'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['bidding_result'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Sub/Open Bids</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['bidding_result'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['resolution_number_mop'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Sub/Open Bids</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['resolution_number_mop'] }}
+                                                                            </p>
                                                                         </div>
                                                                     @endif
                                                                 </div>
@@ -1841,6 +2130,38 @@
                                                                     Mode Information</p>
                                                                 <div
                                                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                    @if ($historyItem['philgeps_posting_ref_no'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                RFQ No.</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['philgeps_posting_ref_no'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['ads_post_ib'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                RFQ No.</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['ads_post_ib'] }}</p>
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($historyItem['resolution_number_mop'])
+                                                                        <div>
+                                                                            <p
+                                                                                class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                RFQ No.</p>
+                                                                            <p
+                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
+                                                                                {{ $historyItem['resolution_number_mop'] }}
+                                                                            </p>
+                                                                        </div>
+                                                                    @endif
                                                                     @if ($historyItem['rfq_no'])
                                                                         <div>
                                                                             <p
@@ -1880,17 +2201,6 @@
                                                                             <p
                                                                                 class="text-xs font-medium text-gray-900 dark:text-white">
                                                                                 {{ $historyItem['abstract_of_canvass_date'] }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                    @if ($historyItem['resolution_number'])
-                                                                        <div>
-                                                                            <p
-                                                                                class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                Resolution</p>
-                                                                            <p
-                                                                                class="text-xs font-medium text-gray-900 dark:text-white">
-                                                                                {{ $historyItem['resolution_number'] }}
                                                                             </p>
                                                                         </div>
                                                                     @endif
@@ -2028,7 +2338,7 @@
 
             @if ($activeTab == 3)
                 {{-- Post Procurement Tab --}}
-                <div class="space-y-4">
+                <div class="space-y-6 mb-6">
                     @if ($form['procurement_type'] === 'perLot')
                         {{-- PER LOT POST PROCUREMENT --}}
                         @if ($this->hasPostData)
@@ -2066,42 +2376,29 @@
                                         Award Information
                                     </h4>
                                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                                        @if ($resolutionNumber)
+                                        @if ($resolutionAwardNumber)
                                             <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution #
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
+                                                    Award #
                                                 </p>
                                                 <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $resolutionNumber }}</p>
+                                                    {{ $resolutionAwardNumber }}</p>
                                             </div>
                                         @endif
-                                        @if ($bidEvaluationDate)
+                                        @if ($resolutionAwardDate)
                                             <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid Evaluation
-                                                    Date</p>
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $bidEvaluationDate }}</p>
-                                            </div>
-                                        @endif
-                                        @if ($postQualDate)
-                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post Qual Date
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Resolution
+                                                    Award Date
                                                 </p>
                                                 <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $postQualDate }}</p>
-                                            </div>
-                                        @endif
-                                        @if ($recommendingForAward)
-                                            <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Recommending
-                                                    for Award</p>
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $recommendingForAward }}</p>
+                                                    {{ $resolutionAwardDate }}</p>
                                             </div>
                                         @endif
                                         @if ($noticeOfAwardNumber)
                                             <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice of
-                                                    Award #</p>
+                                                    Award Number
+                                                </p>
                                                 <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                     {{ $noticeOfAwardNumber }}</p>
                                             </div>
@@ -2109,7 +2406,8 @@
                                         @if ($noticeOfAward)
                                             <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice of
-                                                    Award</p>
+                                                    Award Date
+                                                </p>
                                                 <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                     {{ $noticeOfAward }}</p>
                                             </div>
@@ -2122,11 +2420,12 @@
                                                     ₱{{ number_format($awardedAmount, 2) }}</p>
                                             </div>
                                         @endif
+
                                     </div>
                                 </div>
 
                                 {{-- PhilGEPS Information --}}
-                                @if ($philgepsReferenceNo || $awardNoticeNumber || $dateOfPostingOfAwardOnPhilGEPS)
+                                @if ($philgepsNoticeOfAwardNo || $philgepsPostingOfAward)
                                     <div class="mb-6">
                                         <h4
                                             class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
@@ -2138,28 +2437,22 @@
                                             PhilGEPS Information
                                         </h4>
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            @if ($philgepsReferenceNo)
+                                            @if ($philgepsNoticeOfAwardNo)
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS
-                                                        Reference #</p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS|
+                                                        Notice of Award No.
+                                                    </p>
                                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $philgepsReferenceNo }}</p>
+                                                        {{ $philgepsNoticeOfAwardNo }}</p>
                                                 </div>
                                             @endif
-                                            @if ($awardNoticeNumber)
+                                            @if ($philgepsPostingOfAward)
                                                 <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Award
-                                                        Notice #</p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PhilGEPS|
+                                                        Posting of Award
+                                                    </p>
                                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $awardNoticeNumber }}</p>
-                                                </div>
-                                            @endif
-                                            @if ($dateOfPostingOfAwardOnPhilGEPS)
-                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Posting
-                                                        Date on PhilGEPS</p>
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ $dateOfPostingOfAwardOnPhilGEPS }}</p>
+                                                        {{ $philgepsPostingOfAward }}</p>
                                                 </div>
                                             @endif
                                         </div>
@@ -2298,12 +2591,13 @@
                                     {{-- Award Information --}}
                                     @if (
                                         !empty(array_filter([
-                                                $postData['resolutionNumber'] ?? null,
-                                                $postData['bidEvaluationDate'] ?? null,
-                                                $postData['postQualDate'] ?? null,
-                                                $postData['recommendingForAward'] ?? null,
+                                                $postData['resolutionAwardNumber'] ?? null,
+                                                $postData['resolutionAwardDate'] ?? null,
+                                                $postData['noticeOfAwardNumber'] ?? null,
                                                 $postData['noticeOfAward'] ?? null,
                                                 $postData['awardedAmount'] ?? null,
+                                                $postData['philgepsNoticeOfAwardNo'] ?? null,
+                                                $postData['philgepsPostingOfAward'] ?? null,
                                             ])
                                         ))
                                         <div class="mb-6">
@@ -2318,50 +2612,35 @@
                                                 Award Information
                                             </h4>
                                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                @if (!empty($postData['resolutionNumber']))
+                                                @if (!empty($postData['resolutionAwardNumber']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Resolution #</p>
+                                                            Resolution Award #</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['resolutionNumber'] }}</p>
+                                                            {{ $postData['resolutionAwardNumber'] }}</p>
                                                     </div>
                                                 @endif
-                                                @if (!empty($postData['bidEvaluationDate']))
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bid
-                                                            Evaluation Date</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['bidEvaluationDate'] }}</p>
-                                                    </div>
-                                                @endif
-                                                @if (!empty($postData['postQualDate']))
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Post
-                                                            Qual Date</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['postQualDate'] }}</p>
-                                                    </div>
-                                                @endif
-                                                @if (!empty($postData['recommendingForAward']))
+                                                @if (!empty($postData['resolutionAwardDate']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Recommending for Award</p>
+                                                            Resolution
+                                                            Award Date</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['recommendingForAward'] }}</p>
+                                                            {{ $postData['resolutionAwardDate'] }}</p>
                                                     </div>
                                                 @endif
                                                 @if (!empty($postData['noticeOfAwardNumber']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice
-                                                            of Award #</p>
+                                                            of Award Number</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                             {{ $postData['noticeOfAwardNumber'] }}</p>
                                                     </div>
                                                 @endif
                                                 @if (!empty($postData['noticeOfAward']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice
-                                                            of Award</p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Notice of Award Date</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
                                                             {{ $postData['noticeOfAward'] }}</p>
                                                     </div>
@@ -2379,13 +2658,7 @@
                                     @endif
 
                                     {{-- PhilGEPS Information --}}
-                                    @if (
-                                        !empty(array_filter([
-                                                $postData['philgepsReferenceNo'] ?? null,
-                                                $postData['awardNoticeNumber'] ?? null,
-                                                $postData['dateOfPostingOfAwardOnPhilGEPS'] ?? null,
-                                            ])
-                                        ))
+                                    @if (!empty(array_filter([$postData['philgepsNoticeOfAwardNo'] ?? null, $postData['philgepsPostingOfAward'] ?? null])))
                                         <div class="mb-6">
                                             <h4
                                                 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
@@ -2398,28 +2671,20 @@
                                                 PhilGEPS Information
                                             </h4>
                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                @if (!empty($postData['philgepsReferenceNo']))
+                                                @if (!empty($postData['philgepsNoticeOfAwardNo']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            PhilGEPS Reference #</p>
+                                                            PhilGEPS| Notice of Award No.</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['philgepsReferenceNo'] }}</p>
+                                                            {{ $postData['philgepsNoticeOfAwardNo'] }}</p>
                                                     </div>
                                                 @endif
-                                                @if (!empty($postData['awardNoticeNumber']))
-                                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Award
-                                                            Notice #</p>
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['awardNoticeNumber'] }}</p>
-                                                    </div>
-                                                @endif
-                                                @if (!empty($postData['dateOfPostingOfAwardOnPhilGEPS']))
+                                                @if (!empty($postData['philgepsPostingOfAward']))
                                                     <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                                            Posting Date on PhilGEPS</p>
+                                                            PhilGEPS| Posting of Award</p>
                                                         <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $postData['dateOfPostingOfAwardOnPhilGEPS'] }}</p>
+                                                            {{ $postData['philgepsPostingOfAward'] }}</p>
                                                     </div>
                                                 @endif
                                             </div>
@@ -2541,6 +2806,264 @@
                                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No post-procurement data
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+            @endif
+
+            @if ($activeTab == 4)
+                {{-- PMU Tab --}}
+                <div class="space-y-6 mb-6">
+                    @if ($form['procurement_type'] === 'perLot')
+                        {{-- PER LOT PMU --}}
+                        @if ($supplier_id)
+                            @php
+                                $supplier = $suppliers->firstWhere('id', $supplier_id);
+                            @endphp
+
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                                    <h4
+                                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        Supplier Information
+                                    </h4>
+                                </div>
+
+                                @if ($supplier)
+                                    <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Supplier Name</p>
+                                        <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                            {{ $supplier->name ?? 'N/A' }}
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="text-center py-8">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Supplier not found</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No supplier information
+                                        available</p>
+                                </div>
+                            </div>
+                        @endif
+                    @elseif ($form['procurement_type'] === 'perItem')
+                        {{-- PER ITEM PMU WITH SEARCH AND PAGINATION --}}
+                        @php
+                            // Filter items that have supplier_id in postItems
+                            $itemsWithSuppliers = collect($postItems)
+                                ->filter(fn($item) => !empty($item['supplier_id']))
+                                ->values();
+
+                            // Apply search filter
+                            if (!empty($postSearchTerm)) {
+                                $itemsWithSuppliers = $itemsWithSuppliers->filter(function ($postItem) use (
+                                    $postSearchTerm,
+                                ) {
+                                    $searchLower = strtolower($postSearchTerm);
+                                    $item = collect($form['items'] ?? [])->firstWhere('prItemID', $postItem['ref_id']);
+
+                                    if (!$item) {
+                                        return false;
+                                    }
+
+                                    return str_contains(strtolower($item['description'] ?? ''), $searchLower) ||
+                                        str_contains(strtolower($item['item_no'] ?? ''), $searchLower);
+                                });
+                            }
+
+                            $totalPostItems = $itemsWithSuppliers->count();
+
+                            // Pagination
+                            $currentPostPage = $postPage ?? 1;
+                            $itemsPerPostPage = $postPerPage ?? 10;
+                            $totalPostPages = max(1, ceil($totalPostItems / $itemsPerPostPage));
+
+                            // Paginate
+                            $paginatedPostItems = $itemsWithSuppliers->slice(
+                                ($currentPostPage - 1) * $itemsPerPostPage,
+                                $itemsPerPostPage,
+                            );
+                        @endphp
+
+                        @if ($totalPostItems > 0)
+                            {{-- Search and Pagination Controls --}}
+                            <div
+                                class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex-1 max-w-md">
+                                        <input type="text" wire:model.live.debounce.300ms="postSearchTerm"
+                                            placeholder="Search items..."
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-sm text-gray-600 dark:text-gray-400">Show:</label>
+                                        <select wire:model.live="postPerPage"
+                                            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            <option value="5">5</option>
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Item Cards with Supplier Info --}}
+                            @foreach ($paginatedPostItems as $postItem)
+                                @php
+                                    $item = collect($form['items'] ?? [])->firstWhere('prItemID', $postItem['ref_id']);
+                                    $supplier = $suppliers->firstWhere('id', $postItem['supplier_id']);
+                                @endphp
+
+                                @if ($item)
+                                    <div
+                                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                        {{-- Item Header --}}
+                                        <div class="mb-4 pb-4 border-b border-gray-200 dark:border-neutral-600">
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                                                            Item #{{ $item['item_no'] ?? 'N/A' }}
+                                                        </span>
+                                                    </div>
+                                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        {{ $item['description'] ?? 'No description' }}
+                                                    </h3>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        Amount: ₱{{ number_format($item['amount'] ?? 0, 2) }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Supplier Information --}}
+                                        <div class="mb-4">
+                                            <h4
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                                Supplier Information
+                                            </h4>
+
+                                            @if ($supplier)
+                                                <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-4">
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Supplier
+                                                        Name</p>
+                                                    <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {{ $supplier->name ?? 'N/A' }}
+                                                    </p>
+                                                </div>
+                                            @else
+                                                <div
+                                                    class="text-center py-6 bg-gray-50 dark:bg-neutral-800 rounded-lg">
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Supplier
+                                                        information not available</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+
+                            {{-- Pagination Controls --}}
+                            @if ($totalPostPages > 1)
+                                <div
+                                    class="bg-white rounded-xl p-4 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    <div class="flex items-center justify-between flex-wrap gap-3">
+                                        {{-- Page info --}}
+                                        <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                            Showing <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalPostItems > 0 ? ($currentPostPage - 1) * $itemsPerPostPage + 1 : 0 }}</span>
+                                            to
+                                            <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ min($currentPostPage * $itemsPerPostPage, $totalPostItems) }}</span>
+                                            of
+                                            <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $totalPostItems }}</span>
+                                            items
+                                        </div>
+
+                                        {{-- Pagination buttons --}}
+                                        <div class="flex items-center gap-2">
+                                            <button type="button"
+                                                wire:click="$set('postPage', {{ max(1, $currentPostPage - 1) }})"
+                                                @if ($currentPostPage <= 1) disabled @endif
+                                                class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {{ $currentPostPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800' : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                Previous
+                                            </button>
+
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                                Page {{ $currentPostPage }} of {{ $totalPostPages }}
+                                            </span>
+
+                                            <button type="button"
+                                                wire:click="$set('postPage', {{ min($totalPostPages, $currentPostPage + 1) }})"
+                                                @if ($currentPostPage >= $totalPostPages) disabled @endif
+                                                class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {{ $currentPostPage >= $totalPostPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-neutral-800' : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' }}">
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @elseif (!empty($postSearchTerm))
+                            {{-- No Results Found --}}
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No items found matching
+                                        "{{ $postSearchTerm }}"</p>
+                                    <button wire:click="$set('postSearchTerm', '')"
+                                        class="mt-4 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                                        Clear Search
+                                    </button>
+                                </div>
+                            </div>
+                        @else
+                            <div
+                                class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                <div class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No supplier information
                                         available</p>
                                 </div>
                             </div>
@@ -2743,7 +3266,7 @@
                                                 </div>
 
                                                 {{-- Date/Time --}}
-                                                <div
+                                                {{-- <div
                                                     class="flex items-center gap-1.5 text-xs {{ $index === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }} mt-2">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
@@ -2753,7 +3276,7 @@
                                                     </svg>
                                                     <span
                                                         class="font-medium tracking-tight">{{ $history['date'] }}</span>
-                                                </div>
+                                                </div> --}}
                                             </div>
                                         </div>
                                     </div>

@@ -10,11 +10,14 @@ use App\Livewire\ModeOfProcurement\ModeOfProcurementIndexPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementUpdatePage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerItemPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerLotPage;
+use App\Livewire\ModeOfProcurement\ModeOfProcurementBulkEditPerLotPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
 use App\Livewire\Procurements\ProcurementViewPage;
 use App\Livewire\Procurements\PRUpdateStatus;
+use App\Livewire\Reports\BacPrsReceivedBPage;
+use App\Livewire\Reports\BacPrsReceivedPage;
 use App\Livewire\ScheduleForPr\ScheduleForPrCreatePage;
 use App\Livewire\ScheduleForPr\ScheduleForPrEditPage;
 use App\Livewire\ScheduleForPr\ScheduleForPrIndexPage;
@@ -94,6 +97,10 @@ Route::middleware(['jwt'])->group(function () {
             ->name('index')
             ->middleware('can:view_any_mode::of::procurement');
 
+        Route::get('/bulk-edit', ModeOfProcurementBulkEditPerLotPage::class)
+            ->name('bulk-edit')
+            ->middleware('can:update_mode::of::procurement');
+
         Route::get('/create', ModeOfProcurementCreatePage::class)
             ->name('create')
             ->middleware('can:create_mode::of::procurement');
@@ -113,6 +120,16 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('/{procurement}/edit', ModeOfProcurementEditPage::class)
             ->name('edit')
             ->middleware('can:edit_mode::of::procurement');
+    });
+
+    // Reports routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::prefix('bac')->name('bac.')->group(function () {
+            Route::get('/prs-received', BacPrsReceivedPage::class)
+                ->name('prs-received');
+            Route::get('/prs-received-b', BacPrsReceivedBPage::class)
+                ->name('prs-received-b');
+        });
     });
 
     // Logout
