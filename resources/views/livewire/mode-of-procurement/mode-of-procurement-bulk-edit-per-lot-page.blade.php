@@ -1385,10 +1385,14 @@
                                         class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                 </td>
                                 <td class="px-2 py-2">
-                                    <input type="number" step="0.01"
-                                        wire:model.defer="postBulkEditData.awardedAmount"
-                                        class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                        placeholder="0.00">
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 pointer-events-none">₱</span>
+                                        <input type="text" wire:model.defer="postBulkEditData.awardedAmount" x-data
+                                            x-mask:dynamic="$money($input, '.', ',', 2)"
+                                            class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                                            placeholder="0.00">
+                                    </div>
                                 </td>
                                 <td class="px-2 py-2">
                                     <input type="text" wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"

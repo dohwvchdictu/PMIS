@@ -81,7 +81,7 @@ class ModeOfProcurementPerLotPage extends Component
     public ?string $noticeOfAwardNumber = null;
     public ?string $noticeOfAward = null;
     public ?string $resolutionAwardDate = null;
-    public ?float $awardedAmount = null;
+    public $awardedAmount = null; // Accepts string from Alpine.js money mask, converted to float on save
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
@@ -170,7 +170,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->noticeOfAwardNumber = $post->notice_of_award_number;
             $this->noticeOfAward = $post->notice_of_award;
             $this->resolutionAwardDate = $post->resolution_award_date;
-            $this->awardedAmount = $post->awarded_amount;
+            $this->awardedAmount = $this->formatAmount($post->awarded_amount); // Format with commas for Alpine mask
             $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
@@ -530,7 +530,12 @@ class ModeOfProcurementPerLotPage extends Component
             return;
         }
 
-        // STEP 4: ALL validation passed - NOW start the database transaction
+        // STEP 4: Validate against clearing existing schedule data
+        if (!$this->validateScheduleDeletion()) {
+            return; // Error already shown in method
+        }
+
+        // STEP 5: ALL validation passed - NOW start the database transaction
         $isMopAdded = false;
         $isMopUpdated = false;
         $isScheduleAdded = false;
@@ -727,6 +732,13 @@ class ModeOfProcurementPerLotPage extends Component
                     $item['abstract_of_canvass_date'] ?? null,
                 ];
 
+                // For SVP modes (7-24) with ABC >= 200k, PhilGEPS and Ads/Post IB should also count as valid SVP data
+                $prAbc = $this->abc ?? 0;
+                if ($prAbc >= 200000) {
+                    $svpFields[] = $item['philgeps_posting_ref_no'] ?? null;
+                    $svpFields[] = $item['ads_post_ib'] ?? null;
+                }
+
                 $hasSvpData = $this->hasAnyValue($svpFields);
 
                 if ($existingSvp && !$hasSvpData) {
@@ -797,6 +809,74 @@ class ModeOfProcurementPerLotPage extends Component
                     LivewireAlert::title('Validation Error!')
                         ->error()
                         ->text("PR {$prNumber}: Ads/Post IB date is required when ABC is ₱200,000.00 or more.")
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate that editing is not clearing existing schedule data without replacement
+     * Prevents accidental data loss when user edits existing schedules
+     *
+     * @return bool True if validation passes
+     */
+    private function validateScheduleDeletion(): bool
+    {
+        foreach ($this->form['items'] as $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+            $prNumber = $this->form['pr_number'] ?? 'PR';
+
+            // Skip validation for new items (no existing data to protect)
+            if (str_starts_with($item['uid'] ?? '', 'temp_')) {
+                continue;
+            }
+
+            // For competitive bidding modes
+            if ($this->isCompetitiveBidding($modeId)) {
+                // Check if item has existing bidding data
+                $hasExistingBiddingData = $this->hasValue($item['bidding_number']) ||
+                    $this->hasValue($item['ib_number']) ||
+                    $this->hasValue($item['sub_open_bids']);
+
+                // Check if user is trying to clear the data (no replacement values)
+                $clearingBiddingData = !$this->hasValue($item['bidding_number']) &&
+                    !$this->hasValue($item['ib_number']) &&
+                    !$this->hasValue($item['sub_open_bids']) &&
+                    !$this->hasValue($item['pre_proc_conference']);
+
+                if ($hasExistingBiddingData && $clearingBiddingData) {
+                    LivewireAlert::title('Cannot Clear Existing Data')
+                        ->error()
+                        ->text("Cannot clear existing bidding data for {$prNumber} without providing replacement data or Pre-Proc Conference.")
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
+                    return false;
+                }
+            }
+
+            // For SVP/Alternative modes
+            if ($this->isSvpMode($modeId)) {
+                // Check if item has existing SVP data
+                $hasExistingSvpData = $this->hasValue($item['rfq_no']) ||
+                    $this->hasValue($item['canvass_date']) ||
+                    $this->hasValue($item['abstract_of_canvass_date']);
+
+                // Check if user is trying to clear the data (no replacement values)
+                $clearingSvpData = !$this->hasValue($item['rfq_no']) &&
+                    !$this->hasValue($item['canvass_date']) &&
+                    !$this->hasValue($item['abstract_of_canvass_date']);
+
+                if ($hasExistingSvpData && $clearingSvpData) {
+                    LivewireAlert::title('Cannot Clear Existing Data')
+                        ->error()
+                        ->text("Cannot clear existing SVP data for {$prNumber} without providing replacement data.")
                         ->toast()
                         ->position('top-end')
                         ->show();
@@ -1042,7 +1122,7 @@ class ModeOfProcurementPerLotPage extends Component
             'resolutionAwardDate' => 'nullable|date',
             'noticeOfAwardNumber' => 'nullable|string|max:255',
             'noticeOfAward' => 'nullable|date',
-            'awardedAmount' => 'nullable|numeric|min:0',
+            'awardedAmount' => ['nullable', 'regex:/^[0-9,]+\.?[0-9]{0,2}$/'], // Accepts: 1234.56 or 1,234.56
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
@@ -1069,6 +1149,7 @@ class ModeOfProcurementPerLotPage extends Component
         $messages = [
             'resolutionAwardNumber.required' => 'Resolution Award Number is required when entering post-procurement data.',
             'resolutionAwardDate.required' => 'Resolution Award Date is required when entering post-procurement data.',
+            'awardedAmount.regex' => 'Awarded Amount must be a valid number with up to 2 decimal places.',
         ];
 
         try {
@@ -1096,7 +1177,7 @@ class ModeOfProcurementPerLotPage extends Component
                     'resolution_award_date' => $this->resolutionAwardDate,
                     'notice_of_award_number' => $this->noticeOfAwardNumber,
                     'notice_of_award' => $this->noticeOfAward,
-                    'awarded_amount' => $this->awardedAmount,
+                    'awarded_amount' => $this->cleanAmount($this->awardedAmount),
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
@@ -1152,6 +1233,9 @@ class ModeOfProcurementPerLotPage extends Component
                 ->position('top-end')
                 ->show();
         }
+
+        // Reload data to reflect changes from database
+        $this->mount($this->procurement);
     }
 
     public function save()
@@ -1172,7 +1256,8 @@ class ModeOfProcurementPerLotPage extends Component
             $this->saveTab1();
         }
 
-        $this->mount($this->procurement);
+        // Note: mount() is called within saveTab1() and savePost() after successful save
+        // Don't reload here to preserve user input when validation fails
     }
 
     public function editHistoryItem($index): void
@@ -1240,7 +1325,7 @@ class ModeOfProcurementPerLotPage extends Component
                 ->position('top-end')
                 ->show();
 
-            $this->mount($this->procurement);
+            // Don't reload data - keep modal open with user's input so they can fix errors
             return;
         }
 
@@ -1302,6 +1387,34 @@ class ModeOfProcurementPerLotPage extends Component
     private function nullableDate($value)
     {
         return $this->hasValue($value) ? $value : null;
+    }
+
+    /**
+     * Clean and convert formatted amount string to float
+     * Removes commas from Alpine.js money mask format
+     */
+    private function cleanAmount($value): ?float
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        // Remove commas and convert to float
+        $cleaned = str_replace(',', '', (string) $value);
+        return (float) $cleaned;
+    }
+
+    /**
+     * Format amount with comma separators and 2 decimal places
+     * Used when loading from database for display
+     */
+    private function formatAmount($value): ?string
+    {
+        if (!$this->hasValue($value)) {
+            return null;
+        }
+
+        return number_format((float) $value, 2, '.', ',');
     }
 
     public function cancel()
