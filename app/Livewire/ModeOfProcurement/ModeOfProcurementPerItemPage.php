@@ -57,6 +57,10 @@ class ModeOfProcurementPerItemPage extends Component
     public bool $showHistory = false;
     public ?string $historyForPrItemId = null;
 
+    // Pagination
+    public int $perPage = 10;
+    public int $currentPage = 1;
+
     // Post-Procurement Tab Fields
     public array $postItems = [];
     public ?string $resolutionAwardNumber = null;
@@ -285,8 +289,13 @@ class ModeOfProcurementPerItemPage extends Component
 
         $this->form['items'] = [];
 
-        // Loop through PR Items
-        $sortedPrItems = $procurement->pr_items->sortBy('prItemID');
+        // Loop through PR Items - FIXED: Sort by item_no for correct display order
+        $sortedPrItems = $procurement->pr_items
+            ->sortBy(function ($prItem) {
+                // Extract numeric part from item_no for proper sorting (e.g., "Item 1", "Item 10")
+                preg_match('/\d+/', $prItem->item_no ?? '', $matches);
+                return $matches[0] ?? 0;
+            });
 
         foreach ($sortedPrItems as $prItem) {
             $prItemID = $prItem->prItemID;
@@ -517,13 +526,6 @@ class ModeOfProcurementPerItemPage extends Component
             return;
         }
 
-        // Validate ABC threshold only for items that will appear in Post tab
-        if ($step == 2) {
-            if (!$this->validateAbcThresholdForPostItems()) {
-                return; // Validation failed, stay on current tab
-            }
-        }
-
         // Clear selections when changing tabs
         $this->selectedItems = [];
         $this->selectedPostItems = [];
@@ -661,6 +663,15 @@ class ModeOfProcurementPerItemPage extends Component
                 $item['date_returned_of_canvass'] ?? null,
                 $item['abstract_of_canvass_date'] ?? null,
             ];
+
+            // For SVP modes (7-24) with ABC >= 200k, PhilGEPS and Ads/Post IB should also count as valid SVP data
+            if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
+                $prAbc = $this->procurement->abc ?? 0;
+                if ($prAbc >= 200000) {
+                    $svpFields[] = $item['philgeps_posting_ref_no'] ?? null;
+                    $svpFields[] = $item['ads_post_ib'] ?? null;
+                }
+            }
 
             $hasAnyBiddingData = $this->hasAnyValue($biddingFields);
             $hasAnySvpData = $this->hasAnyValue($svpFields);
@@ -1243,6 +1254,11 @@ class ModeOfProcurementPerItemPage extends Component
                 ->show();
 
             throw $e;
+        }
+
+        // Validate ABC threshold requirements for post items
+        if (!$this->validateAbcThresholdForPostItems()) {
+            return; // Validation failed, abort save
         }
 
         $isAdded = false;
@@ -2009,24 +2025,36 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Check amount threshold consistency
-        $below200k = [];
-        $above200k = [];
-
-        foreach ($amounts as $itemNum => $amount) {
-            if ($amount < 200000) {
-                $below200k[] = $itemNum;
-            } else {
-                $above200k[] = $itemNum;
-            }
-        }
+        // For SVP modes (7-24), use PR ABC instead of item amounts
+        $commonMode = empty($modes) ? null : array_key_first($modes);
+        $isSvpMode = $this->isSvpMode($commonMode);
 
         $amountThreshold = null;
-        if (!empty($below200k) && !empty($above200k)) {
-            $errors[] = "Mixed amount thresholds detected. Bulk edit requires all items to have the same amount threshold (either all below ₱200,000 or all ₱200,000 and above).";
-        } elseif (!empty($below200k)) {
-            $amountThreshold = '<200k';
-        } elseif (!empty($above200k)) {
-            $amountThreshold = '>=200k';
+
+        if ($isSvpMode) {
+            // For SVP modes, check the overall PR ABC
+            $prAbc = $this->procurement->abc ?? 0;
+            $amountThreshold = $prAbc >= 200000 ? '>=200k' : '<200k';
+        } else {
+            // For other modes, check individual item amounts (existing logic)
+            $below200k = [];
+            $above200k = [];
+
+            foreach ($amounts as $itemNum => $amount) {
+                if ($amount < 200000) {
+                    $below200k[] = $itemNum;
+                } else {
+                    $above200k[] = $itemNum;
+                }
+            }
+
+            if (!empty($below200k) && !empty($above200k)) {
+                $errors[] = "Mixed amount thresholds detected. Bulk edit requires all items to have the same amount threshold (either all below ₱200,000 or all ₱200,000 and above).";
+            } elseif (!empty($below200k)) {
+                $amountThreshold = '<200k';
+            } elseif (!empty($above200k)) {
+                $amountThreshold = '>=200k';
+            }
         }
 
         return [
@@ -2034,7 +2062,7 @@ class ModeOfProcurementPerItemPage extends Component
             'errors' => $errors,
             'itemNumbers' => $itemNumbers,
             'amountThreshold' => $amountThreshold,
-            'commonMode' => empty($modes) ? null : array_key_first($modes),
+            'commonMode' => $commonMode,
         ];
     }
 
@@ -2893,8 +2921,17 @@ class ModeOfProcurementPerItemPage extends Component
     public function getPostAvailableItemsProperty(): array
     {
         $postAvailableItems = [];
+        $seenPrItemIds = []; // Track which prItemIDs we've already processed
 
         foreach ($this->form['items'] ?? [] as $index => $item) {
+            $prItemID = $item['prItemID'] ?? null;
+
+            // Skip if we've already processed this prItemID (only check current mode, not history)
+            if (!$prItemID || in_array($prItemID, $seenPrItemIds)) {
+                continue;
+            }
+
+            $seenPrItemIds[] = $prItemID;
             $modeId = $item['mode_of_procurement_id'] ?? null;
 
             // Check for SUCCESSFUL bidding in competitive modes
@@ -2922,6 +2959,86 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         return $postAvailableItems;
+    }
+
+    public function nextPage(): void
+    {
+        $this->currentPage++;
+    }
+
+    public function previousPage(): void
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
+    }
+
+    public function gotoPage($page): void
+    {
+        $this->currentPage = $page;
+    }
+
+    public function updatedPerPage(): void
+    {
+        // Reset to page 1 when items per page changes
+        $this->currentPage = 1;
+    }
+
+    public function getPaginatedItemsProperty(): array
+    {
+        // Get unique prItemIDs for pagination
+        $uniquePrItemIDs = collect($this->form['items'])
+            ->pluck('prItemID')
+            ->unique()
+            ->values()
+            ->all();
+
+        $totalUniqueItems = count($uniquePrItemIDs);
+        $totalPages = max(1, ceil($totalUniqueItems / $this->perPage));
+
+        // Ensure current page is within bounds
+        if ($this->currentPage > $totalPages) {
+            $this->currentPage = $totalPages;
+        }
+
+        // Get paginated prItemIDs
+        $offset = ($this->currentPage - 1) * $this->perPage;
+        $paginatedPrItemIDs = array_slice($uniquePrItemIDs, $offset, $this->perPage);
+
+        // Filter items to only include those in current page - PRESERVE ORIGINAL KEYS
+        $paginatedItems = [];
+        foreach ($this->form['items'] as $originalIndex => $item) {
+            if (in_array($item['prItemID'], $paginatedPrItemIDs)) {
+                $paginatedItems[$originalIndex] = $item;
+            }
+        }
+
+        return $paginatedItems;
+    }
+
+    public function getPaginationDataProperty(): array
+    {
+        $uniquePrItemIDs = collect($this->form['items'])
+            ->pluck('prItemID')
+            ->unique()
+            ->values()
+            ->all();
+
+        $total = count($uniquePrItemIDs);
+        $totalPages = max(1, ceil($total / $this->perPage));
+        $from = $total > 0 ? (($this->currentPage - 1) * $this->perPage) + 1 : 0;
+        $to = min($this->currentPage * $this->perPage, $total);
+
+        return [
+            'currentPage' => $this->currentPage,
+            'perPage' => $this->perPage,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'from' => $from,
+            'to' => $to,
+            'hasMorePages' => $this->currentPage < $totalPages,
+            'hasPreviousPages' => $this->currentPage > 1,
+        ];
     }
 
     public function render()

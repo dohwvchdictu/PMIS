@@ -360,7 +360,7 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
 
-                                @forelse ($form['items'] ?? [] as $itemIndex => $item)
+                                @forelse ($this->paginatedItems as $itemIndex => $item)
                                     @php
                                         // ===== BASIC ROW IDENTIFIERS =====
                                         $modeId = $item['mode_of_procurement_id'] ?? null;
@@ -381,7 +381,10 @@
                                         $isSvpMode = $this->isSvpMode($modeId);
                                         $isPending = $this->isPendingMode($modeId);
                                         $itemAmount = (float) ($item['amount'] ?? 0);
-                                        $meetsAbcThreshold = $this->meetsAbcThreshold($itemAmount);
+                                        // For SVP modes (7-24), check PR ABC; for others, check item amount
+                                        $meetsAbcThreshold = $isSvpMode
+                                            ? $this->meetsAbcThreshold($procurement->abc)
+                                            : $this->meetsAbcThreshold($itemAmount);
 
                                         // ===== ROW METADATA =====
                                         $historyTargetUid = $rowUid;
@@ -1063,6 +1066,78 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pagination Controls -->
+                    @if ($this->paginationData['total'] > 0)
+                        <div
+                            class="mx-4 mt-4 mb-2 flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-neutral-600">
+                            {{-- Items per page --}}
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm text-gray-600 dark:text-gray-400">Show:</label>
+                                <select wire:model.live="perPage"
+                                    class="px-3 py-1.5 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">per page</span>
+                            </div>
+
+                            {{-- Center: Pagination --}}
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                {{-- Page info --}}
+                                <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    Showing <span
+                                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $this->paginationData['from'] }}</span>
+                                    to
+                                    <span
+                                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $this->paginationData['to'] }}</span>
+                                    of
+                                    <span
+                                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $this->paginationData['total'] }}</span>
+                                    items
+                                </div>
+
+                                @if ($this->paginationData['totalPages'] > 1)
+                                    {{-- Pagination buttons --}}
+                                    <div class="flex items-center gap-1">
+                                        {{-- Previous Button --}}
+                                        <button type="button" wire:click="previousPage" @disabled(!$this->paginationData['hasPreviousPages'])
+                                            class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+
+                                        {{-- Page Numbers --}}
+                                        @for ($i = 1; $i <= $this->paginationData['totalPages']; $i++)
+                                            @if ($i == 1 || $i == $this->paginationData['totalPages'] || abs($i - $this->paginationData['currentPage']) <= 2)
+                                                <button type="button" wire:click="gotoPage({{ $i }})"
+                                                    class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $this->paginationData['currentPage'] == $i ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                                    {{ $i }}
+                                                </button>
+                                            @elseif (abs($i - $this->paginationData['currentPage']) == 3)
+                                                <span class="px-2 text-xs text-gray-500">...</span>
+                                            @endif
+                                        @endfor
+
+                                        {{-- Next Button --}}
+                                        <button type="button" wire:click="nextPage" @disabled(!$this->paginationData['hasMorePages'])
+                                            class="p-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
             </div>
@@ -2274,7 +2349,8 @@
                                         placeholder="0.00">
                                 </td>
                                 <td class="px-2 py-2">
-                                    <input type="text" wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"
+                                    <input type="text"
+                                        wire:model.defer="postBulkEditData.philgepsNoticeOfAwardNo"
                                         class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
                                         placeholder="PHL-NOA-YYYY-NNN">
                                 </td>
@@ -2302,8 +2378,8 @@
                     class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
                     <button type="button" wire:click="closePostBulkEditModal"
                         class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                         Cancel

@@ -727,6 +727,13 @@ class ModeOfProcurementPerLotPage extends Component
                     $item['abstract_of_canvass_date'] ?? null,
                 ];
 
+                // For SVP modes (7-24) with ABC >= 200k, PhilGEPS and Ads/Post IB should also count as valid SVP data
+                $prAbc = $this->abc ?? 0;
+                if ($prAbc >= 200000) {
+                    $svpFields[] = $item['philgeps_posting_ref_no'] ?? null;
+                    $svpFields[] = $item['ads_post_ib'] ?? null;
+                }
+
                 $hasSvpData = $this->hasAnyValue($svpFields);
 
                 if ($existingSvp && !$hasSvpData) {
