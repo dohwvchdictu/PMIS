@@ -123,8 +123,8 @@ Route::middleware(['jwt'])->group(function () {
     });
 
     // Reports routes
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::prefix('bac')->name('bac.')->group(function () {
+    Route::prefix('reports')->name('reports.')->middleware('can:view_reports')->group(function () {
+        Route::prefix('bac')->name('bac.')->middleware('can:view_bac_reports')->group(function () {
             Route::get('/prs-received', BacPrsReceivedPage::class)
                 ->name('prs-received');
             Route::get('/prs-received-b', BacPrsReceivedBPage::class)
