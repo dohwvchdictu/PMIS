@@ -50,7 +50,12 @@ return [
         'pages' => true,
         'widgets' => true,
         'resources' => true,
-        'custom_permissions' => false,
+        'custom_permissions' => [
+            'Reports' => [
+                'view_reports',
+                'view_bac_reports',
+            ],
+        ],
     ],
 
     'generator' => [
