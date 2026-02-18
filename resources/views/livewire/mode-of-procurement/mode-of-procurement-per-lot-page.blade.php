@@ -677,22 +677,53 @@
                     <!-- Header Section -->
                     <div
                         class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
-                        <div class="flex items-center gap-2">
-                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-2">
+                                <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                        Post-Procurement Data
+                                    </h3>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        Award information and supplier details
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
-                                    Post-Procurement Data
-                                </h3>
-                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                    Award information and supplier details
-                                </p>
-                            </div>
+                            {{-- Forward to PMU: right side of header --}}
+                            @if ($this->isForwardedToPmu)
+                                <div
+                                    class="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded-lg flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="leading-tight">
+                                        <span class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                            to PMU</span>
+                                        @if ($this->forwardedToPmuDate)
+                                            <span
+                                                class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->format('F d, Y') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @elseif ($this->canForwardToPmu)
+                                <button wire:click="openForwardModal" type="button"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    Forward to PMU
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -806,65 +837,6 @@
                     </div>
                 </div>
 
-                {{-- Forward to PMU Action Section --}}
-                @if ($this->isForwardedToPmu)
-                    <div
-                        class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-blue-600 dark:bg-blue-700 rounded-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4
-                                    class="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                                    Forwarded to PMU
-                                </h4>
-                                @if ($this->forwardedToPmuDate)
-                                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                        Date Forwarded: <span
-                                            class="font-medium">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->format('F d, Y') }}</span>
-                                    </p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @elseif ($this->canForwardToPmu)
-                    <div
-                        class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-start gap-3">
-                                <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-                                        Ready to Forward
-                                    </h4>
-                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                        All post-procurement details are complete. You can now forward this to PMU.
-                                    </p>
-                                </div>
-                            </div>
-                            <button wire:click="openForwardModal"
-                                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-md hover:shadow-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
-                                Forward to PMU
-                            </button>
-                        </div>
-                    </div>
-                @endif
             </div>
         @endif
     </div>
@@ -1207,27 +1179,6 @@
     <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
         closeMethod="closeForwardModal">
         <div class="px-4 py-3">
-            {{-- Information Section --}}
-            <div
-                class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div class="flex-1">
-                        <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
-                            Forward Procurement to PMU
-                        </h4>
-                        <p class="text-xs text-emerald-700 dark:text-emerald-300">
-                            This will mark the procurement as forwarded to the Procurement Management Unit (Stage 7).
-                            Please enter the actual date when this procurement was forwarded.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             {{-- PR Number Display --}}
             <div
                 class="mb-4 p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-600">

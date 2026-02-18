@@ -1592,27 +1592,6 @@
     <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
         closeMethod="closeForwardModal">
         <div class="px-4 py-3">
-            {{-- Information Section --}}
-            <div
-                class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div class="flex-1">
-                        <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
-                            Forward Procurements to PMU
-                        </h4>
-                        <p class="text-xs text-emerald-700 dark:text-emerald-300">
-                            This will mark the selected procurements as forwarded to the Procurement Management Unit
-                            (Stage 7). Please enter the actual date when these procurements were forwarded.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             {{-- Summary Pills --}}
             @if ($forwardedToPmuSummary['forwarded'] > 0 || $forwardedToPmuSummary['pending'] > 0)
                 <div class="mb-4 flex flex-wrap gap-2">

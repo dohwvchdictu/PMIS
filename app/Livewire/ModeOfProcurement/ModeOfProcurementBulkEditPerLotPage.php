@@ -2138,7 +2138,16 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
             foreach ($currentItems as $item) {
                 // Check if this item meets post-procurement eligibility
-                if ($this->isItemEligibleForPost($item)) {
+                if (!$this->isItemEligibleForPost($item)) {
+                    continue;
+                }
+
+                // Exclude already-forwarded PRs (they have no checkbox)
+                $isForwarded = \App\Models\PrLotPrstage::where('procID', $item['procID'])
+                    ->where('pr_stage_id', 7)
+                    ->exists();
+
+                if (!$isForwarded) {
                     $eligibleItems[] = $item['procID'];
                 }
             }
@@ -2161,7 +2170,16 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         foreach ($currentItems as $item) {
             // Check if this item meets post-procurement eligibility based on current mode
-            if ($this->isItemEligibleForPost($item)) {
+            if (!$this->isItemEligibleForPost($item)) {
+                continue;
+            }
+
+            // Exclude already-forwarded PRs (they have no checkbox)
+            $isForwarded = \App\Models\PrLotPrstage::where('procID', $item['procID'])
+                ->where('pr_stage_id', 7)
+                ->exists();
+
+            if (!$isForwarded) {
                 $eligibleItems[] = $item['procID'];
             }
         }
