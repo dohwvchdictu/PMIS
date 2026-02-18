@@ -459,6 +459,7 @@ class ProcurementViewPage extends Component
 
                 if ($post) {
                     $this->postItems[$prItemID] = [
+                        'ref_id' => $prItemID,
                         'resolutionAwardNumber' => $post->resolution_award_number,
                         'resolutionAwardDate' => $post->resolution_award_date,
                         'bidEvaluationDate' => $post->bid_evaluation_date,

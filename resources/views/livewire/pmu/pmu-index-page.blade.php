@@ -104,7 +104,7 @@
                                                         class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 text-blue-600 dark:text-blue-400 transition-all duration-150 group/item">
                                                         <x-heroicon-o-eye
                                                             class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                        <span class="font-medium">View Details</span>
+                                                        <span class="font-medium">View</span>
                                                     </a>
                                                 </li>
                                             @endcan
