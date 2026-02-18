@@ -21,10 +21,6 @@ class PrItemPrstage extends Model implements Auditable
         'stage_history',
     ];
 
-    protected $casts = [
-        'stage_history' => 'datetime',
-    ];
-
     protected $auditInclude = [
         'procID',
         'prItemID',

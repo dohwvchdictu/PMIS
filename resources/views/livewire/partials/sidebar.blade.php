@@ -139,6 +139,28 @@
                         </li>
                     @endcan
 
+                    <!-- PMU -->
+                    {{-- @can('view_any_pmu') --}}
+                    <li>
+                        <a class="w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
+                            transition-all duration-200 border-l-4
+                            {{ request()->routeIs('pmu.*')
+                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
+                            href="{{ route('pmu.index') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="size-5 flex-shrink-0">
+                                <path fill-rule="evenodd"
+                                    d="M2.25 4.125c0-1.036.84-1.875 1.875-1.875h5.25c1.036 0 1.875.84 1.875 1.875V17.25a4.5 4.5 0 1 1-9 0V4.125Zm4.5 14.25a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z"
+                                    clip-rule="evenodd" />
+                                <path
+                                    d="M10.719 21.75h9.156c1.036 0 1.875-.84 1.875-1.875v-5.25c0-1.036-.84-1.875-1.875-1.875h-.14l-8.742 8.743c-.09.089-.18.175-.274.257ZM12.738 17.625l6.474-6.474a1.875 1.875 0 0 0 0-2.651L15.5 4.787a1.875 1.875 0 0 0-2.651 0l-.1.099V17.25c0 .126-.003.251-.01.375Z" />
+                            </svg>
+                            <span>PMU</span>
+                        </a>
+                    </li>
+                    {{-- @endcan --}}
+
                     <!-- Reports Section -->
                     @can('view_reports')
                         <li class="pt-4 mt-4 border-t border-gray-200 dark:border-neutral-600">
@@ -194,8 +216,8 @@
                                         {{ request()->routeIs('reports.bac.prs-received')
                                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
                                             : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-emerald-600/20' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                                    class="size-5 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                    fill="currentColor" class="size-5 flex-shrink-0">
                                                     <path fill-rule="evenodd"
                                                         d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625ZM7.5 15a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 7.5 15Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H8.25Z"
                                                         clip-rule="evenodd" />
