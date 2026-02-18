@@ -19,45 +19,59 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
             <thead class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
                 <tr>
-                    <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-16">
-                    </th>
-                    <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-16">
-                    </th>
+                    <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-16"></th>
+                    <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-16"></th>
                     <th
                         class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                         Notice of Award Number
                     </th>
                     <th
-                        class="px-6 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        PR Count
+                        class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        Date Forwarded
                     </th>
                     <th
                         class="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Total ABC
+                        Contract Amount
                     </th>
                     <th
                         class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Date Range
+                        PO / Contract Number
                     </th>
-
+                    <th
+                        class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        Contract Signing Date
+                    </th>
+                    <th
+                        class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        Notice to Proceed Date
+                    </th>
+                    <th
+                        class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        Remarks
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
                 @forelse ($groupedItems as $group)
                     <!-- Main Row -->
                     <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
-                        <!-- Toggle Button -->
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <!-- Toggle Button with PR Count Badge -->
+                        <td class="px-4 py-4 whitespace-nowrap">
                             <button wire:click="toggle('expandedNoaNumber', '{{ $group->notice_of_award_number }}')"
-                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                class="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                                 <svg class="w-5 h-5 transition-transform {{ $expandedNoaNumber === $group->notice_of_award_number ? 'rotate-90' : '' }}"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 5l7 7-7 7" />
                                 </svg>
+                                <span
+                                    class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 min-w-[20px]">
+                                    {{ $group->procurement_count }}
+                                </span>
                             </button>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <!-- Actions -->
+                        <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                             <div x-data="{ open: false }" class="relative inline-block" x-ref="menuWrapper">
                                 <button @click="open = !open" @click.away="open = false"
                                     class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow">
@@ -99,33 +113,42 @@
                                 </template>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                        <!-- NOA Number -->
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                             {{ $group->notice_of_award_number }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                {{ $group->procurement_count }} PR(s)
-                            </span>
+                        <!-- Date Forwarded -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->format('M d, Y') : '—' }}
                         </td>
+                        <!-- Contract Amount -->
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                            ₱ {{ number_format($group->total_abc, 2) }}
+                            {{ $group->contract_amount ? '₱ ' . number_format($group->contract_amount, 2) : '—' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            @if ($group->earliest_date == $group->latest_date)
-                                {{ \Carbon\Carbon::parse($group->earliest_date)->format('M d, Y') }}
-                            @else
-                                {{ \Carbon\Carbon::parse($group->earliest_date)->format('M d, Y') }} -
-                                {{ \Carbon\Carbon::parse($group->latest_date)->format('M d, Y') }}
-                            @endif
+                        <!-- PO / Contract Number -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            {{ $group->po_contract_number ?? '—' }}
                         </td>
-
+                        <!-- Contract Signing Date -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            {{ $group->contract_signing_date ? \Carbon\Carbon::parse($group->contract_signing_date)->format('M d, Y') : '—' }}
+                        </td>
+                        <!-- Notice to Proceed Date -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            {{ $group->notice_to_proceed_date ? \Carbon\Carbon::parse($group->notice_to_proceed_date)->format('M d, Y') : '—' }}
+                        </td>
+                        <!-- Remarks -->
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                            <div class="truncate" title="{{ $group->remarks }}">
+                                {{ $group->remarks ?? '—' }}
+                            </div>
+                        </td>
                     </tr>
 
                     <!-- Expanded Row with Procurements -->
                     @if ($expandedNoaNumber === $group->notice_of_award_number && $expandedProcurements)
                         <tr class="bg-gray-50 dark:bg-neutral-900">
-                            <td colspan="6" class="px-6 py-4">
+                            <td colspan="9" class="px-6 py-4">
                                 <div class="space-y-4">
 
                                     <div class="overflow-x-auto">
@@ -177,8 +200,8 @@
                                                                     class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
                                                                     <svg class="w-5 h-5 inline" fill="none"
                                                                         stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                                            stroke-width="2"
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
                                                                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                                         <path stroke-linecap="round"
                                                                             stroke-linejoin="round" stroke-width="2"
@@ -198,7 +221,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
+                        <td colspan="9" class="px-6 py-12 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">

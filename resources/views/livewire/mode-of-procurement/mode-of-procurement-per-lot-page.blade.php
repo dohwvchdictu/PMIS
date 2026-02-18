@@ -241,9 +241,17 @@
                                         )->exists();
                                         $canEditMop = auth()->user()->can('edit_mode::of::procurement');
                                         $isCurrentRow = $loop->first;
+                                        $isForwarded = $this->isForwardedToPmu;
 
-                                        $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
-                                        $disableInputs = $isHistory || ($isCurrentRow && $hasPostData && !$canEditMop);
+                                        $disableSelect =
+                                            $isHistory ||
+                                            $hasSchedule ||
+                                            $rowUid === 'MOP-1-1' ||
+                                            ($isForwarded && !$canEditMop);
+                                        $disableInputs =
+                                            $isHistory ||
+                                            ($isCurrentRow && $hasPostData && !$canEditMop) ||
+                                            ($isForwarded && !$canEditMop);
                                         $showFields = $isSavedRecord;
 
                                         // Show current row always, history rows only when $showHistory is true
@@ -729,28 +737,34 @@
 
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                @php
+                                    $disablePost =
+                                        $this->isForwardedToPmu && !auth()->user()->can('edit_mode::of::procurement');
+                                @endphp
                                 <tr>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="resolutionAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="RES-YYYY-NNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="RES-YYYY-NNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="resolutionAwardDate"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="noticeOfAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="NOAYYYY-NNNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="NOAYYYY-NNNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="noticeOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
@@ -759,25 +773,27 @@
                                                 class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 pointer-events-none">₱</span>
                                             <input type="text" wire:model.defer="awardedAmount" x-data
                                                 x-mask:dynamic="$money($input, '.', ',', 2)"
-                                                class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                placeholder="0.00">
+                                                class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                placeholder="0.00" @disabled($disablePost)>
                                         </div>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="philgepsNoticeOfAwardNo"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="PHL-NOA-YYYY-NNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="PHL-NOA-YYYY-NNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="philgepsPostingOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <select wire:model.defer="supplier_id"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                             <option value="">Select Supplier...</option>
                                             @foreach ($suppliers as $supplier)
                                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -791,7 +807,32 @@
                 </div>
 
                 {{-- Forward to PMU Action Section --}}
-                @if ($this->canForwardToPmu)
+                @if ($this->isForwardedToPmu)
+                    <div
+                        class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-600 dark:bg-blue-700 rounded-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4
+                                    class="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                                    Forwarded to PMU
+                                </h4>
+                                @if ($this->forwardedToPmuDate)
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                                        Date Forwarded: <span
+                                            class="font-medium">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->format('F d, Y') }}</span>
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @elseif ($this->canForwardToPmu)
                     <div
                         class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700">
                         <div class="flex items-center justify-between">

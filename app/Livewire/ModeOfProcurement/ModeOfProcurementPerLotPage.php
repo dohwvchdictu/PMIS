@@ -1336,6 +1336,29 @@ class ModeOfProcurementPerLotPage extends Component
             $this->hasValue($post->supplier_id);
     }
 
+    /**
+     * Check if this procurement has already been forwarded to PMU (stage 7 exists)
+     */
+    public function getIsForwardedToPmuProperty(): bool
+    {
+        return PrLotPrstage::where('procID', $this->procID)
+            ->where('pr_stage_id', 7)
+            ->exists();
+    }
+
+    /**
+     * Get the forwarded date from the PMU stage record
+     */
+    public function getForwardedToPmuDateProperty(): ?string
+    {
+        $stage = PrLotPrstage::where('procID', $this->procID)
+            ->where('pr_stage_id', 7)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        return $stage?->actual_date_forwarded;
+    }
+
     public function updateHistoryItem(): void
     {
         if ($this->editingIndex === null || !isset($this->form['items'][$this->editingIndex])) {
@@ -1490,6 +1513,15 @@ class ModeOfProcurementPerLotPage extends Component
                             'actual_date_forwarded' => $this->actualDateForwarded,
                         ]);
 
+                        // Update PMU record with new date_forwarded
+                        $post = PostProcurement::where('ref_id', $this->procID)->first();
+                        if ($post && $this->hasValue($post->notice_of_award_number)) {
+                            \App\Models\Pmu::updateOrCreate(
+                                ['notice_of_award_number' => $post->notice_of_award_number],
+                                ['date_forwarded' => $this->actualDateForwarded]
+                            );
+                        }
+
                         LivewireAlert::title('Date Updated!')
                             ->success()
                             ->text('Actual date forwarded has been updated for this PMU record.')
@@ -1504,6 +1536,15 @@ class ModeOfProcurementPerLotPage extends Component
                             'stage_history' => (string) $latestStageId, // Previous stage
                             'actual_date_forwarded' => $this->actualDateForwarded,
                         ]);
+
+                        // Insert/update PMU record
+                        $post = PostProcurement::where('ref_id', $this->procID)->first();
+                        if ($post && $this->hasValue($post->notice_of_award_number)) {
+                            \App\Models\Pmu::updateOrCreate(
+                                ['notice_of_award_number' => $post->notice_of_award_number],
+                                ['date_forwarded' => $this->actualDateForwarded]
+                            );
+                        }
 
                         LivewireAlert::title('Forwarded to PMU!')
                             ->success()
@@ -1520,6 +1561,15 @@ class ModeOfProcurementPerLotPage extends Component
                         'stage_history' => null, // No previous stage
                         'actual_date_forwarded' => $this->actualDateForwarded,
                     ]);
+
+                    // Insert/update PMU record
+                    $post = PostProcurement::where('ref_id', $this->procID)->first();
+                    if ($post && $this->hasValue($post->notice_of_award_number)) {
+                        \App\Models\Pmu::updateOrCreate(
+                            ['notice_of_award_number' => $post->notice_of_award_number],
+                            ['date_forwarded' => $this->actualDateForwarded]
+                        );
+                    }
 
                     LivewireAlert::title('Forwarded to PMU!')
                         ->success()

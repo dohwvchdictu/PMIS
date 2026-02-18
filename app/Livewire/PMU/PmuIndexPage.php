@@ -4,6 +4,7 @@ namespace App\Livewire\PMU;
 
 use App\Models\Procurement;
 use App\Models\PostProcurement;
+use App\Models\Pmu;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -73,6 +74,7 @@ class PmuIndexPage extends Component
         // Get procurements with stage 7 (Forwarded to PMU) grouped by notice_of_award_number
         $query = Procurement::query()
             ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
             ->leftJoin('divisions', 'procurements.divisions_id', '=', 'divisions.id')
             ->where(function ($q) {
                 // Check if procurement has lot stage or item stage with pr_stage_id = 7
@@ -83,7 +85,8 @@ class PmuIndexPage extends Component
                     $query->where('pr_stage_id', 7);
                 });
             })
-            ->whereNotNull('post_procurements.notice_of_award_number');
+            ->whereNotNull('post_procurements.notice_of_award_number')
+            ->whereNull('pmus.deleted_at');
 
         // Apply search filter
         if (!empty($this->search)) {
@@ -97,12 +100,24 @@ class PmuIndexPage extends Component
         $groupedItems = $query
             ->select(
                 'post_procurements.notice_of_award_number',
+                'pmus.date_forwarded',
+                'pmus.contract_amount',
+                'pmus.po_contract_number',
+                'pmus.contract_signing_date',
+                'pmus.notice_to_proceed_date',
+                'pmus.remarks',
                 DB::raw('COUNT(DISTINCT procurements.procID) as procurement_count'),
-                DB::raw('SUM(procurements.abc) as total_abc'),
-                DB::raw('MIN(procurements.date_receipt) as earliest_date'),
-                DB::raw('MAX(procurements.date_receipt) as latest_date')
+                DB::raw('SUM(procurements.abc) as total_abc')
             )
-            ->groupBy('post_procurements.notice_of_award_number')
+            ->groupBy(
+                'post_procurements.notice_of_award_number',
+                'pmus.date_forwarded',
+                'pmus.contract_amount',
+                'pmus.po_contract_number',
+                'pmus.contract_signing_date',
+                'pmus.notice_to_proceed_date',
+                'pmus.remarks'
+            )
             ->orderBy('post_procurements.notice_of_award_number', 'desc')
             ->paginate($this->perPage);
 
@@ -111,7 +126,9 @@ class PmuIndexPage extends Component
         if ($this->expandedNoaNumber) {
             $expandedProcurements = Procurement::query()
                 ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
+                ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
                 ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
+                ->whereNull('pmus.deleted_at')
                 ->where(function ($q) {
                     $q->whereHas('prLotPrstages', function ($query) {
                         $query->where('pr_stage_id', 7);

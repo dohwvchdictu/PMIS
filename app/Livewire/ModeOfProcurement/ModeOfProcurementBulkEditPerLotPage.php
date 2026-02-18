@@ -4,6 +4,8 @@ namespace App\Livewire\ModeOfProcurement;
 
 use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
+use App\Models\PostProcurement;
+use App\Models\PrLotPrstage;
 use App\Models\PrSvp;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -87,6 +89,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public bool $selectAllPost = false;
     public bool $showPostBulkEditModal = false;
     public array $postBulkEditData = [];
+
+    // Forward to PMU Modal
+    public bool $showForwardModal = false;
+    public ?string $actualDateForwarded = null;
 
     // Post-Procurement Tab Fields
     public ?string $resolutionAwardNumber = null;
@@ -2566,6 +2572,305 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         }
     }
 
+    // ============================================================================
+    // FORWARD TO PMU
+    // ============================================================================
+
+    /**
+     * Check if at least one selected post item has all 6 required fields filled
+     * Returns true if ANY selected post item qualifies for forwarding
+     *
+     * Required fields: Resolution Award Number/Date, NOA Number/Date, Awarded Amount, Supplier
+     */
+    public function getCanForwardToPmuProperty(): bool
+    {
+        if (empty($this->selectedPostItems)) {
+            return false;
+        }
+
+        foreach ($this->selectedPostItems as $refId) {
+            $post = PostProcurement::where('ref_id', $refId)->first();
+
+            if (
+                $post &&
+                $this->hasValue($post->resolution_award_number) &&
+                $this->hasValue($post->resolution_award_date) &&
+                $this->hasValue($post->notice_of_award_number) &&
+                $this->hasValue($post->notice_of_award) &&
+                $this->hasValue($post->awarded_amount) &&
+                $this->hasValue($post->supplier_id)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Count how many selected post items actually qualify for forwarding
+     * (have all 6 required post fields filled)
+     */
+    public function getEligibleForwardCountProperty(): int
+    {
+        $count = 0;
+
+        foreach ($this->selectedPostItems as $refId) {
+            $post = PostProcurement::where('ref_id', $refId)->first();
+
+            if (
+                $post &&
+                $this->hasValue($post->resolution_award_number) &&
+                $this->hasValue($post->resolution_award_date) &&
+                $this->hasValue($post->notice_of_award_number) &&
+                $this->hasValue($post->notice_of_award) &&
+                $this->hasValue($post->awarded_amount) &&
+                $this->hasValue($post->supplier_id)
+            ) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Get a summary of forwarded vs pending status for selected post items
+     * Returns ['forwarded' => int, 'pending' => int]
+     */
+    public function getForwardedToPmuSummaryProperty(): array
+    {
+        $forwarded = 0;
+        $pending = 0;
+
+        foreach ($this->selectedPostItems as $refId) {
+            $exists = PrLotPrstage::where('procID', $refId)
+                ->where('pr_stage_id', 7)
+                ->exists();
+
+            if ($exists) {
+                $forwarded++;
+            } else {
+                $pending++;
+            }
+        }
+
+        return ['forwarded' => $forwarded, 'pending' => $pending];
+    }
+
+    /**
+     * Open the Forward to PMU modal
+     * Validates at least one selected post item qualifies
+     * Pre-fills date only if all already-forwarded items share the same date
+     */
+    public function openForwardModal(): void
+    {
+        if (empty($this->selectedPostItems)) {
+            LivewireAlert::title('No Items Selected')
+                ->warning()
+                ->text('Please select at least one item to forward to PMU.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Collect ineligible PR numbers
+        $ineligiblePrs = [];
+        foreach ($this->selectedPostItems as $refId) {
+            $post = PostProcurement::where('ref_id', $refId)->first();
+
+            $isEligible = $post &&
+                $this->hasValue($post->resolution_award_number) &&
+                $this->hasValue($post->resolution_award_date) &&
+                $this->hasValue($post->notice_of_award_number) &&
+                $this->hasValue($post->notice_of_award) &&
+                $this->hasValue($post->awarded_amount) &&
+                $this->hasValue($post->supplier_id);
+
+            if (!$isEligible) {
+                // Get PR number for better error message
+                $prItem = collect($this->items)->firstWhere('procID', $refId);
+                $ineligiblePrs[] = $prItem['pr_number'] ?? $refId;
+            }
+        }
+
+        if (!empty($ineligiblePrs)) {
+            $prList = implode(', ', $ineligiblePrs);
+            LivewireAlert::title('Cannot Forward to PMU')
+                ->error()
+                ->text("The following PR(s) are missing required post-procurement fields (Resolution Award Number/Date, Notice of Award Number/Date, Awarded Amount, or Supplier): {$prList}. Please complete all fields before forwarding.")
+                ->toast()
+                ->position('top-end')
+                ->timer(8000)
+                ->show();
+            return;
+        }
+
+        // Pre-fill date if all already-forwarded items share the same date
+        $dates = [];
+        foreach ($this->selectedPostItems as $refId) {
+            $stage = PrLotPrstage::where('procID', $refId)
+                ->where('pr_stage_id', 7)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($stage && $stage->actual_date_forwarded) {
+                $dates[] = $stage->actual_date_forwarded;
+            }
+        }
+
+        $uniqueDates = array_unique($dates);
+        if (count($uniqueDates) === 1) {
+            $this->actualDateForwarded = reset($uniqueDates);
+        } else {
+            $this->actualDateForwarded = now()->format('Y-m-d');
+        }
+
+        $this->showForwardModal = true;
+    }
+
+    /**
+     * Close the Forward to PMU modal
+     */
+    public function closeForwardModal(): void
+    {
+        $this->showForwardModal = false;
+        $this->actualDateForwarded = null;
+    }
+
+    /**
+     * Forward selected post items to PMU (Stage 7) in bulk
+     * Skips items that don't have all 6 required post fields
+     * Creates or updates PrLotPrstage stage 7 record per PR
+     * Also creates/updates PMU record via notice_of_award_number
+     */
+    public function forwardToPmu(): void
+    {
+        $this->validate([
+            'actualDateForwarded' => 'required|date'
+        ], [
+            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date.'
+        ]);
+
+        $forwarded = 0;
+        $updated = 0;
+        $skipped = 0;
+
+        try {
+            DB::transaction(function () use (&$forwarded, &$updated, &$skipped) {
+                foreach ($this->selectedPostItems as $refId) {
+                    $post = PostProcurement::where('ref_id', $refId)->first();
+
+                    // Skip if post data missing or required fields incomplete
+                    if (
+                        !$post ||
+                        !$this->hasValue($post->resolution_award_number) ||
+                        !$this->hasValue($post->resolution_award_date) ||
+                        !$this->hasValue($post->notice_of_award_number) ||
+                        !$this->hasValue($post->notice_of_award) ||
+                        !$this->hasValue($post->awarded_amount) ||
+                        !$this->hasValue($post->supplier_id)
+                    ) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Get latest stage for this PR
+                    $latestStage = PrLotPrstage::where('procID', $refId)
+                        ->orderBy('created_at', 'desc')
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    if ($latestStage && $latestStage->pr_stage_id == 7) {
+                        // Already at stage 7 — update date only
+                        $previousStage = PrLotPrstage::where('procID', $refId)
+                            ->where('id', '<', $latestStage->id)
+                            ->orderBy('created_at', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->first();
+
+                        $latestStage->update([
+                            'stage_history' => $previousStage ? (string) $previousStage->pr_stage_id : null,
+                            'actual_date_forwarded' => $this->actualDateForwarded,
+                        ]);
+
+                        $updated++;
+                    } else {
+                        // Create new stage 7 row
+                        PrLotPrstage::create([
+                            'procID' => $refId,
+                            'pr_stage_id' => 7,
+                            'stage_history' => $latestStage ? (string) $latestStage->pr_stage_id : null,
+                            'actual_date_forwarded' => $this->actualDateForwarded,
+                        ]);
+
+                        $forwarded++;
+                    }
+
+                    // Create/update PMU record
+                    if ($this->hasValue($post->notice_of_award_number)) {
+                        \App\Models\Pmu::updateOrCreate(
+                            ['notice_of_award_number' => $post->notice_of_award_number],
+                            ['date_forwarded' => $this->actualDateForwarded]
+                        );
+                    }
+                }
+            });
+
+            $this->closeForwardModal();
+
+            $total = $forwarded + $updated;
+            $message = '';
+            if ($forwarded > 0 && $updated > 0) {
+                $message = "{$forwarded} PR(s) forwarded and {$updated} PR(s) date updated.";
+            } elseif ($forwarded > 0) {
+                $message = "{$forwarded} PR(s) successfully forwarded to PMU.";
+            } elseif ($updated > 0) {
+                $message = "Date updated for {$updated} PR(s).";
+            }
+
+            if ($skipped > 0) {
+                $message .= " {$skipped} PR(s) skipped (incomplete post-procurement data).";
+            }
+
+            if ($total > 0) {
+                LivewireAlert::title('Forwarded to PMU!')
+                    ->success()
+                    ->text($message)
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+            } else {
+                LivewireAlert::title('No Items Forwarded')
+                    ->warning()
+                    ->text($message ?: 'All selected items were skipped due to incomplete post-procurement data.')
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+            }
+
+            $this->loadProcurementData();
+            $this->populateBulkEditData();
+            $this->loadPostProcurementData();
+
+        } catch (\Exception $e) {
+            \Log::error('Bulk Forward to PMU failed', [
+                'procIDs' => $this->selectedPostItems,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            LivewireAlert::title('Forward Failed')
+                ->error()
+                ->text('Failed to forward to PMU. Please try again.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
+    }
+
     /**
      * Render the component view with all necessary data
      *
@@ -2584,6 +2889,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'abcThresholdCategory' => $this->abcThresholdCategory,
             'showAddModeButton' => $this->showAddModeButton,
             'showAddForm' => $this->showAddForm,
+            'canForwardToPmu' => $this->canForwardToPmu,
+            'forwardedToPmuSummary' => $this->forwardedToPmuSummary,
+            'eligibleForwardCount' => $this->eligibleForwardCount,
         ]);
     }
 }
