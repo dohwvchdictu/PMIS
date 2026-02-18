@@ -5,6 +5,7 @@ namespace App\Livewire\ModeOfProcurement;
 use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
+use App\Models\PrLotPrstage;
 use App\Models\PrSvp;
 use App\Models\Supplier;
 use Illuminate\Support\Collection;
@@ -93,6 +94,10 @@ class ModeOfProcurementPerLotPage extends Component
     public ?array $editingItem = null;
     public ?int $editingIndex = null;
     public array $scheduleValidationErrors = [];
+
+    // Forward to PMU Modal Properties
+    public bool $showForwardModal = false;
+    public ?string $actualDateForwarded = null;
 
     public function mount(Procurement $procurement): void
     {
@@ -1301,6 +1306,36 @@ class ModeOfProcurementPerLotPage extends Component
         return $post !== null;
     }
 
+    /**
+     * Check if all required Post Procurement fields are filled
+     * Enables "Forward to PMU" button when all 6 core fields are complete
+     *
+     * Required fields (excludes PhilGEPS - handled in Tab 1):
+     * - Resolution Award Number
+     * - Resolution Award Date
+     * - Notice of Award Number
+     * - Notice of Award Date
+     * - Awarded Amount
+     * - Supplier
+     */
+    public function getCanForwardToPmuProperty(): bool
+    {
+        // Check if data exists in database (not just form)
+        $post = PostProcurement::where('ref_id', $this->procID)->first();
+
+        if (!$post) {
+            return false;
+        }
+
+        // Check all 6 required fields are filled in database
+        return $this->hasValue($post->resolution_award_number) &&
+            $this->hasValue($post->resolution_award_date) &&
+            $this->hasValue($post->notice_of_award_number) &&
+            $this->hasValue($post->notice_of_award) &&
+            $this->hasValue($post->awarded_amount) &&
+            $this->hasValue($post->supplier_id);
+    }
+
     public function updateHistoryItem(): void
     {
         if ($this->editingIndex === null || !isset($this->form['items'][$this->editingIndex])) {
@@ -1382,6 +1417,135 @@ class ModeOfProcurementPerLotPage extends Component
         $this->showModal = false;
         $this->editingItem = null;
         $this->editingIndex = null;
+    }
+
+    /**
+     * Open the Forward to PMU modal
+     * Pre-fills with existing date if already forwarded
+     */
+    public function openForwardModal(): void
+    {
+        // Check if already forwarded and pre-fill date
+        $existingStage = PrLotPrstage::where('procID', $this->procID)
+            ->where('pr_stage_id', 7)
+            ->first();
+
+        if ($existingStage && $existingStage->actual_date_forwarded) {
+            $this->actualDateForwarded = $existingStage->actual_date_forwarded;
+        } else {
+            $this->actualDateForwarded = now()->format('Y-m-d'); // Default to today
+        }
+
+        $this->showForwardModal = true;
+    }
+
+    /**
+     * Close the Forward to PMU modal
+     */
+    public function closeForwardModal(): void
+    {
+        $this->showForwardModal = false;
+        $this->actualDateForwarded = null;
+    }
+
+    /**
+     * Forward procurement to PMU (Stage 7)
+     * Creates new stage row or updates existing stage 7 row with actual_date_forwarded
+     * Stage history tracks the previous stage ID
+     */
+    public function forwardToPmu(): void
+    {
+        // Validate actual date
+        $this->validate([
+            'actualDateForwarded' => 'required|date'
+        ], [
+            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date.'
+        ]);
+
+        try {
+            DB::transaction(function () {
+                // Get all stage records for this procurement, ordered by latest first
+                $latestStage = PrLotPrstage::where('procID', $this->procID)
+                    ->orderBy('created_at', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($latestStage) {
+                    $latestStageId = $latestStage->pr_stage_id;
+
+                    if ($latestStageId == 7) {
+                        // Latest stage IS 7: UPDATE existing row
+                        // Get the stage before this one (second latest)
+                        $previousStage = PrLotPrstage::where('procID', $this->procID)
+                            ->where('id', '<', $latestStage->id)
+                            ->orderBy('created_at', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->first();
+
+                        $stageHistory = $previousStage ? (string) $previousStage->pr_stage_id : null;
+
+                        $latestStage->update([
+                            'stage_history' => $stageHistory,
+                            'actual_date_forwarded' => $this->actualDateForwarded,
+                        ]);
+
+                        LivewireAlert::title('Date Updated!')
+                            ->success()
+                            ->text('Actual date forwarded has been updated for this PMU record.')
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                    } else {
+                        // Latest stage is NOT 7: CREATE new row with stage 7
+                        PrLotPrstage::create([
+                            'procID' => $this->procID,
+                            'pr_stage_id' => 7, // PMU Stage
+                            'stage_history' => (string) $latestStageId, // Previous stage
+                            'actual_date_forwarded' => $this->actualDateForwarded,
+                        ]);
+
+                        LivewireAlert::title('Forwarded to PMU!')
+                            ->success()
+                            ->text('Procurement has been successfully forwarded to PMU.')
+                            ->toast()
+                            ->position('top-end')
+                            ->show();
+                    }
+                } else {
+                    // No existing stages: Create first stage as PMU
+                    PrLotPrstage::create([
+                        'procID' => $this->procID,
+                        'pr_stage_id' => 7, // PMU Stage
+                        'stage_history' => null, // No previous stage
+                        'actual_date_forwarded' => $this->actualDateForwarded,
+                    ]);
+
+                    LivewireAlert::title('Forwarded to PMU!')
+                        ->success()
+                        ->text('Procurement has been successfully forwarded to PMU.')
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
+                }
+            });
+
+            $this->closeForwardModal();
+            $this->mount($this->procurement); // Reload data
+        } catch (\Exception $e) {
+            \Log::error('Forward to PMU failed', [
+                'procID' => $this->procID,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            LivewireAlert::title('Forward Failed')
+                ->error()
+                ->text('Failed to forward to PMU. Please try again.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
     }
 
     private function nullableDate($value)

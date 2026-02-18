@@ -11,6 +11,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles()
 
+    <!-- Custom styles for Livewire Alert z-index -->
+    <style>
+        /* Ensure SweetAlert2 appears above modals (modal z-index: 99999) */
+        .swal-z-index-max {
+            z-index: 999999 !important;
+        }
+    </style>
+
     <!-- Dark Mode Initialization (must be in head to prevent flash) -->
     <script>
         // Initialize dark mode immediately before page renders

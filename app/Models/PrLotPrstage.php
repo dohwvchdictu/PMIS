@@ -16,11 +16,13 @@ class PrLotPrstage extends Model implements Auditable
         'procID',
         'pr_stage_id',
         'stage_history',
+        'actual_date_forwarded',
     ];
     protected $auditInclude = [
         'procID',
         'pr_stage_id',
         'stage_history',
+        'actual_date_forwarded',
     ];
 
     protected $auditTimestamps = true;

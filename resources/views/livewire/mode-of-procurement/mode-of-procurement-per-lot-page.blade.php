@@ -789,6 +789,41 @@
                         </table>
                     </div>
                 </div>
+
+                {{-- Forward to PMU Action Section --}}
+                @if ($this->canForwardToPmu)
+                    <div
+                        class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-start gap-3">
+                                <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                                        Ready to Forward
+                                    </h4>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        All post-procurement details are complete. You can now forward this to PMU.
+                                    </p>
+                                </div>
+                            </div>
+                            <button wire:click="openForwardModal"
+                                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-md hover:shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                                Forward to PMU
+                            </button>
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
     </div>
@@ -1125,6 +1160,83 @@
 
             </div>
         @endif
+    </x-forms.modal>
+
+    {{-- Forward to PMU Modal --}}
+    <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
+        closeMethod="closeForwardModal">
+        <div class="px-4 py-3">
+            {{-- Information Section --}}
+            <div
+                class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
+                            Forward Procurement to PMU
+                        </h4>
+                        <p class="text-xs text-emerald-700 dark:text-emerald-300">
+                            This will mark the procurement as forwarded to the Procurement Management Unit (Stage 7).
+                            Please enter the actual date when this procurement was forwarded.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- PR Number Display --}}
+            <div
+                class="mb-4 p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-600">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">PR Number:</span>
+                        <span
+                            class="ml-2 text-sm font-semibold text-gray-900 dark:text-white">{{ $form['pr_number'] ?? 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="date" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToPmu"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
+                    </button>
+                </div>
+            </div>
+        </div>
     </x-forms.modal>
 
 </div>
