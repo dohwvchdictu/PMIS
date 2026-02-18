@@ -2689,7 +2689,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($post->supplier_id);
 
             if (!$isEligible) {
-                // Get PR number for better error message
                 $prItem = collect($this->items)->firstWhere('procID', $refId);
                 $ineligiblePrs[] = $prItem['pr_number'] ?? $refId;
             }
@@ -2705,6 +2704,43 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 ->timer(8000)
                 ->show();
             return;
+        }
+
+        // Warn (but still open) if some selected items are already forwarded
+        $alreadyForwardedPrs = [];
+        foreach ($this->selectedPostItems as $refId) {
+            $exists = PrLotPrstage::where('procID', $refId)
+                ->where('pr_stage_id', 7)
+                ->exists();
+            if ($exists) {
+                $prItem = collect($this->items)->firstWhere('procID', $refId);
+                $alreadyForwardedPrs[] = $prItem['pr_number'] ?? $refId;
+            }
+        }
+
+        if (!empty($alreadyForwardedPrs)) {
+            $prList = implode(', ', $alreadyForwardedPrs);
+
+            // If ALL selected items are already forwarded, block and do not open modal
+            if (count($alreadyForwardedPrs) === count($this->selectedPostItems)) {
+                LivewireAlert::title('Already Forwarded')
+                    ->error()
+                    ->text("The following PR(s) are already forwarded to PMU: {$prList}. No action needed.")
+                    ->toast()
+                    ->position('top-end')
+                    ->timer(6000)
+                    ->show();
+                return;
+            }
+
+            // Some (but not all) are already forwarded — warn but still open
+            LivewireAlert::title('Already Forwarded')
+                ->warning()
+                ->text("The following PR(s) are already forwarded to PMU: {$prList}. Proceeding will update their forwarded date.")
+                ->toast()
+                ->position('top-end')
+                ->timer(6000)
+                ->show();
         }
 
         // Pre-fill date if all already-forwarded items share the same date
@@ -2850,6 +2886,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     ->position('top-end')
                     ->show();
             }
+
+            $this->selectedPostItems = [];
+            $this->selectAllPost = false;
 
             $this->loadProcurementData();
             $this->populateBulkEditData();

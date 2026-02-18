@@ -699,23 +699,25 @@
                                         Bulk Edit
                                     </span>
                                 </button>
-                                <button wire:click="openForwardModal" type="button"
-                                    class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+                                @if ($this->canForwardToPmu)
+                                    <button wire:click="openForwardModal" type="button"
+                                        class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
                                         bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
-                                    <span class="flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                                        </svg>
-                                        Forward to PMU
-                                        @if ($forwardedToPmuSummary['forwarded'] > 0)
-                                            <span class="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded-full">
-                                                {{ $forwardedToPmuSummary['forwarded'] }} done
-                                            </span>
-                                        @endif
-                                    </span>
-                                </button>
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                            </svg>
+                                            Forward to PMU
+                                            @if ($forwardedToPmuSummary['forwarded'] > 0)
+                                                <span class="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded-full">
+                                                    {{ $forwardedToPmuSummary['forwarded'] }} done
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -823,20 +825,90 @@
                                                     : null;
 
                                             $isSelected = in_array($refId, $selectedPostItems);
+                                            $isForwarded = \App\Models\PrLotPrstage::where('procID', $refId)
+                                                ->where('pr_stage_id', 7)
+                                                ->exists();
+                                            $forwardedDate = $isForwarded
+                                                ? \App\Models\PrLotPrstage::where('procID', $refId)
+                                                    ->where('pr_stage_id', 7)
+                                                    ->orderBy('created_at', 'desc')
+                                                    ->value('actual_date_forwarded')
+                                                : null;
                                         @endphp
 
                                         <tr wire:key="post-item-{{ $refId }}"
-                                            class="hover:bg-gray-50 dark:hover:bg-neutral-700 {{ $isSelected ? 'bg-emerald-100 dark:bg-emerald-900/30 border-2 border-emerald-400' : '' }}">
+                                            class="hover:bg-gray-50 dark:hover:bg-neutral-700
+                                                {{ $isForwarded ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}
+                                                {{ $isSelected ? 'border-2 border-emerald-400 ' . ($isForwarded ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30') : '' }}">
                                             <td class="px-2 py-2 text-center">
-                                                <input type="checkbox" wire:model.live="selectedPostItems"
-                                                    value="{{ $refId }}"
-                                                    class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                                @if ($isForwarded)
+                                                    <div class="relative flex justify-center items-center"
+                                                        x-data="{ open: false }" @click.outside="open = false">
+                                                        <button type="button" @click="open = !open"
+                                                            @mouseenter="open = true" @mouseleave="open = false"
+                                                            class="p-1 rounded-full bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                            title="Forwarded to PMU">
+                                                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                                                fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                        </button>
+                                                        <div x-show="open"
+                                                            x-transition:enter="transition ease-out duration-150"
+                                                            x-transition:enter-start="opacity-0 scale-95"
+                                                            x-transition:enter-end="opacity-100 scale-100"
+                                                            x-transition:leave="transition ease-in duration-100"
+                                                            x-transition:leave-start="opacity-100 scale-100"
+                                                            x-transition:leave-end="opacity-0 scale-95"
+                                                            class="absolute left-8 top-1/2 -translate-y-1/2 z-50 w-52 bg-white dark:bg-neutral-800 border border-blue-200 dark:border-blue-700 rounded-lg shadow-lg p-3 text-left pointer-events-none"
+                                                            style="display: none;">
+                                                            <div class="flex items-center gap-1.5 mb-1.5">
+                                                                <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                                                    fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                                </svg>
+                                                                <span
+                                                                    class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                                                    to PMU</span>
+                                                            </div>
+                                                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                                <span
+                                                                    class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
+                                                                {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->format('F d, Y') : 'N/A' }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <input type="checkbox" wire:model.live="selectedPostItems"
+                                                        value="{{ $refId }}"
+                                                        class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                                @endif
                                             </td>
                                             <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                    {{ $item['pr_number'] }}
-                                                </span>
+                                                <div class="flex flex-col gap-0.5">
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                        {{ $item['pr_number'] }}
+                                                    </span>
+                                                    @if ($isForwarded)
+                                                        <span
+                                                            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-300"
+                                                            style="font-size:10px;">
+                                                            <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            PMU{{ $forwardedDate ? ' · ' . \Carbon\Carbon::parse($forwardedDate)->format('m/d/Y') : '' }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
                                                 <div class="max-w-xs truncate"
@@ -1517,106 +1589,98 @@
     @endonce
 
     {{-- Forward to PMU Modal --}}
-    @if ($showForwardModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-600 w-full max-w-md mx-4"
-                x-data x-trap.noscroll="true">
-
-                {{-- Header --}}
-                <div
-                    class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/20 border-b border-blue-200 dark:border-blue-700 rounded-t-xl">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-blue-600 dark:bg-blue-700 rounded-lg">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-blue-900 dark:text-blue-100">Forward to PMU</h3>
-                            <p class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                {{ count($selectedPostItems) }} PR(s) will be forwarded
-                            </p>
-                        </div>
+    <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
+        closeMethod="closeForwardModal">
+        <div class="px-4 py-3">
+            {{-- Information Section --}}
+            <div
+                class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
+                            Forward Procurements to PMU
+                        </h4>
+                        <p class="text-xs text-emerald-700 dark:text-emerald-300">
+                            This will mark the selected procurements as forwarded to the Procurement Management Unit
+                            (Stage 7). Please enter the actual date when these procurements were forwarded.
+                        </p>
                     </div>
-                    <button wire:click="closeForwardModal" type="button"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
                 </div>
+            </div>
 
-                {{-- Summary --}}
-                @if ($forwardedToPmuSummary['forwarded'] > 0 || $forwardedToPmuSummary['pending'] > 0)
-                    <div class="px-6 pt-4 flex gap-3">
-                        @if ($forwardedToPmuSummary['forwarded'] > 0)
-                            <div
-                                class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                {{ $forwardedToPmuSummary['forwarded'] }} already forwarded
-                            </div>
-                        @endif
-                        @if ($forwardedToPmuSummary['pending'] > 0)
-                            <div
-                                class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-xs font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ $forwardedToPmuSummary['pending'] }} pending
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                {{-- Body --}}
-                <div class="px-6 py-5 space-y-4">
+            {{-- Summary Pills --}}
+            @if ($forwardedToPmuSummary['forwarded'] > 0 || $forwardedToPmuSummary['pending'] > 0)
+                <div class="mb-4 flex flex-wrap gap-2">
                     @if ($forwardedToPmuSummary['forwarded'] > 0)
                         <div
-                            class="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
-                            <strong>Note:</strong> {{ $forwardedToPmuSummary['forwarded'] }} PR(s) already forwarded —
-                            their date will be updated to the date you enter below.
-                        </div>
-                    @endif
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Actual Date Forwarded <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" wire:model.live="actualDateForwarded"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg text-sm bg-white dark:bg-neutral-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600">
-                        @error('actualDateForwarded')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-                {{-- Footer --}}
-                <div
-                    class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-neutral-600 rounded-b-xl bg-gray-50 dark:bg-neutral-800/50">
-                    <button wire:click="closeForwardModal" type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-700 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-600">
-                        Cancel
-                    </button>
-                    <button wire:click="forwardToPmu" type="button"
-                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
-                        <span class="flex items-center gap-2">
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                    d="M5 13l4 4L19 7" />
                             </svg>
-                            Forward to PMU
-                        </span>
+                            {{ $forwardedToPmuSummary['forwarded'] }} already forwarded
+                        </div>
+                    @endif
+                    @if ($forwardedToPmuSummary['pending'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ $forwardedToPmuSummary['pending'] }} pending
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Already Forwarded Note --}}
+            @if ($forwardedToPmuSummary['forwarded'] > 0)
+                <div
+                    class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>Note:</strong> {{ $forwardedToPmuSummary['forwarded'] }} PR(s) already forwarded —
+                    their date will be updated to the date you enter below.
+                </div>
+            @endif
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="date" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToPmu"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
                     </button>
                 </div>
             </div>
         </div>
-    @endif
+    </x-forms.modal>
 
 </div>
