@@ -895,19 +895,6 @@
                                                         class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
                                                         {{ $item['pr_number'] }}
                                                     </span>
-                                                    @if ($isForwarded)
-                                                        <span
-                                                            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-300"
-                                                            style="font-size:10px;">
-                                                            <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                            PMU{{ $forwardedDate ? ' · ' . \Carbon\Carbon::parse($forwardedDate)->format('m/d/Y') : '' }}
-                                                        </span>
-                                                    @endif
                                                 </div>
                                             </td>
                                             <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
