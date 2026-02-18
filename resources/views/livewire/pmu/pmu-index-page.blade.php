@@ -163,19 +163,19 @@
                                                     </th>
                                                     <th
                                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                                        Procurement Program / Project
+                                                        Title/Description
                                                     </th>
                                                     <th
                                                         class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                                        ABC Amount
+                                                        ABC Amount/Amount
                                                     </th>
-                                                    <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-16">
-                                                    </th>
+                                                    <th class="px-2 py-1 w-16"></th>
                                                 </tr>
                                             </thead>
                                             <tbody
                                                 class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
-                                                @foreach ($expandedProcurements as $procurement)
+                                                {{-- Per-lot rows --}}
+                                                @foreach ($expandedProcurements ?? [] as $procurement)
                                                     <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                                         <td
                                                             class="px-4 py-3 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
@@ -212,6 +212,54 @@
                                                         </td>
                                                     </tr>
                                                 @endforeach
+
+                                                {{-- Per-item rows --}}
+                                                @foreach ($expandedItemRows ?? [] as $row)
+                                                    <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/10">
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                                                            <span
+                                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs">
+                                                                {{ $row->pr_number }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                                                            <div class="break-words whitespace-normal">
+                                                                {{ $row->description }}
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white font-medium">
+                                                            ₱ {{ number_format($row->amount, 2) }}
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
+                                                            @can('view_procurement')
+                                                                <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
+                                                                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                                                                    <svg class="w-5 h-5 inline" fill="none"
+                                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                </a>
+                                                            @endcan
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+
+                                                @if (empty($expandedProcurements?->all()) && empty($expandedItemRows?->all()))
+                                                    <tr>
+                                                        <td colspan="5"
+                                                            class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                                                            No items found.
+                                                        </td>
+                                                    </tr>
+                                                @endif
                                             </tbody>
                                         </table>
                                     </div>

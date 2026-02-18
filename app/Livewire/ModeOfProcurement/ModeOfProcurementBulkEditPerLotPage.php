@@ -2202,7 +2202,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
     /**
      * Validate post-procurement bulk edit selection
-     * Ensures all selected items have identical post-procurement values
+     * Ensures all selected items have identical post-procurement values`
      *
      * @param \Illuminate\Support\Collection $postProcurements Post-procurement records
      * @param array $refIds Reference IDs of selected items
