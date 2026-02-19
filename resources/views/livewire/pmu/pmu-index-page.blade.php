@@ -163,13 +163,68 @@
                                                                 </span>
                                                             </td>
                                                             <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                                                <div class="font-medium break-words whitespace-normal">
-                                                                    {{ $procRow->description }}
-                                                                </div>
+                                                                <div
+                                                                    class="font-medium break-words whitespace-normal max-w-xs">
+                                                                    {{ $procRow->description }}</div>
                                                             </td>
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white font-medium">
                                                                 ₱ {{ number_format($procRow->abc, 2) }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->resolution_award_number ?? '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->resolution_award_date ? \Carbon\Carbon::parse($procRow->resolution_award_date)->format('M d, Y') : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $procRow->awarded_amount ? '₱ ' . number_format($procRow->awarded_amount, 2) : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                <div
+                                                                    class="break-words whitespace-normal max-w-[10rem]">
+                                                                    {{ $procRow->supplier_name ?? '—' }}</div>
+                                                            </td>
+                                                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                                                @if ($procRow->po_contract_number)
+                                                                    @if ($procRow->po_contract_number_link)
+                                                                        <a href="{{ $procRow->po_contract_number_link }}"
+                                                                            target="_blank" rel="noopener noreferrer"
+                                                                            class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 font-medium underline underline-offset-2 transition-colors">{{ $procRow->po_contract_number }}</a>
+                                                                    @else
+                                                                        <span
+                                                                            class="text-gray-900 dark:text-white font-medium">{{ $procRow->po_contract_number }}</span>
+                                                                    @endif
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500">—</span>
+                                                                @endif
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                                                                {{ $procRow->pmu_contract_amount ? '₱ ' . number_format($procRow->pmu_contract_amount, 2) : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->pmu_contract_signing_date ? \Carbon\Carbon::parse($procRow->pmu_contract_signing_date)->format('M d, Y') : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->pmu_notice_to_proceed_date ? \Carbon\Carbon::parse($procRow->pmu_notice_to_proceed_date)->format('M d, Y') : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                @if ($procRow->pmu_remarks)
+                                                                    <span title="{{ $procRow->pmu_remarks }}"
+                                                                        class="cursor-help">{{ \Illuminate\Support\Str::limit($procRow->pmu_remarks, 40) }}</span>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500">—</span>
+                                                                @endif
                                                             </td>
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
@@ -192,7 +247,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="4"
+                                                            <td colspan="13"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>
@@ -302,9 +357,9 @@
 
     {{-- View Details Modal --}}
     @if ($showViewModal)
-        <x-forms.modal title="PMU Details — {{ $viewNoaNumber }}" size="max-w-4xl" closeMethod="closeViewModal"
+        <x-forms.modal title="PMU Details — {{ $viewNoaNumber }}" size="max-w-[98vw]" closeMethod="closeViewModal"
             model="showViewModal">
-            <div class="space-y-4 p-4" x-data="{ showLinkedPrs: false }">
+            <div class="space-y-4 p-4">
 
                 {{-- NOA Header Box --}}
                 <div
@@ -343,28 +398,11 @@
                         {{-- Spacer --}}
                         <div class="flex-1"></div>
 
-                        {{-- View PRs Toggle --}}
-                        <div class="flex items-center px-4 py-4">
-                            <button type="button" x-on:click="showLinkedPrs = !showLinkedPrs"
-                                class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                View
-                            </button>
-                        </div>
-
                     </div>
                 </div>
 
-                {{-- Linked PRs / Items (collapsible) --}}
-                <div x-show="showLinkedPrs" x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-y-2"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-2"
+                {{-- Linked PRs / Items --}}
+                <div
                     class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
 
                     {{-- Section header --}}
@@ -384,13 +422,7 @@
                                 {{ $totalLinked }}
                             </span>
                         </div>
-                        <button type="button" x-on:click="showLinkedPrs = false"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+
                     </div>
 
                     <div class="overflow-x-auto">
@@ -399,15 +431,42 @@
                                 class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
                                 <tr>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         PR Number</th>
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                         Title / Description</th>
                                     <th
-                                        class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         ABC / Amount</th>
-                                    <th class="px-4 py-3 w-12"></th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Res. Award No.</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Res. Award Date</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Awarded Amt</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        Supplier</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        PO / Contract No.</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Contract Amt</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Signing Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        NTP Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                        Remarks</th>
+                                    <th class="px-2 py-1 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody
@@ -421,11 +480,62 @@
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                            <div class="break-words whitespace-normal">{{ $row->description }}</div>
+                                            <div class="break-words whitespace-normal max-w-xs">
+                                                {{ $row->description }}</div>
                                         </td>
                                         <td
                                             class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
                                             ₱ {{ number_format($row->abc, 2) }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->resolution_award_number ?? '—' }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->resolution_award_date ? \Carbon\Carbon::parse($row->resolution_award_date)->format('M d, Y') : '—' }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $row->awarded_amount ? '₱ ' . number_format($row->awarded_amount, 2) : '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                            <div class="break-words whitespace-normal max-w-[10rem]">
+                                                {{ $row->supplier_name ?? '—' }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                            @if ($row->po_contract_number)
+                                                @if ($row->po_contract_number_link)
+                                                    <a href="{{ $row->po_contract_number_link }}" target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 font-medium underline underline-offset-2 transition-colors">{{ $row->po_contract_number }}</a>
+                                                @else
+                                                    <span
+                                                        class="text-gray-900 dark:text-white font-medium">{{ $row->po_contract_number }}</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                                            @endif
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $row->contract_amount ? '₱ ' . number_format($row->contract_amount, 2) : '—' }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->contract_signing_date ? \Carbon\Carbon::parse($row->contract_signing_date)->format('M d, Y') : '—' }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->notice_to_proceed_date ? \Carbon\Carbon::parse($row->notice_to_proceed_date)->format('M d, Y') : '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                            @if ($row->remarks)
+                                                <span title="{{ $row->remarks }}"
+                                                    class="cursor-help">{{ \Illuminate\Support\Str::limit($row->remarks, 40) }}</span>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center">
                                             @can('view_procurement')
@@ -446,7 +556,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4"
+                                        <td colspan="13"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No linked PRs or items found.
                                         </td>
@@ -515,77 +625,6 @@
                             </div>
                         @endif
                     </div>
-                </div>
-
-                {{-- PO / Contract Details (read-only) --}}
-                <div
-                    class="bg-white rounded-xl border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden">
-
-                    {{-- Section header --}}
-                    <div
-                        class="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-neutral-600 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-700">
-                        <span
-                            class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">PO
-                            / Contract Details</span>
-                        @if ($viewPmuRecord?->po_contract_number_link)
-                            <a href="{{ $viewPmuRecord->po_contract_number_link }}" target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-colors shadow-sm">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                Show PO
-                            </a>
-                        @endif
-                    </div>
-
-                    {{-- Fields --}}
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-200 dark:bg-neutral-600">
-
-                        {{-- PO / Contract Number --}}
-                        <div class="bg-white dark:bg-neutral-700 px-4 py-3">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">PO / Contract Number</p>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                                {{ $viewPmuRecord?->po_contract_number ?? '—' }}
-                            </p>
-                        </div>
-
-                        {{-- Contract Amount --}}
-                        <div class="bg-white dark:bg-neutral-700 px-4 py-3">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Contract Amount</p>
-                            <p class="text-sm font-semibold text-black dark:text-white">
-                                {{ $viewPmuRecord?->contract_amount ? '₱ ' . number_format($viewPmuRecord->contract_amount, 2) : '—' }}
-                            </p>
-                        </div>
-
-                        {{-- Contract Signing Date --}}
-                        <div class="bg-white dark:bg-neutral-700 px-4 py-3">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Contract Signing Date</p>
-                            <p class="text-sm text-gray-900 dark:text-white">
-                                {{ $viewPmuRecord?->contract_signing_date ? \Carbon\Carbon::parse($viewPmuRecord->contract_signing_date)->format('M d, Y') : '—' }}
-                            </p>
-                        </div>
-
-                        {{-- Notice to Proceed Date --}}
-                        <div class="bg-white dark:bg-neutral-700 px-4 py-3">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Notice to Proceed Date</p>
-                            <p class="text-sm text-gray-900 dark:text-white">
-                                {{ $viewPmuRecord?->notice_to_proceed_date ? \Carbon\Carbon::parse($viewPmuRecord->notice_to_proceed_date)->format('M d, Y') : '—' }}
-                            </p>
-                        </div>
-
-                    </div>
-
-                    {{-- Remarks --}}
-                    @if ($viewPmuRecord?->remarks)
-                        <div class="px-4 py-3 border-t border-gray-200 dark:border-neutral-600">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Remarks</p>
-                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                                {{ $viewPmuRecord->remarks }}</p>
-                        </div>
-                    @endif
-
                 </div>
 
             </div>

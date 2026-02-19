@@ -190,10 +190,19 @@ class PmuIndexPage extends Component
         $expandedPaginator = null;
 
         if ($this->expandedNoaNumber) {
+            $expandedPmu = Pmu::where('notice_of_award_number', $this->expandedNoaNumber)->first();
+            $expandedPmuId = $expandedPmu?->id;
+
             // Per-lot procurements
             $lots = \DB::table('procurements')
                 ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
                 ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+                ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+                ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
+                    $join->on('pmu_po.ref_id', '=', 'procurements.procID')
+                        ->where('pmu_po.pmu_id', '=', $expandedPmuId)
+                        ->whereNull('pmu_po.deleted_at');
+                })
                 ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
                 ->whereNull('pmus.deleted_at')
                 ->whereExists(function ($q) {
@@ -207,7 +216,17 @@ class PmuIndexPage extends Component
                     'procurements.pr_number',
                     \DB::raw('procurements.procurement_program_project as description'),
                     'procurements.abc',
-                    \DB::raw("'lot' as row_type")
+                    \DB::raw("'lot' as row_type"),
+                    'post_procurements.resolution_award_number',
+                    'post_procurements.resolution_award_date',
+                    'post_procurements.awarded_amount',
+                    'suppliers.name as supplier_name',
+                    'pmu_po.po_contract_number',
+                    'pmu_po.po_contract_number_link',
+                    'pmu_po.contract_amount as pmu_contract_amount',
+                    'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                    'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                    'pmu_po.remarks as pmu_remarks'
                 )
                 ->get();
 
@@ -216,6 +235,12 @@ class PmuIndexPage extends Component
                 ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
                 ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
                 ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+                ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+                ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
+                    $join->on('pmu_po.ref_id', '=', 'pr_items.prItemID')
+                        ->where('pmu_po.pmu_id', '=', $expandedPmuId)
+                        ->whereNull('pmu_po.deleted_at');
+                })
                 ->whereExists(function ($q) {
                     $q->select(\DB::raw(1))
                         ->from('pr_item_prstage')
@@ -229,7 +254,17 @@ class PmuIndexPage extends Component
                     'procurements.pr_number',
                     'pr_items.description',
                     \DB::raw('pr_items.amount as abc'),
-                    \DB::raw("'item' as row_type")
+                    \DB::raw("'item' as row_type"),
+                    'post_procurements.resolution_award_number',
+                    'post_procurements.resolution_award_date',
+                    'post_procurements.awarded_amount',
+                    'suppliers.name as supplier_name',
+                    'pmu_po.po_contract_number',
+                    'pmu_po.po_contract_number_link',
+                    'pmu_po.contract_amount as pmu_contract_amount',
+                    'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                    'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                    'pmu_po.remarks as pmu_remarks'
                 )
                 ->orderBy('procurements.pr_number')
                 ->orderBy('pr_items.item_no')
@@ -268,6 +303,16 @@ class PmuIndexPage extends Component
             'pr_number' => $p->pr_number,
             'description' => $p->procurement_program_project,
             'abc' => $p->abc,
+            'resolution_award_number' => $p->resolution_award_number ?? null,
+            'resolution_award_date' => $p->resolution_award_date ?? null,
+            'awarded_amount' => $p->awarded_amount ?? null,
+            'supplier_name' => $p->supplier_name ?? null,
+            'po_contract_number' => $p->po_contract_number ?? null,
+            'po_contract_number_link' => $p->po_contract_number_link ?? null,
+            'contract_amount' => $p->pmu_contract_amount ?? null,
+            'contract_signing_date' => $p->pmu_contract_signing_date ?? null,
+            'notice_to_proceed_date' => $p->pmu_notice_to_proceed_date ?? null,
+            'remarks' => $p->pmu_remarks ?? null,
         ]);
 
         $items = collect($this->viewItemRows ?? [])->map(fn($r) => (object) [
@@ -275,6 +320,16 @@ class PmuIndexPage extends Component
             'pr_number' => $r->pr_number,
             'description' => $r->description,
             'abc' => $r->amount,
+            'resolution_award_number' => $r->resolution_award_number ?? null,
+            'resolution_award_date' => $r->resolution_award_date ?? null,
+            'awarded_amount' => $r->awarded_amount ?? null,
+            'supplier_name' => $r->supplier_name ?? null,
+            'po_contract_number' => $r->po_contract_number ?? null,
+            'po_contract_number_link' => $r->po_contract_number_link ?? null,
+            'contract_amount' => $r->pmu_contract_amount ?? null,
+            'contract_signing_date' => $r->pmu_contract_signing_date ?? null,
+            'notice_to_proceed_date' => $r->pmu_notice_to_proceed_date ?? null,
+            'remarks' => $r->pmu_remarks ?? null,
         ]);
 
         $combined = $lots->merge($items);
@@ -304,17 +359,43 @@ class PmuIndexPage extends Component
         $this->viewProcurements = Procurement::query()
             ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
             ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('pmu_po', function ($join) {
+                $join->on('pmu_po.ref_id', '=', 'procurements.procID')
+                    ->on('pmu_po.pmu_id', '=', 'pmus.id')
+                    ->whereNull('pmu_po.deleted_at');
+            })
             ->where('post_procurements.notice_of_award_number', $noaNumber)
             ->whereNull('pmus.deleted_at')
             ->whereHas('prLotPrstages', fn($q) => $q->where('pr_stage_id', 7))
-            ->with(['division', 'category'])
-            ->select('procurements.*')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'procurements.procurement_program_project',
+                'procurements.abc',
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'suppliers.name as supplier_name',
+                'pmu_po.po_contract_number',
+                'pmu_po.po_contract_number_link',
+                'pmu_po.contract_amount as pmu_contract_amount',
+                'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.remarks as pmu_remarks'
+            )
             ->get();
 
         $this->viewItemRows = DB::table('pr_items')
             ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
             ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
             ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('pmu_po', function ($join) {
+                $join->on('pmu_po.ref_id', '=', 'pr_items.prItemID')
+                    ->on('pmu_po.pmu_id', '=', 'pmus.id')
+                    ->whereNull('pmu_po.deleted_at');
+            })
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
                     ->from('pr_item_prstage')
@@ -329,7 +410,17 @@ class PmuIndexPage extends Component
                 'pr_items.prItemID',
                 'pr_items.item_no',
                 'pr_items.description',
-                'pr_items.amount'
+                'pr_items.amount',
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'suppliers.name as supplier_name',
+                'pmu_po.po_contract_number',
+                'pmu_po.po_contract_number_link',
+                'pmu_po.contract_amount as pmu_contract_amount',
+                'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.remarks as pmu_remarks'
             )
             ->orderBy('procurements.pr_number')
             ->orderBy('pr_items.item_no')
