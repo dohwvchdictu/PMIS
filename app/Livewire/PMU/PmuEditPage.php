@@ -80,10 +80,10 @@ class PmuEditPage extends Component
 
             $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
 
-            foreach ($this->selectedItems as $procId) {
+            foreach ($this->selectedItems as $rowKey) {
                 PmuPo::updateOrCreate(
                     [
-                        'ref_id' => $procId,
+                        'ref_id' => $rowKey,
                         'pmu_id' => $pmu->id,
                     ],
                     [
@@ -171,10 +171,9 @@ class PmuEditPage extends Component
 
     public function updatedSelectAll(bool $value): void
     {
-        $pageIds = $this->buildEditPaginator()
-            ->items();
+        $pageIds = $this->buildEditPaginator()->items();
         $pageIds = collect($pageIds)
-            ->pluck('procID')
+            ->pluck('rowKey')
             ->unique()->values()->map(fn($id) => (string) $id)->toArray();
 
         if ($value) {
@@ -190,10 +189,9 @@ class PmuEditPage extends Component
 
     public function updatedSelectedItems(): void
     {
-        $pageIds = $this->buildEditPaginator()
-            ->items();
+        $pageIds = $this->buildEditPaginator()->items();
         $pageIds = collect($pageIds)
-            ->pluck('procID')
+            ->pluck('rowKey')
             ->unique()->values()->map(fn($id) => (string) $id)->toArray();
         $this->selectAll = !empty($pageIds) &&
             empty(array_diff($pageIds, array_unique($this->selectedItems)));
@@ -219,22 +217,22 @@ class PmuEditPage extends Component
 
         $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
 
-        // Fetch existing pmu_po rows for all selected procIDs
+        // Fetch existing pmu_po rows for all selected rowKeys
         $existing = PmuPo::where('pmu_id', $pmu->id)
             ->whereIn('ref_id', $this->selectedItems)
             ->get()
             ->keyBy('ref_id');
 
         // Build a normalised snapshot for each selected item (null if no record)
-        $snapshots = collect($this->selectedItems)->map(function ($procId) use ($existing) {
-            $row = $existing->get($procId);
+        $snapshots = collect($this->selectedItems)->map(function ($rowKey) use ($existing) {
+            $row = $existing->get($rowKey);
             return [
-                'contract_amount'         => $row ? (string) $row->contract_amount : '',
-                'po_contract_number'      => $row ? ($row->po_contract_number ?? '') : '',
+                'contract_amount' => $row ? (string) $row->contract_amount : '',
+                'po_contract_number' => $row ? ($row->po_contract_number ?? '') : '',
                 'po_contract_number_link' => $row ? ($row->po_contract_number_link ?? '') : '',
-                'contract_signing_date'   => $row && $row->contract_signing_date ? $row->contract_signing_date->format('Y-m-d') : '',
-                'notice_to_proceed_date'  => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format('Y-m-d') : '',
-                'remarks'                 => $row ? ($row->remarks ?? '') : '',
+                'contract_signing_date' => $row && $row->contract_signing_date ? $row->contract_signing_date->format('Y-m-d') : '',
+                'notice_to_proceed_date' => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format('Y-m-d') : '',
+                'remarks' => $row ? ($row->remarks ?? '') : '',
             ];
         })->values();
 
@@ -252,12 +250,12 @@ class PmuEditPage extends Component
 
         // Pre-fill form with the common data (or blank if none exist yet)
         $data = $snapshots->first();
-        $this->contract_amount         = $data['contract_amount'];
-        $this->po_contract_number      = $data['po_contract_number'];
+        $this->contract_amount = $data['contract_amount'];
+        $this->po_contract_number = $data['po_contract_number'];
         $this->po_contract_number_link = $data['po_contract_number_link'];
-        $this->contract_signing_date   = $data['contract_signing_date'];
-        $this->notice_to_proceed_date  = $data['notice_to_proceed_date'];
-        $this->remarks                 = $data['remarks'];
+        $this->contract_signing_date = $data['contract_signing_date'];
+        $this->notice_to_proceed_date = $data['notice_to_proceed_date'];
+        $this->remarks = $data['remarks'];
 
         $this->showBulkEditModal = true;
     }
@@ -309,7 +307,10 @@ class PmuEditPage extends Component
             )
             ->get()
             ->map(fn($p) => (object) [
+                'rowKey' => $p->procID,
+                'rowType' => 'lot',
                 'procID' => $p->procID,
+                'prItemID' => null,
                 'pr_number' => $p->pr_number,
                 'description' => $p->procurement_program_project,
                 'abc' => $p->abc,
@@ -317,7 +318,7 @@ class PmuEditPage extends Component
                 'resolution_award_date' => $p->resolution_award_date,
                 'awarded_amount' => $p->awarded_amount,
                 'supplier_name' => $p->supplier_name,
-            ]);
+            ])->toBase();
 
         $items = DB::table('pr_items')
             ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
@@ -333,6 +334,7 @@ class PmuEditPage extends Component
             ->select(
                 'procurements.procID',
                 'procurements.pr_number',
+                'pr_items.prItemID',
                 'pr_items.description',
                 'pr_items.amount',
                 'post_procurements.resolution_award_number',
@@ -344,7 +346,10 @@ class PmuEditPage extends Component
             ->orderBy('pr_items.item_no')
             ->get()
             ->map(fn($r) => (object) [
+                'rowKey' => $r->prItemID,
+                'rowType' => 'item',
                 'procID' => $r->procID,
+                'prItemID' => $r->prItemID,
                 'pr_number' => $r->pr_number,
                 'description' => $r->description,
                 'abc' => $r->amount,

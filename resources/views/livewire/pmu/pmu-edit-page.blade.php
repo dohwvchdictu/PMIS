@@ -160,11 +160,11 @@
                     @forelse ($editPaginator as $row)
                         <tr
                             class="bg-white dark:bg-neutral-700 hover:bg-emerald-50 dark:hover:bg-neutral-800 transition-colors
-                            {{ in_array($row->procID, $selectedItems) ? '!bg-emerald-50 dark:!bg-emerald-900/20' : '' }}">
+                            {{ in_array($row->rowKey, $selectedItems) ? '!bg-emerald-50 dark:!bg-emerald-900/20' : '' }}">
                             {{-- Checkbox + Eye --}}
                             <td class="px-3 py-2 whitespace-nowrap text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <input type="checkbox" wire:model.live="selectedItems" value="{{ $row->procID }}"
+                                    <input type="checkbox" wire:model.live="selectedItems" value="{{ $row->rowKey }}"
                                         class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                                     @can('view_procurement')
                                         <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
@@ -207,7 +207,7 @@
                                 {{ $row->supplier_name ?? '—' }}
                             </td>
                             {{-- Read-only PMU fields --}}
-                            @php $po = $pmuPoByProcId->get($row->procID); @endphp
+                            @php $po = $pmuPoByProcId->get($row->rowKey); @endphp
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->po_contract_number ?? '—' }}
                             </td>
