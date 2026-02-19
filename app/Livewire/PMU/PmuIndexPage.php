@@ -160,21 +160,13 @@ class PmuIndexPage extends Component
             ->select(
                 'post_procurements.notice_of_award_number',
                 'pmus.date_forwarded',
-                'pmus.contract_amount',
-                'pmus.po_contract_number',
-                'pmus.contract_signing_date',
-                'pmus.notice_to_proceed_date',
-                'pmus.remarks'
+                'post_procurements.notice_of_award'
             )
             ->unionAll(
                 $itemQuery->select(
                     'post_procurements.notice_of_award_number',
                     'pmus.date_forwarded',
-                    'pmus.contract_amount',
-                    'pmus.po_contract_number',
-                    'pmus.contract_signing_date',
-                    'pmus.notice_to_proceed_date',
-                    'pmus.remarks'
+                    'post_procurements.notice_of_award'
                 )
             );
 
@@ -183,21 +175,13 @@ class PmuIndexPage extends Component
             ->select(
                 'notice_of_award_number',
                 'date_forwarded',
-                'contract_amount',
-                'po_contract_number',
-                'contract_signing_date',
-                'notice_to_proceed_date',
-                'remarks',
+                'notice_of_award',
                 \DB::raw('COUNT(*) as procurement_count')
             )
             ->groupBy(
                 'notice_of_award_number',
                 'date_forwarded',
-                'contract_amount',
-                'po_contract_number',
-                'contract_signing_date',
-                'notice_to_proceed_date',
-                'remarks'
+                'notice_of_award'
             )
             ->orderBy('date_forwarded', 'desc')
             ->paginate($this->perPage);

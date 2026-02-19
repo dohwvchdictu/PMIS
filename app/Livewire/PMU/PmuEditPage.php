@@ -3,21 +3,26 @@
 namespace App\Livewire\PMU;
 
 use App\Models\Pmu;
+use App\Models\PmuPo;
 use App\Models\Procurement;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PmuEditPage extends Component
 {
     public $noticeOfAwardNumber;
-    public $pmuRecord = null;
-    public $procurements = null;
-    public $itemRows = null;
+    public $noticeOfAward = null;
 
     // Linked PRs pagination
     public $editPage = 1;
     public $editPerPage = 10;
+
+    // Bulk edit selection
+    public array $selectedItems = [];
+    public bool $selectAll = false;
+    public bool $showBulkEditModal = false;
 
     // Form fields
     public $date_forwarded = '';
@@ -28,95 +33,115 @@ class PmuEditPage extends Component
     public $notice_to_proceed_date = '';
     public $remarks = '';
 
-    protected $rules = [
-        'date_forwarded' => 'nullable|date',
-        'contract_amount' => 'required|numeric|min:0',
-        'po_contract_number' => 'required|string|max:255',
-        'po_contract_number_link' => 'nullable|url|max:2048',
-        'contract_signing_date' => 'required|date',
-        'notice_to_proceed_date' => 'nullable|date',
-        'remarks' => 'nullable|string',
-    ];
-
-    protected $messages = [
-        'contract_amount.required' => 'Contract amount is required.',
-        'contract_amount.numeric' => 'Contract amount must be a valid number.',
-        'contract_amount.min' => 'Contract amount must be 0 or greater.',
-        'po_contract_number.required' => 'PO / Contract number is required.',
-        'contract_signing_date.required' => 'Contract signing date is required.',
-        'date_forwarded.date' => 'Date forwarded must be a valid date.',
-        'contract_signing_date.date' => 'Contract signing date must be a valid date.',
-        'notice_to_proceed_date.date' => 'Notice to proceed date must be a valid date.',
-    ];
-
     public function mount($id)
     {
         $this->noticeOfAwardNumber = $id;
 
         $record = Pmu::where('notice_of_award_number', $id)->firstOrFail();
-        $this->pmuRecord = $record;
+
+        $this->noticeOfAward = DB::table('post_procurements')
+            ->where('notice_of_award_number', $id)
+            ->value('notice_of_award');
 
         $this->date_forwarded = $record->date_forwarded ? $record->date_forwarded->format('Y-m-d') : '';
-        $this->contract_amount = $record->contract_amount ?? '';
-        $this->po_contract_number = $record->po_contract_number ?? '';
-        $this->po_contract_number_link = $record->po_contract_number_link ?? '';
-        $this->contract_signing_date = $record->contract_signing_date ? $record->contract_signing_date->format('Y-m-d') : '';
-        $this->notice_to_proceed_date = $record->notice_to_proceed_date ? $record->notice_to_proceed_date->format('Y-m-d') : '';
-        $this->remarks = $record->remarks ?? '';
-
-        // Per-lot procurements (stage 7)
-        $this->procurements = Procurement::query()
-            ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
-            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
-            ->where('post_procurements.notice_of_award_number', $id)
-            ->whereNull('pmus.deleted_at')
-            ->whereHas('prLotPrstages', fn($q) => $q->where('pr_stage_id', 7))
-            ->select('procurements.*')
-            ->get();
-
-        // Per-item rows (stage 7)
-        $this->itemRows = DB::table('pr_items')
-            ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
-            ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
-            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
-            ->whereExists(function ($q) {
-                $q->select(DB::raw(1))
-                    ->from('pr_item_prstage')
-                    ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
-                    ->where('pr_item_prstage.pr_stage_id', 7);
-            })
-            ->where('post_procurements.notice_of_award_number', $id)
-            ->whereNull('pmus.deleted_at')
-            ->select(
-                'procurements.procID',
-                'procurements.pr_number',
-                'pr_items.prItemID',
-                'pr_items.item_no',
-                'pr_items.description',
-                'pr_items.amount'
-            )
-            ->orderBy('procurements.pr_number')
-            ->orderBy('pr_items.item_no')
-            ->get();
     }
 
     public function update()
     {
-        $this->validate();
+        $this->validate([
+            'contract_amount' => 'required|numeric|min:0',
+            'po_contract_number' => 'required|string|max:255',
+            'po_contract_number_link' => 'nullable|url|max:2048',
+            'contract_signing_date' => 'required|date',
+            'notice_to_proceed_date' => 'nullable|date',
+            'remarks' => 'nullable|string',
+        ], [
+            'contract_amount.required' => 'Contract amount is required.',
+            'contract_amount.numeric' => 'Contract amount must be a valid number.',
+            'contract_amount.min' => 'Contract amount must be 0 or greater.',
+            'po_contract_number.required' => 'PO / Contract number is required.',
+            'contract_signing_date.required' => 'Contract signing date is required.',
+            'contract_signing_date.date' => 'Contract signing date must be a valid date.',
+            'notice_to_proceed_date.date' => 'Notice to proceed date must be a valid date.',
+        ]);
+
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No items selected')
+                ->warning()
+                ->text('Please select at least one item.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+
+            foreach ($this->selectedItems as $procId) {
+                PmuPo::updateOrCreate(
+                    [
+                        'ref_id' => $procId,
+                        'pmu_id' => $pmu->id,
+                    ],
+                    [
+                        'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
+                        'po_contract_number' => $this->po_contract_number ?: null,
+                        'po_contract_number_link' => $this->po_contract_number_link ?: null,
+                        'contract_signing_date' => $this->contract_signing_date ?: null,
+                        'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
+                        'remarks' => $this->remarks ?: null,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            $this->closeBulkEditModal();
+            $this->clearSelections();
+
+            LivewireAlert::title('Saved!')
+                ->success()
+                ->text('PO / Contract details saved for ' . count($this->selectedItems) . ' item(s).')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Failed to save records: ' . $e->getMessage())
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
+    }
+
+    public function save()
+    {
+        try {
+            $this->validateOnly('date_forwarded', [
+                'date_forwarded' => 'nullable|date',
+            ]);
+        } catch (ValidationException $e) {
+            $firstError = collect($e->errors())->flatten()->first();
+            LivewireAlert::title('Validation Error')
+                ->warning()
+                ->text($firstError)
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
 
         try {
             DB::beginTransaction();
 
             $record = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
-
             $record->update([
                 'date_forwarded' => $this->date_forwarded ?: null,
-                'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
-                'po_contract_number' => $this->po_contract_number ?: null,
-                'po_contract_number_link' => $this->po_contract_number_link ?: null,
-                'contract_signing_date' => $this->contract_signing_date ?: null,
-                'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
-                'remarks' => $this->remarks ?: null,
             ]);
 
             DB::commit();
@@ -144,33 +169,197 @@ class PmuEditPage extends Component
         return redirect()->route('pmu.index');
     }
 
+    public function updatedSelectAll(bool $value): void
+    {
+        $pageIds = $this->buildEditPaginator()
+            ->items();
+        $pageIds = collect($pageIds)
+            ->pluck('procID')
+            ->unique()->values()->map(fn($id) => (string) $id)->toArray();
+
+        if ($value) {
+            $this->selectedItems = array_values(array_unique(
+                array_merge($this->selectedItems, $pageIds)
+            ));
+        } else {
+            $this->selectedItems = array_values(
+                array_diff($this->selectedItems, $pageIds)
+            );
+        }
+    }
+
+    public function updatedSelectedItems(): void
+    {
+        $pageIds = $this->buildEditPaginator()
+            ->items();
+        $pageIds = collect($pageIds)
+            ->pluck('procID')
+            ->unique()->values()->map(fn($id) => (string) $id)->toArray();
+        $this->selectAll = !empty($pageIds) &&
+            empty(array_diff($pageIds, array_unique($this->selectedItems)));
+    }
+
+    public function clearSelections(): void
+    {
+        $this->selectedItems = [];
+        $this->selectAll = false;
+    }
+
+    public function openBulkEditModal(): void
+    {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No items selected')
+                ->warning()
+                ->text('Please select at least one item.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+
+        // Fetch existing pmu_po rows for all selected procIDs
+        $existing = PmuPo::where('pmu_id', $pmu->id)
+            ->whereIn('ref_id', $this->selectedItems)
+            ->get()
+            ->keyBy('ref_id');
+
+        // Build a normalised snapshot for each selected item (null if no record)
+        $snapshots = collect($this->selectedItems)->map(function ($procId) use ($existing) {
+            $row = $existing->get($procId);
+            return [
+                'contract_amount'         => $row ? (string) $row->contract_amount : '',
+                'po_contract_number'      => $row ? ($row->po_contract_number ?? '') : '',
+                'po_contract_number_link' => $row ? ($row->po_contract_number_link ?? '') : '',
+                'contract_signing_date'   => $row && $row->contract_signing_date ? $row->contract_signing_date->format('Y-m-d') : '',
+                'notice_to_proceed_date'  => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format('Y-m-d') : '',
+                'remarks'                 => $row ? ($row->remarks ?? '') : '',
+            ];
+        })->values();
+
+        // If multiple items selected, ensure all share identical values
+        if ($snapshots->unique()->count() > 1) {
+            LivewireAlert::title('Conflicting Data')
+                ->error()
+                ->text('The selected items have different PO / Contract details. Please select items with identical data or edit them one at a time.')
+                ->toast()
+                ->timer(5000)
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Pre-fill form with the common data (or blank if none exist yet)
+        $data = $snapshots->first();
+        $this->contract_amount         = $data['contract_amount'];
+        $this->po_contract_number      = $data['po_contract_number'];
+        $this->po_contract_number_link = $data['po_contract_number_link'];
+        $this->contract_signing_date   = $data['contract_signing_date'];
+        $this->notice_to_proceed_date  = $data['notice_to_proceed_date'];
+        $this->remarks                 = $data['remarks'];
+
+        $this->showBulkEditModal = true;
+    }
+
+    public function closeBulkEditModal(): void
+    {
+        $this->showBulkEditModal = false;
+        $this->contract_amount = '';
+        $this->po_contract_number = '';
+        $this->po_contract_number_link = '';
+        $this->contract_signing_date = '';
+        $this->notice_to_proceed_date = '';
+        $this->remarks = '';
+        $this->resetErrorBag();
+    }
+
     public function setEditPage(int $page): void
     {
         $this->editPage = $page;
+        $this->clearSelections();
     }
 
     public function updatingEditPerPage(): void
     {
         $this->editPage = 1;
+        $this->clearSelections();
+    }
+
+    private function fetchCombinedRows(): \Illuminate\Support\Collection
+    {
+        $id = $this->noticeOfAwardNumber;
+
+        $lots = Procurement::query()
+            ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->where('post_procurements.notice_of_award_number', $id)
+            ->whereNull('pmus.deleted_at')
+            ->whereHas('prLotPrstages', fn($q) => $q->where('pr_stage_id', 7))
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'procurements.procurement_program_project',
+                'procurements.abc',
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'suppliers.name as supplier_name'
+            )
+            ->get()
+            ->map(fn($p) => (object) [
+                'procID' => $p->procID,
+                'pr_number' => $p->pr_number,
+                'description' => $p->procurement_program_project,
+                'abc' => $p->abc,
+                'resolution_award_number' => $p->resolution_award_number,
+                'resolution_award_date' => $p->resolution_award_date,
+                'awarded_amount' => $p->awarded_amount,
+                'supplier_name' => $p->supplier_name,
+            ]);
+
+        $items = DB::table('pr_items')
+            ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
+            ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->whereExists(fn($q) => $q->select(DB::raw(1))
+                ->from('pr_item_prstage')
+                ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
+                ->where('pr_item_prstage.pr_stage_id', 7))
+            ->where('post_procurements.notice_of_award_number', $id)
+            ->whereNull('pmus.deleted_at')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'pr_items.description',
+                'pr_items.amount',
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'suppliers.name as supplier_name'
+            )
+            ->orderBy('procurements.pr_number')
+            ->orderBy('pr_items.item_no')
+            ->get()
+            ->map(fn($r) => (object) [
+                'procID' => $r->procID,
+                'pr_number' => $r->pr_number,
+                'description' => $r->description,
+                'abc' => $r->amount,
+                'resolution_award_number' => $r->resolution_award_number,
+                'resolution_award_date' => $r->resolution_award_date,
+                'awarded_amount' => $r->awarded_amount,
+                'supplier_name' => $r->supplier_name,
+            ]);
+
+        return $lots->merge($items);
     }
 
     private function buildEditPaginator(): \Illuminate\Pagination\LengthAwarePaginator
     {
-        $lots = collect($this->procurements ?? [])->map(fn($p) => (object) [
-            'procID' => $p->procID,
-            'pr_number' => $p->pr_number,
-            'description' => $p->procurement_program_project,
-            'abc' => $p->abc,
-        ]);
-
-        $items = collect($this->itemRows ?? [])->map(fn($r) => (object) [
-            'procID' => $r->procID,
-            'pr_number' => $r->pr_number,
-            'description' => $r->description,
-            'abc' => $r->amount,
-        ]);
-
-        $combined = $lots->merge($items);
+        $combined = $this->fetchCombinedRows();
         $total = $combined->count();
         $perPage = max(1, (int) $this->editPerPage);
         $page = max(1, (int) $this->editPage);
@@ -186,11 +375,18 @@ class PmuEditPage extends Component
 
     public function render()
     {
+        $pmuRecord = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->first();
+
+        // Key pmu_po records by ref_id (procID) for fast per-row lookup in the blade
+        $pmuPoByProcId = $pmuRecord
+            ? PmuPo::where('pmu_id', $pmuRecord->id)->get()->keyBy('ref_id')
+            : collect();
+
         return view('livewire.pmu.pmu-edit-page', [
             'noticeOfAwardNumber' => $this->noticeOfAwardNumber,
-            'pmuRecord' => $this->pmuRecord,
-            'procurements' => $this->procurements,
-            'itemRows' => $this->itemRows,
+            'pmuRecord' => $pmuRecord,
+            'pmuPoByProcId' => $pmuPoByProcId,
+            'noticeOfAward' => $this->noticeOfAward,
             'editPaginator' => $this->buildEditPaginator(),
         ])->layout('components.layouts.app');
     }

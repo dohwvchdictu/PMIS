@@ -15,23 +15,11 @@ class Pmu extends Model implements Auditable
     protected $fillable = [
         'notice_of_award_number',
         'date_forwarded',
-        'contract_amount',
-        'po_contract_number',
-        'po_contract_number_link',
-        'contract_signing_date',
-        'notice_to_proceed_date',
-        'remarks',
     ];
 
     protected $auditInclude = [
         'notice_of_award_number',
         'date_forwarded',
-        'contract_amount',
-        'po_contract_number',
-        'po_contract_number_link',
-        'contract_signing_date',
-        'notice_to_proceed_date',
-        'remarks',
     ];
 
     protected $auditTimestamps = true;
@@ -40,9 +28,6 @@ class Pmu extends Model implements Auditable
 
     protected $casts = [
         'date_forwarded' => 'date',
-        'contract_signing_date' => 'date',
-        'notice_to_proceed_date' => 'date',
-        'contract_amount' => 'decimal:2',
     ];
 
     public function generateTags(): array
@@ -54,5 +39,10 @@ class Pmu extends Model implements Auditable
     public function procurements()
     {
         return $this->hasMany(PostProcurement::class, 'notice_of_award_number', 'notice_of_award_number');
+    }
+
+    public function pmuPos()
+    {
+        return $this->hasMany(PmuPo::class, 'ref_id');
     }
 }

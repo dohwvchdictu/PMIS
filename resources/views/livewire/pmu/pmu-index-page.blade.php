@@ -31,24 +31,8 @@
                             Date Forwarded
                         </th>
                         <th
-                            class="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Contract Amount
-                        </th>
-                        <th
                             class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            PO / Contract Number
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Contract Signing Date
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Notice to Proceed Date
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Remarks
+                            Notice of Award Date
                         </th>
                     </tr>
                 </thead>
@@ -134,34 +118,16 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->format('M d, Y') : '—' }}
                             </td>
-                            <!-- Contract Amount -->
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                                {{ $group->contract_amount ? '₱ ' . number_format($group->contract_amount, 2) : '—' }}
-                            </td>
-                            <!-- PO / Contract Number -->
+                            <!-- Notice of Award Date -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->po_contract_number ?? '—' }}
-                            </td>
-                            <!-- Contract Signing Date -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->contract_signing_date ? \Carbon\Carbon::parse($group->contract_signing_date)->format('M d, Y') : '—' }}
-                            </td>
-                            <!-- Notice to Proceed Date -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->notice_to_proceed_date ? \Carbon\Carbon::parse($group->notice_to_proceed_date)->format('M d, Y') : '—' }}
-                            </td>
-                            <!-- Remarks -->
-                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                <div class="truncate" title="{{ $group->remarks }}">
-                                    {{ $group->remarks ?? '—' }}
-                                </div>
+                                {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
                             </td>
                         </tr>
 
                         <!-- Expanded Row with Procurements -->
                         @if ($expandedNoaNumber === $group->notice_of_award_number && $expandedPaginator)
                             <tr class="bg-gray-50 dark:bg-neutral-900">
-                                <td colspan="9" class="px-6 py-4">
+                                <td colspan="5" class="px-6 py-4">
                                     <div class="space-y-4">
 
                                         <div class="overflow-x-auto">
@@ -305,7 +271,7 @@
                         @endif
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center">
+                            <td colspan="5" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -360,6 +326,17 @@
                             <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Date Forwarded</p>
                             <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
                                 {{ $viewPmuRecord?->date_forwarded ? \Carbon\Carbon::parse($viewPmuRecord->date_forwarded)->format('M d, Y') : '—' }}
+                            </p>
+                        </div>
+
+                        {{-- Divider --}}
+                        <div class="w-px bg-gray-200 dark:bg-neutral-600 hidden sm:block"></div>
+
+                        {{-- Notice of Award Date --}}
+                        <div class="px-5 py-4 flex flex-col justify-center">
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Notice of Award Date</p>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                {{ $viewPostProcurement?->notice_of_award ? \Carbon\Carbon::parse($viewPostProcurement->notice_of_award)->format('M d, Y') : '—' }}
                             </p>
                         </div>
 
