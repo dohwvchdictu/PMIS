@@ -15,6 +15,10 @@ class PmuEditPage extends Component
     public $procurements = null;
     public $itemRows = null;
 
+    // Linked PRs pagination
+    public $editPage = 1;
+    public $editPerPage = 10;
+
     // Form fields
     public $date_forwarded = '';
     public $contract_amount = '';
@@ -140,6 +144,46 @@ class PmuEditPage extends Component
         return redirect()->route('pmu.index');
     }
 
+    public function setEditPage(int $page): void
+    {
+        $this->editPage = $page;
+    }
+
+    public function updatingEditPerPage(): void
+    {
+        $this->editPage = 1;
+    }
+
+    private function buildEditPaginator(): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $lots = collect($this->procurements ?? [])->map(fn($p) => (object) [
+            'procID' => $p->procID,
+            'pr_number' => $p->pr_number,
+            'description' => $p->procurement_program_project,
+            'abc' => $p->abc,
+        ]);
+
+        $items = collect($this->itemRows ?? [])->map(fn($r) => (object) [
+            'procID' => $r->procID,
+            'pr_number' => $r->pr_number,
+            'description' => $r->description,
+            'abc' => $r->amount,
+        ]);
+
+        $combined = $lots->merge($items);
+        $total = $combined->count();
+        $perPage = max(1, (int) $this->editPerPage);
+        $page = max(1, (int) $this->editPage);
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $combined->forPage($page, $perPage)->values(),
+            $total,
+            $perPage,
+            $page,
+            ['pageName' => 'edit_page']
+        );
+    }
+
     public function render()
     {
         return view('livewire.pmu.pmu-edit-page', [
@@ -147,6 +191,7 @@ class PmuEditPage extends Component
             'pmuRecord' => $this->pmuRecord,
             'procurements' => $this->procurements,
             'itemRows' => $this->itemRows,
+            'editPaginator' => $this->buildEditPaginator(),
         ])->layout('components.layouts.app');
     }
 }

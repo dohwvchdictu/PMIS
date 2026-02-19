@@ -21,6 +21,14 @@ class PmuIndexPage extends Component
     public $perPage = 10;
     public $itemsPerPage = 10;
 
+    // Expanded row pagination
+    public $expandedPage = 1;
+    public $expandedPerPage = 10;
+
+    // Modal linked-PRs pagination
+    public $modalPage = 1;
+    public $modalPerPage = 10;
+
     // Search
     public $search = '';
 
@@ -67,7 +75,28 @@ class PmuIndexPage extends Component
             $this->$property = null;
         } else {
             $this->$property = $value;
+            $this->expandedPage = 1;
         }
+    }
+
+    public function setExpandedPage(int $page): void
+    {
+        $this->expandedPage = $page;
+    }
+
+    public function updatingExpandedPerPage(): void
+    {
+        $this->expandedPage = 1;
+    }
+
+    public function setModalPage(int $page): void
+    {
+        $this->modalPage = $page;
+    }
+
+    public function updatingModalPerPage(): void
+    {
+        $this->modalPage = 1;
     }
 
     public function updatingSearch()
@@ -173,25 +202,33 @@ class PmuIndexPage extends Component
             ->orderBy('date_forwarded', 'desc')
             ->paginate($this->perPage);
 
-        // If an NOA is expanded, load its per-lot and per-item entries separately
-        $expandedProcurements = null;
-        $expandedItemRows = null;
+        // If an NOA is expanded, load a unified paginated list (per-lot + per-item)
+        $expandedPaginator = null;
 
         if ($this->expandedNoaNumber) {
             // Per-lot procurements
-            $expandedProcurements = Procurement::query()
+            $lots = \DB::table('procurements')
                 ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
                 ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
                 ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
                 ->whereNull('pmus.deleted_at')
-                ->whereHas('prLotPrstages', function ($q) {
-                    $q->where('pr_stage_id', 7);
+                ->whereExists(function ($q) {
+                    $q->select(\DB::raw(1))
+                        ->from('pr_lot_prstage')
+                        ->whereColumn('pr_lot_prstage.procID', 'procurements.procID')
+                        ->where('pr_lot_prstage.pr_stage_id', 7);
                 })
-                ->select('procurements.*', 'post_procurements.notice_of_award_number')
+                ->select(
+                    'procurements.procID',
+                    'procurements.pr_number',
+                    \DB::raw('procurements.procurement_program_project as description'),
+                    'procurements.abc',
+                    \DB::raw("'lot' as row_type")
+                )
                 ->get();
 
-            // Per-item rows: each forwarded pr_item with matching post_procurement
-            $expandedItemRows = \DB::table('pr_items')
+            // Per-item rows
+            $items = \DB::table('pr_items')
                 ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
                 ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
                 ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
@@ -206,21 +243,68 @@ class PmuIndexPage extends Component
                 ->select(
                     'procurements.procID',
                     'procurements.pr_number',
-                    'pr_items.prItemID',
-                    'pr_items.item_no',
                     'pr_items.description',
-                    'pr_items.amount'
+                    \DB::raw('pr_items.amount as abc'),
+                    \DB::raw("'item' as row_type")
                 )
                 ->orderBy('procurements.pr_number')
                 ->orderBy('pr_items.item_no')
                 ->get();
+
+            $combined = $lots->merge($items);
+            $total = $combined->count();
+            $perPage = max(1, (int) $this->expandedPerPage);
+            $page = max(1, (int) $this->expandedPage);
+            $sliced = $combined->forPage($page, $perPage)->values();
+
+            $expandedPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                $sliced,
+                $total,
+                $perPage,
+                $page,
+                ['pageName' => 'expanded_page']
+            );
         }
 
         return view('livewire.pmu.pmu-index-page', [
             'groupedItems' => $groupedItems,
-            'expandedProcurements' => $expandedProcurements,
-            'expandedItemRows' => $expandedItemRows,
+            'expandedPaginator' => $expandedPaginator,
+            'modalPaginator' => $this->buildModalPaginator(),
         ])->layout('components.layouts.app');
+    }
+
+    private function buildModalPaginator(): ?\Illuminate\Pagination\LengthAwarePaginator
+    {
+        if (!$this->showViewModal) {
+            return null;
+        }
+
+        $lots = collect($this->viewProcurements ?? [])->map(fn($p) => (object) [
+            'procID' => $p->procID,
+            'pr_number' => $p->pr_number,
+            'description' => $p->procurement_program_project,
+            'abc' => $p->abc,
+        ]);
+
+        $items = collect($this->viewItemRows ?? [])->map(fn($r) => (object) [
+            'procID' => $r->procID,
+            'pr_number' => $r->pr_number,
+            'description' => $r->description,
+            'abc' => $r->amount,
+        ]);
+
+        $combined = $lots->merge($items);
+        $total = $combined->count();
+        $perPage = max(1, (int) $this->modalPerPage);
+        $page = max(1, (int) $this->modalPage);
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $combined->forPage($page, $perPage)->values(),
+            $total,
+            $perPage,
+            $page,
+            ['pageName' => 'modal_page']
+        );
     }
 
     public function openViewModal(string $noaNumber): void
@@ -275,6 +359,7 @@ class PmuIndexPage extends Component
             $this->viewSupplier = null;
         }
 
+        $this->modalPage = 1;
         $this->showViewModal = true;
     }
 
@@ -288,5 +373,6 @@ class PmuIndexPage extends Component
         $this->viewItemRows = null;
         $this->viewTotalAbc = 0;
         $this->viewSupplier = null;
+        $this->modalPage = 1;
     }
 }

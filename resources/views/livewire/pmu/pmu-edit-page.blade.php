@@ -62,7 +62,7 @@
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Linked PRs / Items</span>
-                    @php $totalLinked = ($procurements?->count() ?? 0) + ($itemRows?->count() ?? 0); @endphp
+                    @php $totalLinked = $editPaginator->total(); @endphp
                     <span
                         class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                         {{ $totalLinked }}
@@ -94,44 +94,8 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
-                        {{-- Per-lot rows --}}
-                        @foreach ($procurements ?? [] as $proc)
+                        @forelse ($editPaginator as $row)
                             <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
-                                        {{ $proc->pr_number }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                    <div class="break-words whitespace-normal">{{ $proc->procurement_program_project }}
-                                    </div>
-                                </td>
-                                <td
-                                    class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
-                                    ₱ {{ number_format($proc->abc, 2) }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-center">
-                                    @can('view_procurement')
-                                        <a href="{{ route('procurements.view', ['procurement' => $proc->procID]) }}"
-                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                            target="_blank">
-                                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </a>
-                                    @endcan
-                                </td>
-                            </tr>
-                        @endforeach
-
-                        {{-- Per-item rows --}}
-                        @foreach ($itemRows ?? [] as $row)
-                            <tr class="hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <span
                                         class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
@@ -143,7 +107,7 @@
                                 </td>
                                 <td
                                     class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
-                                    ₱ {{ number_format($row->amount, 2) }}
+                                    ₱ {{ number_format($row->abc, 2) }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
                                     @can('view_procurement')
@@ -161,18 +125,74 @@
                                     @endcan
                                 </td>
                             </tr>
-                        @endforeach
-
-                        @if (($procurements?->isEmpty() ?? true) && ($itemRows?->isEmpty() ?? true))
+                        @empty
                             <tr>
                                 <td colspan="4"
                                     class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                     No linked PRs or items found.
                                 </td>
                             </tr>
-                        @endif
+                        @endforelse
                     </tbody>
                 </table>
+
+                {{-- Linked PRs pagination --}}
+                @if ($editPaginator->hasPages() || $editPaginator->total() > 0)
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full p-4 border-t border-gray-200 dark:border-neutral-700 gap-3 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+
+                        <!-- Left: Per-page selector -->
+                        <div class="flex items-center gap-x-2">
+                            <label for="editPerPage"
+                                class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
+                            <select id="editPerPage" wire:model.live="editPerPage"
+                                class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
+                        </div>
+
+                        <!-- Center: Summary + Pagination -->
+                        <div class="flex flex-col items-center justify-center gap-3 flex-1">
+                            <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                Showing
+                                <span
+                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $editPaginator->firstItem() ?? 0 }}</span>
+                                to
+                                <span
+                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $editPaginator->lastItem() ?? 0 }}</span>
+                                of
+                                <span
+                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $editPaginator->total() }}</span>
+                                items
+                            </div>
+
+                            @if ($editPaginator->hasPages())
+                                <div class="flex items-center gap-1">
+                                    <button wire:click="setEditPage({{ $editPaginator->currentPage() - 1 }})"
+                                        @disabled($editPaginator->onFirstPage())
+                                        class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                        Previous
+                                    </button>
+                                    @for ($p = 1; $p <= $editPaginator->lastPage(); $p++)
+                                        <button wire:click="setEditPage({{ $p }})"
+                                            class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $p === $editPaginator->currentPage() ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                            {{ $p }}
+                                        </button>
+                                    @endfor
+                                    <button wire:click="setEditPage({{ $editPaginator->currentPage() + 1 }})"
+                                        @disabled(!$editPaginator->hasMorePages())
+                                        class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                        Next
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
