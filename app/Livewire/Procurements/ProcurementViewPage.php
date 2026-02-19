@@ -16,7 +16,8 @@ use App\Models\{
     Supplier,
     PostProcurement,
     BidSchedule,
-    PrSvp
+    PrSvp,
+    Pmu
 };
 use Illuminate\Support\Collection;
 
@@ -66,6 +67,10 @@ class ProcurementViewPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+
+    // PMU data
+    public ?array $pmuRecord = null;
+    public array $pmuItems = [];
 
     public function mount(Procurement $procurement): void
     {
@@ -440,6 +445,22 @@ class ProcurementViewPage extends Component
                 $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
                 $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
                 $this->supplier_id = $post->supplier_id;
+
+                // Load PMU record for perLot
+                if ($post->notice_of_award_number) {
+                    $pmu = Pmu::where('notice_of_award_number', $post->notice_of_award_number)
+                        ->whereNull('deleted_at')
+                        ->first();
+                    if ($pmu) {
+                        $this->pmuRecord = [
+                            'po_contract_number' => $pmu->po_contract_number,
+                            'po_contract_number_link' => $pmu->po_contract_number_link,
+                            'contract_amount' => $pmu->contract_amount,
+                            'contract_signing_date' => $pmu->contract_signing_date?->format('Y-m-d'),
+                            'notice_to_proceed_date' => $pmu->notice_to_proceed_date?->format('Y-m-d'),
+                        ];
+                    }
+                }
             }
         } else {
             // For perItem, load post-procurement data for each prItemID
@@ -472,6 +493,22 @@ class ProcurementViewPage extends Component
                         'philgepsPostingOfAward' => $post->philgeps_posting_of_award,
                         'supplier_id' => $post->supplier_id,
                     ];
+
+                    // Load PMU record for this item
+                    if ($post->notice_of_award_number) {
+                        $pmu = Pmu::where('notice_of_award_number', $post->notice_of_award_number)
+                            ->whereNull('deleted_at')
+                            ->first();
+                        if ($pmu) {
+                            $this->pmuItems[$prItemID] = [
+                                'po_contract_number' => $pmu->po_contract_number,
+                                'po_contract_number_link' => $pmu->po_contract_number_link,
+                                'contract_amount' => $pmu->contract_amount,
+                                'contract_signing_date' => $pmu->contract_signing_date?->format('Y-m-d'),
+                                'notice_to_proceed_date' => $pmu->notice_to_proceed_date?->format('Y-m-d'),
+                            ];
+                        }
+                    }
                 }
             }
         }

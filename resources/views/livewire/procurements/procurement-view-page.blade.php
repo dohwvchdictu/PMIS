@@ -2824,6 +2824,7 @@
                                 $supplier = $suppliers->firstWhere('id', $supplier_id);
                             @endphp
 
+                            {{-- Supplier Information --}}
                             <div
                                 class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                                 <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
@@ -2856,12 +2857,74 @@
                                     </div>
                                 @endif
                             </div>
+
+                            {{-- PO / Contract Details --}}
+                            @if ($pmuRecord)
+                                <div
+                                    class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                                    <div
+                                        class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                                        <h4
+                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            PO / Contract Details
+                                        </h4>
+                                        @if (!empty($pmuRecord['po_contract_number_link']))
+                                            <a href="{{ $pmuRecord['po_contract_number_link'] }}" target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                                Show PO
+                                            </a>
+                                        @endif
+                                    </div>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO / Contract
+                                                Number</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $pmuRecord['po_contract_number'] ?? '—' }}
+                                            </p>
+                                        </div>
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contract Amount
+                                            </p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $pmuRecord['contract_amount'] ? '₱ ' . number_format($pmuRecord['contract_amount'], 2) : '—' }}
+                                            </p>
+                                        </div>
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contract Signing
+                                                Date</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $pmuRecord['contract_signing_date'] ? \Carbon\Carbon::parse($pmuRecord['contract_signing_date'])->format('M d, Y') : '—' }}
+                                            </p>
+                                        </div>
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Notice to Proceed
+                                                Date</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $pmuRecord['notice_to_proceed_date'] ? \Carbon\Carbon::parse($pmuRecord['notice_to_proceed_date'])->format('M d, Y') : '—' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @else
                             <div
                                 class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
                                 <div class="text-center py-12">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                     </svg>
@@ -2991,6 +3054,69 @@
                                                 </div>
                                             @endif
                                         </div>
+
+                                        {{-- PO / Contract Details --}}
+                                        @php $itemPmu = $pmuItems[$postItem['ref_id']] ?? null; @endphp
+                                        @if ($itemPmu)
+                                            <div class="border-t border-gray-200 dark:border-neutral-600 pt-4">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <h4
+                                                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24"
+                                                            stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                        PO / Contract Details
+                                                    </h4>
+                                                    @if (!empty($itemPmu['po_contract_number_link']))
+                                                        <a href="{{ $itemPmu['po_contract_number_link'] }}"
+                                                            target="_blank" rel="noopener noreferrer"
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
+                                                            <svg class="w-3.5 h-3.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                            </svg>
+                                                            Show PO
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO /
+                                                            Contract Number</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $itemPmu['po_contract_number'] ?? '—' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Contract Amount</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $itemPmu['contract_amount'] ? '₱ ' . number_format($itemPmu['contract_amount'], 2) : '—' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Contract Signing Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $itemPmu['contract_signing_date'] ? \Carbon\Carbon::parse($itemPmu['contract_signing_date'])->format('M d, Y') : '—' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Notice to Proceed Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $itemPmu['notice_to_proceed_date'] ? \Carbon\Carbon::parse($itemPmu['notice_to_proceed_date'])->format('M d, Y') : '—' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             @endforeach

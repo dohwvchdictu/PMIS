@@ -98,13 +98,23 @@
                                             }
                                         })">
                                         <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-                                            @can('view_pmu')
+                                            {{-- @can('view_pmu')
                                                 <li>
                                                     <a href="{{ route('pmu.view', $group->notice_of_award_number) }}"
                                                         class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 text-blue-600 dark:text-blue-400 transition-all duration-150 group/item">
                                                         <x-heroicon-o-eye
                                                             class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                        <span class="font-medium">View</span>
+                                                        <span class="font-medium">View Details</span>
+                                                    </a>
+                                                </li>
+                                            @endcan --}}
+                                            @can('update_pmu')
+                                                <li>
+                                                    <a href="{{ route('pmu.edit', $group->notice_of_award_number) }}"
+                                                        class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-amber-50 hover:to-amber-100 dark:hover:from-amber-900/30 dark:hover:to-amber-800/30 text-amber-600 dark:text-amber-400 transition-all duration-150 group/item">
+                                                        <x-heroicon-o-pencil-square
+                                                            class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
+                                                        <span class="font-medium">Update</span>
                                                     </a>
                                                 </li>
                                             @endcan
