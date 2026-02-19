@@ -5,6 +5,7 @@ namespace App\Livewire\PMU;
 use App\Models\Procurement;
 use App\Models\PostProcurement;
 use App\Models\Pmu;
+use App\Models\Supplier;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -25,6 +26,16 @@ class PmuIndexPage extends Component
 
     // Collapsible functionality
     public $expandedNoaNumber = null;
+
+    // View Modal
+    public bool $showViewModal = false;
+    public ?string $viewNoaNumber = null;
+    public $viewPmuRecord = null;
+    public $viewPostProcurement = null;
+    public $viewProcurements = null;
+    public $viewItemRows = null;
+    public float $viewTotalAbc = 0;
+    public $viewSupplier = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -210,5 +221,72 @@ class PmuIndexPage extends Component
             'expandedProcurements' => $expandedProcurements,
             'expandedItemRows' => $expandedItemRows,
         ])->layout('components.layouts.app');
+    }
+
+    public function openViewModal(string $noaNumber): void
+    {
+        $this->viewNoaNumber = $noaNumber;
+
+        $this->viewPmuRecord = Pmu::where('notice_of_award_number', $noaNumber)
+            ->whereNull('deleted_at')
+            ->first();
+
+        $this->viewPostProcurement = PostProcurement::where('notice_of_award_number', $noaNumber)->first();
+
+        $this->viewProcurements = Procurement::query()
+            ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->where('post_procurements.notice_of_award_number', $noaNumber)
+            ->whereNull('pmus.deleted_at')
+            ->whereHas('prLotPrstages', fn($q) => $q->where('pr_stage_id', 7))
+            ->with(['division', 'category'])
+            ->select('procurements.*')
+            ->get();
+
+        $this->viewItemRows = DB::table('pr_items')
+            ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
+            ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('pr_item_prstage')
+                    ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
+                    ->where('pr_item_prstage.pr_stage_id', 7);
+            })
+            ->where('post_procurements.notice_of_award_number', $noaNumber)
+            ->whereNull('pmus.deleted_at')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'pr_items.prItemID',
+                'pr_items.item_no',
+                'pr_items.description',
+                'pr_items.amount'
+            )
+            ->orderBy('procurements.pr_number')
+            ->orderBy('pr_items.item_no')
+            ->get();
+
+        $this->viewTotalAbc = (float) $this->viewProcurements->sum('abc');
+
+        if ($this->viewPostProcurement?->supplier_id) {
+            $this->viewSupplier = Supplier::find($this->viewPostProcurement->supplier_id);
+        } else {
+            $this->viewSupplier = null;
+        }
+
+        $this->showViewModal = true;
+    }
+
+    public function closeViewModal(): void
+    {
+        $this->showViewModal = false;
+        $this->viewNoaNumber = null;
+        $this->viewPmuRecord = null;
+        $this->viewPostProcurement = null;
+        $this->viewProcurements = null;
+        $this->viewItemRows = null;
+        $this->viewTotalAbc = 0;
+        $this->viewSupplier = null;
     }
 }
