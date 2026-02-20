@@ -458,22 +458,22 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        // Get post data from first PR
-        $firstRefId = $currentItems[0]['procID'];
+        // Load all post records in a single query instead of N+1 per item
+        $refIds = array_column($currentItems, 'procID');
+        $postRecords = \App\Models\PostProcurement::whereIn('ref_id', $refIds)->get()->keyBy('ref_id');
 
-        $firstPost = \App\Models\PostProcurement::where('ref_id', $firstRefId)->first();
-
-        if (!$firstPost) {
-            return; // No post data exists
+        if ($postRecords->isEmpty()) {
+            return;
         }
+
+        $firstPost = $postRecords->first();
 
         // Check if ALL PRs have identical post data
         $allIdentical = true;
 
         foreach ($currentItems as $item) {
             $refId = $item['procID'];
-
-            $itemPost = \App\Models\PostProcurement::where('ref_id', $refId)->first();
+            $itemPost = $postRecords->get($refId);
 
             // If any PR is missing post data or has different data, don't pre-fill
             if (
@@ -498,7 +498,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->resolutionAwardDate = $firstPost->resolution_award_date;
             $this->noticeOfAwardNumber = $firstPost->notice_of_award_number;
             $this->noticeOfAward = $firstPost->notice_of_award;
-            $this->awardedAmount = $this->formatAmount($firstPost->awarded_amount); // Format with commas for Alpine mask
+            $this->awardedAmount = $this->formatAmount($firstPost->awarded_amount);
             $this->philgepsNoticeOfAwardNo = $firstPost->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $firstPost->philgeps_posting_of_award;
             $this->supplier_id = $firstPost->supplier_id;
@@ -553,6 +553,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     {
         $this->scheduleValidationErrors = [];
         $modeId = $this->bulkEdit['mode_of_procurement_id'] ?? null;
+
+        // Check permission first — adds errors to $scheduleValidationErrors if blocked
+        if (!$this->canModifySuccessfulBids()) {
+            return false;
+        }
 
         if (!$modeId) {
             $this->scheduleValidationErrors[] = 'Mode of Procurement is required.';
@@ -1088,55 +1093,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
 
 
-    private function buildPerLotRow(Procurement $procurement, Collection $scheduleMap): array
-    {
-        $latestMop = $procurement->mopLots()
-            ->with('modeOfProcurement')
-            ->orderBy('mode_order', 'desc')
-            ->first();
-
-        $schedule = [];
-        if ($latestMop && $scheduleMap->has($procurement->procID)) {
-            $schedule = $scheduleMap[$procurement->procID][$latestMop->uid] ?? [];
-        }
-
-        return [
-            'procID' => $procurement->procID,
-            'prItemID' => null,
-            'pr_number' => $procurement->pr_number,
-            'procurement_program_project' => $procurement->procurement_program_project,
-            'procurement_type' => 'perLot',
-            'mop_id' => $latestMop?->id,
-            'mop_uid' => $latestMop?->uid,
-            'mode_of_procurement_id' => $latestMop?->mode_of_procurement_id,
-            'mode_order' => $latestMop?->mode_order ?? 0,
-
-            // Schedule fields
-            'bidding_number' => $schedule['bidding_number'] ?? '',
-            'ib_number' => $schedule['ib_number'] ?? '',
-            'philgeps_posting_ref_no' => $schedule['philgeps_posting_ref_no'] ?? '',
-            'ads_post_ib' => $schedule['ads_post_ib'] ?? '',
-            'pre_proc_conference' => $schedule['pre_proc_conference'] ?? '',
-            'list_of_invited_observers' => $schedule['list_of_invited_observers'] ?? '',
-            'observer_1' => $schedule['observer_1'] ?? '',
-            'observer_2' => $schedule['observer_2'] ?? '',
-            'observer_3' => $schedule['observer_3'] ?? '',
-            'observer_4' => $schedule['observer_4'] ?? '',
-            'observer_5' => $schedule['observer_5'] ?? '',
-            'pre_bid_conference' => $schedule['pre_bid_conference'] ?? '',
-            'eligibility_check' => $schedule['eligibility_check'] ?? '',
-            'submission_opening_of_bids' => $schedule['submission_opening_of_bids'] ?? '',
-            'bid_evaluation' => $schedule['bid_evaluation'] ?? '',
-            'post_qualification' => $schedule['post_qualification'] ?? '',
-            'bidding_result' => $schedule['bidding_result'] ?? '',
-            'resolution_number_mop' => $schedule['resolution_number_mop'] ?? '',
-            'resolution_number' => $schedule['resolution_number'] ?? '',
-            'rfq_no' => $schedule['rfq_no'] ?? '',
-            'canvass_date' => $schedule['canvass_date'] ?? '',
-            'date_returned_of_canvass' => $schedule['date_returned_of_canvass'] ?? '',
-            'abstract_of_canvass_date' => $schedule['abstract_of_canvass_date'] ?? '',
-        ];
-    }
+    // buildPerLotRow() removed — loadProcurementData() uses buildPerLotRowFromMop() exclusively
 
 
 
@@ -1151,32 +1108,24 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Get selected procurements
         $procurements = Procurement::whereIn('procID', $this->selectedItems)->get();
 
-        $hasBelowThreshold = false;
-        $hasAboveThreshold = false;
-        $differentPRs = [];
+        $below200k = [];
+        $above200k = [];
 
         foreach ($procurements as $procurement) {
             $abcAmount = $procurement->abc ?? 0;
 
             if ($abcAmount < self::ABC_THRESHOLD) {
-                $hasBelowThreshold = true;
-                if ($hasAboveThreshold) {
-                    $differentPRs[] = $procurement->pr_number;
-                }
+                $below200k[] = $procurement->pr_number;
             } else {
-                $hasAboveThreshold = true;
-                if ($hasBelowThreshold) {
-                    $differentPRs[] = $procurement->pr_number;
-                }
+                $above200k[] = $procurement->pr_number;
             }
         }
 
         // If mismatch found
-        if ($hasBelowThreshold && $hasAboveThreshold) {
-            $prList = implode(', ', $differentPRs);
+        if (!empty($below200k) && !empty($above200k)) {
             LivewireAlert::title('ABC Threshold Mismatch')
                 ->warning()
-                ->text("PR {$prList} " . (count($differentPRs) > 1 ? 'have' : 'has') . " different ABC threshold. For SVP and Other modes, all PRs must be below ₱200K or ₱200K and above.")
+                ->text('PRs have mixed ABC threshold categories. Below \u20b1200K: ' . implode(', ', $below200k) . '; \u20b1200K and above: ' . implode(', ', $above200k) . '. For SVP and Other modes, all PRs must be in the same threshold category.')
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -1264,6 +1213,17 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         'mode_of_procurement_id' => $modeId,
                     ]);
                     $isMopUpdated = true;
+
+                    // Also save the entered schedule fields for the updated mode
+                    $mopLot = MopLot::find($currentItem['mop_id']);
+                    if ($mopLot) {
+                        $this->saveRelatedSchedules(
+                            $mopLot,
+                            array_merge($this->bulkEdit, ['procID' => $procurement->procID]),
+                            $isScheduleAdded,
+                            $isScheduleUpdated
+                        );
+                    }
                 } elseif ($isAddingNewMode && $modeId && $modeId != self::MODE_PENDING) {
                     $modeOrder = ($currentItem['mode_order'] ?? 0) + 1;
                     $generatedUid = "MOP-{$modeId}-{$modeOrder}";
@@ -1595,9 +1555,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // SVP/ALTERNATIVE MODES
         if (in_array($modeId, self::SVP_MODES)) {
-            // Get ABC from the procurement
-            $procurement = \App\Models\Procurement::where('procID', $item['procID'])->first();
-            $abc = $procurement ? $procurement->abc : 0;
+            // ABC is already available from the loaded item array — no extra query needed
+            $abc = $item['abc'] ?? 0;
 
             // Base required SVP fields
             $allSvpFieldsFilled =
@@ -1945,6 +1904,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         DB::transaction(function () use ($currentItems, &$isAdded, &$isUpdated, &$addedCount, &$updatedCount) {
             foreach ($currentItems as $item) {
+                // Only save post data for PRs that meet post-procurement eligibility
+                if (!$this->isItemEligibleForPost($item)) {
+                    continue;
+                }
+
                 $refId = $item['procurement_type'] === 'perLot' ? $item['procID'] : $item['prItemID'];
 
                 $data = [
@@ -2136,6 +2100,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $eligibleItems = [];
             $currentItems = $this->getCurrentItems();
 
+            // Batch-load all forwarded statuses in a single query
+            $procIds = array_column($currentItems, 'procID');
+            $forwardedIds = \App\Models\PrLotPrstage::whereIn('procID', $procIds)
+                ->where('pr_stage_id', 7)
+                ->pluck('procID')
+                ->toArray();
+
             foreach ($currentItems as $item) {
                 // Check if this item meets post-procurement eligibility
                 if (!$this->isItemEligibleForPost($item)) {
@@ -2143,11 +2114,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 }
 
                 // Exclude already-forwarded PRs (they have no checkbox)
-                $isForwarded = \App\Models\PrLotPrstage::where('procID', $item['procID'])
-                    ->where('pr_stage_id', 7)
-                    ->exists();
-
-                if (!$isForwarded) {
+                if (!in_array($item['procID'], $forwardedIds)) {
                     $eligibleItems[] = $item['procID'];
                 }
             }
@@ -2168,6 +2135,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $eligibleItems = [];
         $currentItems = $this->getCurrentItems();
 
+        // Batch-load all forwarded statuses in a single query
+        $procIds = array_column($currentItems, 'procID');
+        $forwardedIds = \App\Models\PrLotPrstage::whereIn('procID', $procIds)
+            ->where('pr_stage_id', 7)
+            ->pluck('procID')
+            ->toArray();
+
         foreach ($currentItems as $item) {
             // Check if this item meets post-procurement eligibility based on current mode
             if (!$this->isItemEligibleForPost($item)) {
@@ -2175,11 +2149,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             }
 
             // Exclude already-forwarded PRs (they have no checkbox)
-            $isForwarded = \App\Models\PrLotPrstage::where('procID', $item['procID'])
-                ->where('pr_stage_id', 7)
-                ->exists();
-
-            if (!$isForwarded) {
+            if (!in_array($item['procID'], $forwardedIds)) {
                 $eligibleItems[] = $item['procID'];
             }
         }

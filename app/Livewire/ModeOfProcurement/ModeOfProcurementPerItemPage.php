@@ -231,14 +231,11 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bid_evaluation_date']) &&
                     $this->hasValue($item['post_qualification_date']) &&
-                    $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
-                // For competitive bidding modes, also require resolution_number_mop
-                if ($this->isCompetitiveBidding($modeId)) {
-                    $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
-                }
+                // Also require resolution_number_mop for competitive bidding modes
+                $allBiddingFieldsFilled = $allBiddingFieldsFilled && $this->hasValue($item['resolution_number_mop']);
 
                 if ($allBiddingFieldsFilled) {
                     return true;
@@ -1021,9 +1018,7 @@ class ModeOfProcurementPerItemPage extends Component
             $hasBiddingData = $this->hasAnyValue($biddingFields);
 
             // Add resolution_number_mop check for modes 2-6
-            if ($this->isCompetitiveBidding($modeId)) {
-                $hasBiddingData = $hasBiddingData || $this->hasValue($itemData['resolution_number_mop']);
-            }
+            $hasBiddingData = $hasBiddingData || $this->hasValue($itemData['resolution_number_mop']);
 
             $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
@@ -1202,7 +1197,6 @@ class ModeOfProcurementPerItemPage extends Component
             ];
 
             $hasData = $this->hasAnyValue($postFields);
-            !empty($postItem['supplier_id']);
 
             if ($hasData) {
                 $rules["postItems.{$prItemID}.resolutionAwardNumber"] = 'required|string|max:255';

@@ -209,11 +209,15 @@
                                                 document.addEventListener('livewire:init', () => {
                                                     Livewire.hook('morph.updated', () => {
                                                         updateSelectAllCheckbox();
+                                                        updatePostSelectAllCheckbox();
                                                     });
                                                 });
 
                                                 // Update on page load
-                                                document.addEventListener('DOMContentLoaded', updateSelectAllCheckbox);
+                                                document.addEventListener('DOMContentLoaded', () => {
+                                                    updateSelectAllCheckbox();
+                                                    updatePostSelectAllCheckbox();
+                                                });
 
                                                 // Post Procurement checkbox synchronization
                                                 function updatePostSelectAllCheckbox() {
@@ -237,16 +241,6 @@
                                                         selectAllCheckbox.checked = false;
                                                     }
                                                 }
-
-                                                // Update post checkboxes on Livewire updates
-                                                document.addEventListener('livewire:init', () => {
-                                                    Livewire.hook('morph.updated', () => {
-                                                        updatePostSelectAllCheckbox();
-                                                    });
-                                                });
-
-                                                // Update on page load
-                                                document.addEventListener('DOMContentLoaded', updatePostSelectAllCheckbox);
 
                                                 // Toggle all post checkboxes function
                                                 function toggleAllPostCheckboxes(source) {
@@ -367,14 +361,15 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
 
+                                @php $prevPrID = null; @endphp
                                 @forelse ($this->paginatedItems as $itemIndex => $item)
                                     @php
                                         // ===== BASIC ROW IDENTIFIERS =====
                                         $modeId = $item['mode_of_procurement_id'] ?? null;
                                         $rowUid = $item['uid'] ?? 'temp_' . $itemIndex;
                                         $currentPrID = $item['prItemID'] ?? null;
-                                        $prevPrID = $form['items'][$itemIndex - 1]['prItemID'] ?? null;
-                                        $isHead = $itemIndex === 0 || $currentPrID !== $prevPrID;
+                                        $isHead = $prevPrID === null || $currentPrID !== $prevPrID;
+                                        $prevPrID = $currentPrID;
                                         $isHistoryRow = !$isHead;
                                     @endphp
 
@@ -415,7 +410,7 @@
                                             !empty($item['canvass_date']) ||
                                             !empty($item['date_returned_of_canvass']) ||
                                             !empty($item['abstract_of_canvass_date']) ||
-                                            !empty($item['resolution_number']);
+                                            !empty($item['resolution_number_mop']);
 
                                         // ===== PERMISSIONS & STATE =====
                                         $hasPostData = $this->hasPostDataForItem($itemIndex);
