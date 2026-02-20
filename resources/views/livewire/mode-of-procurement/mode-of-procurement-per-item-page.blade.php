@@ -3,10 +3,17 @@
         class="bg-white rounded-xl shadow-md border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
         <!-- PR Number Badge - Top Left Corner -->
         <div class="absolute top-0 left-0 z-10">
-            <span
-                class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-sm font-semibold bg-emerald-600 text-white shadow-md">
-                PR #{{ $form['pr_number'] ?? 'N/A' }}
-            </span>
+            @can('view_procurement')
+                <a href="{{ route('procurements.view', ['procurement' => $procurement->procID]) }}" target="_blank"
+                    class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-sm font-semibold bg-emerald-600 text-white shadow-md hover:bg-emerald-700 transition-colors">
+                    PR #{{ $form['pr_number'] ?? 'N/A' }}
+                </a>
+            @else
+                <span
+                    class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-sm font-semibold bg-emerald-600 text-white shadow-md">
+                    PR #{{ $form['pr_number'] ?? 'N/A' }}
+                </span>
+            @endcan
         </div>
 
         <!-- ABC Badge - Top Right Corner -->

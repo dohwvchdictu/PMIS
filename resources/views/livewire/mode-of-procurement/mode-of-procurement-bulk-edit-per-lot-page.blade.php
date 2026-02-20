@@ -317,10 +317,18 @@
                                         <!-- PR Number -->
                                         <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
                                             @if ($isHead)
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                    {{ $item['pr_number'] }}
-                                                </span>
+                                                @can('view_procurement')
+                                                    <a href="{{ route('procurements.view', ['procurement' => $item['procID']]) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                        {{ $item['pr_number'] }}
+                                                    </a>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                        {{ $item['pr_number'] }}
+                                                    </span>
+                                                @endcan
                                             @endif
                                         </td>
 
@@ -891,10 +899,18 @@
                                             </td>
                                             <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
                                                 <div class="flex flex-col gap-0.5">
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                        {{ $item['pr_number'] }}
-                                                    </span>
+                                                    @can('view_procurement')
+                                                        <a href="{{ route('procurements.view', ['procurement' => $item['procID']]) }}"
+                                                            target="_blank"
+                                                            class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                            {{ $item['pr_number'] }}
+                                                        </a>
+                                                    @else
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                            {{ $item['pr_number'] }}
+                                                        </span>
+                                                    @endcan
                                                 </div>
                                             </td>
                                             <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
