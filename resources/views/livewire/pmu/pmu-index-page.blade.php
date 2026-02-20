@@ -5,7 +5,7 @@
         <!-- Search Bar -->
         <div class="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
             <div class="relative max-w-md">
-                <input type="text" wire:model.live="search" placeholder="Search by PR Number, NOA Number, Division..."
+                <input type="text" wire:model.live="search" placeholder="Search..."
                     class="w-full px-4 py-2.5 pl-10 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-800 dark:text-white dark:border-neutral-600 dark:placeholder-gray-400" />
                 <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">

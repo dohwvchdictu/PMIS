@@ -147,12 +147,12 @@ class PmuIndexPage extends Component
             $lotQuery->where(function ($q) {
                 $q->where('procurements.pr_number', 'like', '%' . $this->search . '%')
                     ->orWhere('post_procurements.notice_of_award_number', 'like', '%' . $this->search . '%')
-                    ->orWhere('divisions.divisions', 'like', '%' . $this->search . '%');
+                    ->orWhere('procurements.procurement_program_project', 'like', '%' . $this->search . '%');
             });
             $itemQuery->where(function ($q) {
                 $q->where('procurements.pr_number', 'like', '%' . $this->search . '%')
                     ->orWhere('post_procurements.notice_of_award_number', 'like', '%' . $this->search . '%')
-                    ->orWhere('divisions.divisions', 'like', '%' . $this->search . '%');
+                    ->orWhere('pr_items.description', 'like', '%' . $this->search . '%');
             });
         }
 
