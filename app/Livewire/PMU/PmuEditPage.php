@@ -49,14 +49,13 @@ class PmuEditPage extends Component
     public function update()
     {
         $this->validate([
-            'contract_amount' => 'required|numeric|min:0',
+            'contract_amount' => 'nullable|numeric|min:0',
             'po_contract_number' => 'required|string|max:255',
             'po_contract_number_link' => 'nullable|url|max:2048',
             'contract_signing_date' => 'required|date',
             'notice_to_proceed_date' => 'nullable|date',
             'remarks' => 'nullable|string',
         ], [
-            'contract_amount.required' => 'Contract amount is required.',
             'contract_amount.numeric' => 'Contract amount must be a valid number.',
             'contract_amount.min' => 'Contract amount must be 0 or greater.',
             'po_contract_number.required' => 'PO / Contract number is required.',

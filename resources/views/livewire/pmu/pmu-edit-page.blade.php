@@ -359,7 +359,7 @@
                 }">
                     <label for="modal_contract_amount"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Contract Amount <span class="text-red-500">*</span>
+                        Contract Amount
                     </label>
                     <div class="relative">
                         <span

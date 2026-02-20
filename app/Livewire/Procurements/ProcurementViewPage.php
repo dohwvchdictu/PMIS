@@ -17,7 +17,8 @@ use App\Models\{
     PostProcurement,
     BidSchedule,
     PrSvp,
-    Pmu
+    Pmu,
+    PmuPo
 };
 use Illuminate\Support\Collection;
 
@@ -452,13 +453,18 @@ class ProcurementViewPage extends Component
                         ->whereNull('deleted_at')
                         ->first();
                     if ($pmu) {
-                        $this->pmuRecord = [
-                            'po_contract_number' => $pmu->po_contract_number,
-                            'po_contract_number_link' => $pmu->po_contract_number_link,
-                            'contract_amount' => $pmu->contract_amount,
-                            'contract_signing_date' => $pmu->contract_signing_date?->format('Y-m-d'),
-                            'notice_to_proceed_date' => $pmu->notice_to_proceed_date?->format('Y-m-d'),
-                        ];
+                        $pmuPo = PmuPo::where('pmu_id', $pmu->id)
+                            ->where('ref_id', $procurement->procID)
+                            ->first();
+                        if ($pmuPo) {
+                            $this->pmuRecord = [
+                                'po_contract_number' => $pmuPo->po_contract_number,
+                                'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                'contract_amount' => $pmuPo->contract_amount,
+                                'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
+                                'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                            ];
+                        }
                     }
                 }
             }
@@ -500,13 +506,21 @@ class ProcurementViewPage extends Component
                             ->whereNull('deleted_at')
                             ->first();
                         if ($pmu) {
-                            $this->pmuItems[$prItemID] = [
-                                'po_contract_number' => $pmu->po_contract_number,
-                                'po_contract_number_link' => $pmu->po_contract_number_link,
-                                'contract_amount' => $pmu->contract_amount,
-                                'contract_signing_date' => $pmu->contract_signing_date?->format('Y-m-d'),
-                                'notice_to_proceed_date' => $pmu->notice_to_proceed_date?->format('Y-m-d'),
-                            ];
+                            $pmuPo = PmuPo::where('pmu_id', $pmu->id)
+                                ->where('ref_id', $prItemID)
+                                ->first();
+                            if ($pmuPo) {
+                                $this->pmuItems[$prItemID] = [
+                                    'notice_of_award_number' => $post->notice_of_award_number,
+                                    'notice_of_award' => $post->notice_of_award,
+                                    'date_forwarded' => $pmu->date_forwarded?->format('Y-m-d'),
+                                    'po_contract_number' => $pmuPo->po_contract_number,
+                                    'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                    'contract_amount' => $pmuPo->contract_amount,
+                                    'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
+                                    'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                                ];
+                            }
                         }
                     }
                 }
