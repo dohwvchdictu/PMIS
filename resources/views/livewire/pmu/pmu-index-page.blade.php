@@ -130,25 +130,48 @@
                                 <td colspan="5" class="px-6 py-4">
                                     <div class="space-y-4">
 
-                                        <div class="overflow-x-auto">
+                                        <div class="overflow-x-auto overflow-y-auto max-h-[55vh]">
                                             <table
                                                 class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700 rounded-lg overflow-hidden">
                                                 <thead
-                                                    class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
+                                                    class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-10">
                                                     <tr>
                                                         <th
-                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                                            PR Number
-                                                        </th>
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PR Number</th>
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                                            Title/Description
-                                                        </th>
+                                                            Title / Description</th>
                                                         <th
-                                                            class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                                            ABC Amount/Amount
-                                                        </th>
-                                                        <th class="px-2 py-1 w-16"></th>
+                                                            class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            ABC / Amount</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Resolution Award No.</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Resolution Award Date</th>
+                                                        <th
+                                                            class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Awarded Amount</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                                            Supplier</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PO / Contract No.</th>
+                                                        <th
+                                                            class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Contract Amount</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Contract Signing Date</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            NTP Date</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                                            Remarks</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody
@@ -157,14 +180,23 @@
                                                         <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                                                                <span
-                                                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs">
-                                                                    {{ $procRow->pr_number }}
-                                                                </span>
+                                                                @can('view_procurement')
+                                                                    <a href="{{ route('procurements.view', ['procurement' => $procRow->procID]) }}"
+                                                                        target="_blank"
+                                                                        class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                                        {{ $procRow->pr_number }}
+                                                                    </a>
+                                                                @else
+                                                                    <span
+                                                                        class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs">
+                                                                        {{ $procRow->pr_number }}
+                                                                    </span>
+                                                                @endcan
                                                             </td>
-                                                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                                                <div
-                                                                    class="font-medium break-words whitespace-normal max-w-xs">
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white max-w-[14rem]">
+                                                                <div class="font-medium truncate"
+                                                                    title="{{ $procRow->description }}">
                                                                     {{ $procRow->description }}</div>
                                                             </td>
                                                             <td
@@ -194,10 +226,12 @@
                                                                     @if ($procRow->po_contract_number_link)
                                                                         <a href="{{ $procRow->po_contract_number_link }}"
                                                                             target="_blank" rel="noopener noreferrer"
-                                                                            class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 font-medium underline underline-offset-2 transition-colors">{{ $procRow->po_contract_number }}</a>
+                                                                            class="inline-flex items-center gap-1 font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 underline underline-offset-2 transition-colors">
+                                                                            {{ $procRow->po_contract_number }}
+                                                                        </a>
                                                                     @else
                                                                         <span
-                                                                            class="text-gray-900 dark:text-white font-medium">{{ $procRow->po_contract_number }}</span>
+                                                                            class="font-medium text-gray-900 dark:text-white">{{ $procRow->po_contract_number }}</span>
                                                                     @endif
                                                                 @else
                                                                     <span
@@ -226,28 +260,10 @@
                                                                         class="text-gray-400 dark:text-gray-500">—</span>
                                                                 @endif
                                                             </td>
-                                                            <td
-                                                                class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-                                                                @can('view_procurement')
-                                                                    <a href="{{ route('procurements.view', ['procurement' => $procRow->procID]) }}"
-                                                                        target="_blank"
-                                                                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                                                                        <svg class="w-5 h-5 inline" fill="none"
-                                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round"
-                                                                                stroke-linejoin="round" stroke-width="2"
-                                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                            <path stroke-linecap="round"
-                                                                                stroke-linejoin="round" stroke-width="2"
-                                                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                        </svg>
-                                                                    </a>
-                                                                @endcan
-                                                            </td>
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="13"
+                                                            <td colspan="12"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>
@@ -466,7 +482,6 @@
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                         Remarks</th>
-                                    <th class="px-2 py-1 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody
@@ -474,10 +489,18 @@
                                 @forelse ($modalPaginator ?? [] as $row)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
                                         <td class="px-4 py-3 whitespace-nowrap">
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
-                                                {{ $row->pr_number }}
-                                            </span>
+                                            @can('view_procurement')
+                                                <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
+                                                    target="_blank"
+                                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                    {{ $row->pr_number }}
+                                                </a>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                                                    {{ $row->pr_number }}
+                                                </span>
+                                            @endcan
                                         </td>
                                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
                                             <div class="break-words whitespace-normal max-w-xs">
@@ -508,10 +531,12 @@
                                                 @if ($row->po_contract_number_link)
                                                     <a href="{{ $row->po_contract_number_link }}" target="_blank"
                                                         rel="noopener noreferrer"
-                                                        class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 font-medium underline underline-offset-2 transition-colors">{{ $row->po_contract_number }}</a>
+                                                        class="inline-flex items-center gap-1 font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 underline underline-offset-2 transition-colors">
+                                                        {{ $row->po_contract_number }}
+                                                    </a>
                                                 @else
                                                     <span
-                                                        class="text-gray-900 dark:text-white font-medium">{{ $row->po_contract_number }}</span>
+                                                        class="font-medium text-gray-900 dark:text-white">{{ $row->po_contract_number }}</span>
                                                 @endif
                                             @else
                                                 <span class="text-gray-400 dark:text-gray-500">—</span>
@@ -537,26 +562,10 @@
                                                 <span class="text-gray-400 dark:text-gray-500">—</span>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center">
-                                            @can('view_procurement')
-                                                <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
-                                                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                                    target="_blank">
-                                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                </a>
-                                            @endcan
-                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="13"
+                                        <td colspan="12"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No linked PRs or items found.
                                         </td>

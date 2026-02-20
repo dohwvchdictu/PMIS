@@ -161,30 +161,24 @@
                         <tr
                             class="bg-white dark:bg-neutral-700 hover:bg-emerald-50 dark:hover:bg-neutral-800 transition-colors
                             {{ in_array($row->rowKey, $selectedItems) ? '!bg-emerald-50 dark:!bg-emerald-900/20' : '' }}">
-                            {{-- Checkbox + Eye --}}
+                            {{-- Checkbox --}}
                             <td class="px-3 py-2 whitespace-nowrap text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <input type="checkbox" wire:model.live="selectedItems" value="{{ $row->rowKey }}"
-                                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                    @can('view_procurement')
-                                        <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
-                                            class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                            target="_blank" title="View procurement">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </a>
-                                    @endcan
-                                </div>
+                                <input type="checkbox" wire:model.live="selectedItems" value="{{ $row->rowKey }}"
+                                    class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap">
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
-                                    {{ $row->pr_number }}
-                                </span>
+                                @can('view_procurement')
+                                    <a href="{{ route('procurements.view', ['procurement' => $row->procID]) }}"
+                                        target="_blank" title="View procurement"
+                                        class="inline-flex items-center px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                        {{ $row->pr_number }}
+                                    </a>
+                                @else
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                                        {{ $row->pr_number }}
+                                    </span>
+                                @endcan
                             </td>
                             <td class="px-3 py-2 text-xs text-gray-900 dark:text-white max-w-[200px]">
                                 <div class="whitespace-nowrap overflow-hidden text-ellipsis"
