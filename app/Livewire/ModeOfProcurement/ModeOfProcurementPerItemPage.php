@@ -224,7 +224,6 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
-                    $this->hasValue($item['obsrvr_prebid_conf']) &&
                     $this->hasValue($item['obsrvr_eligibility']) &&
                     $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                     $this->hasValue($item['obsrvr_bid']) &&
