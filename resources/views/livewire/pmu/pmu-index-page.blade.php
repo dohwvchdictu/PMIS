@@ -153,6 +153,12 @@
                                                             Supplier</th>
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            Date Receipt of Supplier (NOA)</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PO Date</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             PO / Contract No.</th>
                                                         <th
                                                             class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
@@ -207,6 +213,14 @@
                                                                     class="break-words whitespace-normal max-w-[10rem]">
                                                                     {{ $procRow->supplier_name ?? '—' }}</div>
                                                             </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->date_receipt_of_supplier_noa ? \Carbon\Carbon::parse($procRow->date_receipt_of_supplier_noa)->format('M d, Y') : '—' }}
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                {{ $procRow->po_date ? \Carbon\Carbon::parse($procRow->po_date)->format('M d, Y') : '—' }}
+                                                            </td>
                                                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                                                 @if ($procRow->po_contract_number)
                                                                     @if ($procRow->po_contract_number_link)
@@ -249,7 +263,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="10"
+                                                            <td colspan="12"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>
@@ -449,6 +463,12 @@
                                         Supplier</th>
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        Date Receipt of Supplier (NOA)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        PO Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         PO / Contract No.</th>
                                     <th
                                         class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
@@ -498,6 +518,14 @@
                                             <div class="break-words whitespace-normal max-w-[10rem]">
                                                 {{ $row->supplier_name ?? '—' }}</div>
                                         </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->date_receipt_of_supplier_noa ? \Carbon\Carbon::parse($row->date_receipt_of_supplier_noa)->format('M d, Y') : '—' }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            {{ $row->po_date ? \Carbon\Carbon::parse($row->po_date)->format('M d, Y') : '—' }}
+                                        </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm">
                                             @if ($row->po_contract_number)
                                                 @if ($row->po_contract_number_link)
@@ -537,7 +565,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10"
+                                        <td colspan="12"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No linked PRs or items found.
                                         </td>

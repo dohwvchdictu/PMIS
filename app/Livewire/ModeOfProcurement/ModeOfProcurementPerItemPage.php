@@ -7,8 +7,10 @@ use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrItemPrstage;
 use App\Models\Pmu;
+use App\Models\PmuPo;
 use App\Models\PrSvp;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
@@ -1410,6 +1412,28 @@ class ModeOfProcurementPerItemPage extends Component
     private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
+    }
+
+    /**
+     * Calculate PO date: 10th calendar day from Date Receipt of Supplier (NOA).
+     * If the result falls on a Saturday, move back 1 day to Friday.
+     * If the result falls on a Sunday, move back 2 days to Friday.
+     */
+    private function calculatePoDate(?string $dateReceiptOfSupplierNoa): ?string
+    {
+        if (!$this->hasValue($dateReceiptOfSupplierNoa)) {
+            return null;
+        }
+
+        $date = Carbon::parse($dateReceiptOfSupplierNoa)->addDays(10);
+
+        if ($date->dayOfWeek === Carbon::SUNDAY) {
+            $date->subDays(2); // move back to Friday
+        } elseif ($date->dayOfWeek === Carbon::SATURDAY) {
+            $date->subDays(1); // move back to Friday
+        }
+
+        return $date->format('Y-m-d');
     }
 
     /**
@@ -3328,10 +3352,18 @@ class ModeOfProcurementPerItemPage extends Component
                     }
 
                     if ($this->hasValue($post->notice_of_award_number)) {
-                        Pmu::updateOrCreate(
+                        $pmu = Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
                             ['date_forwarded' => $this->actualDateForwarded]
                         );
+
+                        $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                        if ($poDate) {
+                            PmuPo::updateOrCreate(
+                                ['pmu_id' => $pmu->id, 'ref_id' => $prItemID],
+                                ['po_date' => $poDate]
+                            );
+                        }
                     }
                 }
             });

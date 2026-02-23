@@ -17,6 +17,7 @@ class PmuPo extends Model implements Auditable
     protected $fillable = [
         'pmu_id',
         'ref_id',
+        'po_date',
         'contract_amount',
         'po_contract_number',
         'po_contract_number_link',
@@ -28,6 +29,7 @@ class PmuPo extends Model implements Auditable
     protected $auditInclude = [
         'pmu_id',
         'ref_id',
+        'po_date',
         'contract_amount',
         'po_contract_number',
         'po_contract_number_link',
@@ -41,6 +43,7 @@ class PmuPo extends Model implements Auditable
     protected $auditStrict = false;
 
     protected $casts = [
+        'po_date' => 'date',
         'contract_signing_date' => 'date',
         'notice_to_proceed_date' => 'date',
         'contract_amount' => 'decimal:2',
