@@ -195,6 +195,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgepsNoticeOfAwardNo' => $post?->philgeps_notice_of_award_no ?? null,
                     'philgepsPostingOfAward' => $post?->philgeps_posting_of_award ?? null,
                     'supplier_id' => $post?->supplier_id ?? null,
+                    'dateReceiptOfSupplierNoa' => $post?->date_receipt_of_supplier_noa ?? null,
                 ];
             }
         }
@@ -1285,6 +1286,7 @@ class ModeOfProcurementPerItemPage extends Component
                     $postItem['awardNoticeNumber'] ?? null,
                     $postItem['dateOfPostingOfAwardOnPhilGEPS'] ?? null,
                     $postItem['supplier_id'] ?? null,
+                    $postItem['dateReceiptOfSupplierNoa'] ?? null,
                 ];
 
                 $hasData = $this->hasAnyValue($postFields);
@@ -1303,6 +1305,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgeps_notice_of_award_no' => $postItem['philgepsNoticeOfAwardNo'] ?? null,
                     'philgeps_posting_of_award' => $this->nullableDate($postItem['philgepsPostingOfAward'] ?? null),
                     'supplier_id' => $postItem['supplier_id'] ?? null,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($postItem['dateReceiptOfSupplierNoa'] ?? null),
                 ];
 
                 // Use ref_id as prItemID (unique per item)
@@ -2704,6 +2707,7 @@ class ModeOfProcurementPerItemPage extends Component
             'philgepsNoticeOfAwardNo' => $firstPostItem['philgepsNoticeOfAwardNo'] ?? '',
             'philgepsPostingOfAward' => $firstPostItem['philgepsPostingOfAward'] ?? '',
             'supplier_id' => $firstPostItem['supplier_id'] ?? '',
+            'dateReceiptOfSupplierNoa' => $firstPostItem['dateReceiptOfSupplierNoa'] ?? '',
         ];
 
         // Populate selected_items for display in the table
@@ -2743,7 +2747,8 @@ class ModeOfProcurementPerItemPage extends Component
             'awardedAmount',
             'philgepsNoticeOfAwardNo',
             'philgepsPostingOfAward',
-            'supplier_id'
+            'supplier_id',
+            'dateReceiptOfSupplierNoa',
         ];
 
         foreach ($fields as $field) {
@@ -2776,6 +2781,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgeps_notice_of_award_no' => $this->postBulkEditData['philgepsNoticeOfAwardNo'] ?: null,
                     'philgeps_posting_of_award' => $this->nullableDate($this->postBulkEditData['philgepsPostingOfAward']),
                     'supplier_id' => $this->postBulkEditData['supplier_id'] ?: null,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->postBulkEditData['dateReceiptOfSupplierNoa']),
                 ];
 
                 PostProcurement::updateOrCreate(
@@ -2841,7 +2847,8 @@ class ModeOfProcurementPerItemPage extends Component
                 ($postItem['awardedAmount'] ?? null) !== ($firstPostItem['awardedAmount'] ?? null) ||
                 ($postItem['philgepsNoticeOfAwardNo'] ?? null) !== ($firstPostItem['philgepsNoticeOfAwardNo'] ?? null) ||
                 ($postItem['philgepsPostingOfAward'] ?? null) !== ($firstPostItem['philgepsPostingOfAward'] ?? null) ||
-                ($postItem['supplier_id'] ?? null) !== ($firstPostItem['supplier_id'] ?? null)
+                ($postItem['supplier_id'] ?? null) !== ($firstPostItem['supplier_id'] ?? null) ||
+                ($postItem['dateReceiptOfSupplierNoa'] ?? null) !== ($firstPostItem['dateReceiptOfSupplierNoa'] ?? null)
             ) {
                 $allIdentical = false;
                 break;
@@ -2858,6 +2865,7 @@ class ModeOfProcurementPerItemPage extends Component
             $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPostItem['philgepsNoticeOfAwardNo'] ?? '';
             $this->postBulkEditData['philgepsPostingOfAward'] = $firstPostItem['philgepsPostingOfAward'] ?? '';
             $this->postBulkEditData['supplier_id'] = $firstPostItem['supplier_id'] ?? '';
+            $this->postBulkEditData['dateReceiptOfSupplierNoa'] = $firstPostItem['dateReceiptOfSupplierNoa'] ?? '';
         }
     }
 
@@ -3074,7 +3082,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 return true;
             }
@@ -3100,7 +3109,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 $count++;
             }
