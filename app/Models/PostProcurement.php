@@ -22,6 +22,7 @@ class PostProcurement extends Model implements Auditable
         'awarded_amount',
         'philgeps_posting_of_award',
         'supplier_id',
+        'date_receipt_of_supplier_noa',
     ];
 
     protected $auditInclude = [
@@ -34,6 +35,7 @@ class PostProcurement extends Model implements Auditable
         'awarded_amount',
         'philgeps_posting_of_award',
         'supplier_id',
+        'date_receipt_of_supplier_noa',
     ];
 
     protected $auditTimestamps = true;

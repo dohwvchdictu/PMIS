@@ -771,6 +771,10 @@
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
                                         Supplier</th>
+
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Date Receipt of Supplier (NOA)</th>
                                 </tr>
 
                             </thead>
@@ -837,6 +841,12 @@
                                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
                                             @endforeach
                                         </select>
+                                    </td>
+
+                                    <td class="px-2 py-2 align-top">
+                                        <input type="date" wire:model.defer="dateReceiptOfSupplierNoa"
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
                                 </tr>
                             </tbody>

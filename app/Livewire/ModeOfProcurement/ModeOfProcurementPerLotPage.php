@@ -86,6 +86,7 @@ class ModeOfProcurementPerLotPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+    public ?string $dateReceiptOfSupplierNoa = null;
 
     public Collection $suppliers;
     public $queryParams = [];
@@ -179,6 +180,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
+            $this->dateReceiptOfSupplierNoa = $post->date_receipt_of_supplier_noa;
         }
     }
 
@@ -1116,6 +1118,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo,
             $this->philgepsPostingOfAward,
             $this->supplier_id,
+            $this->dateReceiptOfSupplierNoa,
         ];
 
 
@@ -1131,6 +1134,7 @@ class ModeOfProcurementPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
+            'dateReceiptOfSupplierNoa' => 'nullable|date',
         ];
 
         // FIX #9: If ANY field has data, make Resolution Award Number and Date REQUIRED
@@ -1148,6 +1152,7 @@ class ModeOfProcurementPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
             'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
+            'dateReceiptOfSupplierNoa' => 'Date Receipt of Supplier (NOA)',
         ];
 
         // FIX #9: Custom error messages for better UX
@@ -1186,6 +1191,7 @@ class ModeOfProcurementPerLotPage extends Component
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->dateReceiptOfSupplierNoa),
                 ];
 
                 $postModel = PostProcurement::updateOrCreate(
@@ -1317,6 +1323,7 @@ class ModeOfProcurementPerLotPage extends Component
      * - Notice of Award Date
      * - Awarded Amount
      * - Supplier
+     * - Date Receipt of Supplier (NOA)
      */
     public function getCanForwardToPmuProperty(): bool
     {
@@ -1327,13 +1334,14 @@ class ModeOfProcurementPerLotPage extends Component
             return false;
         }
 
-        // Check all 6 required fields are filled in database
+        // Check all 7 required fields are filled in database
         return $this->hasValue($post->resolution_award_number) &&
             $this->hasValue($post->resolution_award_date) &&
             $this->hasValue($post->notice_of_award_number) &&
             $this->hasValue($post->notice_of_award) &&
             $this->hasValue($post->awarded_amount) &&
-            $this->hasValue($post->supplier_id);
+            $this->hasValue($post->supplier_id) &&
+            $this->hasValue($post->date_receipt_of_supplier_noa);
     }
 
     /**
