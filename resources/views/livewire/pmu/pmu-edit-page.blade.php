@@ -125,12 +125,6 @@
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             ABC / Amount</th>
                         <th
-                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Resolution Award No.</th>
-                        <th
-                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Resolution Award Date</th>
-                        <th
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Awarded Amount</th>
                         <th
@@ -188,12 +182,6 @@
                                 class="px-3 py-2 whitespace-nowrap text-right text-xs font-medium text-gray-900 dark:text-white">
                                 ₱ {{ number_format($row->abc, 2) }}
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $row->resolution_award_number ?? '—' }}
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $row->resolution_award_date ? \Carbon\Carbon::parse($row->resolution_award_date)->format('M d, Y') : '—' }}
-                            </td>
                             <td class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-900 dark:text-white">
                                 {{ $row->awarded_amount ? '₱ ' . number_format($row->awarded_amount, 2) : '—' }}
                             </td>
@@ -205,8 +193,7 @@
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->po_contract_number ?? '—' }}
                             </td>
-                            <td
-                                class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->contract_amount ? '₱ ' . number_format($po->contract_amount, 2) : '—' }}
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
@@ -240,7 +227,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="14" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="12" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No linked PRs or items found.
                             </td>
                         </tr>

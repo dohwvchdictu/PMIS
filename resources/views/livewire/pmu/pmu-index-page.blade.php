@@ -146,12 +146,6 @@
                                                             class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             ABC / Amount</th>
                                                         <th
-                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                                                            Resolution Award No.</th>
-                                                        <th
-                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                                                            Resolution Award Date</th>
-                                                        <th
                                                             class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             Awarded Amount</th>
                                                         <th
@@ -202,14 +196,6 @@
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white font-medium">
                                                                 ₱ {{ number_format($procRow->abc, 2) }}
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                                                {{ $procRow->resolution_award_number ?? '—' }}
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                                                {{ $procRow->resolution_award_date ? \Carbon\Carbon::parse($procRow->resolution_award_date)->format('M d, Y') : '—' }}
                                                             </td>
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
@@ -263,7 +249,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="12"
+                                                            <td colspan="10"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>
@@ -456,12 +442,6 @@
                                         class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         ABC / Amount</th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                                        Res. Award No.</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                                        Res. Award Date</th>
-                                    <th
                                         class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         Awarded Amt</th>
                                     <th
@@ -511,14 +491,6 @@
                                             ₱ {{ number_format($row->abc, 2) }}
                                         </td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                            {{ $row->resolution_award_number ?? '—' }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                            {{ $row->resolution_award_date ? \Carbon\Carbon::parse($row->resolution_award_date)->format('M d, Y') : '—' }}
-                                        </td>
-                                        <td
                                             class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
                                             {{ $row->awarded_amount ? '₱ ' . number_format($row->awarded_amount, 2) : '—' }}
                                         </td>
@@ -565,7 +537,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="12"
+                                        <td colspan="10"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No linked PRs or items found.
                                         </td>

@@ -299,8 +299,6 @@ class PmuEditPage extends Component
                 'procurements.pr_number',
                 'procurements.procurement_program_project',
                 'procurements.abc',
-                'post_procurements.resolution_award_number',
-                'post_procurements.resolution_award_date',
                 'post_procurements.awarded_amount',
                 'suppliers.name as supplier_name'
             )
@@ -313,8 +311,6 @@ class PmuEditPage extends Component
                 'pr_number' => $p->pr_number,
                 'description' => $p->procurement_program_project,
                 'abc' => $p->abc,
-                'resolution_award_number' => $p->resolution_award_number,
-                'resolution_award_date' => $p->resolution_award_date,
                 'awarded_amount' => $p->awarded_amount,
                 'supplier_name' => $p->supplier_name,
             ])->toBase();
@@ -336,8 +332,6 @@ class PmuEditPage extends Component
                 'pr_items.prItemID',
                 'pr_items.description',
                 'pr_items.amount',
-                'post_procurements.resolution_award_number',
-                'post_procurements.resolution_award_date',
                 'post_procurements.awarded_amount',
                 'suppliers.name as supplier_name'
             )
@@ -352,8 +346,6 @@ class PmuEditPage extends Component
                 'pr_number' => $r->pr_number,
                 'description' => $r->description,
                 'abc' => $r->amount,
-                'resolution_award_number' => $r->resolution_award_number,
-                'resolution_award_date' => $r->resolution_award_date,
                 'awarded_amount' => $r->awarded_amount,
                 'supplier_name' => $r->supplier_name,
             ]);
