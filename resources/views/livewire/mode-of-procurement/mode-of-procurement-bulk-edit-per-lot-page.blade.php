@@ -797,6 +797,9 @@
                                     <th
                                         class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                         Supplier</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Date Receipt of Supplier (NOA)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -973,6 +976,11 @@
                                         <td class="px-2 py-2">
                                             <span class="text-xs text-gray-700 dark:text-gray-300">
                                                 {{ $supplier ? $supplier->name : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData && $postData->date_receipt_of_supplier_noa ? $this->formatDate($postData->date_receipt_of_supplier_noa) : '-' }}
                                             </span>
                                         </td>
                                     </tr>
@@ -1469,6 +1477,10 @@
                                     class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
                                     Supplier
                                 </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Date Receipt of Supplier (NOA)
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1520,6 +1532,10 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date" wire:model.defer="postBulkEditData.dateReceiptOfSupplierNoa"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                 </td>
                             </tr>
                         </tbody>

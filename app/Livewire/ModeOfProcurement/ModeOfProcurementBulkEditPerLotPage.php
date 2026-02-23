@@ -103,6 +103,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+    public ?string $dateReceiptOfSupplierNoa = null;
     public Collection $suppliers;
 
     /**
@@ -485,7 +486,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $itemPost->awarded_amount !== $firstPost->awarded_amount ||
                 $itemPost->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                 $itemPost->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                $itemPost->supplier_id !== $firstPost->supplier_id
+                $itemPost->supplier_id !== $firstPost->supplier_id ||
+                $itemPost->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
             ) {
                 $allIdentical = false;
                 break;
@@ -502,6 +504,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo = $firstPost->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $firstPost->philgeps_posting_of_award;
             $this->supplier_id = $firstPost->supplier_id;
+            $this->dateReceiptOfSupplierNoa = $firstPost->date_receipt_of_supplier_noa;
         }
     }
 
@@ -1841,6 +1844,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo,
             $this->philgepsPostingOfAward,
             $this->supplier_id,
+            $this->dateReceiptOfSupplierNoa,
         ];
 
         $hasAnyPostData = $this->hasAnyValue($postFields);
@@ -1855,6 +1859,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
+            'dateReceiptOfSupplierNoa' => 'nullable|date',
         ];
 
         // If ANY field has data, make Resolution Award Number and Date REQUIRED
@@ -1872,6 +1877,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
             'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
+            'dateReceiptOfSupplierNoa' => 'Date Receipt of Supplier (NOA)',
         ];
 
         // Custom error messages for better UX
@@ -1921,6 +1927,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->dateReceiptOfSupplierNoa),
                 ];
 
                 $postModel = \App\Models\PostProcurement::updateOrCreate(
@@ -2236,6 +2243,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $supplierName = \App\Models\Supplier::find($post->supplier_id)?->business_name ?? 'Unknown';
                 $prsByField['Supplier'][] = "{$prNumber} ({$supplierName})";
             }
+            if ($post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa) {
+                $differentFields['Date Receipt of Supplier (NOA)'] = true;
+                $prsByField['Date Receipt of Supplier (NOA)'][] = "{$prNumber} ({$post->date_receipt_of_supplier_noa})";
+            }
         }
 
         // If any fields are different, show validation error
@@ -2326,6 +2337,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => '',
             'philgepsPostingOfAward' => '',
             'supplier_id' => null,
+            'dateReceiptOfSupplierNoa' => '',
         ];
 
         // If all selected items have post data, check if values are identical
@@ -2344,7 +2356,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     $post->awarded_amount !== $firstPost->awarded_amount ||
                     $post->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                     $post->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                    $post->supplier_id !== $firstPost->supplier_id
+                    $post->supplier_id !== $firstPost->supplier_id ||
+                    $post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
                 ) {
                     $allIdentical = false;
                     break;
@@ -2362,6 +2375,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'philgepsNoticeOfAwardNo' => $firstPost->philgeps_notice_of_award_no ?? '',
                     'philgepsPostingOfAward' => $firstPost->philgeps_posting_of_award ?? '',
                     'supplier_id' => $firstPost->supplier_id,
+                    'dateReceiptOfSupplierNoa' => $firstPost->date_receipt_of_supplier_noa ?? '',
                 ];
             }
         }
@@ -2414,7 +2428,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $post->awarded_amount !== $firstPost->awarded_amount ||
                 $post->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                 $post->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                $post->supplier_id !== $firstPost->supplier_id
+                $post->supplier_id !== $firstPost->supplier_id ||
+                $post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
             ) {
                 $allIdentical = false;
                 break;
@@ -2431,6 +2446,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPost->philgeps_notice_of_award_no ?? '';
             $this->postBulkEditData['philgepsPostingOfAward'] = $firstPost->philgeps_posting_of_award ?? '';
             $this->postBulkEditData['supplier_id'] = $firstPost->supplier_id;
+            $this->postBulkEditData['dateReceiptOfSupplierNoa'] = $firstPost->date_receipt_of_supplier_noa ?? '';
         }
     }
 
@@ -2463,7 +2479,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'awardedAmount',
             'philgepsNoticeOfAwardNo',
             'philgepsPostingOfAward',
-            'supplier_id'
+            'supplier_id',
+            'dateReceiptOfSupplierNoa'
         ];
 
         foreach ($fieldsToCheck as $field) {
@@ -2528,6 +2545,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         $postProc->supplier_id = $this->postBulkEditData['supplier_id'];
                         $hasChanges = true;
                     }
+                    if ($this->hasValue($this->postBulkEditData['dateReceiptOfSupplierNoa'] ?? null)) {
+                        $postProc->date_receipt_of_supplier_noa = $this->postBulkEditData['dateReceiptOfSupplierNoa'];
+                        $hasChanges = true;
+                    }
 
                     if ($hasChanges) {
                         $postProc->save();
@@ -2586,7 +2607,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 return true;
             }
@@ -2613,7 +2635,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 $count++;
             }
