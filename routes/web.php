@@ -11,6 +11,10 @@ use App\Livewire\ModeOfProcurement\ModeOfProcurementUpdatePage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerItemPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementPerLotPage;
 use App\Livewire\ModeOfProcurement\ModeOfProcurementBulkEditPerLotPage;
+use App\Livewire\PMU\PmuIndexPage;
+use App\Livewire\PMU\PmuCreatePage;
+use App\Livewire\PMU\PmuEditPage;
+use App\Livewire\PMU\PmuViewPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
@@ -120,6 +124,25 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('/{procurement}/edit', ModeOfProcurementEditPage::class)
             ->name('edit')
             ->middleware('can:edit_mode::of::procurement');
+    });
+
+    // PMU routes with Shield permissions
+    Route::prefix('pmu')->name('pmu.')->group(function () {
+        Route::get('/', PmuIndexPage::class)
+            ->name('index')
+            ->middleware('can:view_any_pmu');
+
+        Route::get('/create', PmuCreatePage::class)
+            ->name('create')
+            ->middleware('can:create_pmu');
+
+        Route::get('/{id}/edit', PmuEditPage::class)
+            ->name('edit')
+            ->middleware('can:update_pmu');
+
+        Route::get('/{id}/view', PmuViewPage::class)
+            ->name('view')
+            ->middleware('can:view_pmu');
     });
 
     // Reports routes

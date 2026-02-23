@@ -16,7 +16,9 @@ use App\Models\{
     Supplier,
     PostProcurement,
     BidSchedule,
-    PrSvp
+    PrSvp,
+    Pmu,
+    PmuPo
 };
 use Illuminate\Support\Collection;
 
@@ -66,6 +68,10 @@ class ProcurementViewPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+
+    // PMU data
+    public ?array $pmuRecord = null;
+    public array $pmuItems = [];
 
     public function mount(Procurement $procurement): void
     {
@@ -440,6 +446,27 @@ class ProcurementViewPage extends Component
                 $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
                 $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
                 $this->supplier_id = $post->supplier_id;
+
+                // Load PMU record for perLot
+                if ($post->notice_of_award_number) {
+                    $pmu = Pmu::where('notice_of_award_number', $post->notice_of_award_number)
+                        ->whereNull('deleted_at')
+                        ->first();
+                    if ($pmu) {
+                        $pmuPo = PmuPo::where('pmu_id', $pmu->id)
+                            ->where('ref_id', $procurement->procID)
+                            ->first();
+                        if ($pmuPo) {
+                            $this->pmuRecord = [
+                                'po_contract_number' => $pmuPo->po_contract_number,
+                                'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                'contract_amount' => $pmuPo->contract_amount,
+                                'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
+                                'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                            ];
+                        }
+                    }
+                }
             }
         } else {
             // For perItem, load post-procurement data for each prItemID
@@ -459,6 +486,7 @@ class ProcurementViewPage extends Component
 
                 if ($post) {
                     $this->postItems[$prItemID] = [
+                        'ref_id' => $prItemID,
                         'resolutionAwardNumber' => $post->resolution_award_number,
                         'resolutionAwardDate' => $post->resolution_award_date,
                         'bidEvaluationDate' => $post->bid_evaluation_date,
@@ -471,6 +499,30 @@ class ProcurementViewPage extends Component
                         'philgepsPostingOfAward' => $post->philgeps_posting_of_award,
                         'supplier_id' => $post->supplier_id,
                     ];
+
+                    // Load PMU record for this item
+                    if ($post->notice_of_award_number) {
+                        $pmu = Pmu::where('notice_of_award_number', $post->notice_of_award_number)
+                            ->whereNull('deleted_at')
+                            ->first();
+                        if ($pmu) {
+                            $pmuPo = PmuPo::where('pmu_id', $pmu->id)
+                                ->where('ref_id', $prItemID)
+                                ->first();
+                            if ($pmuPo) {
+                                $this->pmuItems[$prItemID] = [
+                                    'notice_of_award_number' => $post->notice_of_award_number,
+                                    'notice_of_award' => $post->notice_of_award,
+                                    'date_forwarded' => $pmu->date_forwarded?->format('Y-m-d'),
+                                    'po_contract_number' => $pmuPo->po_contract_number,
+                                    'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                    'contract_amount' => $pmuPo->contract_amount,
+                                    'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
+                                    'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                                ];
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -18,4 +18,9 @@ return [
     'showCancelButton' => false,
     'showConfirmButton' => false,
     'backdrop' => true,
+
+    // Custom configuration to ensure alerts appear above modals (z-index: 99999)
+    'customClass' => [
+        'container' => 'swal-z-index-max',
+    ],
 ];

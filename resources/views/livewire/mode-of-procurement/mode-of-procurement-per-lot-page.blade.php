@@ -3,10 +3,17 @@
         class="bg-white rounded-xl shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700 overflow-hidden relative">
         <!-- PR Number Badge - Top Left Corner -->
         <div class="absolute top-0 left-0 z-10">
-            <span
-                class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md">
-                PR #{{ $form['pr_number'] ?? 'N/A' }}
-            </span>
+            @can('view_procurement')
+                <a href="{{ route('procurements.view', ['procurement' => $procurement->procID]) }}" target="_blank"
+                    class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md hover:bg-emerald-700 transition-colors">
+                    PR #{{ $form['pr_number'] ?? 'N/A' }}
+                </a>
+            @else
+                <span
+                    class="inline-flex items-center px-3 py-1.5 rounded-tl-xl rounded-br-xl text-s font-semibold bg-emerald-600 text-white shadow-md">
+                    PR #{{ $form['pr_number'] ?? 'N/A' }}
+                </span>
+            @endcan
         </div>
 
         <!-- ABC Badge - Top Right Corner -->
@@ -241,9 +248,17 @@
                                         )->exists();
                                         $canEditMop = auth()->user()->can('edit_mode::of::procurement');
                                         $isCurrentRow = $loop->first;
+                                        $isForwarded = $this->isForwardedToPmu;
 
-                                        $disableSelect = $isHistory || $hasSchedule || $rowUid === 'MOP-1-1';
-                                        $disableInputs = $isHistory || ($isCurrentRow && $hasPostData && !$canEditMop);
+                                        $disableSelect =
+                                            $isHistory ||
+                                            $hasSchedule ||
+                                            $rowUid === 'MOP-1-1' ||
+                                            ($isForwarded && !$canEditMop);
+                                        $disableInputs =
+                                            $isHistory ||
+                                            ($isCurrentRow && $hasPostData && !$canEditMop) ||
+                                            ($isForwarded && !$canEditMop);
                                         $showFields = $isSavedRecord;
 
                                         // Show current row always, history rows only when $showHistory is true
@@ -669,22 +684,53 @@
                     <!-- Header Section -->
                     <div
                         class="px-4 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/20 border-b-2 border-emerald-500 dark:border-emerald-600">
-                        <div class="flex items-center gap-2">
-                            <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-2">
+                                <div class="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
+                                        Post-Procurement Data
+                                    </h3>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        Award information and supplier details
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">
-                                    Post-Procurement Data
-                                </h3>
-                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                    Award information and supplier details
-                                </p>
-                            </div>
+                            {{-- Forward to PMU: right side of header --}}
+                            @if ($this->isForwardedToPmu)
+                                <div
+                                    class="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded-lg flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="leading-tight">
+                                        <span class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                            to PMU</span>
+                                        @if ($this->forwardedToPmuDate)
+                                            <span
+                                                class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->format('F d, Y') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @elseif ($this->canForwardToPmu)
+                                <button wire:click="openForwardModal" type="button"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    Forward to PMU
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -729,28 +775,34 @@
 
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                @php
+                                    $disablePost =
+                                        $this->isForwardedToPmu && !auth()->user()->can('edit_mode::of::procurement');
+                                @endphp
                                 <tr>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="resolutionAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="RES-YYYY-NNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="RES-YYYY-NNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="resolutionAwardDate"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="noticeOfAwardNumber"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="NOAYYYY-NNNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="NOAYYYY-NNNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="noticeOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
@@ -759,25 +811,27 @@
                                                 class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400 pointer-events-none">₱</span>
                                             <input type="text" wire:model.defer="awardedAmount" x-data
                                                 x-mask:dynamic="$money($input, '.', ',', 2)"
-                                                class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                                placeholder="0.00">
+                                                class="w-full pl-6 pr-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                                placeholder="0.00" @disabled($disablePost)>
                                         </div>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="text" wire:model.defer="philgepsNoticeOfAwardNo"
-                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
-                                            placeholder="PHL-NOA-YYYY-NNN">
+                                            class="w-full px-2 py-1 text-xs text-right border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            placeholder="PHL-NOA-YYYY-NNN" @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <input type="date" wire:model.defer="philgepsPostingOfAward"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                     </td>
 
                                     <td class="px-2 py-2 align-top">
                                         <select wire:model.defer="supplier_id"
-                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
+                                            class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                            @disabled($disablePost)>
                                             <option value="">Select Supplier...</option>
                                             @foreach ($suppliers as $supplier)
                                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -789,6 +843,7 @@
                         </table>
                     </div>
                 </div>
+
             </div>
         @endif
     </div>
@@ -1125,6 +1180,62 @@
 
             </div>
         @endif
+    </x-forms.modal>
+
+    {{-- Forward to PMU Modal --}}
+    <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
+        closeMethod="closeForwardModal">
+        <div class="px-4 py-3">
+            {{-- PR Number Display --}}
+            <div
+                class="mb-4 p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-600">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">PR Number:</span>
+                        <span
+                            class="ml-2 text-sm font-semibold text-gray-900 dark:text-white">{{ $form['pr_number'] ?? 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="date" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToPmu"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
+                    </button>
+                </div>
+            </div>
+        </div>
     </x-forms.modal>
 
 </div>

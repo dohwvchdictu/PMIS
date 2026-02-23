@@ -88,7 +88,7 @@
             'procurements' => 'Procurements',
             'mode-of-procurement' => 'Mode of Procurement',
             'bac-approved-pr' => 'BAC Approved PR',
-            'posts' => 'Posts Procurement',
+            'pmu' => 'PMU',
             'create' => 'Create',
             'edit' => 'Edit',
             'view' => 'View',

@@ -11,6 +11,7 @@ use App\Models\PrItemPrstage;
 use App\Models\Division;
 use App\Models\Remarks;
 use App\Models\PrItem;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
@@ -103,94 +104,147 @@ class PRUpdateStatus extends Component
                 'lotNotes.max' => 'Notes cannot exceed 5000 characters.',
             ]);
 
-            // Update stage for perLot
-            PrLotPrstage::create([
-                'procID' => $this->procurement->procID,
-                'pr_stage_id' => $this->selectedStageId,
-                'stage_history' => now(),
-            ]);
+            try {
+                DB::transaction(function () {
+                    // Get the latest stage for this procurement
+                    $latestStage = PrLotPrstage::where('procID', $this->procurement->procID)
+                        ->orderBy('created_at', 'desc')
+                        ->orderBy('id', 'desc')
+                        ->first();
 
-            // Create remark history if remark is provided OR if notes exist
-            if ($this->remarksId || !empty($this->lotNotes)) {
-                PrLotRemark::create([
-                    'procID' => $this->procurement->procID,
-                    'remarks_id' => $this->remarksId ?: null, // Explicitly set to null if empty
-                    'notes' => $this->lotNotes,
-                    'remark_history' => now(),
+                    $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+                    // Only create new stage record if stage has changed
+                    if ($this->selectedStageId != $currentStageId) {
+                        PrLotPrstage::create([
+                            'procID' => $this->procurement->procID,
+                            'pr_stage_id' => $this->selectedStageId,
+                            'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                        ]);
+                    }
+
+                    // Create remark history if remark is provided OR if notes exist
+                    if ($this->remarksId || !empty($this->lotNotes)) {
+                        PrLotRemark::create([
+                            'procID' => $this->procurement->procID,
+                            'remarks_id' => $this->remarksId ?: null,
+                            'notes' => $this->lotNotes,
+                            'remark_history' => now(),
+                        ]);
+                    }
+                });
+
+                session()->flash('alert', [
+                    'type' => 'success',
+                    'title' => 'Saved!',
+                    'message' => 'Procurement status updated successfully.',
                 ]);
+
+                return redirect()->route('procurements.index', $this->queryParams);
+            } catch (\Exception $e) {
+                \Log::error('PRUpdateStatus save failed (perLot)', [
+                    'procID' => $this->procurement->procID,
+                    'error' => $e->getMessage(),
+                ]);
+
+                LivewireAlert::title('Save Failed')
+                    ->error()
+                    ->text('Failed to update procurement status. Please try again.')
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+
+                return;
             }
-
-            session()->flash('alert', [
-                'type' => 'success',
-                'title' => 'Saved!',
-                'message' => 'Procurement status updated successfully.',
-            ]);
-
-            return redirect()->route('procurements.index', $this->queryParams);
 
         } else {
             // Update for perItem - process all items
             $updatedCount = 0;
             $remarksCount = 0;
 
-            foreach ($this->form['items'] as $item) {
-                $itemId = $item['prItemID'];
+            try {
+                DB::transaction(function () use (&$updatedCount, &$remarksCount) {
+                    foreach ($this->form['items'] as $item) {
+                        $itemId = $item['prItemID'];
 
-                // Check if stage is selected for this item
-                if (!empty($this->itemStages[$itemId])) {
-                    $currentStageId = $item['prstage']['pr_stage_id'] ?? null;
+                        // Check if stage is selected for this item
+                        if (!empty($this->itemStages[$itemId])) {
+                            // Get latest stage for this item
+                            $latestItemStage = PrItemPrstage::where('procID', $this->procurement->procID)
+                                ->where('prItemID', $itemId)
+                                ->orderBy('created_at', 'desc')
+                                ->orderBy('id', 'desc')
+                                ->first();
 
-                    // Create new stage record if changed
-                    if ($this->itemStages[$itemId] != $currentStageId) {
-                        PrItemPrstage::create([
-                            'procID' => $this->procurement->procID,
-                            'prItemID' => $itemId,
-                            'pr_stage_id' => $this->itemStages[$itemId],
-                            'stage_history' => now(),
-                        ]);
-                        $updatedCount++;
+                            $currentStageId = $latestItemStage ? $latestItemStage->pr_stage_id : null;
+
+                            // Create new stage record if changed
+                            if ($this->itemStages[$itemId] != $currentStageId) {
+                                PrItemPrstage::create([
+                                    'procID' => $this->procurement->procID,
+                                    'prItemID' => $itemId,
+                                    'pr_stage_id' => $this->itemStages[$itemId],
+                                    'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                                ]);
+                                $updatedCount++;
+                            }
+                        }
+
+                        // Create item remark history if remark is provided OR if notes exist
+                        if (!empty($this->itemRemarks[$itemId]) || !empty($this->itemNotes[$itemId])) {
+                            PrItemRemark::create([
+                                'procID' => $this->procurement->procID,
+                                'prItemID' => $itemId,
+                                'remarks_id' => !empty($this->itemRemarks[$itemId]) ? $this->itemRemarks[$itemId] : null,
+                                'notes' => $this->itemNotes[$itemId] ?? null,
+                                'remark_history' => now(),
+                            ]);
+                            $remarksCount++;
+                        }
                     }
-                }
+                });
 
-                // Create item remark history if remark is provided OR if notes exist
-                if (!empty($this->itemRemarks[$itemId]) || !empty($this->itemNotes[$itemId])) {
-                    PrItemRemark::create([
-                        'procID' => $this->procurement->procID,
-                        'prItemID' => $itemId,
-                        'remarks_id' => !empty($this->itemRemarks[$itemId]) ? $this->itemRemarks[$itemId] : null,
-                        'notes' => $this->itemNotes[$itemId] ?? null,
-                        'remark_history' => now(),
+                // Check if any changes were made (stages OR remarks/notes)
+                if ($updatedCount > 0 || $remarksCount > 0) {
+                    $messages = [];
+
+                    if ($updatedCount > 0) {
+                        $messages[] = $updatedCount . ' item(s) status updated';
+                    }
+
+                    if ($remarksCount > 0) {
+                        $messages[] = $remarksCount . ' note(s)/remark(s) added';
+                    }
+
+                    session()->flash('alert', [
+                        'type' => 'success',
+                        'title' => 'Saved!',
+                        'message' => implode(' and ', $messages) . ' successfully.',
                     ]);
-                    $remarksCount++;
+
+                    return redirect()->route('procurements.index', $this->queryParams);
+                } else {
+                    LivewireAlert::info()
+                        ->title('No Changes')
+                        ->text('No stage, remark, or note changes were made.')
+                        ->toast()
+                        ->position('top-end')
+                        ->show();
                 }
-            }
-
-            // Check if any changes were made (stages OR remarks/notes)
-            if ($updatedCount > 0 || $remarksCount > 0) {
-                $messages = [];
-
-                if ($updatedCount > 0) {
-                    $messages[] = $updatedCount . ' item(s) status updated';
-                }
-
-                if ($remarksCount > 0) {
-                    $messages[] = $remarksCount . ' note(s)/remark(s) added';
-                }
-
-                session()->flash('alert', [
-                    'type' => 'success',
-                    'title' => 'Saved!',
-                    'message' => implode(' and ', $messages) . ' successfully.',
+            } catch (\Exception $e) {
+                \Log::error('PRUpdateStatus save failed (perItem)', [
+                    'procID' => $this->procurement->procID,
+                    'error' => $e->getMessage(),
                 ]);
 
-                return redirect()->route('procurements.index', $this->queryParams);
-            } else {
-                LivewireAlert::info()
-                    ->title('No Changes')
-                    ->text('No stage, remark, or note changes were made.')
+                LivewireAlert::title('Save Failed')
+                    ->error()
+                    ->text('Failed to update item statuses. Please try again.')
                     ->toast()
                     ->position('top-end')
                     ->show();
+
+                return;
             }
         }
     }

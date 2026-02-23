@@ -221,10 +221,18 @@
 
                                     <td
                                         class="px-2 py-4 text-center text-sm font-bold sticky left-28 z-20 {{ $loop->even ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-100 group-hover:to-teal-100 dark:group-hover:from-emerald-900/30 dark:group-hover:to-teal-900/30 text-emerald-700 dark:text-emerald-300 w-40">
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
-                                            {{ $procurement->pr_number }}
-                                        </span>
+                                        @can('view_procurement')
+                                            <a href="{{ route('procurements.view', ['procurement' => $procurement->procID]) }}"
+                                                target="_blank"
+                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                {{ $procurement->pr_number }}
+                                            </a>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
+                                                {{ $procurement->pr_number }}
+                                            </span>
+                                        @endcan
                                     </td>
 
                                     <td
@@ -531,10 +539,18 @@
 
                         <td
                             class="px-2 py-4 text-center text-sm font-bold sticky left-28 z-20 {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-emerald-700 dark:text-emerald-300 w-40">
-                            <span
-                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
-                                {{ $procurement->pr_number }}
-                            </span>
+                            @can('view_procurement')
+                                <a href="{{ route('procurements.view', ['procurement' => $procurement->procID]) }}"
+                                    target="_blank"
+                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                    {{ $procurement->pr_number }}
+                                </a>
+                            @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-s">
+                                    {{ $procurement->pr_number }}
+                                </span>
+                            @endcan
                         </td>
 
                         <td

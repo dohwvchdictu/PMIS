@@ -317,10 +317,18 @@
                                         <!-- PR Number -->
                                         <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
                                             @if ($isHead)
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                    {{ $item['pr_number'] }}
-                                                </span>
+                                                @can('view_procurement')
+                                                    <a href="{{ route('procurements.view', ['procurement' => $item['procID']]) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                        {{ $item['pr_number'] }}
+                                                    </a>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                        {{ $item['pr_number'] }}
+                                                    </span>
+                                                @endcan
                                             @endif
                                         </td>
 
@@ -699,6 +707,25 @@
                                         Bulk Edit
                                     </span>
                                 </button>
+                                @if ($this->canForwardToPmu)
+                                    <button wire:click="openForwardModal" type="button"
+                                        class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+                                        bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                            </svg>
+                                            Forward to PMU
+                                            @if ($forwardedToPmuSummary['forwarded'] > 0)
+                                                <span class="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded-full">
+                                                    {{ $forwardedToPmuSummary['forwarded'] }} done
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -732,146 +759,226 @@
 
                     <!-- Post Procurement Table -->
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
-                            <table class="w-full text-xs min-w-max">
-                                <thead class="bg-gray-200 dark:bg-neutral-800">
-                                    <tr>
-                                        <th
-                                            class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
-                                            <input type="checkbox" wire:model.live="selectAllPost"
-                                                class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700">
-                                        </th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
-                                            PR Number</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
-                                            Procurement Program / Project</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution Award Number</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Resolution Award Date</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Notice of Award Number</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Notice of Award Date</th>
-                                        <th
-                                            class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Awarded Amount</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS Notice of Award No.</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            PhilGEPS Posting of Award</th>
-                                        <th
-                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
-                                            Supplier</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                        <table class="w-full text-xs min-w-max">
+                            <thead class="bg-gray-200 dark:bg-neutral-800">
+                                <tr>
+                                    <th
+                                        class="px-2 py-3 text-center font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-12">
+                                        <input type="checkbox" wire:model.live="selectAllPost"
+                                            class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700">
+                                    </th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-32">
+                                        PR Number</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-64">
+                                        Procurement Program / Project</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Number</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Resolution Award Date</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Number</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Notice of Award Date</th>
+                                    <th
+                                        class="px-2 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Awarded Amount</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Notice of Award No.</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        PhilGEPS Posting of Award</th>
+                                    <th
+                                        class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                        Supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
+                                @php
+                                    $displayedPRs = [];
+
+                                    // Pre-load all post-procurement, supplier, and forwarded data in batch queries
+                                    $allPostRefIds = collect($items)->pluck('procID')->unique()->values()->toArray();
+                                    $preloadedPostData = \App\Models\PostProcurement::whereIn('ref_id', $allPostRefIds)
+                                        ->get()
+                                        ->keyBy('ref_id');
+                                    $preloadedSupplierIds = $preloadedPostData
+                                        ->whereNotNull('supplier_id')
+                                        ->pluck('supplier_id')
+                                        ->unique()
+                                        ->values()
+                                        ->toArray();
+                                    $preloadedSuppliers = \App\Models\Supplier::whereIn('id', $preloadedSupplierIds)
+                                        ->get()
+                                        ->keyBy('id');
+                                    $preloadedForwardedStages = \App\Models\PrLotPrstage::whereIn(
+                                        'procID',
+                                        $allPostRefIds,
+                                    )
+                                        ->where('pr_stage_id', 7)
+                                        ->orderBy('created_at', 'desc')
+                                        ->get()
+                                        ->groupBy('procID');
+                                @endphp
+
+                                @foreach ($items as $item)
                                     @php
-                                        $displayedPRs = [];
+                                        // Only show each PR once (the current/latest mode)
+                                        $procKey =
+                                            $item['procurement_type'] === 'perLot'
+                                                ? 'lot_' . $item['procID']
+                                                : 'item_' . $item['prItemID'];
+
+                                        if (in_array($procKey, $displayedPRs)) {
+                                            continue;
+                                        }
+                                        $displayedPRs[] = $procKey;
+
+                                        // Check if this item is eligible based on CURRENT mode requirements
+                                        // Only show items that meet the post-procurement criteria
+                                        if (!$this->isItemEligibleForPost($item)) {
+                                            continue;
+                                        }
+
+                                        // Get post-procurement data from pre-loaded collections (no N+1 queries)
+                                        $refId = $item['procID'];
+                                        $postData = $preloadedPostData->get($refId);
+                                        $supplier =
+                                            $postData && $postData->supplier_id
+                                                ? $preloadedSuppliers->get($postData->supplier_id)
+                                                : null;
+
+                                        $isSelected = in_array($refId, $selectedPostItems);
+                                        $forwardedStages = $preloadedForwardedStages->get($refId);
+                                        $isForwarded = $forwardedStages && $forwardedStages->isNotEmpty();
+                                        $forwardedDate = $isForwarded
+                                            ? $forwardedStages->first()?->actual_date_forwarded
+                                            : null;
                                     @endphp
 
-                                    @foreach ($items as $item)
-                                        @php
-                                            // Only show each PR once (the current/latest mode)
-                                            $procKey =
-                                                $item['procurement_type'] === 'perLot'
-                                                    ? 'lot_' . $item['procID']
-                                                    : 'item_' . $item['prItemID'];
-
-                                            if (in_array($procKey, $displayedPRs)) {
-                                                continue;
-                                            }
-                                            $displayedPRs[] = $procKey;
-
-                                            // Check if this item is eligible based on CURRENT mode requirements
-                                            // Only show items that meet the post-procurement criteria
-                                            if (!$this->isItemEligibleForPost($item)) {
-                                                continue;
-                                            }
-
-                                            // Get post-procurement data
-                                            $refId = $item['procID'];
-                                            $postData = \App\Models\PostProcurement::where('ref_id', $refId)->first();
-                                            $supplier =
-                                                $postData && $postData->supplier_id
-                                                    ? \App\Models\Supplier::find($postData->supplier_id)
-                                                    : null;
-
-                                            $isSelected = in_array($refId, $selectedPostItems);
-                                        @endphp
-
-                                        <tr wire:key="post-item-{{ $refId }}"
-                                            class="hover:bg-gray-50 dark:hover:bg-neutral-700 {{ $isSelected ? 'bg-emerald-100 dark:bg-emerald-900/30 border-2 border-emerald-400' : '' }}">
-                                            <td class="px-2 py-2 text-center">
+                                    <tr wire:key="post-item-{{ $refId }}"
+                                        class="hover:bg-gray-50 dark:hover:bg-neutral-700
+                                                {{ $isForwarded ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}
+                                                {{ $isSelected ? 'border-2 border-emerald-400 ' . ($isForwarded ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30') : '' }}">
+                                        <td class="px-2 py-2 text-center">
+                                            @if ($isForwarded)
+                                                <div class="relative flex justify-center items-center"
+                                                    x-data="{ open: false }" @click.outside="open = false">
+                                                    <button type="button" @click="open = !open"
+                                                        @mouseenter="open = true" @mouseleave="open = false"
+                                                        class="p-1 rounded-full bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                        title="Forwarded to PMU">
+                                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                        </svg>
+                                                    </button>
+                                                    <div x-show="open"
+                                                        x-transition:enter="transition ease-out duration-150"
+                                                        x-transition:enter-start="opacity-0 scale-95"
+                                                        x-transition:enter-end="opacity-100 scale-100"
+                                                        x-transition:leave="transition ease-in duration-100"
+                                                        x-transition:leave-start="opacity-100 scale-100"
+                                                        x-transition:leave-end="opacity-0 scale-95"
+                                                        class="absolute left-8 top-1/2 -translate-y-1/2 z-50 w-52 bg-white dark:bg-neutral-800 border border-blue-200 dark:border-blue-700 rounded-lg shadow-lg p-3 text-left pointer-events-none"
+                                                        style="display: none;">
+                                                        <div class="flex items-center gap-1.5 mb-1.5">
+                                                            <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                                                fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                            <span
+                                                                class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                                                to PMU</span>
+                                                        </div>
+                                                        <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                            <span
+                                                                class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
+                                                            {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->format('F d, Y') : 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
                                                 <input type="checkbox" wire:model.live="selectedPostItems"
                                                     value="{{ $refId }}"
                                                     class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            </td>
-                                            <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
-                                                    {{ $item['pr_number'] }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                                <div class="max-w-xs truncate"
-                                                    title="{{ $item['procurement_program_project'] }}">
-                                                    {{ $item['procurement_program_project'] }}
-                                                </div>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData->resolution_award_number ?? '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData && $postData->resolution_award_date ? $this->formatDate($postData->resolution_award_date) : '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData->notice_of_award_number ?? '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData && $postData->notice_of_award ? $this->formatDate($postData->notice_of_award) : '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2 text-right">
-                                                <span class="text-xs text-gray-900 dark:text-white font-medium">
-                                                    {{ $postData && $postData->awarded_amount ? '₱' . number_format($postData->awarded_amount, 2) : '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData->philgeps_notice_of_award_no ?? '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $postData && $postData->philgeps_posting_of_award ? $this->formatDate($postData->philgeps_posting_of_award) : '-' }}
-                                                </span>
-                                            </td>
-                                            <td class="px-2 py-2">
-                                                <span class="text-xs text-gray-700 dark:text-gray-300">
-                                                    {{ $supplier ? $supplier->name : '-' }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-2 py-2 text-xs font-medium text-gray-900 dark:text-white">
+                                            <div class="flex flex-col gap-0.5">
+                                                @can('view_procurement')
+                                                    <a href="{{ route('procurements.view', ['procurement' => $item['procID']]) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors">
+                                                        {{ $item['pr_number'] }}
+                                                    </a>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300 font-mono">
+                                                        {{ $item['pr_number'] }}
+                                                    </span>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                        <td class="px-2 py-2 text-xs text-gray-700 dark:text-gray-300">
+                                            <div class="max-w-xs truncate"
+                                                title="{{ $item['procurement_program_project'] }}">
+                                                {{ $item['procurement_program_project'] }}
+                                            </div>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData?->resolution_award_number ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData && $postData->resolution_award_date ? $this->formatDate($postData->resolution_award_date) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData?->notice_of_award_number ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData && $postData->notice_of_award ? $this->formatDate($postData->notice_of_award) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2 text-right">
+                                            <span class="text-xs text-gray-900 dark:text-white font-medium">
+                                                {{ $postData && $postData->awarded_amount ? '₱' . number_format($postData->awarded_amount, 2) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData?->philgeps_notice_of_award_no ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $postData && $postData->philgeps_posting_of_award ? $this->formatDate($postData->philgeps_posting_of_award) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                {{ $supplier ? $supplier->name : '-' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1498,5 +1605,79 @@
             }
         </script>
     @endonce
+
+    {{-- Forward to PMU Modal --}}
+    <x-forms.modal wire:model="showForwardModal" title="Forward to PMU" size="max-w-lg" model="showForwardModal"
+        closeMethod="closeForwardModal">
+        <div class="px-4 py-3">
+            {{-- Summary Pills --}}
+            @if ($forwardedToPmuSummary['forwarded'] > 0 || $forwardedToPmuSummary['pending'] > 0)
+                <div class="mb-4 flex flex-wrap gap-2">
+                    @if ($forwardedToPmuSummary['forwarded'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            {{ $forwardedToPmuSummary['forwarded'] }} already forwarded
+                        </div>
+                    @endif
+                    @if ($forwardedToPmuSummary['pending'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ $forwardedToPmuSummary['pending'] }} pending
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Already Forwarded Note --}}
+            @if ($forwardedToPmuSummary['forwarded'] > 0)
+                <div
+                    class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>Note:</strong> {{ $forwardedToPmuSummary['forwarded'] }} PR(s) already forwarded —
+                    their date will be updated to the date you enter below.
+                </div>
+            @endif
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="date" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToPmu"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
+                    </button>
+                </div>
+            </div>
+        </div>
+    </x-forms.modal>
 
 </div>
