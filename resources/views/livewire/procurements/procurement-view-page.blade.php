@@ -2873,19 +2873,34 @@
                                             </svg>
                                             PO / Contract Details
                                         </h4>
-                                        @if (!empty($pmuRecord['po_contract_number_link']))
-                                            <a href="{{ $pmuRecord['po_contract_number_link'] }}" target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                Show PO
-                                            </a>
-                                        @endif
+                                        <div class="flex items-center gap-2">
+                                            @if (!empty($pmuRecord['po_contract_number_link']))
+                                                <a href="{{ $pmuRecord['po_contract_number_link'] }}"
+                                                    target="_blank" rel="noopener noreferrer"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Show PO
+                                                </a>
+                                            @endif
+                                            @if (!empty($pmuRecord['ntp_link']))
+                                                <a href="{{ $pmuRecord['ntp_link'] }}" target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Show NTP
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
@@ -3071,19 +3086,34 @@
                                                         </svg>
                                                         PO / Contract Details
                                                     </h4>
-                                                    @if (!empty($itemPmu['po_contract_number_link']))
-                                                        <a href="{{ $itemPmu['po_contract_number_link'] }}"
-                                                            target="_blank" rel="noopener noreferrer"
-                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
-                                                            <svg class="w-3.5 h-3.5" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                            </svg>
-                                                            Show PO
-                                                        </a>
-                                                    @endif
+                                                    <div class="flex items-center gap-2">
+                                                        @if (!empty($itemPmu['po_contract_number_link']))
+                                                            <a href="{{ $itemPmu['po_contract_number_link'] }}"
+                                                                target="_blank" rel="noopener noreferrer"
+                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
+                                                                <svg class="w-3.5 h-3.5" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                Show PO
+                                                            </a>
+                                                        @endif
+                                                        @if (!empty($itemPmu['ntp_link']))
+                                                            <a href="{{ $itemPmu['ntp_link'] }}" target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
+                                                                <svg class="w-3.5 h-3.5" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                Show NTP
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                     <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">

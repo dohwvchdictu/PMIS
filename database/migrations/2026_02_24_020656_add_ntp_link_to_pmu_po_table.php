@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('pmu_po', function (Blueprint $table) {
-            $table->date('po_date')->nullable()->after('ref_id');
+            $table->string('ntp_link', 2048)->nullable()->after('po_contract_number_link');
         });
     }
 
@@ -20,10 +20,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        if (Schema::hasColumn('pmu_po', 'po_date')) {
-            Schema::table('pmu_po', function (Blueprint $table) {
-                $table->dropColumn('po_date');
-            });
-        }
+        Schema::table('pmu_po', function (Blueprint $table) {
+            $table->dropColumn('ntp_link');
+        });
     }
 };

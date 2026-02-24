@@ -34,6 +34,10 @@
                             class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                             Notice of Award Date
                         </th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                            PO Status
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
@@ -122,12 +126,70 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
                             </td>
+                            <!-- PO Status warnings -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @php
+                                    $wc = $warningCounts->get($group->notice_of_award_number);
+                                    $exceeded = (int) ($wc->exceeded_count ?? 0);
+                                    $overdue = (int) ($wc->overdue_count ?? 0);
+                                    $soon = (int) ($wc->soon_count ?? 0);
+                                @endphp
+                                <div class="flex flex-wrap gap-1">
+                                    @if ($exceeded > 0)
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                                            title="{{ $exceeded }} item(s) with PO Date exceeding the deadline">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            {{ $exceeded }} Exceeded
+                                        </span>
+                                    @endif
+                                    @if ($overdue > 0)
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                                            title="{{ $overdue }} item(s) past the PO Date Deadline with no PO Date recorded">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            {{ $overdue }} Overdue
+                                        </span>
+                                    @endif
+                                    @if ($soon > 0)
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                                            title="{{ $soon }} item(s) with deadline within 3 days">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            {{ $soon }} Due Soon
+                                        </span>
+                                    @endif
+                                    @if ($exceeded === 0 && $overdue === 0 && $soon === 0)
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            On Track
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
 
                         <!-- Expanded Row with Procurements -->
                         @if ($expandedNoaNumber === $group->notice_of_award_number && $expandedPaginator)
                             <tr class="bg-gray-50 dark:bg-neutral-900">
-                                <td colspan="5" class="px-6 py-4">
+                                <td colspan="6" class="px-6 py-4">
                                     <div class="space-y-4">
 
                                         <div class="overflow-x-auto overflow-y-auto max-h-[55vh]">
@@ -156,6 +218,9 @@
                                                             Date Receipt of Supplier (NOA)</th>
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PO Date Deadline</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             PO Date</th>
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
@@ -169,6 +234,9 @@
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             NTP Date</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            NTP Link</th>
                                                         <th
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                                             Remarks</th>
@@ -219,6 +287,78 @@
                                                             </td>
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                                @php
+                                                                    $deadlineWarning = null;
+                                                                    if ($procRow->po_date_deadline) {
+                                                                        $deadline = \Carbon\Carbon::parse(
+                                                                            $procRow->po_date_deadline,
+                                                                        );
+                                                                        $today = \Carbon\Carbon::today();
+                                                                        $daysUntil = $today->diffInDays(
+                                                                            $deadline,
+                                                                            false,
+                                                                        );
+                                                                        if (
+                                                                            $procRow->po_date &&
+                                                                            \Carbon\Carbon::parse(
+                                                                                $procRow->po_date,
+                                                                            )->gt($deadline)
+                                                                        ) {
+                                                                            $deadlineWarning = 'exceeded';
+                                                                        } elseif (
+                                                                            $daysUntil < 0 &&
+                                                                            !$procRow->po_date
+                                                                        ) {
+                                                                            $deadlineWarning = 'overdue';
+                                                                        } elseif (
+                                                                            $daysUntil >= 0 &&
+                                                                            $daysUntil <= 3 &&
+                                                                            !$procRow->po_date
+                                                                        ) {
+                                                                            $deadlineWarning = 'soon';
+                                                                        }
+                                                                    }
+                                                                @endphp
+                                                                <div class="flex flex-col gap-1">
+                                                                    <span>{{ $procRow->po_date_deadline ? \Carbon\Carbon::parse($procRow->po_date_deadline)->format('M d, Y') : '—' }}</span>
+                                                                    @if ($deadlineWarning === 'exceeded')
+                                                                        <span
+                                                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                                            <svg class="w-3 h-3" fill="currentColor"
+                                                                                viewBox="0 0 20 20">
+                                                                                <path fill-rule="evenodd"
+                                                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                                    clip-rule="evenodd" />
+                                                                            </svg>
+                                                                            Exceeded
+                                                                        </span>
+                                                                    @elseif ($deadlineWarning === 'overdue')
+                                                                        <span
+                                                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                                            <svg class="w-3 h-3" fill="currentColor"
+                                                                                viewBox="0 0 20 20">
+                                                                                <path fill-rule="evenodd"
+                                                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                                    clip-rule="evenodd" />
+                                                                            </svg>
+                                                                            Overdue
+                                                                        </span>
+                                                                    @elseif ($deadlineWarning === 'soon')
+                                                                        <span
+                                                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                                            <svg class="w-3 h-3" fill="currentColor"
+                                                                                viewBox="0 0 20 20">
+                                                                                <path fill-rule="evenodd"
+                                                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                                                    clip-rule="evenodd" />
+                                                                            </svg>
+                                                                            Due Soon
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                                                 {{ $procRow->po_date ? \Carbon\Carbon::parse($procRow->po_date)->format('M d, Y') : '—' }}
                                                             </td>
                                                             <td class="px-4 py-3 whitespace-nowrap text-sm">
@@ -250,6 +390,18 @@
                                                                 class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                                                 {{ $procRow->pmu_notice_to_proceed_date ? \Carbon\Carbon::parse($procRow->pmu_notice_to_proceed_date)->format('M d, Y') : '—' }}
                                                             </td>
+                                                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                                                @if ($procRow->ntp_link)
+                                                                    <a href="{{ $procRow->ntp_link }}"
+                                                                        target="_blank" rel="noopener noreferrer"
+                                                                        class="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 underline underline-offset-2 transition-colors">
+                                                                        View NTP
+                                                                    </a>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500">—</span>
+                                                                @endif
+                                                            </td>
                                                             <td
                                                                 class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                                 @if ($procRow->pmu_remarks)
@@ -263,7 +415,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="12"
+                                                            <td colspan="14"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>
@@ -342,7 +494,7 @@
                         @endif
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
+                            <td colspan="6" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -466,6 +618,9 @@
                                         Date Receipt of Supplier (NOA)</th>
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        PO Date Deadline</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         PO Date</th>
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
@@ -479,6 +634,9 @@
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                         NTP Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                        NTP Link</th>
                                     <th
                                         class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                         Remarks</th>
@@ -524,6 +682,61 @@
                                         </td>
                                         <td
                                             class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                            @php
+                                                $deadlineWarning = null;
+                                                if ($row->po_date_deadline) {
+                                                    $deadline = \Carbon\Carbon::parse($row->po_date_deadline);
+                                                    $today = \Carbon\Carbon::today();
+                                                    $daysUntil = $today->diffInDays($deadline, false);
+                                                    if (
+                                                        $row->po_date &&
+                                                        \Carbon\Carbon::parse($row->po_date)->gt($deadline)
+                                                    ) {
+                                                        $deadlineWarning = 'exceeded';
+                                                    } elseif ($daysUntil < 0 && !$row->po_date) {
+                                                        $deadlineWarning = 'overdue';
+                                                    } elseif ($daysUntil >= 0 && $daysUntil <= 3 && !$row->po_date) {
+                                                        $deadlineWarning = 'soon';
+                                                    }
+                                                }
+                                            @endphp
+                                            <div class="flex flex-col gap-1">
+                                                <span>{{ $row->po_date_deadline ? \Carbon\Carbon::parse($row->po_date_deadline)->format('M d, Y') : '—' }}</span>
+                                                @if ($deadlineWarning === 'exceeded')
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd"
+                                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                        Exceeded
+                                                    </span>
+                                                @elseif ($deadlineWarning === 'overdue')
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd"
+                                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                        Overdue
+                                                    </span>
+                                                @elseif ($deadlineWarning === 'soon')
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd"
+                                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                        Due Soon
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                             {{ $row->po_date ? \Carbon\Carbon::parse($row->po_date)->format('M d, Y') : '—' }}
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm">
@@ -554,6 +767,17 @@
                                             class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                             {{ $row->notice_to_proceed_date ? \Carbon\Carbon::parse($row->notice_to_proceed_date)->format('M d, Y') : '—' }}
                                         </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                            @if ($row->ntp_link)
+                                                <a href="{{ $row->ntp_link }}" target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 underline underline-offset-2 transition-colors">
+                                                    View NTP
+                                                </a>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                             @if ($row->remarks)
                                                 <span title="{{ $row->remarks }}"
@@ -565,7 +789,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="12"
+                                        <td colspan="14"
                                             class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No linked PRs or items found.
                                         </td>

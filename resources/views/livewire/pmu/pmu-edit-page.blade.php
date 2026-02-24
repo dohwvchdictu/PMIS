@@ -132,6 +132,15 @@
                             Supplier</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date Receipt of Supplier (NOA)</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            PO Date Deadline</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            PO Date</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             PO / Contract No.</th>
                         <th
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
@@ -145,6 +154,9 @@
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             PO / Contract No. Link</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            NTP Link</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Remarks</th>
@@ -188,12 +200,70 @@
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $row->supplier_name ?? '—' }}
                             </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $row->date_receipt_of_supplier_noa ? \Carbon\Carbon::parse($row->date_receipt_of_supplier_noa)->format('M d, Y') : '—' }}
+                            </td>
                             {{-- Read-only PMU fields --}}
-                            @php $po = $pmuPoByProcId->get($row->rowKey); @endphp
+                            @php
+                                $po = $pmuPoByProcId->get($row->rowKey);
+                                $deadlineWarning = null;
+                                if ($po?->po_date_deadline) {
+                                    $deadline = \Carbon\Carbon::parse($po->po_date_deadline);
+                                    $today = \Carbon\Carbon::today();
+                                    $daysUntil = $today->diffInDays($deadline, false);
+                                    if ($po->po_date && \Carbon\Carbon::parse($po->po_date)->gt($deadline)) {
+                                        $deadlineWarning = 'exceeded';
+                                    } elseif ($daysUntil < 0 && !$po->po_date) {
+                                        $deadlineWarning = 'overdue';
+                                    } elseif ($daysUntil >= 0 && $daysUntil <= 3 && !$po->po_date) {
+                                        $deadlineWarning = 'soon';
+                                    }
+                                }
+                            @endphp
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                <div class="flex flex-col gap-1">
+                                    <span>{{ $po?->po_date_deadline ? \Carbon\Carbon::parse($po->po_date_deadline)->format('M d, Y') : '—' }}</span>
+                                    @if ($deadlineWarning === 'exceeded')
+                                        <span
+                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Exceeded
+                                        </span>
+                                    @elseif ($deadlineWarning === 'overdue')
+                                        <span
+                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Overdue
+                                        </span>
+                                    @elseif ($deadlineWarning === 'soon')
+                                        <span
+                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Due Soon
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $po?->po_date ? \Carbon\Carbon::parse($po->po_date)->format('M d, Y') : '—' }}
+                            </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->po_contract_number ?? '—' }}
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
+                            <td
+                                class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->contract_amount ? '₱ ' . number_format($po->contract_amount, 2) : '—' }}
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
@@ -219,6 +289,22 @@
                                     <span class="text-gray-400 dark:text-gray-500">—</span>
                                 @endif
                             </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                @if ($po?->ntp_link)
+                                    <a href="{{ $po->ntp_link }}" target="_blank" rel="noopener noreferrer"
+                                        class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+                                        title="{{ $po->ntp_link }}">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                        </svg>
+                                        Link
+                                    </a>
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500">—</span>
+                                @endif
+                            </td>
                             <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
                                 <div class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[10rem]"
                                     title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}
@@ -227,7 +313,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="15" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No linked PRs or items found.
                             </td>
                         </tr>
@@ -297,11 +383,51 @@
     </div>
 
     {{-- Bulk Edit Modal --}}
-    <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" title="Bulk Edit — PO / Contract Details" size="max-w-3xl">
+    <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" title="Bulk Edit — PO / Contract Details" size="max-w-4xl">
 
         <div class="px-4 py-3">
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {{-- PO Date Deadline Warning Banner --}}
+            @if ($po_date_deadline_display)
+                <div
+                    class="mb-4 flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-600 rounded-lg">
+                    <svg class="w-5 h-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                    <div>
+                        <p class="text-xs font-semibold text-amber-800 dark:text-amber-200">PO Date Deadline:
+                            <span
+                                class="font-bold">{{ \Carbon\Carbon::parse($po_date_deadline_display)->format('M d, Y') }}</span>
+                        </p>
+                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                            The PO Date must not exceed this date — it should be on or before the PO Date Deadline.
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+
+                {{-- PO Date --}}
+                <div>
+                    <label for="modal_po_date"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        PO Date
+                        @if ($po_date_deadline_display)
+                            <span class="text-amber-600 dark:text-amber-400 font-normal">(≤
+                                {{ \Carbon\Carbon::parse($po_date_deadline_display)->format('M d, Y') }})</span>
+                        @endif
+                    </label>
+                    <input type="date" id="modal_po_date" wire:model="po_date"
+                        @if ($po_date_deadline_display) max="{{ $po_date_deadline_display }}" @endif
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('po_date') border-red-500 @else border-gray-300 @enderror">
+                    @error('po_date')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
 
                 {{-- PO / Contract Number --}}
                 <div>
@@ -365,7 +491,7 @@
                 <div>
                     <label for="modal_contract_signing_date"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Contract Signing Date <span class="text-red-500">*</span>
+                        Contract Signing Date
                     </label>
                     <input type="date" id="modal_contract_signing_date" wire:model="contract_signing_date"
                         class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
@@ -390,7 +516,7 @@
                 </div>
 
                 {{-- PO / Contract Number Link --}}
-                <div class="sm:col-span-4">
+                <div class="sm:col-span-6">
                     <label for="modal_po_contract_number_link"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         PO / Contract Number Link
@@ -413,8 +539,31 @@
                     @enderror
                 </div>
 
+                {{-- NTP Link --}}
+                <div class="sm:col-span-6">
+                    <label for="modal_ntp_link"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        NTP Link
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                        </span>
+                        <input type="url" id="modal_ntp_link" wire:model="ntp_link" placeholder="https://..."
+                            class="w-full pl-8 pr-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                            @error('ntp_link') border-red-500 @else border-gray-300 @enderror">
+                    </div>
+                    @error('ntp_link')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 {{-- Remarks --}}
-                <div class="sm:col-span-4">
+                <div class="sm:col-span-6">
                     <label for="modal_remarks"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Remarks

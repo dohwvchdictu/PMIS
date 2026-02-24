@@ -1534,7 +1534,7 @@ class ModeOfProcurementPerLotPage extends Component
                             if ($poDate) {
                                 PmuPo::updateOrCreate(
                                     ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
-                                    ['po_date' => $poDate]
+                                    ['po_date_deadline' => $poDate]
                                 );
                             }
                         }
@@ -1566,7 +1566,7 @@ class ModeOfProcurementPerLotPage extends Component
                             if ($poDate) {
                                 PmuPo::updateOrCreate(
                                     ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
-                                    ['po_date' => $poDate]
+                                    ['po_date_deadline' => $poDate]
                                 );
                             }
                         }
@@ -1599,7 +1599,7 @@ class ModeOfProcurementPerLotPage extends Component
                         if ($poDate) {
                             PmuPo::updateOrCreate(
                                 ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
-                                ['po_date' => $poDate]
+                                ['po_date_deadline' => $poDate]
                             );
                         }
                     }

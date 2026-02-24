@@ -183,7 +183,7 @@ class PmuIndexPage extends Component
                 'date_forwarded',
                 'notice_of_award'
             )
-            ->orderBy('date_forwarded', 'desc')
+            ->orderBy('notice_of_award_number', 'desc')
             ->paginate($this->perPage);
 
         // If an NOA is expanded, load a unified paginated list (per-lot + per-item)
@@ -222,9 +222,11 @@ class PmuIndexPage extends Component
                     'post_procurements.awarded_amount',
                     'post_procurements.date_receipt_of_supplier_noa',
                     'suppliers.name as supplier_name',
+                    'pmu_po.po_date_deadline',
                     'pmu_po.po_date',
                     'pmu_po.po_contract_number',
                     'pmu_po.po_contract_number_link',
+                    'pmu_po.ntp_link',
                     'pmu_po.contract_amount as pmu_contract_amount',
                     'pmu_po.contract_signing_date as pmu_contract_signing_date',
                     'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -262,9 +264,11 @@ class PmuIndexPage extends Component
                     'post_procurements.awarded_amount',
                     'post_procurements.date_receipt_of_supplier_noa',
                     'suppliers.name as supplier_name',
+                    'pmu_po.po_date_deadline',
                     'pmu_po.po_date',
                     'pmu_po.po_contract_number',
                     'pmu_po.po_contract_number_link',
+                    'pmu_po.ntp_link',
                     'pmu_po.contract_amount as pmu_contract_amount',
                     'pmu_po.contract_signing_date as pmu_contract_signing_date',
                     'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -289,10 +293,29 @@ class PmuIndexPage extends Component
             );
         }
 
+        // Build warning counts (exceeded / overdue / due-soon) per NOA number
+        $today = \Carbon\Carbon::today()->toDateString();
+        $soonDate = \Carbon\Carbon::today()->addDays(3)->toDateString();
+
+        $warningCounts = \DB::table('pmus')
+            ->join('pmu_po', 'pmu_po.pmu_id', '=', 'pmus.id')
+            ->whereNotNull('pmu_po.po_date_deadline')
+            ->whereNull('pmus.deleted_at')
+            ->select(
+                'pmus.notice_of_award_number',
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NOT NULL AND pmu_po.po_date > pmu_po.po_date_deadline THEN 1 ELSE 0 END) as exceeded_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline < '{$today}' THEN 1 ELSE 0 END) as overdue_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline >= '{$today}' AND pmu_po.po_date_deadline <= '{$soonDate}' THEN 1 ELSE 0 END) as soon_count")
+            )
+            ->groupBy('pmus.notice_of_award_number')
+            ->get()
+            ->keyBy('notice_of_award_number');
+
         return view('livewire.pmu.pmu-index-page', [
             'groupedItems' => $groupedItems,
             'expandedPaginator' => $expandedPaginator,
             'modalPaginator' => $this->buildModalPaginator(),
+            'warningCounts' => $warningCounts,
         ])->layout('components.layouts.app');
     }
 
@@ -312,9 +335,11 @@ class PmuIndexPage extends Component
             'awarded_amount' => $p->awarded_amount ?? null,
             'date_receipt_of_supplier_noa' => $p->date_receipt_of_supplier_noa ?? null,
             'supplier_name' => $p->supplier_name ?? null,
+            'po_date_deadline' => $p->po_date_deadline ?? null,
             'po_date' => $p->po_date ?? null,
             'po_contract_number' => $p->po_contract_number ?? null,
             'po_contract_number_link' => $p->po_contract_number_link ?? null,
+            'ntp_link' => $p->ntp_link ?? null,
             'contract_amount' => $p->pmu_contract_amount ?? null,
             'contract_signing_date' => $p->pmu_contract_signing_date ?? null,
             'notice_to_proceed_date' => $p->pmu_notice_to_proceed_date ?? null,
@@ -331,9 +356,11 @@ class PmuIndexPage extends Component
             'awarded_amount' => $r->awarded_amount ?? null,
             'date_receipt_of_supplier_noa' => $r->date_receipt_of_supplier_noa ?? null,
             'supplier_name' => $r->supplier_name ?? null,
+            'po_date_deadline' => $r->po_date_deadline ?? null,
             'po_date' => $r->po_date ?? null,
             'po_contract_number' => $r->po_contract_number ?? null,
             'po_contract_number_link' => $r->po_contract_number_link ?? null,
+            'ntp_link' => $r->ntp_link ?? null,
             'contract_amount' => $r->pmu_contract_amount ?? null,
             'contract_signing_date' => $r->pmu_contract_signing_date ?? null,
             'notice_to_proceed_date' => $r->pmu_notice_to_proceed_date ?? null,
@@ -386,9 +413,11 @@ class PmuIndexPage extends Component
                 'post_procurements.awarded_amount',
                 'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
                 'pmu_po.po_date',
                 'pmu_po.po_contract_number',
                 'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -426,9 +455,11 @@ class PmuIndexPage extends Component
                 'post_procurements.awarded_amount',
                 'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
                 'pmu_po.po_date',
                 'pmu_po.po_contract_number',
                 'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',

@@ -2889,7 +2889,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         if ($poDate) {
                             PmuPo::updateOrCreate(
                                 ['pmu_id' => $pmu->id, 'ref_id' => $refId],
-                                ['po_date' => $poDate]
+                                ['po_date_deadline' => $poDate]
                             );
                         }
                     }
