@@ -140,6 +140,10 @@
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
                         IB No
                     </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        DTrack No
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-neutral-800">
@@ -299,10 +303,22 @@
                                 <span class="text-gray-400 italic text-xs">N/A</span>
                             @endif
                         </td>
+
+                        <!-- DTrack No -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                            @if ($procurement->dtrack_no)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 rounded-md font-mono text-xs text-sky-700 dark:text-sky-300">
+                                    {{ $procurement->dtrack_no }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="15" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="16" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">

@@ -116,6 +116,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             'Procurement Stage',
             'Current Mode',
             'IB No',
+            'DTrack No',
         ];
     }
 
@@ -169,6 +170,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
             $currentMode,
             $ibNo,
+            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -210,6 +212,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
             $currentMode,
             'N/A',
+            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -218,7 +221,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:O1')->applyFromArray([
+        $sheet->getStyle('A1:P1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -242,7 +245,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         ]);
 
         // Center align all data cells (A to O)
-        $sheet->getStyle('A2:O' . $highestRow)->applyFromArray([
+        $sheet->getStyle('A2:P' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -332,6 +335,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             'M' => 30, // Procurement Stage
             'N' => 25, // Current Mode
             'O' => 20, // IB No
+            'P' => 20, // DTrack No
         ];
     }
 }
