@@ -18,8 +18,15 @@ class PmuIndexPage extends Component
     protected $paginationTheme = 'tailwind';
 
     // Pagination
-    public $perPage = 10;
+    public $pendingPerPage = 10;
+    public $receivedPerPage = 10;
     public $itemsPerPage = 10;
+
+    // Pending table pagination
+    public $pendingPage = 1;
+
+    // Received table pagination
+    public $receivedPage = 1;
 
     // Expanded row pagination
     public $expandedPage = 1;
@@ -35,6 +42,18 @@ class PmuIndexPage extends Component
     // Collapsible functionality
     public $expandedNoaNumber = null;
 
+    // Receive Modal
+    public bool $showReceiveModal = false;
+    public ?string $receivingNoaNumber = null;
+    public ?string $receiveDate = null;
+    public ?string $receiveRemarks = null;
+
+    // Bulk Receive
+    public array $selectedNoaNumbers = [];
+    public bool $showBulkReceiveModal = false;
+    public ?string $bulkReceiveDate = null;
+    public ?string $bulkReceiveRemarks = null;
+
     // View Modal
     public bool $showViewModal = false;
     public ?string $viewNoaNumber = null;
@@ -47,7 +66,8 @@ class PmuIndexPage extends Component
 
     protected $queryString = [
         'search' => ['except' => ''],
-        'perPage' => ['except' => 10],
+        'pendingPerPage' => ['except' => 10],
+        'receivedPerPage' => ['except' => 10],
     ];
 
     public function mount()
@@ -104,6 +124,27 @@ class PmuIndexPage extends Component
         $this->resetPage();
     }
 
+    public function setPendingPage(int $page): void
+    {
+        $this->pendingPage = $page;
+    }
+
+    public function updatingPendingPerPage(): void
+    {
+        $this->pendingPage = 1;
+    }
+
+    public function setReceivedPage(int $page): void
+    {
+        $this->receivedPage = $page;
+    }
+
+    public function updatingReceivedPerPage(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    // Keep for backward compat – resets both tables
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -160,31 +201,46 @@ class PmuIndexPage extends Component
             ->select(
                 'post_procurements.notice_of_award_number',
                 'pmus.date_forwarded',
-                'post_procurements.notice_of_award'
+                'post_procurements.notice_of_award',
+                'pmus.date_received',
+                'pmus.received_remarks'
             )
             ->unionAll(
                 $itemQuery->select(
                     'post_procurements.notice_of_award_number',
                     'pmus.date_forwarded',
-                    'post_procurements.notice_of_award'
+                    'post_procurements.notice_of_award',
+                    'pmus.date_received',
+                    'pmus.received_remarks'
                 )
             );
 
-        $groupedItems = \DB::table(\DB::raw('(' . $unionQuery->toSql() . ') as combined'))
+        $outerBase = \DB::table(\DB::raw('(' . $unionQuery->toSql() . ') as combined'))
             ->mergeBindings($unionQuery)
             ->select(
                 'notice_of_award_number',
                 'date_forwarded',
                 'notice_of_award',
+                'date_received',
+                'received_remarks',
                 \DB::raw('COUNT(*) as procurement_count')
             )
             ->groupBy(
                 'notice_of_award_number',
                 'date_forwarded',
-                'notice_of_award'
+                'notice_of_award',
+                'date_received',
+                'received_remarks'
             )
-            ->orderBy('notice_of_award_number', 'desc')
-            ->paginate($this->perPage);
+            ->orderBy('notice_of_award_number', 'desc');
+
+        $pendingItems = (clone $outerBase)
+            ->whereNull('date_received')
+            ->paginate($this->pendingPerPage, ['*'], 'pending_page', $this->pendingPage);
+
+        $receivedItems = (clone $outerBase)
+            ->whereNotNull('date_received')
+            ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
         // If an NOA is expanded, load a unified paginated list (per-lot + per-item)
         $expandedPaginator = null;
@@ -312,7 +368,8 @@ class PmuIndexPage extends Component
             ->keyBy('notice_of_award_number');
 
         return view('livewire.pmu.pmu-index-page', [
-            'groupedItems' => $groupedItems,
+            'pendingItems' => $pendingItems,
+            'receivedItems' => $receivedItems,
             'expandedPaginator' => $expandedPaginator,
             'modalPaginator' => $this->buildModalPaginator(),
             'warningCounts' => $warningCounts,
@@ -492,5 +549,125 @@ class PmuIndexPage extends Component
         $this->viewTotalAbc = 0;
         $this->viewSupplier = null;
         $this->modalPage = 1;
+    }
+
+    public function openReceiveModal(string $noaNumber): void
+    {
+        $pmu = Pmu::where('notice_of_award_number', $noaNumber)->whereNull('deleted_at')->first();
+
+        $this->receivingNoaNumber = $noaNumber;
+        $this->receiveDate = $pmu?->date_received
+            ? $pmu->date_received->format('Y-m-d')
+            : now()->format('Y-m-d');
+        $this->receiveRemarks = $pmu?->received_remarks ?? '';
+        $this->showReceiveModal = true;
+    }
+
+    public function confirmReceive(): void
+    {
+        $this->validate([
+            'receiveDate' => 'required|date',
+            'receiveRemarks' => 'nullable|string|max:1000',
+        ], [
+            'receiveDate.required' => 'Received date is required.',
+            'receiveDate.date' => 'Please enter a valid date.',
+        ]);
+
+        $pmu = Pmu::where('notice_of_award_number', $this->receivingNoaNumber)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$pmu) {
+            LivewireAlert::title('Error')->error()->text('PMU record not found.')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $pmu->update([
+            'date_received' => $this->receiveDate,
+            'received_remarks' => $this->receiveRemarks ?: null,
+        ]);
+
+        $this->closeReceiveModal();
+
+        LivewireAlert::title('Marked as Received!')
+            ->success()
+            ->text('NOA ' . $this->receivingNoaNumber . ' has been marked as received.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeReceiveModal(): void
+    {
+        $this->showReceiveModal = false;
+        $this->receivingNoaNumber = null;
+        $this->receiveDate = null;
+        $this->receiveRemarks = null;
+        $this->resetValidation(['receiveDate', 'receiveRemarks']);
+    }
+
+    // ─── Bulk Receive ────────────────────────────────────────────────────────
+
+    public function toggleNoaSelection(string $noaNumber): void
+    {
+        if (in_array($noaNumber, $this->selectedNoaNumbers)) {
+            $this->selectedNoaNumbers = array_values(
+                array_filter($this->selectedNoaNumbers, fn($n) => $n !== $noaNumber)
+            );
+        } else {
+            $this->selectedNoaNumbers[] = $noaNumber;
+        }
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedNoaNumbers = [];
+    }
+
+    public function openBulkReceiveModal(): void
+    {
+        if (empty($this->selectedNoaNumbers)) {
+            return;
+        }
+        $this->bulkReceiveDate = now()->format('Y-m-d');
+        $this->bulkReceiveRemarks = null;
+        $this->showBulkReceiveModal = true;
+    }
+
+    public function confirmBulkReceive(): void
+    {
+        $this->validate([
+            'bulkReceiveDate' => 'required|date',
+            'bulkReceiveRemarks' => 'nullable|string|max:1000',
+        ], [
+            'bulkReceiveDate.required' => 'Received date is required.',
+            'bulkReceiveDate.date' => 'Please enter a valid date.',
+        ]);
+
+        $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
+            ->whereNull('deleted_at')
+            ->update([
+                'date_received' => $this->bulkReceiveDate,
+                'received_remarks' => $this->bulkReceiveRemarks ?: null,
+            ]);
+
+        $count = count($this->selectedNoaNumbers);
+        $this->closeBulkReceiveModal();
+        $this->selectedNoaNumbers = [];
+
+        LivewireAlert::title('Bulk Receive Successful!')
+            ->success()
+            ->text("{$count} NOA(s) have been marked as received.")
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeBulkReceiveModal(): void
+    {
+        $this->showBulkReceiveModal = false;
+        $this->bulkReceiveDate = null;
+        $this->bulkReceiveRemarks = null;
+        $this->resetValidation(['bulkReceiveDate', 'bulkReceiveRemarks']);
     }
 }

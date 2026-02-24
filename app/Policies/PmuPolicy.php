@@ -105,4 +105,12 @@ class PmuPolicy
     {
         return $user->can('{{ Reorder }}');
     }
+
+    /**
+     * Determine whether the user can mark a PMU record as received.
+     */
+    public function receive(User $user): bool
+    {
+        return $user->can('receive_pmu');
+    }
 }
