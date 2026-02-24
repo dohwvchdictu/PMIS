@@ -89,8 +89,7 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Bulk Edit
+                                        </svg>Edit
                                     </span>
                                 </button>
                             </div>
@@ -687,7 +686,7 @@
                                         {{ count($selectedPostItems) }} procurement(s) selected for bulk edit
                                     </span>
                                     <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                                        Click Bulk Edit to update post-procurement data for all selected PRs
+                                        Click Edit to update post-procurement data for all selected PRs
                                     </p>
                                 </div>
                             </div>
@@ -704,7 +703,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                        Bulk Edit
+                                        Edit
                                     </span>
                                 </button>
                                 @if ($this->canForwardToPmu)
