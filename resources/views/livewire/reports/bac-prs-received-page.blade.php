@@ -76,49 +76,69 @@
 
     <!-- Enhanced Table Section -->
     <div class="overflow-auto flex-1">
-        <table class="table-fixed w-full min-w-[1200px] divide-y divide-gray-200 dark:divide-neutral-700">
+        <table class="table-auto w-full min-w-[2400px] divide-y divide-gray-200 dark:divide-neutral-700">
             <thead
                 class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-30">
                 <tr>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
                         PR Number
                     </th>
                     <th
-                        class="px-2 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-80">
+                        class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-72">
                         Procurement Program / Project
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
                         Date Received
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Unit / Cluster
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-40">
                         Category
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Immediate Date Needed
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Fund Source
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
                         ABC Amount
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        Division
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        Venue
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        Approved PPMP
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-20">
+                        EPA
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Procurement Stage
                     </th>
                     <th
-                        class="px-2 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Current Mode
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        IB No
                     </th>
                 </tr>
             </thead>
@@ -129,7 +149,7 @@
                         <!-- PR Number -->
                         <td class="px-3 py-4 text-center text-sm font-bold text-emerald-700 dark:text-emerald-300">
                             <span
-                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs">
+                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs whitespace-nowrap">
                                 {{ $procurement->pr_number }}
                             </span>
                         </td>
@@ -202,6 +222,48 @@
                             </div>
                         </td>
 
+                        <!-- Division -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            <div class="truncate" title="{{ $procurement->division?->divisions }}">
+                                {{ $procurement->division?->divisions ?? 'N/A' }}
+                            </div>
+                        </td>
+
+                        <!-- Venue -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            <div class="truncate"
+                                title="{{ $procurement->venueSpecific?->name ?? $procurement->category_venue }}">
+                                {{ $procurement->venueSpecific?->name ?? ($procurement->category_venue ?? 'N/A') }}
+                            </div>
+                        </td>
+
+                        <!-- Approved PPMP -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($procurement->approved_ppmp !== null && $procurement->approved_ppmp !== '')
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold {{ $procurement->approved_ppmp == '1' || strtolower($procurement->approved_ppmp) === 'yes' ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-neutral-700 dark:text-gray-300 dark:border-neutral-600' }}">
+                                    {{ $procurement->approved_ppmp == '1' || strtolower((string) $procurement->approved_ppmp) === 'yes' ? 'Yes' : $procurement->approved_ppmp }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
+
+                        <!-- EPA (Early Procurement Activity) -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($procurement->early_procurement)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
+                                    Yes
+                                </span>
+                            @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300 dark:bg-neutral-700 dark:text-gray-300 dark:border-neutral-600">
+                                    No
+                                </span>
+                            @endif
+                        </td>
+
                         <!-- Procurement Stage -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                             @if ($procurement->currentPrStage)
@@ -225,10 +287,22 @@
                                 <span class="text-gray-400 italic text-xs">No Mode</span>
                             @endif
                         </td>
+
+                        <!-- IB No -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                            @if ($procurement->currentIbNo)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md font-mono text-xs text-amber-700 dark:text-amber-300">
+                                    {{ $procurement->currentIbNo }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="15" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
