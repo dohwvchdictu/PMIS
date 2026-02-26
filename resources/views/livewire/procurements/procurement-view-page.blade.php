@@ -3350,126 +3350,178 @@
     @if ($modalType === 'stageHistory')
         @php
             $modalTitle = 'Stage History';
+            $itemLabel = null;
             if ($selectedPrItemID && $form['procurement_type'] === 'perItem') {
                 $selectedItem = collect($form['items'] ?? [])->firstWhere('prItemID', $selectedPrItemID);
                 if ($selectedItem) {
-                    $modalTitle = 'Stage History - Item #' . ($selectedItem['item_no'] ?? 'N/A');
+                    $modalTitle = 'Stage History';
+                    $itemLabel = 'Item #' . ($selectedItem['item_no'] ?? 'N/A');
+                    if (!empty($selectedItem['description'])) {
+                        $itemLabel .= ' — ' . \Illuminate\Support\Str::limit($selectedItem['description'], 55);
+                    }
                 }
             }
+            $totalStages = count($stageHistory);
         @endphp
-        <x-forms.modal :title="$modalTitle" size="max-w-md" closeMethod="closeStageHistoryModal">
+        <x-forms.modal :title="$modalTitle" size="max-w-lg" closeMethod="closeStageHistoryModal">
             @if ($modalType === 'stageHistory')
-                <div class="px-6 py-4">
-                    @if (count($stageHistory) > 0)
-                        {{-- Scrollable Timeline Container --}}
-                        <div class="relative max-h-[32rem] overflow-y-auto pr-2 pl-4">
-                            {{-- Vertical Line (Centered) --}}
-                            <div
-                                class="absolute left-[32px] top-4 bottom-4 w-px bg-gradient-to-b from-emerald-500 via-emerald-400 to-gray-300 dark:from-emerald-600 dark:via-emerald-500 dark:to-gray-600">
-                            </div>
+                @if ($totalStages > 0)
+                    {{-- ── Timeline ────────────────────────────────────────────── --}}
+                    <div class="px-6 py-4 max-h-[26rem] overflow-y-auto">
+                        @foreach ($stageHistory as $index => $history)
+                            @php
+                                $isFirst = $index === 0;
+                                $isLast = $index === $totalStages - 1;
 
-                            <div class="space-y-4 pt-2">
-                                @foreach ($stageHistory as $index => $history)
-                                    <div class="relative flex items-start gap-4 group">
-                                        {{-- Timeline Node --}}
-                                        <div class="flex-shrink-0 relative z-10">
-                                            @if ($index === 0)
-                                                {{-- Current Stage - Green --}}
-                                                <div
-                                                    class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-emerald-200 dark:ring-emerald-800">
-                                                    <svg class="w-4 h-4 text-white" fill="currentColor"
-                                                        viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            @else
-                                                {{-- Past Stages - Grey --}}
-                                                <div
-                                                    class="w-8 h-8 bg-gray-400 dark:bg-gray-600 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white dark:ring-neutral-800">
-                                                    <svg class="w-4 h-4 text-white" fill="currentColor"
-                                                        viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            @endif
+                                // User initials (up to 2 chars)
+                                $initials = collect(explode(' ', trim($history['user'])))
+                                    ->filter()
+                                    ->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+                                    ->take(2)
+                                    ->implode('');
+                                if (!$initials) {
+                                    $initials = '?';
+                                }
+
+                                // Avatar colour palette (deterministic by first char)
+                                $avatarPalettes = [
+                                    'A' => 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+                                    'B' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                                    'C' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+                                    'D' => 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+                                    'E' =>
+                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+                                    'F' => 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300',
+                                    'G' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+                                    'H' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                                    'I' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+                                    'J' => 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+                                    'K' => 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
+                                    'L' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+                                    'M' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+                                    'N' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+                                ];
+                                $firstChar = mb_strtoupper(mb_substr($history['user'], 0, 1));
+                                $avatarClass =
+                                    $avatarPalettes[$firstChar] ??
+                                    'bg-gray-100 text-gray-600 dark:bg-neutral-700 dark:text-gray-300';
+                            @endphp
+
+                            <div class="flex gap-4">
+                                {{-- ── node + connector ── --}}
+                                <div class="flex flex-col items-center">
+                                    @if ($isFirst)
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-200 dark:shadow-emerald-950 ring-4 ring-emerald-100 dark:ring-emerald-900/50">
+                                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                            </svg>
                                         </div>
+                                    @else
+                                        <div
+                                            class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200 dark:border-neutral-600 bg-white dark:bg-neutral-800">
+                                            <span
+                                                class="text-[10px] font-bold text-gray-400 dark:text-gray-500">{{ $totalStages - $index }}</span>
+                                        </div>
+                                    @endif
+                                    @if (!$isLast)
+                                        <div class="w-px flex-1 mt-1.5 mb-1 bg-gray-200 dark:bg-neutral-700"></div>
+                                    @endif
+                                </div>
 
-                                        {{-- Content Card --}}
-                                        <div class="flex-1 pb-4">
+                                {{-- ── card ── --}}
+                                <div class="flex-1 {{ $isLast ? 'pb-1' : 'pb-4' }}">
+                                    <div
+                                        class="group rounded-xl border transition-shadow hover:shadow-md
+                                        {{ $isFirst
+                                            ? 'bg-white dark:bg-neutral-800 border-emerald-200 dark:border-emerald-800 shadow-sm'
+                                            : 'bg-gray-50 dark:bg-neutral-800/50 border-gray-200 dark:border-neutral-700' }}">
+
+                                        @if ($isFirst)
                                             <div
-                                                class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm border {{ $index === 0 ? 'border-emerald-300 dark:border-emerald-700' : 'border-gray-200 dark:border-neutral-600' }} p-3 transition-all hover:shadow-md">
-                                                {{-- Current Badge (Above Stage) --}}
-                                                @if ($index === 0)
+                                                class="h-1 rounded-t-xl bg-gradient-to-r from-emerald-500 to-teal-400">
+                                            </div>
+                                        @endif
+
+                                        <div class="{{ $isFirst ? 'px-5 py-4' : 'px-4 py-3' }}">
+                                            {{-- Stage name row --}}
+                                            <div class="flex items-start justify-between gap-2 mb-3">
+                                                <p
+                                                    class="{{ $isFirst ? 'text-base' : 'text-sm' }} font-semibold leading-snug
+                                                    {{ $isFirst ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300' }}">
+                                                    {{ $history['stage'] }}
+                                                </p>
+                                                @if ($isFirst)
                                                     <span
-                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-600 text-white mb-2">
-                                                        <svg class="w-2.5 h-2.5" fill="currentColor"
-                                                            viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd"
-                                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                                clip-rule="evenodd" />
-                                                        </svg>
-                                                        Current
+                                                        class="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white tracking-wide">
+                                                        <span
+                                                            class="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
+                                                        CURRENT
                                                     </span>
                                                 @endif
+                                            </div>
 
-                                                {{-- Stage Name --}}
-                                                <h4
-                                                    class="text-sm font-semibold {{ $index === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300' }} tracking-tight break-words">
-                                                    {{ $history['stage'] }}
-                                                </h4>
-
-                                                {{-- User Info --}}
-                                                <div
-                                                    class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                    </svg>
-                                                    <span class="tracking-tight">{{ $history['user'] }}</span>
-                                                </div>
-
-                                                {{-- Date/Time --}}
-                                                <div
-                                                    class="flex items-center gap-1.5 text-xs {{ $index === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }} mt-2">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <span
-                                                        class="font-medium tracking-tight">{{ $history['date'] }}</span>
-                                                </div>
+                                            {{-- User + date row --}}
+                                            <div class="flex items-center gap-2">
+                                                {{-- Avatar: real photo or initials fallback --}}
+                                                @if (!empty($history['photo_url']))
+                                                    <img src="{{ $history['photo_url'] }}"
+                                                        alt="{{ $history['user'] }}"
+                                                        class="{{ $isFirst ? 'w-8 h-8' : 'w-6 h-6' }} rounded-full flex-shrink-0 object-cover ring-1 ring-gray-200 dark:ring-neutral-600"
+                                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                    <div class="{{ $isFirst ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' }} rounded-full flex-shrink-0 items-center justify-center font-bold {{ $avatarClass }}"
+                                                        style="display:none;">
+                                                        {{ $initials }}
+                                                    </div>
+                                                @else
+                                                    <div
+                                                        class="{{ $isFirst ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' }} rounded-full flex-shrink-0 flex items-center justify-center font-bold {{ $avatarClass }}">
+                                                        {{ $initials }}
+                                                    </div>
+                                                @endif
+                                                <span
+                                                    class="{{ $isFirst ? 'text-sm' : 'text-xs' }} font-medium {{ $isFirst ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400' }} truncate">
+                                                    {{ $history['user'] }}
+                                                </span>
+                                                <span
+                                                    class="text-gray-300 dark:text-neutral-600 text-xs flex-shrink-0">·</span>
+                                                <span
+                                                    class="{{ $isFirst ? 'text-sm' : 'text-xs' }} text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
+                                                    {{ $history['date'] }}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                @endforeach
+                                </div>
                             </div>
+                        @endforeach
+                    </div>
+
+                    {{-- ── Footer ──────────────────────────────────────────────── --}}
+                    <div class="px-6 pb-4 pt-1 border-t border-gray-100 dark:border-neutral-700">
+                        <p class="text-[11px] text-center text-gray-400 dark:text-gray-600">
+                            Most recent first &middot; {{ $totalStages }}
+                            {{ $totalStages === 1 ? 'transition' : 'transitions' }} recorded
+                        </p>
+                    </div>
+                @else
+                    {{-- Empty state --}}
+                    <div class="px-6 py-12 text-center">
+                        <div
+                            class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-neutral-700 mb-4">
+                            <svg class="w-7 h-7 text-gray-300 dark:text-neutral-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
-                    @else
-                        <div class="text-center py-8">
-                            <div
-                                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-neutral-700 mb-3">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1">No Stage History
-                            </h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                No stage updates recorded yet.
-                            </p>
-                        </div>
-                    @endif
-                </div>
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-1">No Stage History</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">No stage transitions have been recorded
+                            yet.</p>
+                    </div>
+                @endif
             @endif
         </x-forms.modal>
     @endif
