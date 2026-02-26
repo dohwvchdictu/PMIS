@@ -3,8 +3,7 @@
 namespace App\Livewire\Procurements;
 
 use Livewire\Component;
-use App\Services\ApiService;
-use Illuminate\Support\Facades\Storage;
+
 use App\Models\{
     Procurement,
     Category,
@@ -686,23 +685,15 @@ class ProcurementViewPage extends Component
                 ->first();
 
             $userName = 'System';
-            $userPhotoUrl = null;
             $auditDate = $prStage->created_at;
 
             if ($audit) {
                 // Resolve user model
-                $resolvedUser = null;
                 if ($audit->user_id && $audit->user) {
-                    $resolvedUser = $audit->user;
-                    $userName = $resolvedUser->name ?? $resolvedUser->email ?? 'System';
+                    $userName = $audit->user->name ?? $audit->user->email ?? 'System';
                 } elseif ($audit->user_id) {
                     $resolvedUser = \App\Models\User::find($audit->user_id);
                     $userName = $resolvedUser ? ($resolvedUser->name ?? $resolvedUser->email) : 'System';
-                }
-
-                // Resolve photo silently
-                if ($resolvedUser) {
-                    $userPhotoUrl = $this->resolveUserPhoto($resolvedUser);
                 }
 
                 // Use audit created_at for more accurate timestamp
@@ -718,7 +709,6 @@ class ProcurementViewPage extends Component
                 'stage' => $stageName,
                 'date' => $auditDate?->setTimezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A',
                 'user' => $userName,
-                'photo_url' => $userPhotoUrl,
                 'timestamp' => $auditDate?->timestamp ?? 0,
             ];
         }
@@ -731,40 +721,6 @@ class ProcurementViewPage extends Component
         $this->stageHistory = $history;
         $this->modalType = 'stageHistory';
         $this->showModal = true;
-    }
-
-    private function resolveUserPhoto(\App\Models\User $user): ?string
-    {
-        // For the currently logged-in user reuse their already-cached session photo
-        if (auth()->id() === $user->id) {
-            $sessionPhoto = session('userImage') ?? session('user_photo');
-            if ($sessionPhoto) {
-                return $sessionPhoto;
-            }
-        }
-
-        if (!$user->hris_id) {
-            return null;
-        }
-
-        // Check if the photo was previously cached on disk (from their own Navbar load)
-        $storagePath = 'photos/' . $user->hris_id;
-        if (Storage::disk('public')->exists($storagePath)) {
-            return asset('storage/' . $storagePath);
-        }
-
-        // Fetch from API silently (no flash errors)
-        try {
-            $apiService = new ApiService();
-            $url = $apiService->fetchUserPhoto(['photoUrl' => $user->hris_id]);
-            // fetchUserPhoto sets a flash 'error' on failure; suppress it silently
-            session()->forget('error');
-            return $url;
-        } catch (\Exception $e) {
-            // Silently fail — initials avatar will be shown instead
-        }
-
-        return null;
     }
 
     public function closeStageHistoryModal(): void
