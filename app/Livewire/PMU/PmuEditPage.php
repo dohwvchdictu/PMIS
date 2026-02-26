@@ -51,13 +51,8 @@ class PmuEditPage extends Component
 
     public function update()
     {
-        $poDateRule = 'nullable|date';
-        if ($this->po_date_deadline_display) {
-            $poDateRule .= '|before_or_equal:' . $this->po_date_deadline_display;
-        }
-
         $this->validate([
-            'po_date' => $poDateRule,
+            'po_date' => 'nullable|date',
             'contract_amount' => 'nullable|numeric|min:0',
             'po_contract_number' => 'required|string|max:255',
             'po_contract_number_link' => 'nullable|url|max:2048',
@@ -67,7 +62,6 @@ class PmuEditPage extends Component
             'remarks' => 'nullable|string',
         ], [
             'po_date.date' => 'PO Date must be a valid date.',
-            'po_date.before_or_equal' => 'PO Date must not exceed the PO Date Deadline (' . ($this->po_date_deadline_display ? \Carbon\Carbon::parse($this->po_date_deadline_display)->format('M d, Y') : '') . ').',
             'contract_amount.numeric' => 'Contract amount must be a valid number.',
             'contract_amount.min' => 'Contract amount must be 0 or greater.',
             'po_contract_number.required' => 'PO / Contract number is required.',

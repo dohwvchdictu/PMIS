@@ -401,9 +401,6 @@
                             <span
                                 class="font-bold">{{ \Carbon\Carbon::parse($po_date_deadline_display)->format('M d, Y') }}</span>
                         </p>
-                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                            The PO Date must not exceed this date — it should be on or before the PO Date Deadline.
-                        </p>
                     </div>
                 </div>
             @endif
@@ -415,13 +412,12 @@
                     <label for="modal_po_date"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         PO Date
-                        @if ($po_date_deadline_display)
-                            <span class="text-amber-600 dark:text-amber-400 font-normal">(≤
+                        {{-- @if ($po_date_deadline_display)
+                            <span class="text-amber-600 dark:text-amber-400 font-normal">(Deadline:
                                 {{ \Carbon\Carbon::parse($po_date_deadline_display)->format('M d, Y') }})</span>
-                        @endif
+                        @endif --}}
                     </label>
                     <input type="date" id="modal_po_date" wire:model="po_date"
-                        @if ($po_date_deadline_display) max="{{ $po_date_deadline_display }}" @endif
                         class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
                         @error('po_date') border-red-500 @else border-gray-300 @enderror">
                     @error('po_date')
