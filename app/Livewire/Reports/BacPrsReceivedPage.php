@@ -124,7 +124,7 @@ class BacPrsReceivedPage extends Component
                 'clusterCommittee',
                 'category.bacType',
                 'fundSource',
-                'venueSpecific',
+                'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement'
             ])
