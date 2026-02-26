@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.10s>
     {{-- ═══ Pending Receipt ════════════════════════════════════════════════════ --}}
     @if ($pendingItems->total() > 0)
         <div x-data="{ open: false }"

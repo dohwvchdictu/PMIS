@@ -3245,17 +3245,17 @@ class ModeOfProcurementPerItemPage extends Component
                 ->show();
         }
 
-        // Pre-fill date from existing Pmu records if consistent
+        // Pre-fill date from existing PrItemPrstage records if consistent
         $dates = [];
         foreach ($this->selectedPostItems as $prItemID) {
-            $post = PostProcurement::where('ref_id', $prItemID)->first();
-            if ($post && $this->hasValue($post->notice_of_award_number)) {
-                $pmu = Pmu::where('notice_of_award_number', $post->notice_of_award_number)->first();
-                if ($pmu && $pmu->date_forwarded) {
-                    $dates[] = $pmu->date_forwarded instanceof \Carbon\Carbon
-                        ? $pmu->date_forwarded->format('Y-m-d')
-                        : $pmu->date_forwarded;
-                }
+            $stage = PrItemPrstage::where('prItemID', $prItemID)
+                ->where('pr_stage_id', 7)
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($stage && $stage->actual_date_forwarded) {
+                $dates[] = $stage->actual_date_forwarded instanceof \Carbon\Carbon
+                    ? $stage->actual_date_forwarded->format('Y-m-d H:i:s')
+                    : $stage->actual_date_forwarded;
             }
         }
 
@@ -3325,6 +3325,7 @@ class ModeOfProcurementPerItemPage extends Component
 
                         $latestItemStage->update([
                             'stage_history' => $previousItemStage ? (string) $previousItemStage->pr_stage_id : null,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
                         $updated++;
                     } else {
@@ -3333,6 +3334,7 @@ class ModeOfProcurementPerItemPage extends Component
                             'prItemID' => $prItemID,
                             'pr_stage_id' => 7,
                             'stage_history' => $latestItemStage ? (string) $latestItemStage->pr_stage_id : null,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
                         $forwarded++;
                     }
