@@ -1346,12 +1346,13 @@ class ModeOfProcurementPerLotPage extends Component
     }
 
     /**
-     * Check if this procurement has already been forwarded to PMU (stage 7 exists)
+     * Check if this procurement has already been forwarded to PMU (stage 7 exists with actual_date_forwarded)
      */
     public function getIsForwardedToPmuProperty(): bool
     {
         return PrLotPrstage::where('procID', $this->procID)
             ->where('pr_stage_id', 7)
+            ->whereNotNull('actual_date_forwarded')
             ->exists();
     }
 

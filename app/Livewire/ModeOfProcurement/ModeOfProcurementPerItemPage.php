@@ -3154,6 +3154,7 @@ class ModeOfProcurementPerItemPage extends Component
         foreach ($this->selectedPostItems as $prItemID) {
             $exists = PrItemPrstage::where('prItemID', $prItemID)
                 ->where('pr_stage_id', 7)
+                ->whereNotNull('actual_date_forwarded')
                 ->exists();
 
             if ($exists) {
@@ -3230,7 +3231,7 @@ class ModeOfProcurementPerItemPage extends Component
         // Check already-forwarded status (at prItemID level)
         $alreadyForwardedCount = 0;
         foreach ($this->selectedPostItems as $prItemID) {
-            if (PrItemPrstage::where('prItemID', $prItemID)->where('pr_stage_id', 7)->exists()) {
+            if (PrItemPrstage::where('prItemID', $prItemID)->where('pr_stage_id', 7)->whereNotNull('actual_date_forwarded')->exists()) {
                 $alreadyForwardedCount++;
             }
         }

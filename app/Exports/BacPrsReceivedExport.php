@@ -42,7 +42,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
                 'clusterCommittee',
                 'category.bacType',
                 'fundSource',
-                'venueSpecific',
+                'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
                 'pr_items'
@@ -102,21 +102,23 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
     {
         return [
             'PR Number',
+            'IB No',
             'Procurement Program / Project',
             'Date Received',
+            'DTrack No',
+            'Division',
             'Unit / Cluster',
             'Category',
+            'End-User',
+            'Category / Venue',
             'Immediate Date Needed',
+            'Date Needed',
             'Fund Source',
             'ABC Amount',
-            'Division',
-            'Venue',
             'Approved PPMP',
             'EPA',
             'Procurement Stage',
             'Current Mode',
-            'IB No',
-            'DTrack No',
         ];
     }
 
@@ -156,21 +158,23 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
 
         return [
             $procurement->pr_number,
+            $ibNo,
             $procurement->procurement_program_project,
             $formatDate($procurement->date_receipt),
+            $procurement->dtrack_no ?? 'N/A',
+            $procurement->division?->divisions ?? 'N/A',
             $procurement->clusterCommittee?->clustercommittee ?? 'N/A',
             $procurement->category?->category ?? 'N/A',
-            $formatDate($procurement->immediate_date_needed),
+            $procurement->endUser?->endusers ?? 'N/A',
+            $procurement->category_venue ?? 'N/A',
+            $procurement->immediate_date_needed ?? 'N/A',
+            $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($procurement->abc ?? 0, 2),
-            $procurement->division?->divisions ?? 'N/A',
-            $procurement->venueSpecific?->name ?? ($procurement->category_venue ?? 'N/A'),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
             $currentMode,
-            $ibNo,
-            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -198,21 +202,23 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
 
         return [
             $procurement->pr_number,
+            'N/A',
             $item->description,
             $formatDate($procurement->date_receipt),
+            $procurement->dtrack_no ?? 'N/A',
+            $procurement->division?->divisions ?? 'N/A',
             $procurement->clusterCommittee?->clustercommittee ?? 'N/A',
             $procurement->category?->category ?? 'N/A',
-            $formatDate($procurement->immediate_date_needed),
+            $procurement->endUser?->endusers ?? 'N/A',
+            $procurement->category_venue ?? 'N/A',
+            $procurement->immediate_date_needed ?? 'N/A',
+            $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($item->amount ?? 0, 2),
-            $procurement->division?->divisions ?? 'N/A',
-            $procurement->venueSpecific?->name ?? ($procurement->category_venue ?? 'N/A'),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
             $currentMode,
-            'N/A',
-            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -221,7 +227,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:P1')->applyFromArray([
+        $sheet->getStyle('A1:R1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -244,24 +250,24 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Center align all data cells (A to O)
-        $sheet->getStyle('A2:P' . $highestRow)->applyFromArray([
+        // Center align all data cells
+        $sheet->getStyle('A2:R' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
-        // Right align ABC Amount column (H)
-        $sheet->getStyle('H2:H' . $highestRow)->applyFromArray([
+        // Right align ABC Amount column (N)
+        $sheet->getStyle('N2:N' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_RIGHT,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
-        // Wrap text for Procurement Program / Project column (B)
-        $sheet->getStyle('B2:B' . $highestRow)->applyFromArray([
+        // Wrap text for Procurement Program / Project column (C)
+        $sheet->getStyle('C2:C' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -269,7 +275,25 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Wrap text for Immediate Date Needed column (F)
+        // Wrap text for Immediate Date Needed column (K)
+        $sheet->getStyle('K2:K' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Wrap text for Date Needed column (L)
+        $sheet->getStyle('L2:L' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Wrap text for Division column (F)
         $sheet->getStyle('F2:F' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -278,8 +302,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Wrap text for Division column (I)
-        $sheet->getStyle('I2:I' . $highestRow)->applyFromArray([
+        // Wrap text for Procurement Stage column (Q)
+        $sheet->getStyle('Q2:Q' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -287,26 +311,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Wrap text for Venue column (J)
-        $sheet->getStyle('J2:J' . $highestRow)->applyFromArray([
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'wrapText' => true,
-            ],
-        ]);
-
-        // Wrap text for Procurement Stage column (M)
-        $sheet->getStyle('M2:M' . $highestRow)->applyFromArray([
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'wrapText' => true,
-            ],
-        ]);
-
-        // Wrap text for Current Mode column (N)
-        $sheet->getStyle('N2:N' . $highestRow)->applyFromArray([
+        // Wrap text for Current Mode column (R)
+        $sheet->getStyle('R2:R' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -321,21 +327,23 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
     {
         return [
             'A' => 20, // PR Number
-            'B' => 50, // Procurement Program / Project
-            'C' => 18, // Date Received
-            'D' => 25, // Unit / Cluster
-            'E' => 25, // Category
-            'F' => 22, // Immediate Date Needed
-            'G' => 25, // Fund Source
-            'H' => 18, // ABC Amount
-            'I' => 25, // Division
-            'J' => 30, // Venue
-            'K' => 18, // Approved PPMP
-            'L' => 10, // EPA
-            'M' => 30, // Procurement Stage
-            'N' => 25, // Current Mode
-            'O' => 20, // IB No
-            'P' => 20, // DTrack No
+            'B' => 20, // IB No
+            'C' => 50, // Procurement Program / Project
+            'D' => 18, // Date Received
+            'E' => 20, // DTrack No
+            'F' => 25, // Division
+            'G' => 25, // Unit / Cluster
+            'H' => 25, // Category
+            'I' => 30, // End-User
+            'J' => 30, // Category / Venue
+            'K' => 22, // Immediate Date Needed
+            'L' => 22, // Date Needed
+            'M' => 25, // Fund Source
+            'N' => 18, // ABC Amount
+            'O' => 18, // Approved PPMP
+            'P' => 10, // EPA
+            'Q' => 30, // Procurement Stage
+            'R' => 25, // Current Mode
         ];
     }
 }

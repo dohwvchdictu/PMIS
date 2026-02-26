@@ -824,6 +824,7 @@
                                         $allPostRefIds,
                                     )
                                         ->where('pr_stage_id', 7)
+                                        ->whereNotNull('actual_date_forwarded')
                                         ->orderBy('created_at', 'desc')
                                         ->get()
                                         ->groupBy('procID');

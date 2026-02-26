@@ -2133,6 +2133,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $procIds = array_column($currentItems, 'procID');
             $forwardedIds = \App\Models\PrLotPrstage::whereIn('procID', $procIds)
                 ->where('pr_stage_id', 7)
+                ->whereNotNull('actual_date_forwarded')
                 ->pluck('procID')
                 ->toArray();
 
@@ -2168,6 +2169,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $procIds = array_column($currentItems, 'procID');
         $forwardedIds = \App\Models\PrLotPrstage::whereIn('procID', $procIds)
             ->where('pr_stage_id', 7)
+            ->whereNotNull('actual_date_forwarded')
             ->pluck('procID')
             ->toArray();
 
@@ -2679,6 +2681,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         foreach ($this->selectedPostItems as $refId) {
             $exists = PrLotPrstage::where('procID', $refId)
                 ->where('pr_stage_id', 7)
+                ->whereNotNull('actual_date_forwarded')
                 ->exists();
 
             if ($exists) {
@@ -2744,6 +2747,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         foreach ($this->selectedPostItems as $refId) {
             $exists = PrLotPrstage::where('procID', $refId)
                 ->where('pr_stage_id', 7)
+                ->whereNotNull('actual_date_forwarded')
                 ->exists();
             if ($exists) {
                 $prItem = collect($this->items)->firstWhere('procID', $refId);
