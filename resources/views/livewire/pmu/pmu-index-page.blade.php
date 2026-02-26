@@ -1,64 +1,65 @@
 <div>
     {{-- ═══ Pending Receipt ════════════════════════════════════════════════════ --}}
-    <div x-data="{ open: false }"
-        class="bg-white border border-orange-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-orange-800/50 flex flex-col mb-6">
+    @if ($pendingItems->total() > 0)
+        <div x-data="{ open: false }"
+            class="bg-white border border-orange-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-orange-800/50 flex flex-col mb-6">
 
-        <!-- Pending Card Header -->
-        <div @click="open = !open" role="button"
-            class="flex items-center justify-between px-6 py-3 border-b border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-950/20 cursor-pointer select-none">
-            <div class="flex items-center gap-2.5">
-                <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40">
-                    <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <!-- Pending Card Header -->
+            <div @click="open = !open" role="button"
+                class="flex items-center justify-between px-6 py-3 border-b border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-950/20 cursor-pointer select-none">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40">
+                        <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-orange-800 dark:text-orange-300">Pending Receipt</h3>
+                    <span
+                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                        {{ $pendingItems->total() }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    @can('update_pmu')
+                        @if (count($selectedNoaNumbers) > 0)
+                            <div class="flex items-center gap-2" @click.stop>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    <span
+                                        class="font-semibold text-emerald-600 dark:text-emerald-400">{{ count($selectedNoaNumbers) }}</span>
+                                    selected
+                                </span>
+                                <button wire:click="clearSelection"
+                                    class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                                    Clear
+                                </button>
+                                <button wire:click="openBulkReceiveModal"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Receive
+                                </button>
+                            </div>
+                        @endif
+                    @endcan
+                    <svg class="w-4 h-4 text-orange-500 dark:text-orange-400 transition-transform duration-200"
+                        :class="open ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </div>
-                <h3 class="text-sm font-bold text-orange-800 dark:text-orange-300">Pending Receipt</h3>
-                <span
-                    class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                    {{ $pendingItems->total() }}
-                </span>
             </div>
-            <div class="flex items-center gap-3">
-                @can('update_pmu')
-                    @if (count($selectedNoaNumbers) > 0)
-                        <div class="flex items-center gap-2" @click.stop>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                <span
-                                    class="font-semibold text-emerald-600 dark:text-emerald-400">{{ count($selectedNoaNumbers) }}</span>
-                                selected
-                            </span>
-                            <button wire:click="clearSelection"
-                                class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                                Clear
-                            </button>
-                            <button wire:click="openBulkReceiveModal"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Receive
-                            </button>
-                        </div>
-                    @endif
-                @endcan
-                <svg class="w-4 h-4 text-orange-500 dark:text-orange-400 transition-transform duration-200"
-                    :class="open ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </div>
-        </div>
 
-        <!-- Pending Table -->
-        <div x-show="open" x-transition class="overflow-auto flex-1">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
-                <thead class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
-                    <tr>
-                        <th class="px-3 py-2 bg-gray-100 dark:bg-neutral-900 w-10">
-                            <input type="checkbox"
-                                @if ($pendingItems->total() > 0) x-data x-on:click="
+            <!-- Pending Table -->
+            <div x-show="open" x-transition class="overflow-auto flex-1">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
+                    <thead class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
+                        <tr>
+                            <th class="px-3 py-2 bg-gray-100 dark:bg-neutral-900 w-10">
+                                <input type="checkbox"
+                                    @if ($pendingItems->total() > 0) x-data x-on:click="
                                             let boxes = document.querySelectorAll('[data-noa-check]');
                                             let anyUnchecked = Array.from(boxes).some(b => !b.checked);
                                             boxes.forEach(b => {
@@ -66,100 +67,104 @@
                                                 b.dispatchEvent(new Event('change'));
                                             });
                                         " @endif
-                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer"
-                                title="Select / deselect all visible" />
-                        </th>
-                        <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Notice of Award Number
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Date Forwarded From BAC
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                            Notice of Award Date
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
-                    @forelse ($pendingItems as $group)
-                        <!-- Pending Row -->
-                        <tr
-                            class="transition-colors border-l-4 border-l-orange-400 {{ in_array($group->notice_of_award_number, $selectedNoaNumbers) ? 'bg-emerald-50 dark:bg-emerald-950/20 ring-1 ring-inset ring-emerald-300 dark:ring-emerald-700' : 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/30' }}">
-                            @can('update_pmu')
-                                <td class="px-3 py-4 whitespace-nowrap">
-                                    <input type="checkbox" data-noa-check wire:model.live="selectedNoaNumbers"
-                                        value="{{ $group->notice_of_award_number }}"
-                                        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer" />
-                                </td>
-                            @endcan
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <button wire:click="toggle('expandedNoaNumber', '{{ $group->notice_of_award_number }}')"
-                                    class="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                                    <svg class="w-5 h-5 transition-transform {{ $expandedNoaNumber === $group->notice_of_award_number ? 'rotate-90' : '' }}"
-                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    <span
-                                        class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 min-w-[20px]">
-                                        {{ $group->procurement_count }}
-                                    </span>
-                                </button>
-                            </td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                                {{ $group->notice_of_award_number }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->setTimezone('Asia/Manila')->format('M d, Y h:i A') : '—' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
-                            </td>
+                                    class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer"
+                                    title="Select / deselect all visible" />
+                            </th>
+                            <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                Notice of Award Number
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                Date Forwarded From BAC
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                Notice of Award Date
+                            </th>
                         </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
+                        @forelse ($pendingItems as $group)
+                            <!-- Pending Row -->
+                            <tr
+                                class="transition-colors border-l-4 border-l-orange-400 {{ in_array($group->notice_of_award_number, $selectedNoaNumbers) ? 'bg-emerald-50 dark:bg-emerald-950/20 ring-1 ring-inset ring-emerald-300 dark:ring-emerald-700' : 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/30' }}">
+                                @can('update_pmu')
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <input type="checkbox" data-noa-check wire:model.live="selectedNoaNumbers"
+                                            value="{{ $group->notice_of_award_number }}"
+                                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer" />
+                                    </td>
+                                @endcan
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <button
+                                        wire:click="toggle('expandedNoaNumber', '{{ $group->notice_of_award_number }}')"
+                                        class="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                        <svg class="w-5 h-5 transition-transform {{ $expandedNoaNumber === $group->notice_of_award_number ? 'rotate-90' : '' }}"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        <span
+                                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 min-w-[20px]">
+                                            {{ $group->procurement_count }}
+                                        </span>
+                                    </button>
+                                </td>
+                                <td
+                                    class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                    {{ $group->notice_of_award_number }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->setTimezone('Asia/Manila')->format('M d, Y h:i A') : '—' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
+                                </td>
+                            </tr>
 
-                        @if ($expandedNoaNumber === $group->notice_of_award_number && $expandedPaginator)
-                            <tr class="bg-gray-50 dark:bg-neutral-900">
-                                <td colspan="99" class="px-4 py-3">
-                                    <div
-                                        class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
-                                        @include('livewire.pmu.partials.expanded-table')
+                            @if ($expandedNoaNumber === $group->notice_of_award_number && $expandedPaginator)
+                                <tr class="bg-gray-50 dark:bg-neutral-900">
+                                    <td colspan="99" class="px-4 py-3">
+                                        <div
+                                            class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
+                                            @include('livewire.pmu.partials.expanded-table')
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
+                        @empty
+                            <tr>
+                                <td colspan="99" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">All NOAs have
+                                            been
+                                            received</p>
+                                        <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">No pending items to
+                                            process</p>
                                     </div>
                                 </td>
                             </tr>
-                        @endif
-                    @empty
-                        <tr>
-                            <td colspan="99" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">All NOAs have been
-                                        received</p>
-                                    <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">No pending items to
-                                        process</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-        <div x-show="open" x-transition>
-            @if ($pendingItems->hasPages())
-                <div class="px-6 py-4 border-t border-orange-200 dark:border-orange-800/50">
-                    {{ $pendingItems->links() }}
-                </div>
-            @endif
+            <div x-show="open" x-transition>
+                @if ($pendingItems->hasPages())
+                    <div class="px-6 py-4 border-t border-orange-200 dark:border-orange-800/50">
+                        {{ $pendingItems->links() }}
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- ═══ Received NOAs ════════════════════════════════════════════════════ --}}
     <div
