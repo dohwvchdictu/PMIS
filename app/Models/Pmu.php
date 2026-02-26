@@ -32,7 +32,7 @@ class Pmu extends Model implements Auditable
 
     protected $casts = [
         'date_forwarded' => 'date',
-        'date_received' => 'date',
+        'date_received' => 'datetime',
     ];
 
     public function generateTags(): array

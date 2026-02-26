@@ -3261,8 +3261,8 @@ class ModeOfProcurementPerItemPage extends Component
 
         $uniqueDates = array_unique($dates);
         $this->actualDateForwarded = count($uniqueDates) === 1
-            ? reset($uniqueDates)
-            : now()->format('Y-m-d');
+            ? Carbon::parse(reset($uniqueDates))->setTimezone('Asia/Manila')->format('Y-m-d\TH:i')
+            : now('Asia/Manila')->format('Y-m-d\TH:i');
 
         $this->showForwardModal = true;
     }
@@ -3286,16 +3286,21 @@ class ModeOfProcurementPerItemPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
         $forwarded = 0;
         $updated = 0;
         $skipped = 0;
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () use (&$forwarded, &$updated, &$skipped) {
+            DB::transaction(function () use (&$forwarded, &$updated, &$skipped, $utcDateForwarded) {
                 // Stage 7 per prItemID
                 foreach ($this->selectedPostItems as $prItemID) {
                     $prItem = collect($this->form['items'])->firstWhere('prItemID', $prItemID);
@@ -3353,7 +3358,7 @@ class ModeOfProcurementPerItemPage extends Component
                     if ($this->hasValue($post->notice_of_award_number)) {
                         $pmu = Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
 
                         $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);

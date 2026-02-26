@@ -704,7 +704,7 @@ class ProcurementViewPage extends Component
 
             $history[] = [
                 'stage' => $stageName,
-                'date' => $auditDate?->format('M d, Y h:i A') ?? 'N/A',
+                'date' => $auditDate?->setTimezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A',
                 'user' => $userName,
                 'timestamp' => $auditDate?->timestamp ?? 0,
             ];

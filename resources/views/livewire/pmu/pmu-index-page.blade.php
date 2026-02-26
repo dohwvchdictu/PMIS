@@ -114,7 +114,7 @@
                                 {{ $group->notice_of_award_number }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->format('M d, Y') : '—' }}
+                                {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->setTimezone('Asia/Manila')->format('M d, Y h:i A') : '—' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                 {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
@@ -277,7 +277,7 @@
                                                         </a>
                                                     </li>
                                                 @endcan
-                                                @can('edit_pmu')
+                                                {{-- @can('edit_pmu')
                                                     <li>
                                                         <button
                                                             wire:click="openReceiveModal('{{ $group->notice_of_award_number }}')"
@@ -287,7 +287,7 @@
                                                             <span class="font-medium">Edit Received</span>
                                                         </button>
                                                     </li>
-                                                @endcan
+                                                @endcan --}}
                                             </ul>
                                         </div>
                                     </template>
@@ -299,12 +299,12 @@
                             </td>
                             <!-- Date Forwarded -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->format('M d, Y') : '—' }}
+                                {{ $group->date_forwarded ? \Carbon\Carbon::parse($group->date_forwarded)->setTimezone('Asia/Manila')->format('M d, Y h:i A') : '—' }}
                             </td>
                             <!-- Date Received -->
                             <td
                                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                                {{ \Carbon\Carbon::parse($group->date_received)->format('M d, Y') }}
+                                {{ \Carbon\Carbon::parse($group->date_received, 'UTC')->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}
                             </td>
                             <!-- Notice of Award Date -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -442,7 +442,7 @@
                         <div class="px-5 py-4 flex flex-col justify-center">
                             <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Date Forwarded</p>
                             <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                {{ $viewPmuRecord?->date_forwarded ? \Carbon\Carbon::parse($viewPmuRecord->date_forwarded)->format('M d, Y') : '—' }}
+                                {{ $viewPmuRecord?->date_forwarded ? \Carbon\Carbon::parse($viewPmuRecord->date_forwarded)->setTimezone('Asia/Manila')->format('M d, Y h:i A') : '—' }}
                             </p>
                         </div>
 
@@ -799,7 +799,7 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Date Received <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" wire:model="receiveDate"
+                        <input type="datetime-local" wire:model="receiveDate"
                             class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-neutral-700 dark:text-white dark:border-neutral-600
                                    @error('receiveDate') border-red-400 dark:border-red-500 @else border-gray-300 @enderror" />
                         @error('receiveDate')
@@ -887,7 +887,7 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Date Received <span class="text-red-500">*</span>
                 </label>
-                <input type="date" wire:model="bulkReceiveDate"
+                <input type="datetime-local" wire:model="bulkReceiveDate"
                     class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-700 dark:text-white dark:border-neutral-600
                            @error('bulkReceiveDate') border-red-400 dark:border-red-500 @else border-gray-300 @enderror" />
                 @error('bulkReceiveDate')

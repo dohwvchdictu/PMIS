@@ -716,7 +716,7 @@
                                             to PMU</span>
                                         @if ($this->forwardedToPmuDate)
                                             <span
-                                                class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->format('F d, Y') }}</span>
+                                                class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -1217,9 +1217,9 @@
             <div class="mb-4">
                 <label for="actualDateForwarded"
                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Actual Date Forwarded <span class="text-red-500">*</span>
+                    Actual Date &amp; Time Forwarded <span class="text-red-500">*</span>
                 </label>
-                <input type="date" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                <input type="datetime-local" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
                     class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white"
                     required>
                 @error('actualDateForwarded')

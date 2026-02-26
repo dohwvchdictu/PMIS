@@ -1463,9 +1463,9 @@ class ModeOfProcurementPerLotPage extends Component
             ->first();
 
         if ($existingStage && $existingStage->actual_date_forwarded) {
-            $this->actualDateForwarded = $existingStage->actual_date_forwarded;
+            $this->actualDateForwarded = Carbon::parse($existingStage->actual_date_forwarded)->setTimezone('Asia/Manila')->format('Y-m-d\TH:i');
         } else {
-            $this->actualDateForwarded = now()->format('Y-m-d'); // Default to today
+            $this->actualDateForwarded = now('Asia/Manila')->format('Y-m-d\TH:i'); // Default to now (PHT)
         }
 
         $this->showForwardModal = true;
@@ -1491,12 +1491,17 @@ class ModeOfProcurementPerLotPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use ($utcDateForwarded) {
                 // Get all stage records for this procurement, ordered by latest first
                 $latestStage = PrLotPrstage::where('procID', $this->procID)
                     ->orderBy('created_at', 'desc')
@@ -1519,7 +1524,7 @@ class ModeOfProcurementPerLotPage extends Component
 
                         $latestStage->update([
                             'stage_history' => $stageHistory,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         // Update PMU record with new date_forwarded
@@ -1527,7 +1532,7 @@ class ModeOfProcurementPerLotPage extends Component
                         if ($post && $this->hasValue($post->notice_of_award_number)) {
                             $pmu = \App\Models\Pmu::updateOrCreate(
                                 ['notice_of_award_number' => $post->notice_of_award_number],
-                                ['date_forwarded' => $this->actualDateForwarded]
+                                ['date_forwarded' => $utcDateForwarded]
                             );
 
                             $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
@@ -1551,7 +1556,7 @@ class ModeOfProcurementPerLotPage extends Component
                             'procID' => $this->procID,
                             'pr_stage_id' => 7, // PMU Stage
                             'stage_history' => (string) $latestStageId, // Previous stage
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         // Insert/update PMU record
@@ -1559,7 +1564,7 @@ class ModeOfProcurementPerLotPage extends Component
                         if ($post && $this->hasValue($post->notice_of_award_number)) {
                             $pmu = \App\Models\Pmu::updateOrCreate(
                                 ['notice_of_award_number' => $post->notice_of_award_number],
-                                ['date_forwarded' => $this->actualDateForwarded]
+                                ['date_forwarded' => $utcDateForwarded]
                             );
 
                             $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
@@ -1584,7 +1589,7 @@ class ModeOfProcurementPerLotPage extends Component
                         'procID' => $this->procID,
                         'pr_stage_id' => 7, // PMU Stage
                         'stage_history' => null, // No previous stage
-                        'actual_date_forwarded' => $this->actualDateForwarded,
+                        'actual_date_forwarded' => $utcDateForwarded,
                     ]);
 
                     // Insert/update PMU record
@@ -1592,7 +1597,7 @@ class ModeOfProcurementPerLotPage extends Component
                     if ($post && $this->hasValue($post->notice_of_award_number)) {
                         $pmu = \App\Models\Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
 
                         $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);

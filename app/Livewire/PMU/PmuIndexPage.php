@@ -557,8 +557,8 @@ class PmuIndexPage extends Component
 
         $this->receivingNoaNumber = $noaNumber;
         $this->receiveDate = $pmu?->date_received
-            ? $pmu->date_received->format('Y-m-d')
-            : now()->format('Y-m-d');
+            ? $pmu->date_received->setTimezone('Asia/Manila')->format('Y-m-d\TH:i')
+            : now('Asia/Manila')->format('Y-m-d\TH:i');
         $this->receiveRemarks = $pmu?->received_remarks ?? '';
         $this->showReceiveModal = true;
     }
@@ -583,7 +583,7 @@ class PmuIndexPage extends Component
         }
 
         $pmu->update([
-            'date_received' => $this->receiveDate,
+            'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->receiveDate, 'Asia/Manila')->utc(),
             'received_remarks' => $this->receiveRemarks ?: null,
         ]);
 
@@ -629,7 +629,7 @@ class PmuIndexPage extends Component
         if (empty($this->selectedNoaNumbers)) {
             return;
         }
-        $this->bulkReceiveDate = now()->format('Y-m-d');
+        $this->bulkReceiveDate = now('Asia/Manila')->format('Y-m-d\TH:i');
         $this->bulkReceiveRemarks = null;
         $this->showBulkReceiveModal = true;
     }
@@ -647,7 +647,7 @@ class PmuIndexPage extends Component
         $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
             ->whereNull('deleted_at')
             ->update([
-                'date_received' => $this->bulkReceiveDate,
+                'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->bulkReceiveDate, 'Asia/Manila')->utc(),
                 'received_remarks' => $this->bulkReceiveRemarks ?: null,
             ]);
 

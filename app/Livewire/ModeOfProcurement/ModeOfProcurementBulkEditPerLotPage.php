@@ -2791,9 +2791,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         $uniqueDates = array_unique($dates);
         if (count($uniqueDates) === 1) {
-            $this->actualDateForwarded = reset($uniqueDates);
+            $this->actualDateForwarded = Carbon::parse(reset($uniqueDates))->setTimezone('Asia/Manila')->format('Y-m-d\TH:i');
         } else {
-            $this->actualDateForwarded = now()->format('Y-m-d');
+            $this->actualDateForwarded = now('Asia/Manila')->format('Y-m-d\TH:i');
         }
 
         $this->showForwardModal = true;
@@ -2819,16 +2819,21 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
         $forwarded = 0;
         $updated = 0;
         $skipped = 0;
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () use (&$forwarded, &$updated, &$skipped) {
+            DB::transaction(function () use (&$forwarded, &$updated, &$skipped, $utcDateForwarded) {
                 foreach ($this->selectedPostItems as $refId) {
                     $post = PostProcurement::where('ref_id', $refId)->first();
 
@@ -2862,7 +2867,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                         $latestStage->update([
                             'stage_history' => $previousStage ? (string) $previousStage->pr_stage_id : null,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         $updated++;
@@ -2872,7 +2877,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                             'procID' => $refId,
                             'pr_stage_id' => 7,
                             'stage_history' => $latestStage ? (string) $latestStage->pr_stage_id : null,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         $forwarded++;
@@ -2882,7 +2887,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     if ($this->hasValue($post->notice_of_award_number)) {
                         $pmu = \App\Models\Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
 
                         $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
