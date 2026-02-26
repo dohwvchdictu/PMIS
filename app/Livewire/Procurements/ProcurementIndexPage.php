@@ -372,7 +372,7 @@ class ProcurementIndexPage extends Component
                     $query->with(['prstage.stage', 'currentItemRemark.remark']);
                 }
             ])
-            ->latest();
+            ->orderBy('pr_number', 'desc');
 
         // Apply search filter
         if (!empty($this->search)) {

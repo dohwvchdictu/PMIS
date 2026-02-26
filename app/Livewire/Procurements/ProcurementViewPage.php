@@ -460,6 +460,7 @@ class ProcurementViewPage extends Component
                             $this->pmuRecord = [
                                 'po_contract_number' => $pmuPo->po_contract_number,
                                 'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                'ntp_link' => $pmuPo->ntp_link,
                                 'contract_amount' => $pmuPo->contract_amount,
                                 'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
                                 'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
@@ -516,6 +517,7 @@ class ProcurementViewPage extends Component
                                     'date_forwarded' => $pmu->date_forwarded?->format('Y-m-d'),
                                     'po_contract_number' => $pmuPo->po_contract_number,
                                     'po_contract_number_link' => $pmuPo->po_contract_number_link,
+                                    'ntp_link' => $pmuPo->ntp_link,
                                     'contract_amount' => $pmuPo->contract_amount,
                                     'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
                                     'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
@@ -702,7 +704,7 @@ class ProcurementViewPage extends Component
 
             $history[] = [
                 'stage' => $stageName,
-                'date' => $auditDate?->format('M d, Y h:i A') ?? 'N/A',
+                'date' => $auditDate?->setTimezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A',
                 'user' => $userName,
                 'timestamp' => $auditDate?->timestamp ?? 0,
             ];

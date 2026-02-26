@@ -6,6 +6,7 @@ use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrLotPrstage;
+use App\Models\PmuPo;
 use App\Models\PrSvp;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
@@ -103,6 +104,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+    public ?string $dateReceiptOfSupplierNoa = null;
     public Collection $suppliers;
 
     /**
@@ -485,7 +487,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $itemPost->awarded_amount !== $firstPost->awarded_amount ||
                 $itemPost->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                 $itemPost->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                $itemPost->supplier_id !== $firstPost->supplier_id
+                $itemPost->supplier_id !== $firstPost->supplier_id ||
+                $itemPost->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
             ) {
                 $allIdentical = false;
                 break;
@@ -502,6 +505,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo = $firstPost->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $firstPost->philgeps_posting_of_award;
             $this->supplier_id = $firstPost->supplier_id;
+            $this->dateReceiptOfSupplierNoa = $firstPost->date_receipt_of_supplier_noa;
         }
     }
 
@@ -1410,6 +1414,28 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
     }
 
     /**
+     * Calculate PO date: 10th calendar day from Date Receipt of Supplier (NOA).
+     * If the result falls on a Saturday, move back 1 day to Friday.
+     * If the result falls on a Sunday, move back 2 days to Friday.
+     */
+    private function calculatePoDate(?string $dateReceiptOfSupplierNoa): ?string
+    {
+        if (!$this->hasValue($dateReceiptOfSupplierNoa)) {
+            return null;
+        }
+
+        $date = Carbon::parse($dateReceiptOfSupplierNoa)->addDays(10);
+
+        if ($date->dayOfWeek === Carbon::SUNDAY) {
+            $date->subDays(2); // move back to Friday
+        } elseif ($date->dayOfWeek === Carbon::SATURDAY) {
+            $date->subDays(1); // move back to Friday
+        }
+
+        return $date->format('Y-m-d');
+    }
+
+    /**
      * Clean and convert formatted amount string to float
      * Removes commas from Alpine.js money mask format
      */
@@ -1538,7 +1564,6 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($item['ads_post_ib']) &&
                 $this->hasValue($item['pre_proc_conference']) &&
                 $this->hasValue($item['list_invited_observers']) &&
-                $this->hasValue($item['obsrvr_prebid_conf']) &&
                 $this->hasValue($item['obsrvr_eligibility']) &&
                 $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                 $this->hasValue($item['obsrvr_bid']) &&
@@ -1841,6 +1866,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo,
             $this->philgepsPostingOfAward,
             $this->supplier_id,
+            $this->dateReceiptOfSupplierNoa,
         ];
 
         $hasAnyPostData = $this->hasAnyValue($postFields);
@@ -1855,6 +1881,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
+            'dateReceiptOfSupplierNoa' => 'nullable|date',
         ];
 
         // If ANY field has data, make Resolution Award Number and Date REQUIRED
@@ -1872,6 +1899,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
             'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
+            'dateReceiptOfSupplierNoa' => 'Date Receipt of Supplier (NOA)',
         ];
 
         // Custom error messages for better UX
@@ -1921,6 +1949,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->dateReceiptOfSupplierNoa),
                 ];
 
                 $postModel = \App\Models\PostProcurement::updateOrCreate(
@@ -2236,6 +2265,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $supplierName = \App\Models\Supplier::find($post->supplier_id)?->business_name ?? 'Unknown';
                 $prsByField['Supplier'][] = "{$prNumber} ({$supplierName})";
             }
+            if ($post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa) {
+                $differentFields['Date Receipt of Supplier (NOA)'] = true;
+                $prsByField['Date Receipt of Supplier (NOA)'][] = "{$prNumber} ({$post->date_receipt_of_supplier_noa})";
+            }
         }
 
         // If any fields are different, show validation error
@@ -2326,6 +2359,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => '',
             'philgepsPostingOfAward' => '',
             'supplier_id' => null,
+            'dateReceiptOfSupplierNoa' => '',
         ];
 
         // If all selected items have post data, check if values are identical
@@ -2344,7 +2378,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     $post->awarded_amount !== $firstPost->awarded_amount ||
                     $post->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                     $post->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                    $post->supplier_id !== $firstPost->supplier_id
+                    $post->supplier_id !== $firstPost->supplier_id ||
+                    $post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
                 ) {
                     $allIdentical = false;
                     break;
@@ -2362,6 +2397,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                     'philgepsNoticeOfAwardNo' => $firstPost->philgeps_notice_of_award_no ?? '',
                     'philgepsPostingOfAward' => $firstPost->philgeps_posting_of_award ?? '',
                     'supplier_id' => $firstPost->supplier_id,
+                    'dateReceiptOfSupplierNoa' => $firstPost->date_receipt_of_supplier_noa ?? '',
                 ];
             }
         }
@@ -2414,7 +2450,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $post->awarded_amount !== $firstPost->awarded_amount ||
                 $post->philgeps_notice_of_award_no !== $firstPost->philgeps_notice_of_award_no ||
                 $post->philgeps_posting_of_award !== $firstPost->philgeps_posting_of_award ||
-                $post->supplier_id !== $firstPost->supplier_id
+                $post->supplier_id !== $firstPost->supplier_id ||
+                $post->date_receipt_of_supplier_noa !== $firstPost->date_receipt_of_supplier_noa
             ) {
                 $allIdentical = false;
                 break;
@@ -2431,6 +2468,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPost->philgeps_notice_of_award_no ?? '';
             $this->postBulkEditData['philgepsPostingOfAward'] = $firstPost->philgeps_posting_of_award ?? '';
             $this->postBulkEditData['supplier_id'] = $firstPost->supplier_id;
+            $this->postBulkEditData['dateReceiptOfSupplierNoa'] = $firstPost->date_receipt_of_supplier_noa ?? '';
         }
     }
 
@@ -2463,7 +2501,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             'awardedAmount',
             'philgepsNoticeOfAwardNo',
             'philgepsPostingOfAward',
-            'supplier_id'
+            'supplier_id',
+            'dateReceiptOfSupplierNoa'
         ];
 
         foreach ($fieldsToCheck as $field) {
@@ -2528,6 +2567,10 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                         $postProc->supplier_id = $this->postBulkEditData['supplier_id'];
                         $hasChanges = true;
                     }
+                    if ($this->hasValue($this->postBulkEditData['dateReceiptOfSupplierNoa'] ?? null)) {
+                        $postProc->date_receipt_of_supplier_noa = $this->postBulkEditData['dateReceiptOfSupplierNoa'];
+                        $hasChanges = true;
+                    }
 
                     if ($hasChanges) {
                         $postProc->save();
@@ -2586,7 +2629,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 return true;
             }
@@ -2613,7 +2657,8 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 $count++;
             }
@@ -2746,9 +2791,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         $uniqueDates = array_unique($dates);
         if (count($uniqueDates) === 1) {
-            $this->actualDateForwarded = reset($uniqueDates);
+            $this->actualDateForwarded = Carbon::parse(reset($uniqueDates))->setTimezone('Asia/Manila')->format('Y-m-d\TH:i');
         } else {
-            $this->actualDateForwarded = now()->format('Y-m-d');
+            $this->actualDateForwarded = now('Asia/Manila')->format('Y-m-d\TH:i');
         }
 
         $this->showForwardModal = true;
@@ -2774,16 +2819,21 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
         $forwarded = 0;
         $updated = 0;
         $skipped = 0;
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () use (&$forwarded, &$updated, &$skipped) {
+            DB::transaction(function () use (&$forwarded, &$updated, &$skipped, $utcDateForwarded) {
                 foreach ($this->selectedPostItems as $refId) {
                     $post = PostProcurement::where('ref_id', $refId)->first();
 
@@ -2817,7 +2867,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                         $latestStage->update([
                             'stage_history' => $previousStage ? (string) $previousStage->pr_stage_id : null,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         $updated++;
@@ -2827,7 +2877,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                             'procID' => $refId,
                             'pr_stage_id' => 7,
                             'stage_history' => $latestStage ? (string) $latestStage->pr_stage_id : null,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         $forwarded++;
@@ -2835,10 +2885,18 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     // Create/update PMU record
                     if ($this->hasValue($post->notice_of_award_number)) {
-                        \App\Models\Pmu::updateOrCreate(
+                        $pmu = \App\Models\Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
+
+                        $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                        if ($poDate) {
+                            PmuPo::updateOrCreate(
+                                ['pmu_id' => $pmu->id, 'ref_id' => $refId],
+                                ['po_date_deadline' => $poDate]
+                            );
+                        }
                     }
                 }
             });

@@ -15,11 +15,15 @@ class Pmu extends Model implements Auditable
     protected $fillable = [
         'notice_of_award_number',
         'date_forwarded',
+        'date_received',
+        'received_remarks',
     ];
 
     protected $auditInclude = [
         'notice_of_award_number',
         'date_forwarded',
+        'date_received',
+        'received_remarks',
     ];
 
     protected $auditTimestamps = true;
@@ -28,6 +32,7 @@ class Pmu extends Model implements Auditable
 
     protected $casts = [
         'date_forwarded' => 'date',
+        'date_received' => 'datetime',
     ];
 
     public function generateTags(): array

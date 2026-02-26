@@ -18,8 +18,15 @@ class PmuIndexPage extends Component
     protected $paginationTheme = 'tailwind';
 
     // Pagination
-    public $perPage = 10;
+    public $pendingPerPage = 10;
+    public $receivedPerPage = 10;
     public $itemsPerPage = 10;
+
+    // Pending table pagination
+    public $pendingPage = 1;
+
+    // Received table pagination
+    public $receivedPage = 1;
 
     // Expanded row pagination
     public $expandedPage = 1;
@@ -35,6 +42,18 @@ class PmuIndexPage extends Component
     // Collapsible functionality
     public $expandedNoaNumber = null;
 
+    // Receive Modal
+    public bool $showReceiveModal = false;
+    public ?string $receivingNoaNumber = null;
+    public ?string $receiveDate = null;
+    public ?string $receiveRemarks = null;
+
+    // Bulk Receive
+    public array $selectedNoaNumbers = [];
+    public bool $showBulkReceiveModal = false;
+    public ?string $bulkReceiveDate = null;
+    public ?string $bulkReceiveRemarks = null;
+
     // View Modal
     public bool $showViewModal = false;
     public ?string $viewNoaNumber = null;
@@ -47,7 +66,8 @@ class PmuIndexPage extends Component
 
     protected $queryString = [
         'search' => ['except' => ''],
-        'perPage' => ['except' => 10],
+        'pendingPerPage' => ['except' => 10],
+        'receivedPerPage' => ['except' => 10],
     ];
 
     public function mount()
@@ -104,6 +124,27 @@ class PmuIndexPage extends Component
         $this->resetPage();
     }
 
+    public function setPendingPage(int $page): void
+    {
+        $this->pendingPage = $page;
+    }
+
+    public function updatingPendingPerPage(): void
+    {
+        $this->pendingPage = 1;
+    }
+
+    public function setReceivedPage(int $page): void
+    {
+        $this->receivedPage = $page;
+    }
+
+    public function updatingReceivedPerPage(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    // Keep for backward compat – resets both tables
     public function updatingPerPage()
     {
         $this->resetPage();
@@ -160,31 +201,46 @@ class PmuIndexPage extends Component
             ->select(
                 'post_procurements.notice_of_award_number',
                 'pmus.date_forwarded',
-                'post_procurements.notice_of_award'
+                'post_procurements.notice_of_award',
+                'pmus.date_received',
+                'pmus.received_remarks'
             )
             ->unionAll(
                 $itemQuery->select(
                     'post_procurements.notice_of_award_number',
                     'pmus.date_forwarded',
-                    'post_procurements.notice_of_award'
+                    'post_procurements.notice_of_award',
+                    'pmus.date_received',
+                    'pmus.received_remarks'
                 )
             );
 
-        $groupedItems = \DB::table(\DB::raw('(' . $unionQuery->toSql() . ') as combined'))
+        $outerBase = \DB::table(\DB::raw('(' . $unionQuery->toSql() . ') as combined'))
             ->mergeBindings($unionQuery)
             ->select(
                 'notice_of_award_number',
                 'date_forwarded',
                 'notice_of_award',
+                'date_received',
+                'received_remarks',
                 \DB::raw('COUNT(*) as procurement_count')
             )
             ->groupBy(
                 'notice_of_award_number',
                 'date_forwarded',
-                'notice_of_award'
+                'notice_of_award',
+                'date_received',
+                'received_remarks'
             )
-            ->orderBy('date_forwarded', 'desc')
-            ->paginate($this->perPage);
+            ->orderBy('notice_of_award_number', 'desc');
+
+        $pendingItems = (clone $outerBase)
+            ->whereNull('date_received')
+            ->paginate($this->pendingPerPage, ['*'], 'pending_page', $this->pendingPage);
+
+        $receivedItems = (clone $outerBase)
+            ->whereNotNull('date_received')
+            ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
         // If an NOA is expanded, load a unified paginated list (per-lot + per-item)
         $expandedPaginator = null;
@@ -220,9 +276,13 @@ class PmuIndexPage extends Component
                     'post_procurements.resolution_award_number',
                     'post_procurements.resolution_award_date',
                     'post_procurements.awarded_amount',
+                    'post_procurements.date_receipt_of_supplier_noa',
                     'suppliers.name as supplier_name',
+                    'pmu_po.po_date_deadline',
+                    'pmu_po.po_date',
                     'pmu_po.po_contract_number',
                     'pmu_po.po_contract_number_link',
+                    'pmu_po.ntp_link',
                     'pmu_po.contract_amount as pmu_contract_amount',
                     'pmu_po.contract_signing_date as pmu_contract_signing_date',
                     'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -258,9 +318,13 @@ class PmuIndexPage extends Component
                     'post_procurements.resolution_award_number',
                     'post_procurements.resolution_award_date',
                     'post_procurements.awarded_amount',
+                    'post_procurements.date_receipt_of_supplier_noa',
                     'suppliers.name as supplier_name',
+                    'pmu_po.po_date_deadline',
+                    'pmu_po.po_date',
                     'pmu_po.po_contract_number',
                     'pmu_po.po_contract_number_link',
+                    'pmu_po.ntp_link',
                     'pmu_po.contract_amount as pmu_contract_amount',
                     'pmu_po.contract_signing_date as pmu_contract_signing_date',
                     'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -285,10 +349,30 @@ class PmuIndexPage extends Component
             );
         }
 
+        // Build warning counts (exceeded / overdue / due-soon) per NOA number
+        $today = \Carbon\Carbon::today()->toDateString();
+        $soonDate = \Carbon\Carbon::today()->addDays(3)->toDateString();
+
+        $warningCounts = \DB::table('pmus')
+            ->join('pmu_po', 'pmu_po.pmu_id', '=', 'pmus.id')
+            ->whereNotNull('pmu_po.po_date_deadline')
+            ->whereNull('pmus.deleted_at')
+            ->select(
+                'pmus.notice_of_award_number',
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NOT NULL AND pmu_po.po_date > pmu_po.po_date_deadline THEN 1 ELSE 0 END) as exceeded_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline < '{$today}' THEN 1 ELSE 0 END) as overdue_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline >= '{$today}' AND pmu_po.po_date_deadline <= '{$soonDate}' THEN 1 ELSE 0 END) as soon_count")
+            )
+            ->groupBy('pmus.notice_of_award_number')
+            ->get()
+            ->keyBy('notice_of_award_number');
+
         return view('livewire.pmu.pmu-index-page', [
-            'groupedItems' => $groupedItems,
+            'pendingItems' => $pendingItems,
+            'receivedItems' => $receivedItems,
             'expandedPaginator' => $expandedPaginator,
             'modalPaginator' => $this->buildModalPaginator(),
+            'warningCounts' => $warningCounts,
         ])->layout('components.layouts.app');
     }
 
@@ -306,9 +390,13 @@ class PmuIndexPage extends Component
             'resolution_award_number' => $p->resolution_award_number ?? null,
             'resolution_award_date' => $p->resolution_award_date ?? null,
             'awarded_amount' => $p->awarded_amount ?? null,
+            'date_receipt_of_supplier_noa' => $p->date_receipt_of_supplier_noa ?? null,
             'supplier_name' => $p->supplier_name ?? null,
+            'po_date_deadline' => $p->po_date_deadline ?? null,
+            'po_date' => $p->po_date ?? null,
             'po_contract_number' => $p->po_contract_number ?? null,
             'po_contract_number_link' => $p->po_contract_number_link ?? null,
+            'ntp_link' => $p->ntp_link ?? null,
             'contract_amount' => $p->pmu_contract_amount ?? null,
             'contract_signing_date' => $p->pmu_contract_signing_date ?? null,
             'notice_to_proceed_date' => $p->pmu_notice_to_proceed_date ?? null,
@@ -323,9 +411,13 @@ class PmuIndexPage extends Component
             'resolution_award_number' => $r->resolution_award_number ?? null,
             'resolution_award_date' => $r->resolution_award_date ?? null,
             'awarded_amount' => $r->awarded_amount ?? null,
+            'date_receipt_of_supplier_noa' => $r->date_receipt_of_supplier_noa ?? null,
             'supplier_name' => $r->supplier_name ?? null,
+            'po_date_deadline' => $r->po_date_deadline ?? null,
+            'po_date' => $r->po_date ?? null,
             'po_contract_number' => $r->po_contract_number ?? null,
             'po_contract_number_link' => $r->po_contract_number_link ?? null,
+            'ntp_link' => $r->ntp_link ?? null,
             'contract_amount' => $r->pmu_contract_amount ?? null,
             'contract_signing_date' => $r->pmu_contract_signing_date ?? null,
             'notice_to_proceed_date' => $r->pmu_notice_to_proceed_date ?? null,
@@ -376,9 +468,13 @@ class PmuIndexPage extends Component
                 'post_procurements.resolution_award_number',
                 'post_procurements.resolution_award_date',
                 'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
+                'pmu_po.po_date',
                 'pmu_po.po_contract_number',
                 'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -414,9 +510,13 @@ class PmuIndexPage extends Component
                 'post_procurements.resolution_award_number',
                 'post_procurements.resolution_award_date',
                 'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
+                'pmu_po.po_date',
                 'pmu_po.po_contract_number',
                 'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
@@ -449,5 +549,125 @@ class PmuIndexPage extends Component
         $this->viewTotalAbc = 0;
         $this->viewSupplier = null;
         $this->modalPage = 1;
+    }
+
+    public function openReceiveModal(string $noaNumber): void
+    {
+        $pmu = Pmu::where('notice_of_award_number', $noaNumber)->whereNull('deleted_at')->first();
+
+        $this->receivingNoaNumber = $noaNumber;
+        $this->receiveDate = $pmu?->date_received
+            ? $pmu->date_received->setTimezone('Asia/Manila')->format('Y-m-d\TH:i')
+            : now('Asia/Manila')->format('Y-m-d\TH:i');
+        $this->receiveRemarks = $pmu?->received_remarks ?? '';
+        $this->showReceiveModal = true;
+    }
+
+    public function confirmReceive(): void
+    {
+        $this->validate([
+            'receiveDate' => 'required|date',
+            'receiveRemarks' => 'nullable|string|max:1000',
+        ], [
+            'receiveDate.required' => 'Received date is required.',
+            'receiveDate.date' => 'Please enter a valid date.',
+        ]);
+
+        $pmu = Pmu::where('notice_of_award_number', $this->receivingNoaNumber)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$pmu) {
+            LivewireAlert::title('Error')->error()->text('PMU record not found.')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $pmu->update([
+            'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->receiveDate, 'Asia/Manila')->utc(),
+            'received_remarks' => $this->receiveRemarks ?: null,
+        ]);
+
+        $this->closeReceiveModal();
+
+        LivewireAlert::title('Marked as Received!')
+            ->success()
+            ->text('NOA ' . $this->receivingNoaNumber . ' has been marked as received.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeReceiveModal(): void
+    {
+        $this->showReceiveModal = false;
+        $this->receivingNoaNumber = null;
+        $this->receiveDate = null;
+        $this->receiveRemarks = null;
+        $this->resetValidation(['receiveDate', 'receiveRemarks']);
+    }
+
+    // ─── Bulk Receive ────────────────────────────────────────────────────────
+
+    public function toggleNoaSelection(string $noaNumber): void
+    {
+        if (in_array($noaNumber, $this->selectedNoaNumbers)) {
+            $this->selectedNoaNumbers = array_values(
+                array_filter($this->selectedNoaNumbers, fn($n) => $n !== $noaNumber)
+            );
+        } else {
+            $this->selectedNoaNumbers[] = $noaNumber;
+        }
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedNoaNumbers = [];
+    }
+
+    public function openBulkReceiveModal(): void
+    {
+        if (empty($this->selectedNoaNumbers)) {
+            return;
+        }
+        $this->bulkReceiveDate = now('Asia/Manila')->format('Y-m-d\TH:i');
+        $this->bulkReceiveRemarks = null;
+        $this->showBulkReceiveModal = true;
+    }
+
+    public function confirmBulkReceive(): void
+    {
+        $this->validate([
+            'bulkReceiveDate' => 'required|date',
+            'bulkReceiveRemarks' => 'nullable|string|max:1000',
+        ], [
+            'bulkReceiveDate.required' => 'Received date is required.',
+            'bulkReceiveDate.date' => 'Please enter a valid date.',
+        ]);
+
+        $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
+            ->whereNull('deleted_at')
+            ->update([
+                'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->bulkReceiveDate, 'Asia/Manila')->utc(),
+                'received_remarks' => $this->bulkReceiveRemarks ?: null,
+            ]);
+
+        $count = count($this->selectedNoaNumbers);
+        $this->closeBulkReceiveModal();
+        $this->selectedNoaNumbers = [];
+
+        LivewireAlert::title('Bulk Receive Successful!')
+            ->success()
+            ->text("{$count} NOA(s) have been marked as received.")
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeBulkReceiveModal(): void
+    {
+        $this->showBulkReceiveModal = false;
+        $this->bulkReceiveDate = null;
+        $this->bulkReceiveRemarks = null;
+        $this->resetValidation(['bulkReceiveDate', 'bulkReceiveRemarks']);
     }
 }

@@ -124,6 +124,7 @@ class BacPrsReceivedBPage extends Component
                 'clusterCommittee',
                 'category.bacType',
                 'fundSource',
+                'venueSpecific',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
                 'pr_items'
@@ -195,6 +196,14 @@ class BacPrsReceivedBPage extends Component
             return $p->procurement_type === 'perLot' ? 1 : $p->pr_items->count();
         });
 
+        // Add current mode, status and IB No to each procurement
+        foreach ($procurements as $procurement) {
+            $modeStatus = $this->getCurrentModeAndStatus($procurement);
+            $procurement->currentMode = $modeStatus['mode'];
+            $procurement->currentStatus = $modeStatus['status'];
+            $procurement->currentIbNo = $modeStatus['ibNo'];
+        }
+
         return view('livewire.reports.bac-prs-received-b-page', [
             'procurements' => $procurements,
             'modes' => $this->modes,
@@ -237,18 +246,23 @@ class BacPrsReceivedBPage extends Component
             if ($modeId == 1) {
                 return [
                     'mode' => $latestMop->modeOfProcurement,
-                    'status' => 'No Schedule'
+                    'status' => 'No Schedule',
+                    'ibNo' => null,
                 ];
             }
 
             // Check bidding modes (2-6)
+            $ibNo = null;
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
                 $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-                if ($bidSchedule && $bidSchedule->bidding_result) {
-                    $status = 'Completed';
+                if ($bidSchedule) {
+                    $ibNo = $bidSchedule->ib_number;
+                    if ($bidSchedule->bidding_result) {
+                        $status = 'Completed';
+                    }
                 }
             }
 
@@ -265,10 +279,11 @@ class BacPrsReceivedBPage extends Component
 
             return [
                 'mode' => $latestMop->modeOfProcurement,
-                'status' => $status
+                'status' => $status,
+                'ibNo' => $ibNo ?? null,
             ];
         } else {
-            return ['mode' => null, 'status' => 'Multiple'];
+            return ['mode' => null, 'status' => 'Multiple', 'ibNo' => null];
         }
     }
 }

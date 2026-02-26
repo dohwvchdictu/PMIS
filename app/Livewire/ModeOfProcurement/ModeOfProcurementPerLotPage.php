@@ -7,7 +7,9 @@ use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrLotPrstage;
 use App\Models\PrSvp;
+use App\Models\PmuPo;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
@@ -86,6 +88,7 @@ class ModeOfProcurementPerLotPage extends Component
     public ?string $philgepsNoticeOfAwardNo = null;
     public ?string $philgepsPostingOfAward = null;
     public ?int $supplier_id = null;
+    public ?string $dateReceiptOfSupplierNoa = null;
 
     public Collection $suppliers;
     public $queryParams = [];
@@ -179,6 +182,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
             $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
             $this->supplier_id = $post->supplier_id;
+            $this->dateReceiptOfSupplierNoa = $post->date_receipt_of_supplier_noa;
         }
     }
 
@@ -205,7 +209,6 @@ class ModeOfProcurementPerLotPage extends Component
                     $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
-                    $this->hasValue($item['obsrvr_prebid_conf']) &&
                     $this->hasValue($item['obsrvr_eligibility']) &&
                     $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                     $this->hasValue($item['obsrvr_bid']) &&
@@ -1116,6 +1119,7 @@ class ModeOfProcurementPerLotPage extends Component
             $this->philgepsNoticeOfAwardNo,
             $this->philgepsPostingOfAward,
             $this->supplier_id,
+            $this->dateReceiptOfSupplierNoa,
         ];
 
 
@@ -1131,6 +1135,7 @@ class ModeOfProcurementPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'nullable|string|max:255',
             'philgepsPostingOfAward' => 'nullable|date',
             'supplier_id' => 'nullable|integer|exists:suppliers,id',
+            'dateReceiptOfSupplierNoa' => 'nullable|date',
         ];
 
         // FIX #9: If ANY field has data, make Resolution Award Number and Date REQUIRED
@@ -1148,6 +1153,7 @@ class ModeOfProcurementPerLotPage extends Component
             'philgepsNoticeOfAwardNo' => 'PhilGEPS Notice of Award Number',
             'philgepsPostingOfAward' => 'PhilGEPS Posting of Award',
             'supplier_id' => 'Supplier',
+            'dateReceiptOfSupplierNoa' => 'Date Receipt of Supplier (NOA)',
         ];
 
         // FIX #9: Custom error messages for better UX
@@ -1186,6 +1192,7 @@ class ModeOfProcurementPerLotPage extends Component
                     'philgeps_notice_of_award_no' => $this->philgepsNoticeOfAwardNo,
                     'philgeps_posting_of_award' => $this->nullableDate($this->philgepsPostingOfAward),
                     'supplier_id' => $this->supplier_id,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->dateReceiptOfSupplierNoa),
                 ];
 
                 $postModel = PostProcurement::updateOrCreate(
@@ -1317,6 +1324,7 @@ class ModeOfProcurementPerLotPage extends Component
      * - Notice of Award Date
      * - Awarded Amount
      * - Supplier
+     * - Date Receipt of Supplier (NOA)
      */
     public function getCanForwardToPmuProperty(): bool
     {
@@ -1327,13 +1335,14 @@ class ModeOfProcurementPerLotPage extends Component
             return false;
         }
 
-        // Check all 6 required fields are filled in database
+        // Check all 7 required fields are filled in database
         return $this->hasValue($post->resolution_award_number) &&
             $this->hasValue($post->resolution_award_date) &&
             $this->hasValue($post->notice_of_award_number) &&
             $this->hasValue($post->notice_of_award) &&
             $this->hasValue($post->awarded_amount) &&
-            $this->hasValue($post->supplier_id);
+            $this->hasValue($post->supplier_id) &&
+            $this->hasValue($post->date_receipt_of_supplier_noa);
     }
 
     /**
@@ -1454,9 +1463,9 @@ class ModeOfProcurementPerLotPage extends Component
             ->first();
 
         if ($existingStage && $existingStage->actual_date_forwarded) {
-            $this->actualDateForwarded = $existingStage->actual_date_forwarded;
+            $this->actualDateForwarded = Carbon::parse($existingStage->actual_date_forwarded)->setTimezone('Asia/Manila')->format('Y-m-d\TH:i');
         } else {
-            $this->actualDateForwarded = now()->format('Y-m-d'); // Default to today
+            $this->actualDateForwarded = now('Asia/Manila')->format('Y-m-d\TH:i'); // Default to now (PHT)
         }
 
         $this->showForwardModal = true;
@@ -1482,12 +1491,17 @@ class ModeOfProcurementPerLotPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use ($utcDateForwarded) {
                 // Get all stage records for this procurement, ordered by latest first
                 $latestStage = PrLotPrstage::where('procID', $this->procID)
                     ->orderBy('created_at', 'desc')
@@ -1510,16 +1524,24 @@ class ModeOfProcurementPerLotPage extends Component
 
                         $latestStage->update([
                             'stage_history' => $stageHistory,
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         // Update PMU record with new date_forwarded
                         $post = PostProcurement::where('ref_id', $this->procID)->first();
                         if ($post && $this->hasValue($post->notice_of_award_number)) {
-                            \App\Models\Pmu::updateOrCreate(
+                            $pmu = \App\Models\Pmu::updateOrCreate(
                                 ['notice_of_award_number' => $post->notice_of_award_number],
-                                ['date_forwarded' => $this->actualDateForwarded]
+                                ['date_forwarded' => $utcDateForwarded]
                             );
+
+                            $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                            if ($poDate) {
+                                PmuPo::updateOrCreate(
+                                    ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
+                                    ['po_date_deadline' => $poDate]
+                                );
+                            }
                         }
 
                         LivewireAlert::title('Date Updated!')
@@ -1534,16 +1556,24 @@ class ModeOfProcurementPerLotPage extends Component
                             'procID' => $this->procID,
                             'pr_stage_id' => 7, // PMU Stage
                             'stage_history' => (string) $latestStageId, // Previous stage
-                            'actual_date_forwarded' => $this->actualDateForwarded,
+                            'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
                         // Insert/update PMU record
                         $post = PostProcurement::where('ref_id', $this->procID)->first();
                         if ($post && $this->hasValue($post->notice_of_award_number)) {
-                            \App\Models\Pmu::updateOrCreate(
+                            $pmu = \App\Models\Pmu::updateOrCreate(
                                 ['notice_of_award_number' => $post->notice_of_award_number],
-                                ['date_forwarded' => $this->actualDateForwarded]
+                                ['date_forwarded' => $utcDateForwarded]
                             );
+
+                            $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                            if ($poDate) {
+                                PmuPo::updateOrCreate(
+                                    ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
+                                    ['po_date_deadline' => $poDate]
+                                );
+                            }
                         }
 
                         LivewireAlert::title('Forwarded to PMU!')
@@ -1559,16 +1589,24 @@ class ModeOfProcurementPerLotPage extends Component
                         'procID' => $this->procID,
                         'pr_stage_id' => 7, // PMU Stage
                         'stage_history' => null, // No previous stage
-                        'actual_date_forwarded' => $this->actualDateForwarded,
+                        'actual_date_forwarded' => $utcDateForwarded,
                     ]);
 
                     // Insert/update PMU record
                     $post = PostProcurement::where('ref_id', $this->procID)->first();
                     if ($post && $this->hasValue($post->notice_of_award_number)) {
-                        \App\Models\Pmu::updateOrCreate(
+                        $pmu = \App\Models\Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
+
+                        $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                        if ($poDate) {
+                            PmuPo::updateOrCreate(
+                                ['pmu_id' => $pmu->id, 'ref_id' => $this->procID],
+                                ['po_date_deadline' => $poDate]
+                            );
+                        }
                     }
 
                     LivewireAlert::title('Forwarded to PMU!')
@@ -1601,6 +1639,28 @@ class ModeOfProcurementPerLotPage extends Component
     private function nullableDate($value)
     {
         return $this->hasValue($value) ? $value : null;
+    }
+
+    /**
+     * Calculate PO date: 10th calendar day from Date Receipt of Supplier (NOA).
+     * If the result falls on a Saturday, move back 1 day to Friday.
+     * If the result falls on a Sunday, move back 2 days to Friday.
+     */
+    private function calculatePoDate(?string $dateReceiptOfSupplierNoa): ?string
+    {
+        if (!$this->hasValue($dateReceiptOfSupplierNoa)) {
+            return null;
+        }
+
+        $date = Carbon::parse($dateReceiptOfSupplierNoa)->addDays(10);
+
+        if ($date->dayOfWeek === Carbon::SUNDAY) {
+            $date->subDays(2); // move back to Friday
+        } elseif ($date->dayOfWeek === Carbon::SATURDAY) {
+            $date->subDays(1); // move back to Friday
+        }
+
+        return $date->format('Y-m-d');
     }
 
     /**

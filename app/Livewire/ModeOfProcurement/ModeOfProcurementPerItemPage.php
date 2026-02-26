@@ -7,8 +7,10 @@ use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrItemPrstage;
 use App\Models\Pmu;
+use App\Models\PmuPo;
 use App\Models\PrSvp;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Component;
@@ -195,6 +197,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgepsNoticeOfAwardNo' => $post?->philgeps_notice_of_award_no ?? null,
                     'philgepsPostingOfAward' => $post?->philgeps_posting_of_award ?? null,
                     'supplier_id' => $post?->supplier_id ?? null,
+                    'dateReceiptOfSupplierNoa' => $post?->date_receipt_of_supplier_noa ?? null,
                 ];
             }
         }
@@ -221,7 +224,6 @@ class ModeOfProcurementPerItemPage extends Component
                     $this->hasValue($item['ads_post_ib']) &&
                     $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
-                    $this->hasValue($item['obsrvr_prebid_conf']) &&
                     $this->hasValue($item['obsrvr_eligibility']) &&
                     $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                     $this->hasValue($item['obsrvr_bid']) &&
@@ -1285,6 +1287,7 @@ class ModeOfProcurementPerItemPage extends Component
                     $postItem['awardNoticeNumber'] ?? null,
                     $postItem['dateOfPostingOfAwardOnPhilGEPS'] ?? null,
                     $postItem['supplier_id'] ?? null,
+                    $postItem['dateReceiptOfSupplierNoa'] ?? null,
                 ];
 
                 $hasData = $this->hasAnyValue($postFields);
@@ -1303,6 +1306,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgeps_notice_of_award_no' => $postItem['philgepsNoticeOfAwardNo'] ?? null,
                     'philgeps_posting_of_award' => $this->nullableDate($postItem['philgepsPostingOfAward'] ?? null),
                     'supplier_id' => $postItem['supplier_id'] ?? null,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($postItem['dateReceiptOfSupplierNoa'] ?? null),
                 ];
 
                 // Use ref_id as prItemID (unique per item)
@@ -1407,6 +1411,28 @@ class ModeOfProcurementPerItemPage extends Component
     private function nullableDate($value): ?string
     {
         return empty($value) ? null : $value;
+    }
+
+    /**
+     * Calculate PO date: 10th calendar day from Date Receipt of Supplier (NOA).
+     * If the result falls on a Saturday, move back 1 day to Friday.
+     * If the result falls on a Sunday, move back 2 days to Friday.
+     */
+    private function calculatePoDate(?string $dateReceiptOfSupplierNoa): ?string
+    {
+        if (!$this->hasValue($dateReceiptOfSupplierNoa)) {
+            return null;
+        }
+
+        $date = Carbon::parse($dateReceiptOfSupplierNoa)->addDays(10);
+
+        if ($date->dayOfWeek === Carbon::SUNDAY) {
+            $date->subDays(2); // move back to Friday
+        } elseif ($date->dayOfWeek === Carbon::SATURDAY) {
+            $date->subDays(1); // move back to Friday
+        }
+
+        return $date->format('Y-m-d');
     }
 
     /**
@@ -2704,6 +2730,7 @@ class ModeOfProcurementPerItemPage extends Component
             'philgepsNoticeOfAwardNo' => $firstPostItem['philgepsNoticeOfAwardNo'] ?? '',
             'philgepsPostingOfAward' => $firstPostItem['philgepsPostingOfAward'] ?? '',
             'supplier_id' => $firstPostItem['supplier_id'] ?? '',
+            'dateReceiptOfSupplierNoa' => $firstPostItem['dateReceiptOfSupplierNoa'] ?? '',
         ];
 
         // Populate selected_items for display in the table
@@ -2743,7 +2770,8 @@ class ModeOfProcurementPerItemPage extends Component
             'awardedAmount',
             'philgepsNoticeOfAwardNo',
             'philgepsPostingOfAward',
-            'supplier_id'
+            'supplier_id',
+            'dateReceiptOfSupplierNoa',
         ];
 
         foreach ($fields as $field) {
@@ -2776,6 +2804,7 @@ class ModeOfProcurementPerItemPage extends Component
                     'philgeps_notice_of_award_no' => $this->postBulkEditData['philgepsNoticeOfAwardNo'] ?: null,
                     'philgeps_posting_of_award' => $this->nullableDate($this->postBulkEditData['philgepsPostingOfAward']),
                     'supplier_id' => $this->postBulkEditData['supplier_id'] ?: null,
+                    'date_receipt_of_supplier_noa' => $this->nullableDate($this->postBulkEditData['dateReceiptOfSupplierNoa']),
                 ];
 
                 PostProcurement::updateOrCreate(
@@ -2841,7 +2870,8 @@ class ModeOfProcurementPerItemPage extends Component
                 ($postItem['awardedAmount'] ?? null) !== ($firstPostItem['awardedAmount'] ?? null) ||
                 ($postItem['philgepsNoticeOfAwardNo'] ?? null) !== ($firstPostItem['philgepsNoticeOfAwardNo'] ?? null) ||
                 ($postItem['philgepsPostingOfAward'] ?? null) !== ($firstPostItem['philgepsPostingOfAward'] ?? null) ||
-                ($postItem['supplier_id'] ?? null) !== ($firstPostItem['supplier_id'] ?? null)
+                ($postItem['supplier_id'] ?? null) !== ($firstPostItem['supplier_id'] ?? null) ||
+                ($postItem['dateReceiptOfSupplierNoa'] ?? null) !== ($firstPostItem['dateReceiptOfSupplierNoa'] ?? null)
             ) {
                 $allIdentical = false;
                 break;
@@ -2858,6 +2888,7 @@ class ModeOfProcurementPerItemPage extends Component
             $this->postBulkEditData['philgepsNoticeOfAwardNo'] = $firstPostItem['philgepsNoticeOfAwardNo'] ?? '';
             $this->postBulkEditData['philgepsPostingOfAward'] = $firstPostItem['philgepsPostingOfAward'] ?? '';
             $this->postBulkEditData['supplier_id'] = $firstPostItem['supplier_id'] ?? '';
+            $this->postBulkEditData['dateReceiptOfSupplierNoa'] = $firstPostItem['dateReceiptOfSupplierNoa'] ?? '';
         }
     }
 
@@ -3074,7 +3105,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 return true;
             }
@@ -3100,7 +3132,8 @@ class ModeOfProcurementPerItemPage extends Component
                 $this->hasValue($post->notice_of_award_number) &&
                 $this->hasValue($post->notice_of_award) &&
                 $this->hasValue($post->awarded_amount) &&
-                $this->hasValue($post->supplier_id)
+                $this->hasValue($post->supplier_id) &&
+                $this->hasValue($post->date_receipt_of_supplier_noa)
             ) {
                 $count++;
             }
@@ -3228,8 +3261,8 @@ class ModeOfProcurementPerItemPage extends Component
 
         $uniqueDates = array_unique($dates);
         $this->actualDateForwarded = count($uniqueDates) === 1
-            ? reset($uniqueDates)
-            : now()->format('Y-m-d');
+            ? Carbon::parse(reset($uniqueDates))->setTimezone('Asia/Manila')->format('Y-m-d\TH:i')
+            : now('Asia/Manila')->format('Y-m-d\TH:i');
 
         $this->showForwardModal = true;
     }
@@ -3253,16 +3286,21 @@ class ModeOfProcurementPerItemPage extends Component
         $this->validate([
             'actualDateForwarded' => 'required|date'
         ], [
-            'actualDateForwarded.required' => 'Please enter the actual date forwarded.',
-            'actualDateForwarded.date' => 'Please enter a valid date.'
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
         ]);
 
         $forwarded = 0;
         $updated = 0;
         $skipped = 0;
 
+        // Convert user-entered Asia/Manila datetime to UTC for storage
+        $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+            ->utc()
+            ->format('Y-m-d H:i:s');
+
         try {
-            DB::transaction(function () use (&$forwarded, &$updated, &$skipped) {
+            DB::transaction(function () use (&$forwarded, &$updated, &$skipped, $utcDateForwarded) {
                 // Stage 7 per prItemID
                 foreach ($this->selectedPostItems as $prItemID) {
                     $prItem = collect($this->form['items'])->firstWhere('prItemID', $prItemID);
@@ -3318,10 +3356,18 @@ class ModeOfProcurementPerItemPage extends Component
                     }
 
                     if ($this->hasValue($post->notice_of_award_number)) {
-                        Pmu::updateOrCreate(
+                        $pmu = Pmu::updateOrCreate(
                             ['notice_of_award_number' => $post->notice_of_award_number],
-                            ['date_forwarded' => $this->actualDateForwarded]
+                            ['date_forwarded' => $utcDateForwarded]
                         );
+
+                        $poDate = $this->calculatePoDate($post->date_receipt_of_supplier_noa);
+                        if ($poDate) {
+                            PmuPo::updateOrCreate(
+                                ['pmu_id' => $pmu->id, 'ref_id' => $prItemID],
+                                ['po_date' => $poDate]
+                            );
+                        }
                     }
                 }
             });

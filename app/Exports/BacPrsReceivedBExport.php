@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Procurement;
+use App\Models\BidSchedule;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -40,6 +41,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
                 'clusterCommittee',
                 'category.bacType',
                 'fundSource',
+                'venueSpecific',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
                 'pr_items'
@@ -104,15 +106,21 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
     {
         return [
             'PR Number',
-            'Procurement Program / Project',
+            'Description',
             'Date Received',
             'Unit / Cluster',
             'Category',
             'Immediate Date Needed',
             'Fund Source',
             'ABC Amount',
+            'Division',
+            'Venue',
+            'Approved PPMP',
+            'EPA',
             'Procurement Stage',
             'Current Mode',
+            'IB No',
+            'DTrack No',
         ];
     }
 
@@ -134,9 +142,21 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             }
         };
 
-        // Get current mode
+        // Get current mode and IB No
         $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
         $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
+        $ibNo = 'N/A';
+        if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
+            $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $ibNo = $bidSchedule?->ib_number ?? 'N/A';
+        }
+
+        $approvedPpmp = $procurement->approved_ppmp;
+        $approvedPpmpLabel = ($approvedPpmp === null || $approvedPpmp === '')
+            ? 'N/A'
+            : (($approvedPpmp == '1' || strtolower((string) $approvedPpmp) === 'yes') ? 'Yes' : $approvedPpmp);
 
         return [
             $procurement->pr_number,
@@ -147,8 +167,14 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $formatDate($procurement->immediate_date_needed),
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($procurement->abc ?? 0, 2),
+            $procurement->division?->divisions ?? 'N/A',
+            $procurement->venueSpecific?->name ?? ($procurement->category_venue ?? 'N/A'),
+            $approvedPpmpLabel,
+            $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
             $currentMode,
+            $ibNo,
+            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -169,6 +195,11 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         $latestMop = $item->mopItems->sortByDesc('mode_order')->first();
         $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
 
+        $approvedPpmp = $procurement->approved_ppmp;
+        $approvedPpmpLabel = ($approvedPpmp === null || $approvedPpmp === '')
+            ? 'N/A'
+            : (($approvedPpmp == '1' || strtolower((string) $approvedPpmp) === 'yes') ? 'Yes' : $approvedPpmp);
+
         return [
             $procurement->pr_number,
             $item->description,
@@ -178,8 +209,14 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $formatDate($procurement->immediate_date_needed),
             $procurement->fundSource?->fundsources ?? 'N/A',
             number_format($item->amount ?? 0, 2),
+            $procurement->division?->divisions ?? 'N/A',
+            $procurement->venueSpecific?->name ?? ($procurement->category_venue ?? 'N/A'),
+            $approvedPpmpLabel,
+            $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
             $currentMode,
+            'N/A',
+            $procurement->dtrack_no ?? 'N/A',
         ];
     }
 
@@ -188,7 +225,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:J1')->applyFromArray([
+        $sheet->getStyle('A1:P1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -211,8 +248,8 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             ],
         ]);
 
-        // Center align all data cells (A to J)
-        $sheet->getStyle('A2:J' . $highestRow)->applyFromArray([
+        // Center align all data cells (A to O)
+        $sheet->getStyle('A2:P' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -245,7 +282,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             ],
         ]);
 
-        // Wrap text for Procurement Stage column (I)
+        // Wrap text for Division column (I)
         $sheet->getStyle('I2:I' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -254,8 +291,26 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             ],
         ]);
 
-        // Wrap text for Current Mode column (J)
+        // Wrap text for Venue column (J)
         $sheet->getStyle('J2:J' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Wrap text for Procurement Stage column (M)
+        $sheet->getStyle('M2:M' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Wrap text for Current Mode column (N)
+        $sheet->getStyle('N2:N' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -277,8 +332,14 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'F' => 22, // Immediate Date Needed
             'G' => 25, // Fund Source
             'H' => 18, // ABC Amount
-            'I' => 30, // Procurement Stage
-            'J' => 25, // Current Mode
+            'I' => 25, // Division
+            'J' => 30, // Venue
+            'K' => 18, // Approved PPMP
+            'L' => 10, // EPA
+            'M' => 30, // Procurement Stage
+            'N' => 25, // Current Mode
+            'O' => 20, // IB No
+            'P' => 20, // DTrack No
         ];
     }
 }

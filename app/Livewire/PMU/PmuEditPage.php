@@ -26,9 +26,12 @@ class PmuEditPage extends Component
 
     // Form fields
     public $date_forwarded = '';
+    public $po_date = '';
+    public $po_date_deadline_display = null; // Earliest PO Date Deadline among selected items (read-only, for warning)
     public $contract_amount = '';
     public $po_contract_number = '';
     public $po_contract_number_link = '';
+    public $ntp_link = '';
     public $contract_signing_date = '';
     public $notice_to_proceed_date = '';
     public $remarks = '';
@@ -48,18 +51,26 @@ class PmuEditPage extends Component
 
     public function update()
     {
+        $poDateRule = 'nullable|date';
+        if ($this->po_date_deadline_display) {
+            $poDateRule .= '|before_or_equal:' . $this->po_date_deadline_display;
+        }
+
         $this->validate([
+            'po_date' => $poDateRule,
             'contract_amount' => 'nullable|numeric|min:0',
             'po_contract_number' => 'required|string|max:255',
             'po_contract_number_link' => 'nullable|url|max:2048',
-            'contract_signing_date' => 'required|date',
+            'ntp_link' => 'nullable|url|max:2048',
+            'contract_signing_date' => 'nullable|date',
             'notice_to_proceed_date' => 'nullable|date',
             'remarks' => 'nullable|string',
         ], [
+            'po_date.date' => 'PO Date must be a valid date.',
+            'po_date.before_or_equal' => 'PO Date must not exceed the PO Date Deadline (' . ($this->po_date_deadline_display ? \Carbon\Carbon::parse($this->po_date_deadline_display)->format('M d, Y') : '') . ').',
             'contract_amount.numeric' => 'Contract amount must be a valid number.',
             'contract_amount.min' => 'Contract amount must be 0 or greater.',
             'po_contract_number.required' => 'PO / Contract number is required.',
-            'contract_signing_date.required' => 'Contract signing date is required.',
             'contract_signing_date.date' => 'Contract signing date must be a valid date.',
             'notice_to_proceed_date.date' => 'Notice to proceed date must be a valid date.',
         ]);
@@ -86,9 +97,11 @@ class PmuEditPage extends Component
                         'pmu_id' => $pmu->id,
                     ],
                     [
+                        'po_date' => ($this->po_contract_number && $this->po_date) ? $this->po_date : null,
                         'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
                         'po_contract_number' => $this->po_contract_number ?: null,
                         'po_contract_number_link' => $this->po_contract_number_link ?: null,
+                        'ntp_link' => $this->ntp_link ?: null,
                         'contract_signing_date' => $this->contract_signing_date ?: null,
                         'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
                         'remarks' => $this->remarks ?: null,
@@ -222,13 +235,22 @@ class PmuEditPage extends Component
             ->get()
             ->keyBy('ref_id');
 
+        // Compute po_date_deadline_display: earliest PO Date Deadline among selected items (most restrictive constraint)
+        $this->po_date_deadline_display = collect($this->selectedItems)
+            ->map(fn($rowKey) => $existing->get($rowKey)?->po_date_deadline?->format('Y-m-d'))
+            ->filter()
+            ->sort()
+            ->first();
+
         // Build a normalised snapshot for each selected item (null if no record)
         $snapshots = collect($this->selectedItems)->map(function ($rowKey) use ($existing) {
             $row = $existing->get($rowKey);
             return [
+                'po_date' => $row && $row->po_date ? $row->po_date->format('Y-m-d') : '',
                 'contract_amount' => $row ? (string) $row->contract_amount : '',
                 'po_contract_number' => $row ? ($row->po_contract_number ?? '') : '',
                 'po_contract_number_link' => $row ? ($row->po_contract_number_link ?? '') : '',
+                'ntp_link' => $row ? ($row->ntp_link ?? '') : '',
                 'contract_signing_date' => $row && $row->contract_signing_date ? $row->contract_signing_date->format('Y-m-d') : '',
                 'notice_to_proceed_date' => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format('Y-m-d') : '',
                 'remarks' => $row ? ($row->remarks ?? '') : '',
@@ -247,11 +269,13 @@ class PmuEditPage extends Component
             return;
         }
 
-        // Pre-fill form with the common data (or blank if none exist yet)
+        // Pre-fill form with common data; po_date falls back to PO Date Deadline if not yet set
         $data = $snapshots->first();
+        $this->po_date = $data['po_date'] ?: ($this->po_date_deadline_display ?? '');
         $this->contract_amount = $data['contract_amount'];
         $this->po_contract_number = $data['po_contract_number'];
         $this->po_contract_number_link = $data['po_contract_number_link'];
+        $this->ntp_link = $data['ntp_link'];
         $this->contract_signing_date = $data['contract_signing_date'];
         $this->notice_to_proceed_date = $data['notice_to_proceed_date'];
         $this->remarks = $data['remarks'];
@@ -262,9 +286,12 @@ class PmuEditPage extends Component
     public function closeBulkEditModal(): void
     {
         $this->showBulkEditModal = false;
+        $this->po_date = '';
+        $this->po_date_deadline_display = null;
         $this->contract_amount = '';
         $this->po_contract_number = '';
         $this->po_contract_number_link = '';
+        $this->ntp_link = '';
         $this->contract_signing_date = '';
         $this->notice_to_proceed_date = '';
         $this->remarks = '';
@@ -300,6 +327,7 @@ class PmuEditPage extends Component
                 'procurements.procurement_program_project',
                 'procurements.abc',
                 'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name'
             )
             ->get()
@@ -313,6 +341,7 @@ class PmuEditPage extends Component
                 'abc' => $p->abc,
                 'awarded_amount' => $p->awarded_amount,
                 'supplier_name' => $p->supplier_name,
+                'date_receipt_of_supplier_noa' => $p->date_receipt_of_supplier_noa,
             ])->toBase();
 
         $items = DB::table('pr_items')
@@ -333,6 +362,7 @@ class PmuEditPage extends Component
                 'pr_items.description',
                 'pr_items.amount',
                 'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
                 'suppliers.name as supplier_name'
             )
             ->orderBy('procurements.pr_number')
@@ -348,6 +378,7 @@ class PmuEditPage extends Component
                 'abc' => $r->amount,
                 'awarded_amount' => $r->awarded_amount,
                 'supplier_name' => $r->supplier_name,
+                'date_receipt_of_supplier_noa' => $r->date_receipt_of_supplier_noa,
             ]);
 
         return $lots->merge($items);

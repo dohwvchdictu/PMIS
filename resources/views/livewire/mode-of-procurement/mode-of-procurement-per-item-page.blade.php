@@ -1288,6 +1288,10 @@
                                             class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
                                             Supplier
                                         </th>
+                                        <th
+                                            class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                            Date Receipt of Supplier (NOA)
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -1361,7 +1365,7 @@
                                                             <div class="text-xs text-gray-600 dark:text-gray-400">
                                                                 <span
                                                                     class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
-                                                                {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->format('F d, Y') : 'N/A' }}
+                                                                {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') : 'N/A' }}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1435,6 +1439,11 @@
                                                         </option>
                                                     @endforeach
                                                 </select>
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                <input type="date"
+                                                    wire:model.defer="postItems.{{ $prItemID }}.dateReceiptOfSupplierNoa"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                             </td>
                                         </tr>
                                     @empty
@@ -2235,8 +2244,8 @@
                     </button>
                     <button type="button" onclick="confirmBulkEditSave()"
                         class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 13l4 4L19 7" />
                         </svg>
@@ -2427,6 +2436,10 @@
                                     class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 w-72">
                                     Supplier
                                 </th>
+                                <th
+                                    class="px-2 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600">
+                                    Date Receipt of Supplier (NOA)
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2481,6 +2494,11 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                </td>
+                                <td class="px-2 py-2">
+                                    <input type="date"
+                                        wire:model.defer="postBulkEditData.dateReceiptOfSupplierNoa"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white">
                                 </td>
                             </tr>
                         </tbody>
@@ -2565,9 +2583,10 @@
             <div class="mb-4">
                 <label for="actualDateForwardedPerItem"
                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Actual Date Forwarded <span class="text-red-500">*</span>
+                    Actual Date &amp; Time Forwarded <span class="text-red-500">*</span>
                 </label>
-                <input type="date" id="actualDateForwardedPerItem" wire:model.defer="actualDateForwarded"
+                <input type="datetime-local" id="actualDateForwardedPerItem"
+                    wire:model.defer="actualDateForwarded"
                     class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white"
                     required>
                 @error('actualDateForwarded')
