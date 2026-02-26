@@ -96,8 +96,17 @@ class LoginPage extends Component
 
         // After successful login, handle the photo
         $photoUrl = $response['employee']['photoUrl'] ?? null;
+        $employeeId = $response['employee']['id'] ?? null;
 
-        if ($photoUrl) {
+        // Clear any previously cached copies so we always get the latest
+        if ($employeeId) {
+            Storage::disk('public')->delete([
+                'employees/' . $employeeId . '.jpg',
+                'photos/' . $employeeId,
+            ]);
+        }
+
+        if ($photoUrl && $employeeId) {
             try {
                 $res = Http::withHeaders([
                     'Authorization' => 'Bearer ' . ($response['token'] ?? ''),
@@ -105,7 +114,7 @@ class LoginPage extends Component
 
                 if ($res->successful()) {
                     $contents = $res->body();
-                    $filename = 'employees/' . $response['employee']['id'] . '.jpg';
+                    $filename = 'employees/' . $employeeId . '.jpg';
 
                     Storage::disk('public')->put($filename, $contents);
                     session(['user_photo' => asset('storage/' . $filename)]);

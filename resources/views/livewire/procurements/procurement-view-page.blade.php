@@ -3373,38 +3373,13 @@
                                 $isFirst = $index === 0;
                                 $isLast = $index === $totalStages - 1;
 
-                                // User initials (up to 2 chars)
-                                $initials = collect(explode(' ', trim($history['user'])))
-                                    ->filter()
-                                    ->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))
-                                    ->take(2)
-                                    ->implode('');
-                                if (!$initials) {
-                                    $initials = '?';
-                                }
-
-                                // Avatar colour palette (deterministic by first char)
-                                $avatarPalettes = [
-                                    'A' => 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-                                    'B' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-                                    'C' => 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
-                                    'D' => 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
-                                    'E' =>
-                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-                                    'F' => 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300',
-                                    'G' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
-                                    'H' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-                                    'I' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-                                    'J' => 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-                                    'K' => 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
-                                    'L' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
-                                    'M' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-                                    'N' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-                                ];
-                                $firstChar = mb_strtoupper(mb_substr($history['user'], 0, 1));
-                                $avatarClass =
-                                    $avatarPalettes[$firstChar] ??
-                                    'bg-gray-100 text-gray-600 dark:bg-neutral-700 dark:text-gray-300';
+                                // Connector colour: emerald at top, fades to gray toward oldest
+                                // Interpolate between emerald-500 (16,185,129) and gray-300 (209,213,219)
+                                $ratio = $totalStages > 1 ? $index / ($totalStages - 1) : 0;
+                                $cr = (int) round(16 + (209 - 16) * $ratio);
+                                $cg = (int) round(185 + (213 - 185) * $ratio);
+                                $cb = (int) round(129 + (219 - 129) * $ratio);
+                                $connectorColor = "rgb({$cr},{$cg},{$cb})";
                             @endphp
 
                             <div class="flex gap-4">
@@ -3420,14 +3395,13 @@
                                             </svg>
                                         </div>
                                     @else
-                                        <div
-                                            class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200 dark:border-neutral-600 bg-white dark:bg-neutral-800">
-                                            <span
-                                                class="text-[10px] font-bold text-gray-400 dark:text-gray-500">{{ $totalStages - $index }}</span>
+                                        <div class="w-8 h-8 rounded-full flex-shrink-0 border-2 bg-white dark:bg-neutral-800"
+                                            style="border-color: {{ $connectorColor }};">
                                         </div>
                                     @endif
                                     @if (!$isLast)
-                                        <div class="w-px flex-1 mt-1.5 mb-1 bg-gray-200 dark:bg-neutral-700"></div>
+                                        <div class="w-px flex-1 mt-1.5 mb-1"
+                                            style="background-color: {{ $connectorColor }};"></div>
                                     @endif
                                 </div>
 
@@ -3465,22 +3439,6 @@
 
                                             {{-- User + date row --}}
                                             <div class="flex items-center gap-2">
-                                                {{-- Avatar: real photo or initials fallback --}}
-                                                @if (!empty($history['photo_url']))
-                                                    <img src="{{ $history['photo_url'] }}"
-                                                        alt="{{ $history['user'] }}"
-                                                        class="{{ $isFirst ? 'w-8 h-8' : 'w-6 h-6' }} rounded-full flex-shrink-0 object-cover ring-1 ring-gray-200 dark:ring-neutral-600"
-                                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                                    <div class="{{ $isFirst ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' }} rounded-full flex-shrink-0 items-center justify-center font-bold {{ $avatarClass }}"
-                                                        style="display:none;">
-                                                        {{ $initials }}
-                                                    </div>
-                                                @else
-                                                    <div
-                                                        class="{{ $isFirst ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' }} rounded-full flex-shrink-0 flex items-center justify-center font-bold {{ $avatarClass }}">
-                                                        {{ $initials }}
-                                                    </div>
-                                                @endif
                                                 <span
                                                     class="{{ $isFirst ? 'text-sm' : 'text-xs' }} font-medium {{ $isFirst ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400' }} truncate">
                                                     {{ $history['user'] }}
