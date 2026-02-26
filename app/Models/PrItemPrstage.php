@@ -19,6 +19,7 @@ class PrItemPrstage extends Model implements Auditable
         'prItemID',
         'pr_stage_id',
         'stage_history',
+        'actual_date_forwarded',
     ];
 
     protected $auditInclude = [
@@ -26,6 +27,7 @@ class PrItemPrstage extends Model implements Auditable
         'prItemID',
         'pr_stage_id',
         'stage_history',
+        'actual_date_forwarded',
     ];
     protected $auditTimestamps = true;
 

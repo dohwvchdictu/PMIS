@@ -2902,7 +2902,13 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO Date</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $pmuRecord['po_date'] ? \Carbon\Carbon::parse($pmuRecord['po_date'])->format('M d, Y') : '—' }}
+                                            </p>
+                                        </div>
                                         <div class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3">
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO / Contract
                                                 Number</p>
@@ -3116,6 +3122,13 @@
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO
+                                                            Date</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $itemPmu['po_date'] ? \Carbon\Carbon::parse($itemPmu['po_date'])->format('M d, Y') : '—' }}
+                                                        </p>
+                                                    </div>
                                                     <div class="bg-gray-50 dark:bg-neutral-900 rounded-lg p-3">
                                                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">PO /
                                                             Contract Number</p>

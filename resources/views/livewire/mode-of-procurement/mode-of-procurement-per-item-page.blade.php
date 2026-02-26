@@ -1300,26 +1300,14 @@
                                             $prItemID = $item['prItemID'] ?? null;
                                             $isSelectedPost = in_array($prItemID, $selectedPostItems ?? []);
 
-                                            $isForwarded =
-                                                $prItemID &&
-                                                \App\Models\PrItemPrstage::where('prItemID', $prItemID)
+                                            $forwardedStage = $prItemID
+                                                ? \App\Models\PrItemPrstage::where('prItemID', $prItemID)
                                                     ->where('pr_stage_id', 7)
-                                                    ->exists();
-
-                                            $forwardedDate = null;
-                                            if ($isForwarded) {
-                                                $postRecord = \App\Models\PostProcurement::where(
-                                                    'ref_id',
-                                                    $prItemID,
-                                                )->first();
-                                                if ($postRecord && $postRecord->notice_of_award_number) {
-                                                    $pmuRecord = \App\Models\Pmu::where(
-                                                        'notice_of_award_number',
-                                                        $postRecord->notice_of_award_number,
-                                                    )->first();
-                                                    $forwardedDate = $pmuRecord?->date_forwarded;
-                                                }
-                                            }
+                                                    ->orderBy('id', 'desc')
+                                                    ->first()
+                                                : null;
+                                            $isForwarded = $forwardedStage !== null;
+                                            $forwardedDate = $forwardedStage?->actual_date_forwarded;
                                         @endphp
 
                                         <tr wire:key="post-row-{{ $prItemID }}"

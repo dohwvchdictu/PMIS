@@ -458,6 +458,7 @@ class ProcurementViewPage extends Component
                             ->first();
                         if ($pmuPo) {
                             $this->pmuRecord = [
+                                'po_date' => $pmuPo->po_date?->format('Y-m-d'),
                                 'po_contract_number' => $pmuPo->po_contract_number,
                                 'po_contract_number_link' => $pmuPo->po_contract_number_link,
                                 'ntp_link' => $pmuPo->ntp_link,
@@ -515,6 +516,7 @@ class ProcurementViewPage extends Component
                                     'notice_of_award_number' => $post->notice_of_award_number,
                                     'notice_of_award' => $post->notice_of_award,
                                     'date_forwarded' => $pmu->date_forwarded?->format('Y-m-d'),
+                                    'po_date' => $pmuPo->po_date?->format('Y-m-d'),
                                     'po_contract_number' => $pmuPo->po_contract_number,
                                     'po_contract_number_link' => $pmuPo->po_contract_number_link,
                                     'ntp_link' => $pmuPo->ntp_link,
