@@ -1557,18 +1557,15 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // COMPETITIVE BIDDING MODES
         if (in_array($modeId, self::BIDDING_MODES)) {
-            // Check all required bidding fields are filled
             return $this->hasValue($item['bidding_number']) &&
                 $this->hasValue($item['ib_number']) &&
                 $this->hasValue($item['philgeps_posting_ref_no']) &&
                 $this->hasValue($item['ads_post_ib']) &&
-                $this->hasValue($item['pre_proc_conference']) &&
                 $this->hasValue($item['list_invited_observers']) &&
                 $this->hasValue($item['obsrvr_eligibility']) &&
                 $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                 $this->hasValue($item['obsrvr_bid']) &&
                 $this->hasValue($item['obsrvr_post_qual']) &&
-                $this->hasValue($item['pre_bid_conf']) &&
                 $this->hasValue($item['eligibility_check']) &&
                 $this->hasValue($item['sub_open_bids']) &&
                 $this->hasValue($item['bid_evaluation_date']) &&

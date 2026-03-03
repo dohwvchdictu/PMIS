@@ -207,18 +207,15 @@ class ModeOfProcurementPerLotPage extends Component
                     $this->hasValue($item['ib_number']) &&
                     $this->hasValue($item['philgeps_posting_ref_no']) &&
                     $this->hasValue($item['ads_post_ib']) &&
-                    $this->hasValue($item['pre_proc_conference']) &&
                     $this->hasValue($item['list_invited_observers']) &&
                     $this->hasValue($item['obsrvr_eligibility']) &&
                     $this->hasValue($item['obsrvr_sub_open_of_bid']) &&
                     $this->hasValue($item['obsrvr_bid']) &&
                     $this->hasValue($item['obsrvr_post_qual']) &&
-                    $this->hasValue($item['pre_bid_conf']) &&
                     $this->hasValue($item['eligibility_check']) &&
                     $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bid_evaluation_date']) &&
                     $this->hasValue($item['post_qualification_date']) &&
-                    $this->hasValue($item['sub_open_bids']) &&
                     $this->hasValue($item['bidding_result']) &&
                     ($item['bidding_result'] === 'SUCCESSFUL');
 
