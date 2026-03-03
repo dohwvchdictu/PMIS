@@ -12,12 +12,14 @@ use Illuminate\Validation\ValidationException;
 
 class PmuEditPage extends Component
 {
-    public $noticeOfAwardNumber;
-    public $noticeOfAward = null;
+    private const DATE_FORMAT = 'Y-m-d';
+
+    public string $noticeOfAwardNumber = '';
+    public ?string $noticeOfAward = null;
 
     // Linked PRs pagination
-    public $editPage = 1;
-    public $editPerPage = 10;
+    public int $editPage = 1;
+    public int $editPerPage = 10;
 
     // Bulk edit selection
     public array $selectedItems = [];
@@ -25,18 +27,20 @@ class PmuEditPage extends Component
     public bool $showBulkEditModal = false;
 
     // Form fields
-    public $date_forwarded = '';
-    public $po_date = '';
-    public $po_date_deadline_display = null; // Earliest PO Date Deadline among selected items (read-only, for warning)
-    public $contract_amount = '';
-    public $po_contract_number = '';
-    public $po_contract_number_link = '';
-    public $ntp_link = '';
-    public $contract_signing_date = '';
-    public $notice_to_proceed_date = '';
-    public $remarks = '';
+    public string $date_forwarded = '';
+    public string $po_date = '';
+    public ?string $po_date_deadline_display = null; // Earliest PO Date Deadline among selected items (read-only, for warning)
+    public string $contract_amount = '';
+    public string $po_contract_number = '';
+    public string $po_contract_number_link = '';
+    public string $ntp_link = '';
+    public string $contract_signing_date = '';
+    public string $notice_to_proceed_date = '';
+    public string $remarks = '';
 
-    public function mount($id)
+    private \Illuminate\Support\Collection|null $combinedRowsCache = null;
+
+    public function mount(string $id): void
     {
         $this->noticeOfAwardNumber = $id;
 
@@ -46,10 +50,10 @@ class PmuEditPage extends Component
             ->where('notice_of_award_number', $id)
             ->value('notice_of_award');
 
-        $this->date_forwarded = $record->date_forwarded ? $record->date_forwarded->format('Y-m-d') : '';
+        $this->date_forwarded = $record->date_forwarded ? $record->date_forwarded->format(self::DATE_FORMAT) : '';
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate([
             'po_date' => 'nullable|date',
@@ -116,9 +120,13 @@ class PmuEditPage extends Component
                 ->show();
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('PmuEditPage: Failed to update PO records', [
+                'pmu_id' => $this->noticeOfAwardNumber,
+                'error' => $e->getMessage(),
+            ]);
             LivewireAlert::title('Error')
                 ->error()
-                ->text('Failed to save records: ' . $e->getMessage())
+                ->text('Failed to save records. Please try again or contact support.')
                 ->toast()
                 ->position('top-end')
                 ->show();
@@ -161,16 +169,20 @@ class PmuEditPage extends Component
             return redirect()->route('pmu.index');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('PmuEditPage: Failed to update PMU record', [
+                'pmu_id' => $this->noticeOfAwardNumber,
+                'error' => $e->getMessage(),
+            ]);
             LivewireAlert::title('Error')
                 ->error()
-                ->text('Failed to update record: ' . $e->getMessage())
+                ->text('Failed to update record. Please try again or contact support.')
                 ->toast()
                 ->position('top-end')
                 ->show();
         }
     }
 
-    public function cancel()
+    public function cancel(): \Illuminate\Http\RedirectResponse
     {
         return redirect()->route('pmu.index');
     }
@@ -231,7 +243,7 @@ class PmuEditPage extends Component
 
         // Compute po_date_deadline_display: earliest PO Date Deadline among selected items (most restrictive constraint)
         $this->po_date_deadline_display = collect($this->selectedItems)
-            ->map(fn($rowKey) => $existing->get($rowKey)?->po_date_deadline?->format('Y-m-d'))
+            ->map(fn($rowKey) => $existing->get($rowKey)?->po_date_deadline?->format(self::DATE_FORMAT))
             ->filter()
             ->sort()
             ->first();
@@ -240,13 +252,13 @@ class PmuEditPage extends Component
         $snapshots = collect($this->selectedItems)->map(function ($rowKey) use ($existing) {
             $row = $existing->get($rowKey);
             return [
-                'po_date' => $row && $row->po_date ? $row->po_date->format('Y-m-d') : '',
+                'po_date' => $row && $row->po_date ? $row->po_date->format(self::DATE_FORMAT) : '',
                 'contract_amount' => $row ? (string) $row->contract_amount : '',
                 'po_contract_number' => $row ? ($row->po_contract_number ?? '') : '',
                 'po_contract_number_link' => $row ? ($row->po_contract_number_link ?? '') : '',
                 'ntp_link' => $row ? ($row->ntp_link ?? '') : '',
-                'contract_signing_date' => $row && $row->contract_signing_date ? $row->contract_signing_date->format('Y-m-d') : '',
-                'notice_to_proceed_date' => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format('Y-m-d') : '',
+                'contract_signing_date' => $row && $row->contract_signing_date ? $row->contract_signing_date->format(self::DATE_FORMAT) : '',
+                'notice_to_proceed_date' => $row && $row->notice_to_proceed_date ? $row->notice_to_proceed_date->format(self::DATE_FORMAT) : '',
                 'remarks' => $row ? ($row->remarks ?? '') : '',
             ];
         })->values();
@@ -306,6 +318,11 @@ class PmuEditPage extends Component
 
     private function fetchCombinedRows(): \Illuminate\Support\Collection
     {
+        // Return cached results if already fetched in this request cycle
+        if ($this->combinedRowsCache !== null) {
+            return $this->combinedRowsCache;
+        }
+
         $id = $this->noticeOfAwardNumber;
 
         $lots = Procurement::query()
@@ -338,6 +355,7 @@ class PmuEditPage extends Component
                 'date_receipt_of_supplier_noa' => $p->date_receipt_of_supplier_noa,
             ])->toBase();
 
+        // Cache the combined result before returning
         $items = DB::table('pr_items')
             ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
             ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
@@ -375,7 +393,7 @@ class PmuEditPage extends Component
                 'date_receipt_of_supplier_noa' => $r->date_receipt_of_supplier_noa,
             ]);
 
-        return $lots->merge($items);
+        return $this->combinedRowsCache = $lots->merge($items);
     }
 
     private function buildEditPaginator(): \Illuminate\Pagination\LengthAwarePaginator

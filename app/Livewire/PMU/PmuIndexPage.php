@@ -15,32 +15,29 @@ class PmuIndexPage extends Component
 {
     use WithPagination;
 
+    private const TIMEZONE = 'Asia/Manila';
+    private const DATE_FORMAT = 'Y-m-d\TH:i';
+    private const PR_STAGE_ID = 7;
+    private const ALERT_TYPES = ['success', 'error', 'warning', 'info'];
+    private const WHITELISTED_PROPERTIES = ['expandedNoaNumber'];
+
     protected $paginationTheme = 'tailwind';
 
     // Pagination
-    public $pendingPerPage = 10;
-    public $receivedPerPage = 10;
-    public $itemsPerPage = 10;
-
-    // Pending table pagination
-    public $pendingPage = 1;
-
-    // Received table pagination
-    public $receivedPage = 1;
-
-    // Expanded row pagination
-    public $expandedPage = 1;
-    public $expandedPerPage = 10;
-
-    // Modal linked-PRs pagination
-    public $modalPage = 1;
-    public $modalPerPage = 10;
+    public int $pendingPerPage = 10;
+    public int $receivedPerPage = 10;
+    public int $expandedPage = 1;
+    public int $expandedPerPage = 10;
+    public int $modalPage = 1;
+    public int $modalPerPage = 10;
+    public int $pendingPage = 1;
+    public int $receivedPage = 1;
 
     // Search
-    public $search = '';
+    public string $search = '';
 
     // Collapsible functionality
-    public $expandedNoaNumber = null;
+    public ?string $expandedNoaNumber = null;
 
     // Receive Modal
     public bool $showReceiveModal = false;
@@ -57,12 +54,14 @@ class PmuIndexPage extends Component
     // View Modal
     public bool $showViewModal = false;
     public ?string $viewNoaNumber = null;
-    public $viewPmuRecord = null;
-    public $viewPostProcurement = null;
-    public $viewProcurements = null;
-    public $viewItemRows = null;
+    public ?Pmu $viewPmuRecord = null;
+    public ?PostProcurement $viewPostProcurement = null;
+    public ?\Illuminate\Support\Collection $viewProcurements = null;
+    public ?\Illuminate\Support\Collection $viewItemRows = null;
     public float $viewTotalAbc = 0;
-    public $viewSupplier = null;
+    public ?Supplier $viewSupplier = null;
+
+    private ?array $renderQueryCache = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -70,25 +69,38 @@ class PmuIndexPage extends Component
         'receivedPerPage' => ['except' => 10],
     ];
 
-    public function mount()
+    public function mount(): void
     {
         if (session('alert')) {
             $alert = session('alert');
+            $alertType = $alert['type'] ?? 'info';
 
-            LivewireAlert::title($alert['title'])
-                ->{$alert['type']}()
-                    ->text($alert['message'])
+            // Whitelist alert types to prevent method injection
+            if (!in_array($alertType, self::ALERT_TYPES)) {
+                $alertType = 'info';
+            }
+
+            LivewireAlert::title($alert['title'] ?? 'Alert')
+                ->{$alertType}()
+                    ->text($alert['message'] ?? '')
                     ->toast()
                     ->position('top-end')
                     ->show();
+
+            session()->forget('alert');
         }
     }
 
     /**
      * Toggle expanded/collapsed state for NOA items
      */
-    public function toggle($property, $value)
+    public function toggle(string $property, string $value): void
     {
+        // Whitelist allowed properties to prevent arbitrary property modification
+        if (!in_array($property, self::WHITELISTED_PROPERTIES)) {
+            return;
+        }
+
         $value = (string) $value;
 
         if ($this->$property === $value) {
@@ -119,7 +131,7 @@ class PmuIndexPage extends Component
         $this->modalPage = 1;
     }
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->resetPage();
     }
@@ -145,12 +157,37 @@ class PmuIndexPage extends Component
     }
 
     // Keep for backward compat – resets both tables
-    public function updatingPerPage()
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
 
     public function render()
+    {
+        // Return cached union results if already fetched in this cycle
+        // to prevent re-executing expensive queries on every Livewire update
+        if ($this->renderQueryCache !== null) {
+            $unionResults = $this->renderQueryCache;
+        } else {
+            $unionResults = $this->buildUnionQuery();
+            $this->renderQueryCache = $unionResults;
+        }
+
+        $pendingItems = $unionResults['pending'];
+        $receivedItems = $unionResults['received'];
+        $expandedPaginator = $unionResults['expanded'];
+        $warningCounts = $unionResults['warnings'];
+
+        return view('livewire.pmu.pmu-index-page', [
+            'pendingItems' => $pendingItems,
+            'receivedItems' => $receivedItems,
+            'expandedPaginator' => $expandedPaginator,
+            'modalPaginator' => $this->buildModalPaginator(),
+            'warningCounts' => $warningCounts,
+        ]);
+    }
+
+    private function buildUnionQuery(): array
     {
         // Build a union of:
         //   (A) per-lot: post_procurements.ref_id = procurements.procID  AND  pr_lot_prstage has stage 7
@@ -164,7 +201,7 @@ class PmuIndexPage extends Component
                 $q->select(\DB::raw(1))
                     ->from('pr_lot_prstage')
                     ->whereColumn('pr_lot_prstage.procID', 'procurements.procID')
-                    ->where('pr_lot_prstage.pr_stage_id', 7);
+                    ->where('pr_lot_prstage.pr_stage_id', self::PR_STAGE_ID);
             })
             ->whereNotNull('post_procurements.notice_of_award_number')
             ->whereNull('pmus.deleted_at');
@@ -178,7 +215,7 @@ class PmuIndexPage extends Component
                 $q->select(\DB::raw(1))
                     ->from('pr_item_prstage')
                     ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
-                    ->where('pr_item_prstage.pr_stage_id', 7);
+                    ->where('pr_item_prstage.pr_stage_id', self::PR_STAGE_ID);
             })
             ->whereNotNull('post_procurements.notice_of_award_number')
             ->whereNull('pmus.deleted_at');
@@ -242,118 +279,129 @@ class PmuIndexPage extends Component
             ->whereNotNull('date_received')
             ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
-        // If an NOA is expanded, load a unified paginated list (per-lot + per-item)
-        $expandedPaginator = null;
+        return [
+            'pending' => $pendingItems,
+            'received' => $receivedItems,
+            'expanded' => $this->buildExpandedPaginator(),
+            'warnings' => $this->buildWarningCounts(),
+        ];
+    }
 
-        if ($this->expandedNoaNumber) {
-            $expandedPmu = Pmu::where('notice_of_award_number', $this->expandedNoaNumber)->first();
-            $expandedPmuId = $expandedPmu?->id;
+    private function buildExpandedPaginator(): ?\Illuminate\Pagination\LengthAwarePaginator
+    {
 
-            // Per-lot procurements
-            $lots = \DB::table('procurements')
-                ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
-                ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
-                ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
-                ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
-                    $join->on('pmu_po.ref_id', '=', 'procurements.procID')
-                        ->where('pmu_po.pmu_id', '=', $expandedPmuId)
-                        ->whereNull('pmu_po.deleted_at');
-                })
-                ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
-                ->whereNull('pmus.deleted_at')
-                ->whereExists(function ($q) {
-                    $q->select(\DB::raw(1))
-                        ->from('pr_lot_prstage')
-                        ->whereColumn('pr_lot_prstage.procID', 'procurements.procID')
-                        ->where('pr_lot_prstage.pr_stage_id', 7);
-                })
-                ->select(
-                    'procurements.procID',
-                    'procurements.pr_number',
-                    \DB::raw('procurements.procurement_program_project as description'),
-                    'procurements.abc',
-                    \DB::raw("'lot' as row_type"),
-                    'post_procurements.resolution_award_number',
-                    'post_procurements.resolution_award_date',
-                    'post_procurements.awarded_amount',
-                    'post_procurements.date_receipt_of_supplier_noa',
-                    'suppliers.name as supplier_name',
-                    'pmu_po.po_date_deadline',
-                    'pmu_po.po_date',
-                    'pmu_po.po_contract_number',
-                    'pmu_po.po_contract_number_link',
-                    'pmu_po.ntp_link',
-                    'pmu_po.contract_amount as pmu_contract_amount',
-                    'pmu_po.contract_signing_date as pmu_contract_signing_date',
-                    'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
-                    'pmu_po.remarks as pmu_remarks'
-                )
-                ->get();
-
-            // Per-item rows
-            $items = \DB::table('pr_items')
-                ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
-                ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
-                ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
-                ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
-                ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
-                    $join->on('pmu_po.ref_id', '=', 'pr_items.prItemID')
-                        ->where('pmu_po.pmu_id', '=', $expandedPmuId)
-                        ->whereNull('pmu_po.deleted_at');
-                })
-                ->whereExists(function ($q) {
-                    $q->select(\DB::raw(1))
-                        ->from('pr_item_prstage')
-                        ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
-                        ->where('pr_item_prstage.pr_stage_id', 7);
-                })
-                ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
-                ->whereNull('pmus.deleted_at')
-                ->select(
-                    'procurements.procID',
-                    'procurements.pr_number',
-                    'pr_items.description',
-                    \DB::raw('pr_items.amount as abc'),
-                    \DB::raw("'item' as row_type"),
-                    'post_procurements.resolution_award_number',
-                    'post_procurements.resolution_award_date',
-                    'post_procurements.awarded_amount',
-                    'post_procurements.date_receipt_of_supplier_noa',
-                    'suppliers.name as supplier_name',
-                    'pmu_po.po_date_deadline',
-                    'pmu_po.po_date',
-                    'pmu_po.po_contract_number',
-                    'pmu_po.po_contract_number_link',
-                    'pmu_po.ntp_link',
-                    'pmu_po.contract_amount as pmu_contract_amount',
-                    'pmu_po.contract_signing_date as pmu_contract_signing_date',
-                    'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
-                    'pmu_po.remarks as pmu_remarks'
-                )
-                ->orderBy('procurements.pr_number')
-                ->orderBy('pr_items.item_no')
-                ->get();
-
-            $combined = $lots->merge($items);
-            $total = $combined->count();
-            $perPage = max(1, (int) $this->expandedPerPage);
-            $page = max(1, (int) $this->expandedPage);
-            $sliced = $combined->forPage($page, $perPage)->values();
-
-            $expandedPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
-                $sliced,
-                $total,
-                $perPage,
-                $page,
-                ['pageName' => 'expanded_page']
-            );
+        if (!$this->expandedNoaNumber) {
+            return null;
         }
+        $expandedPmu = Pmu::where('notice_of_award_number', $this->expandedNoaNumber)->first();
+        $expandedPmuId = $expandedPmu?->id;
 
+        // Per-lot procurements
+        $lots = \DB::table('procurements')
+            ->join('post_procurements', 'procurements.procID', '=', 'post_procurements.ref_id')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
+                $join->on('pmu_po.ref_id', '=', 'procurements.procID')
+                    ->where('pmu_po.pmu_id', '=', $expandedPmuId)
+                    ->whereNull('pmu_po.deleted_at');
+            })
+            ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
+            ->whereNull('pmus.deleted_at')
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pr_lot_prstage')
+                    ->whereColumn('pr_lot_prstage.procID', 'procurements.procID')
+                    ->where('pr_lot_prstage.pr_stage_id', self::PR_STAGE_ID);
+            })
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                \DB::raw('procurements.procurement_program_project as description'),
+                'procurements.abc',
+                \DB::raw("'lot' as row_type"),
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
+                'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
+                'pmu_po.po_date',
+                'pmu_po.po_contract_number',
+                'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
+                'pmu_po.contract_amount as pmu_contract_amount',
+                'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.remarks as pmu_remarks'
+            )
+            ->get();
+
+        // Per-item rows
+        $items = \DB::table('pr_items')
+            ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
+            ->join('post_procurements', 'post_procurements.ref_id', '=', 'pr_items.prItemID')
+            ->join('pmus', 'post_procurements.notice_of_award_number', '=', 'pmus.notice_of_award_number')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('pmu_po', function ($join) use ($expandedPmuId) {
+                $join->on('pmu_po.ref_id', '=', 'pr_items.prItemID')
+                    ->where('pmu_po.pmu_id', '=', $expandedPmuId)
+                    ->whereNull('pmu_po.deleted_at');
+            })
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pr_item_prstage')
+                    ->whereColumn('pr_item_prstage.prItemID', 'pr_items.prItemID')
+                    ->where('pr_item_prstage.pr_stage_id', self::PR_STAGE_ID);
+            })
+            ->where('post_procurements.notice_of_award_number', $this->expandedNoaNumber)
+            ->whereNull('pmus.deleted_at')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'pr_items.description',
+                \DB::raw('pr_items.amount as abc'),
+                \DB::raw("'item' as row_type"),
+                'post_procurements.resolution_award_number',
+                'post_procurements.resolution_award_date',
+                'post_procurements.awarded_amount',
+                'post_procurements.date_receipt_of_supplier_noa',
+                'suppliers.name as supplier_name',
+                'pmu_po.po_date_deadline',
+                'pmu_po.po_date',
+                'pmu_po.po_contract_number',
+                'pmu_po.po_contract_number_link',
+                'pmu_po.ntp_link',
+                'pmu_po.contract_amount as pmu_contract_amount',
+                'pmu_po.contract_signing_date as pmu_contract_signing_date',
+                'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.remarks as pmu_remarks'
+            )
+            ->orderBy('procurements.pr_number')
+            ->orderBy('pr_items.item_no')
+            ->get();
+
+        $combined = $lots->merge($items);
+        $total = $combined->count();
+        $perPage = max(1, (int) $this->expandedPerPage);
+        $page = max(1, (int) $this->expandedPage);
+        $sliced = $combined->forPage($page, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $sliced,
+            $total,
+            $perPage,
+            $page,
+            ['pageName' => 'expanded_page']
+        );
+    }
+    private function buildWarningCounts(): \Illuminate\Support\Collection
+    {
         // Build warning counts (exceeded / overdue / due-soon) per NOA number
         $today = \Carbon\Carbon::today()->toDateString();
         $soonDate = \Carbon\Carbon::today()->addDays(3)->toDateString();
 
-        $warningCounts = \DB::table('pmus')
+        return \DB::table('pmus')
             ->join('pmu_po', 'pmu_po.pmu_id', '=', 'pmus.id')
             ->whereNotNull('pmu_po.po_date_deadline')
             ->whereNull('pmus.deleted_at')
@@ -366,14 +414,6 @@ class PmuIndexPage extends Component
             ->groupBy('pmus.notice_of_award_number')
             ->get()
             ->keyBy('notice_of_award_number');
-
-        return view('livewire.pmu.pmu-index-page', [
-            'pendingItems' => $pendingItems,
-            'receivedItems' => $receivedItems,
-            'expandedPaginator' => $expandedPaginator,
-            'modalPaginator' => $this->buildModalPaginator(),
-            'warningCounts' => $warningCounts,
-        ])->layout('components.layouts.app');
     }
 
     private function buildModalPaginator(): ?\Illuminate\Pagination\LengthAwarePaginator
@@ -549,6 +589,7 @@ class PmuIndexPage extends Component
         $this->viewTotalAbc = 0;
         $this->viewSupplier = null;
         $this->modalPage = 1;
+        $this->renderQueryCache = null; // Clear cache when closing modal to ensure fresh data on re-open
     }
 
     public function openReceiveModal(string $noaNumber): void
@@ -557,8 +598,8 @@ class PmuIndexPage extends Component
 
         $this->receivingNoaNumber = $noaNumber;
         $this->receiveDate = $pmu?->date_received
-            ? $pmu->date_received->setTimezone('Asia/Manila')->format('Y-m-d\TH:i')
-            : now('Asia/Manila')->format('Y-m-d\TH:i');
+            ? $pmu->date_received->setTimezone(self::TIMEZONE)->format(self::DATE_FORMAT)
+            : now(self::TIMEZONE)->format(self::DATE_FORMAT);
         $this->receiveRemarks = $pmu?->received_remarks ?? '';
         $this->showReceiveModal = true;
     }
@@ -573,28 +614,41 @@ class PmuIndexPage extends Component
             'receiveDate.date' => 'Please enter a valid date.',
         ]);
 
-        $pmu = Pmu::where('notice_of_award_number', $this->receivingNoaNumber)
-            ->whereNull('deleted_at')
-            ->first();
+        try {
+            $pmu = Pmu::where('notice_of_award_number', $this->receivingNoaNumber)
+                ->whereNull('deleted_at')
+                ->first();
 
-        if (!$pmu) {
-            LivewireAlert::title('Error')->error()->text('PMU record not found.')->toast()->position('top-end')->show();
-            return;
+            if (!$pmu) {
+                LivewireAlert::title('Error')->error()->text('PMU record not found.')->toast()->position('top-end')->show();
+                return;
+            }
+
+            $pmu->update([
+                'date_received' => \Carbon\Carbon::createFromFormat(self::DATE_FORMAT, $this->receiveDate, self::TIMEZONE)->utc(),
+                'received_remarks' => $this->receiveRemarks ?: null,
+            ]);
+
+            $this->closeReceiveModal();
+
+            LivewireAlert::title('Marked as Received!')
+                ->success()
+                ->text('NOA ' . $this->receivingNoaNumber . ' has been marked as received.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('PmuIndexPage: Failed to mark PMU as received', [
+                'noa_number' => $this->receivingNoaNumber,
+                'error' => $e->getMessage(),
+            ]);
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Failed to mark as received. Please try again or contact support.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
-
-        $pmu->update([
-            'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->receiveDate, 'Asia/Manila')->utc(),
-            'received_remarks' => $this->receiveRemarks ?: null,
-        ]);
-
-        $this->closeReceiveModal();
-
-        LivewireAlert::title('Marked as Received!')
-            ->success()
-            ->text('NOA ' . $this->receivingNoaNumber . ' has been marked as received.')
-            ->toast()
-            ->position('top-end')
-            ->show();
     }
 
     public function closeReceiveModal(): void
@@ -604,6 +658,7 @@ class PmuIndexPage extends Component
         $this->receiveDate = null;
         $this->receiveRemarks = null;
         $this->resetValidation(['receiveDate', 'receiveRemarks']);
+        $this->renderQueryCache = null; // Invalidate cache after modal close
     }
 
     // ─── Bulk Receive ────────────────────────────────────────────────────────
@@ -624,12 +679,17 @@ class PmuIndexPage extends Component
         $this->selectedNoaNumbers = [];
     }
 
+    private function invalidateRenderCache(): void
+    {
+        $this->renderQueryCache = null;
+    }
+
     public function openBulkReceiveModal(): void
     {
         if (empty($this->selectedNoaNumbers)) {
             return;
         }
-        $this->bulkReceiveDate = now('Asia/Manila')->format('Y-m-d\TH:i');
+        $this->bulkReceiveDate = now(self::TIMEZONE)->format(self::DATE_FORMAT);
         $this->bulkReceiveRemarks = null;
         $this->showBulkReceiveModal = true;
     }
@@ -644,23 +704,37 @@ class PmuIndexPage extends Component
             'bulkReceiveDate.date' => 'Please enter a valid date.',
         ]);
 
-        $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
-            ->whereNull('deleted_at')
-            ->update([
-                'date_received' => \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->bulkReceiveDate, 'Asia/Manila')->utc(),
-                'received_remarks' => $this->bulkReceiveRemarks ?: null,
+        try {
+            $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
+                ->whereNull('deleted_at')
+                ->update([
+                    'date_received' => \Carbon\Carbon::createFromFormat(self::DATE_FORMAT, $this->bulkReceiveDate, self::TIMEZONE)->utc(),
+                    'received_remarks' => $this->bulkReceiveRemarks ?: null,
+                ]);
+
+            $count = count($this->selectedNoaNumbers);
+            $this->closeBulkReceiveModal();
+            $this->selectedNoaNumbers = [];
+            $this->renderQueryCache = null; // Invalidate cache after bulk update
+
+            LivewireAlert::title('Bulk Receive Successful!')
+                ->success()
+                ->text("{$count} NOA(s) have been marked as received.")
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('PmuIndexPage: Failed to bulk receive PMUs', [
+                'noa_numbers' => $this->selectedNoaNumbers,
+                'error' => $e->getMessage(),
             ]);
-
-        $count = count($this->selectedNoaNumbers);
-        $this->closeBulkReceiveModal();
-        $this->selectedNoaNumbers = [];
-
-        LivewireAlert::title('Bulk Receive Successful!')
-            ->success()
-            ->text("{$count} NOA(s) have been marked as received.")
-            ->toast()
-            ->position('top-end')
-            ->show();
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Failed to mark records as received. Please try again or contact support.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
     }
 
     public function closeBulkReceiveModal(): void
@@ -669,5 +743,6 @@ class PmuIndexPage extends Component
         $this->bulkReceiveDate = null;
         $this->bulkReceiveRemarks = null;
         $this->resetValidation(['bulkReceiveDate', 'bulkReceiveRemarks']);
+        $this->renderQueryCache = null; // Invalidate cache after modal close
     }
 }
