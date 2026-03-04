@@ -88,23 +88,33 @@ class PmuEditPage extends Component
 
             $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
 
+            $data = [
+                'po_date' => ($this->po_contract_number && $this->po_date) ? $this->po_date : null,
+                'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
+                'po_contract_number' => $this->po_contract_number ?: null,
+                'po_contract_number_link' => $this->po_contract_number_link ?: null,
+                'ntp_link' => $this->ntp_link ?: null,
+                'contract_signing_date' => $this->contract_signing_date ?: null,
+                'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
+                'remarks' => $this->remarks ?: null,
+            ];
+
             foreach ($this->selectedItems as $rowKey) {
-                PmuPo::updateOrCreate(
-                    [
+                $pmuPo = PmuPo::where('ref_id', $rowKey)
+                    ->where('pmu_id', $pmu->id)
+                    ->first();
+
+                if ($pmuPo) {
+                    // Update existing record to trigger audit events
+                    $pmuPo->update($data);
+                } else {
+                    // Create new record to trigger audit events
+                    PmuPo::create([
                         'ref_id' => $rowKey,
                         'pmu_id' => $pmu->id,
-                    ],
-                    [
-                        'po_date' => ($this->po_contract_number && $this->po_date) ? $this->po_date : null,
-                        'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
-                        'po_contract_number' => $this->po_contract_number ?: null,
-                        'po_contract_number_link' => $this->po_contract_number_link ?: null,
-                        'ntp_link' => $this->ntp_link ?: null,
-                        'contract_signing_date' => $this->contract_signing_date ?: null,
-                        'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
-                        'remarks' => $this->remarks ?: null,
-                    ]
-                );
+                        ...$data,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -182,7 +192,7 @@ class PmuEditPage extends Component
         }
     }
 
-    public function cancel(): \Illuminate\Http\RedirectResponse
+    public function cancel()
     {
         return redirect()->route('pmu.index');
     }

@@ -705,12 +705,21 @@ class PmuIndexPage extends Component
         ]);
 
         try {
-            $updated = Pmu::whereIn('notice_of_award_number', $this->selectedNoaNumbers)
-                ->whereNull('deleted_at')
-                ->update([
-                    'date_received' => \Carbon\Carbon::createFromFormat(self::DATE_FORMAT, $this->bulkReceiveDate, self::TIMEZONE)->utc(),
-                    'received_remarks' => $this->bulkReceiveRemarks ?: null,
-                ]);
+            $receiveDateTime = \Carbon\Carbon::createFromFormat(self::DATE_FORMAT, $this->bulkReceiveDate, self::TIMEZONE)->utc();
+
+            // Update each PMU individually to trigger audit events
+            foreach ($this->selectedNoaNumbers as $noaNumber) {
+                $pmu = Pmu::where('notice_of_award_number', $noaNumber)
+                    ->whereNull('deleted_at')
+                    ->first();
+
+                if ($pmu) {
+                    $pmu->update([
+                        'date_received' => $receiveDateTime,
+                        'received_remarks' => $this->bulkReceiveRemarks ?: null,
+                    ]);
+                }
+            }
 
             $count = count($this->selectedNoaNumbers);
             $this->closeBulkReceiveModal();
