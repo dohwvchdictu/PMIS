@@ -164,6 +164,28 @@
                         </li>
                     @endcan
 
+                    <!-- Supply -->
+                    @can('view_any_supply')
+                        <li>
+                            <a class="w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
+                            transition-all duration-200 border-l-4
+                            {{ request()->routeIs('supply.*')
+                                ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
+                                href="{{ route('supply.index') }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="size-5 flex-shrink-0">
+                                    <path
+                                        d="M3.375 3C2.339 3 1.5 3.84 1.5 4.875v.75c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875v-.75C22.5 3.839 21.66 3 20.625 3H3.375Z" />
+                                    <path fill-rule="evenodd"
+                                        d="m3.087 9 .54 9.176A3 3 0 0 0 6.62 21h10.757a3 3 0 0 0 2.995-2.824L20.913 9H3.087Zm6.163 3.75A.75.75 0 0 1 10 12h4a.75.75 0 0 1 0 1.5h-4a.75.75 0 0 1-.75-.75Z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span>Supply</span>
+                            </a>
+                        </li>
+                    @endcan
+
                     <!-- Reports Section -->
                     @can('view_reports')
                         <li class="pt-4 mt-4 border-t border-gray-200 dark:border-neutral-600">

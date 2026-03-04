@@ -61,20 +61,29 @@
                 </div>
                 <div class="flex gap-2">
                     <button wire:click="clearSelections" type="button"
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Clear
+                        class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                        Clear Selection
                     </button>
                     <button wire:click="openBulkEditModal" type="button"
-                        class="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit ({{ count($selectedItems) }})
+                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>Edit
+                        </span>
+                    </button>
+                    <button wire:click="openForwardConfirm" type="button"
+                        class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+                        bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                            </svg>
+                            Forward to Supply
+                        </span>
                     </button>
                 </div>
             </div>
@@ -151,6 +160,12 @@
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Notice to Proceed Date</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date Receipt of PO / NTP from Supplier</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Stamped Received of COA</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             PO / Contract No. Link</th>
@@ -272,6 +287,12 @@
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->notice_to_proceed_date ? \Carbon\Carbon::parse($po->notice_to_proceed_date)->format('M d, Y') : '—' }}
                             </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $po?->date_po_receipt_by_supplier ? \Carbon\Carbon::parse($po->date_po_receipt_by_supplier)->format('M d, Y') : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $po?->date_coa_stamped_received ? \Carbon\Carbon::parse($po->date_coa_stamped_received)->format('M d, Y') : '—' }}
+                            </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs">
                                 @if ($po?->po_contract_number_link)
                                     <a href="{{ $po->po_contract_number_link }}" target="_blank"
@@ -313,7 +334,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="15" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="18" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No linked PRs or items found.
                             </td>
                         </tr>
@@ -557,7 +578,33 @@
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
-
+                {{-- Date of PO Receipt by Supplier --}}
+                <div>
+                    <label for="modal_date_po_receipt_by_supplier"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Date Receipt of PO<br><span>/ NTP from Supplier</span>
+                    </label>
+                    <input type="date" id="modal_date_po_receipt_by_supplier"
+                        wire:model="date_po_receipt_by_supplier"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('date_po_receipt_by_supplier') border-red-500 @else border-gray-300 @enderror">
+                    @error('date_po_receipt_by_supplier')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                {{-- Stamped Received of COA (date) --}}
+                <div>
+                    <label for="modal_date_coa_stamped_received"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        <br><span>&nbsp;</span>Stamped Received of COA
+                    </label>
+                    <input type="date" id="modal_date_coa_stamped_received" wire:model="date_coa_stamped_received"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('date_coa_stamped_received') border-red-500 @else border-gray-300 @enderror">
+                    @error('date_coa_stamped_received')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
                 {{-- Remarks --}}
                 <div class="sm:col-span-6">
                     <label for="modal_remarks"
@@ -599,6 +646,81 @@
     </x-forms.modal>
 
 
+
+
+    {{-- Forward to Supply Modal --}}
+    <x-forms.modal wire:model="showForwardConfirm" title="Forward to Supply" size="max-w-lg" model="showForwardConfirm"
+        closeMethod="closeForwardConfirm">
+        <div class="px-4 py-3">
+            {{-- Summary Pills --}}
+            @if ($forwardedToSupplySummary['forwarded'] > 0 || $forwardedToSupplySummary['pending'] > 0)
+                <div class="mb-4 flex flex-wrap gap-2">
+                    @if ($forwardedToSupplySummary['forwarded'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            {{ $forwardedToSupplySummary['forwarded'] }} already forwarded
+                        </div>
+                    @endif
+                    @if ($forwardedToSupplySummary['pending'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ $forwardedToSupplySummary['pending'] }} pending
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Already Forwarded Note --}}
+            @if ($forwardedToSupplySummary['forwarded'] > 0)
+                <div
+                    class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>Note:</strong> {{ $forwardedToSupplySummary['forwarded'] }} item(s) already forwarded —
+                    their date will be updated to the date you enter below.
+                </div>
+            @endif
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date &amp; Time Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="datetime-local" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardConfirm"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToSupply"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
+                    </button>
+                </div>
+            </div>
+        </div>
+    </x-forms.modal>
 
 
     {{-- Fixed Bottom Footer --}}
