@@ -57,6 +57,8 @@ class SupplyIndexPage extends Component
             LivewireAlert::title($alert['title'] ?? 'Alert')
                 ->{$alertType}()
                     ->text($alert['text'] ?? '')
+                    ->toast()
+                    ->position('top-end')
                     ->show();
 
             session()->forget('alert');
@@ -154,6 +156,8 @@ class SupplyIndexPage extends Component
             LivewireAlert::title('Marked as Received!')
                 ->success()
                 ->text('PO/Contract No. ' . $supply->po_contract_number . ' has been marked as received.')
+                ->toast()
+                ->position('top-end')
                 ->show();
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('SupplyIndexPage: Failed to mark supply as received', [
@@ -164,6 +168,8 @@ class SupplyIndexPage extends Component
             LivewireAlert::title('Error')
                 ->error()
                 ->text('Failed to mark the record as received. Please try again.')
+                ->toast()
+                ->position('top-end')
                 ->show();
         }
     }
@@ -229,6 +235,8 @@ class SupplyIndexPage extends Component
             LivewireAlert::title('Bulk Receive Successful!')
                 ->success()
                 ->text("{$count} record(s) have been marked as received.")
+                ->toast()
+                ->position('top-end')
                 ->show();
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('SupplyIndexPage: Failed to bulk receive supplies', [
@@ -239,6 +247,8 @@ class SupplyIndexPage extends Component
             LivewireAlert::title('Error')
                 ->error()
                 ->text('Failed to bulk mark records as received. Please try again.')
+                ->toast()
+                ->position('top-end')
                 ->show();
         }
     }

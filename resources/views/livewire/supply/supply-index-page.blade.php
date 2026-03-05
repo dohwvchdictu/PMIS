@@ -1,17 +1,9 @@
 <div>
     <div wire:poll.15s>
 
-        {{-- ═══ Page Header ════════════════════════════════════════════════════════ --}}
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Supply Office</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track PO/Contract document receipt</p>
-            </div>
-        </div>
-
         {{-- ═══ Pending Receipt ════════════════════════════════════════════════════ --}}
         @if ($pendingItems->total() > 0)
-            <div x-data="{ open: true }"
+            <div x-data="{ open: false }"
                 class="bg-white border border-orange-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-orange-800/50 flex flex-col mb-6">
 
                 {{-- Card Header --}}
@@ -20,8 +12,8 @@
                     <div class="flex items-center gap-2.5">
                         <div
                             class="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40">
-                            <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -37,20 +29,22 @@
                         @can('update_supply')
                             @if (count($selectedSupplyIds) > 0)
                                 <div class="flex items-center gap-2" @click.stop>
-                                    <span class="text-xs text-orange-700 dark:text-orange-300 font-medium">
-                                        {{ count($selectedSupplyIds) }} selected
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span
+                                            class="font-semibold text-emerald-600 dark:text-emerald-400">{{ count($selectedSupplyIds) }}</span>
+                                        selected
                                     </span>
+                                    <button wire:click="clearSelection"
+                                        class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                                        Clear
+                                    </button>
                                     <button wire:click="openBulkReceiveModal"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7" />
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Bulk Receive
-                                    </button>
-                                    <button wire:click="clearSelection"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                                        Clear
+                                        Receive
                                     </button>
                                 </div>
                             @endif
@@ -69,9 +63,20 @@
                         <thead
                             class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
                             <tr>
-                                @can('update_supply')
-                                    <th class="px-3 py-2 bg-gray-100 dark:bg-neutral-900 w-10"></th>
-                                @endcan
+                                <th class="px-3 py-2 bg-gray-100 dark:bg-neutral-900 w-10">
+                                    <input type="checkbox"
+                                        @if ($pendingItems->total() > 0) x-data x-on:click="
+                                            let boxes = document.querySelectorAll('[data-supply-check]');
+                                            let anyUnchecked = Array.from(boxes).some(b => !b.checked);
+                                            boxes.forEach(b => {
+                                                b.checked = anyUnchecked;
+                                                b.dispatchEvent(new Event('change'));
+                                            });
+                                        " @endif
+                                        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer"
+                                        title="Select / deselect all visible" />
+                                </th>
+                                <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     PO / Contract No.</th>
@@ -81,24 +86,22 @@
                                 <th
                                     class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     Remarks</th>
-                                @can('update_supply')
-                                    <th
-                                        class="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                        Actions</th>
-                                @endcan
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
                             @forelse ($pendingItems as $supply)
-                                <tr class="hover:bg-orange-50/50 dark:hover:bg-orange-950/10 transition-colors">
+                                <tr
+                                    class="transition-colors border-l-4 border-l-orange-400 {{ in_array($supply->id, $selectedSupplyIds) ? 'bg-emerald-50 dark:bg-emerald-950/20 ring-1 ring-inset ring-emerald-300 dark:ring-emerald-700' : 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/30' }}">
 
                                     @can('update_supply')
-                                        <td class="px-3 py-3 text-center" @click.stop>
-                                            <input type="checkbox" wire:click="toggleSupplySelection({{ $supply->id }})"
-                                                {{ in_array($supply->id, $selectedSupplyIds) ? 'checked' : '' }}
-                                                class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:border-neutral-600 dark:bg-neutral-700 cursor-pointer" />
+                                        <td class="px-3 py-4 whitespace-nowrap" @click.stop>
+                                            <input type="checkbox" data-supply-check wire:model.live="selectedSupplyIds"
+                                                value="{{ $supply->id }}"
+                                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-neutral-700 dark:border-neutral-500 cursor-pointer" />
                                         </td>
                                     @endcan
+
+                                    <td class="px-4 py-4 whitespace-nowrap"></td>
 
                                     <td class="px-6 py-3 whitespace-nowrap">
                                         <span
@@ -131,32 +134,20 @@
                                     <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">
                                         {{ $supply->remarks ?? '—' }}
                                     </td>
-
-                                    @can('update_supply')
-                                        <td class="px-6 py-3 whitespace-nowrap text-right">
-                                            <button wire:click="openReceiveModal({{ $supply->id }})"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                Mark Received
-                                            </button>
-                                        </td>
-                                    @endcan
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="10" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-600" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">No pending records
-                                                found.</p>
+                                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">All records
+                                                have been received</p>
+                                            <p class="text-gray-400 dark:text-gray-500 text-xs">No pending items to
+                                                process</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -182,28 +173,15 @@
 
             {{-- Search Bar --}}
             <div
-                class="px-4 py-2.5 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex items-center justify-between gap-3">
+                class="px-4 py-2.5 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex justify-start">
                 <div class="relative w-72">
-                    <input type="text" wire:model.live="search"
-                        placeholder="Search PO/contract number, remarks..."
+                    <input type="text" wire:model.live="search" placeholder="Search PO/contract number, remarks..."
                         class="w-full px-4 py-2 pl-9 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
                     <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                </div>
-
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Received Records</span>
-                    <span
-                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                        {{ $receivedItems->total() }}
-                    </span>
                 </div>
             </div>
 
@@ -213,6 +191,7 @@
                     <thead
                         class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
                         <tr>
+                            <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                 PO / Contract No.</th>
@@ -225,83 +204,116 @@
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                 Remarks</th>
-                            @can('update_supply')
-                                <th
-                                    class="px-6 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                                    Actions</th>
-                            @endcan
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
                         @forelse ($receivedItems as $supply)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700/50 transition-colors">
+                            <tr
+                                class="transition-colors bg-white hover:bg-gray-50 dark:bg-neutral-800 dark:hover:bg-neutral-700">
+
+                                {{-- Actions Dropdown --}}
+                                <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                    <div x-data="{ open: false }" class="relative inline-block" x-ref="menuWrapper">
+                                        <button @click="open = !open" @click.away="open = false"
+                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                                                class="size-5 text-gray-600 dark:text-gray-300">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+                                            </svg>
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="transform opacity-0 scale-95"
+                                                x-transition:enter-end="transform opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="transform opacity-100 scale-100"
+                                                x-transition:leave-end="transform opacity-0 scale-95"
+                                                @click.away="open = false"
+                                                class="absolute z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl dark:bg-neutral-800 dark:border-neutral-700 min-w-[160px] overflow-hidden"
+                                                x-ref="dropdown" x-init="$watch('open', value => {
+                                                    if (value) {
+                                                        let rect = $refs.menuWrapper.getBoundingClientRect();
+                                                        $refs.dropdown.style.top = (rect.top + window.scrollY) + 'px';
+                                                        $refs.dropdown.style.left = (rect.right + 10 + window.scrollX) + 'px';
+                                                    }
+                                                })">
+                                                <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                                                    @can('update_supply')
+                                                        <li>
+                                                            <button wire:click="openReceiveModal({{ $supply->id }})"
+                                                                @click="open = false"
+                                                                class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-emerald-100 dark:hover:from-emerald-900/30 dark:hover:to-emerald-800/30 text-emerald-600 dark:text-emerald-400 transition-all duration-150 group/item">
+                                                                <x-heroicon-o-pencil-square
+                                                                    class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
+                                                                <span class="font-medium">Edit Received</span>
+                                                            </button>
+                                                        </li>
+                                                    @endcan
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
 
                                 <td class="px-6 py-3 whitespace-nowrap">
                                     <span
                                         class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
-                                        <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
                                         {{ $supply->po_contract_number }}
                                     </span>
                                 </td>
 
                                 <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                                     @if ($supply->date_forwarded)
-                                        {{ \Carbon\Carbon::parse($supply->date_forwarded)->format('M d, Y') }}
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            {{ \Carbon\Carbon::parse($supply->date_forwarded)->format('M d, Y') }}
+                                        </span>
                                     @else
                                         <span class="text-gray-400 dark:text-gray-500">—</span>
                                     @endif
                                 </td>
 
-                                <td class="px-6 py-3 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7" />
-                                        </svg>
+                                <td
+                                    class="px-6 py-3 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                                    <span class="inline-flex items-center gap-1.5">
                                         {{ \Carbon\Carbon::parse($supply->date_received)->format('M d, Y') }}
                                     </span>
                                 </td>
 
-                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">
-                                    {{ $supply->remarks ?? '—' }}
+                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs">
+                                    @if ($supply->remarks)
+                                        <span class="block truncate" title="{{ $supply->remarks }}">
+                                            {{ $supply->remarks }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
-
-                                @can('update_supply')
-                                    <td class="px-6 py-3 whitespace-nowrap text-right">
-                                        <button wire:click="openReceiveModal({{ $supply->id }})"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Edit
-                                        </button>
-                                    </td>
-                                @endcan
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="10" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none"
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none"
                                             stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                         </svg>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="text-gray-500 dark:text-gray-400 text-sm">
                                             @if (!empty($search))
                                                 No records match your search.
                                             @else
-                                                No received records yet.
+                                                No received records yet
                                             @endif
                                         </p>
+                                        <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Mark pending items as
+                                            received to see them here</p>
                                     </div>
                                 </td>
                             </tr>

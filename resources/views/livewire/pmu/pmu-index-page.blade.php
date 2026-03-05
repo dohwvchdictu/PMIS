@@ -334,6 +334,7 @@
                                         $usecCount = (int) ($ic->usec_count ?? 0);
                                         $rtoBAC = (int) ($ic->return_to_bac_count ?? 0);
                                         $endUser = (int) ($ic->end_user_count ?? 0);
+                                        $forwardedToSupply = (int) ($ic->forwarded_to_supply_count ?? 0);
                                     @endphp
                                     <div class="flex flex-wrap gap-1">
                                         @if ($poTotal === 0)
@@ -345,6 +346,14 @@
                                                 Not Started
                                             </span>
                                         @else
+                                            @if ($forwardedToSupply > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                                                    title="{{ $forwardedToSupply }} of {{ $poTotal }} item(s) forwarded to Supply">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                                                    {{ $forwardedToSupply }}/{{ $poTotal }} Forwarded to Supply
+                                                </span>
+                                            @endif
                                             @if ($readyToForward > 0)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
@@ -385,7 +394,13 @@
                                                     {{ $poPrep }}/{{ $poTotal }} PO Preparation
                                                 </span>
                                             @endif
-                                            @if ($readyToForward === 0 && $usecCount === 0 && $poPrep === 0 && $rtoBAC === 0 && $endUser === 0)
+                                            @if (
+                                                $readyToForward === 0 &&
+                                                    $usecCount === 0 &&
+                                                    $poPrep === 0 &&
+                                                    $rtoBAC === 0 &&
+                                                    $endUser === 0 &&
+                                                    $forwardedToSupply === 0)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
                                                     title="No PO data recorded yet">

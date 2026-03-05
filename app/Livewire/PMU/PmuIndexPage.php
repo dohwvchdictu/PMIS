@@ -439,6 +439,7 @@ class PmuIndexPage extends Component
                 'pmus.notice_of_award_number',
                 \DB::raw('COUNT(*) as total_count'),
                 \DB::raw('SUM(CASE WHEN
+                    pmu_po.manual_status IS NULL AND
                     pmu_po.po_date IS NOT NULL AND
                     pmu_po.po_contract_number IS NOT NULL AND
                     pmu_po.contract_amount IS NOT NULL AND
@@ -469,7 +470,8 @@ class PmuIndexPage extends Component
                     pmu_po.po_contract_number_link IS NOT NULL AND
                     pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
                     pmu_po.date_coa_stamped_received IS NOT NULL
-                ) THEN 1 ELSE 0 END) as end_user_count")
+                ) THEN 1 ELSE 0 END) as end_user_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'forwarded_to_supply' THEN 1 ELSE 0 END) as forwarded_to_supply_count")
             )
             ->groupBy('pmus.notice_of_award_number')
             ->get()
@@ -741,7 +743,7 @@ class PmuIndexPage extends Component
 
     public function setManualStatus(int $pmuPoId, ?string $status): void
     {
-        $allowed = [null, 'return_to_bac', 'for_end_user_compliance'];
+        $allowed = [null, 'return_to_bac', 'for_end_user_compliance', 'forwarded_to_supply'];
         if (!in_array($status, $allowed, true)) {
             return;
         }

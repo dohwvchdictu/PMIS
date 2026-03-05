@@ -196,6 +196,7 @@
                                                                         'return_to_bac' => 'Return to BAC',
                                                                         'for_end_user_compliance'
                                                                             => 'For End-User Compliance',
+                                                                        'forwarded_to_supply' => 'Forwarded to Supply',
                                                                         default => null,
                                                                     };
                                                                     $isRowComplete =
@@ -237,7 +238,12 @@
                                                                         $autoStatusClass = '';
                                                                     }
                                                                 @endphp
-                                                                @if ($isRowComplete)
+                                                                @if ($manualStatus === 'forwarded_to_supply')
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                                                        Forwarded to Supply
+                                                                    </span>
+                                                                @elseif ($isRowComplete)
                                                                     <span
                                                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                                                                         Ready to Forward

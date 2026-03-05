@@ -5,6 +5,7 @@ namespace App\Livewire\PMU;
 use App\Models\Pmu;
 use App\Models\PmuPo;
 use App\Models\Procurement;
+use App\Models\Supply;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
@@ -164,8 +165,17 @@ class PmuEditPage extends Component
                     ->first();
 
                 if ($pmuPo) {
+                    $rowData = $data;
+                    // Protect forwarded_to_supply: never overwrite it via bulk edit unless explicitly set
+                    if (
+                        isset($rowData['manual_status']) &&
+                        $rowData['manual_status'] === null &&
+                        $pmuPo->manual_status === 'forwarded_to_supply'
+                    ) {
+                        unset($rowData['manual_status']);
+                    }
                     // Update existing record to trigger audit events
-                    $pmuPo->update($data);
+                    $pmuPo->update($rowData);
                 } else {
                     // Create new record to trigger audit events
                     PmuPo::create([
@@ -403,7 +413,7 @@ class PmuEditPage extends Component
 
     public function setManualStatus(int $pmuPoId, ?string $status): void
     {
-        $allowed = [null, 'return_to_bac', 'for_end_user_compliance'];
+        $allowed = [null, 'return_to_bac', 'for_end_user_compliance', 'forwarded_to_supply'];
         if (!in_array($status, $allowed, true)) {
             return;
         }
@@ -720,10 +730,20 @@ class PmuEditPage extends Component
                     ->first();
 
                 if ($pmuPo && $this->isRowComplete($pmuPo)) {
-                    // Mark as forwarded to supply with the specified datetime
+                    // Mark as forwarded to supply with the specified datetime and update status
                     $pmuPo->update([
                         'forwarded_to_supply_at' => $utcDateForwarded,
+                        'manual_status' => 'forwarded_to_supply',
                     ]);
+
+                    // Upsert Supply record for tracking on the supply side
+                    if (!empty($pmuPo->po_contract_number)) {
+                        Supply::updateOrCreate(
+                            ['po_contract_number' => $pmuPo->po_contract_number],
+                            ['date_forwarded' => $utcDateForwarded]
+                        );
+                    }
+
                     $forwardedCount++;
                 }
             }

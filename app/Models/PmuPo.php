@@ -29,6 +29,7 @@ class PmuPo extends Model implements Auditable
         'notice_to_proceed_date',
         'remarks',
         'manual_status',
+        'forwarded_to_supply_at',
     ];
 
     protected $auditInclude = [
@@ -46,6 +47,7 @@ class PmuPo extends Model implements Auditable
         'notice_to_proceed_date',
         'remarks',
         'manual_status',
+        'forwarded_to_supply_at',
     ];
 
     protected $auditTimestamps = true;
@@ -60,6 +62,7 @@ class PmuPo extends Model implements Auditable
         'contract_signing_date' => 'date',
         'notice_to_proceed_date' => 'date',
         'contract_amount' => 'decimal:2',
+        'forwarded_to_supply_at' => 'datetime',
     ];
 
     public function generateTags(): array
