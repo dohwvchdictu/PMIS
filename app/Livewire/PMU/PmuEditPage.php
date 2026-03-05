@@ -48,6 +48,16 @@ class PmuEditPage extends Component
     // Manual status
     public string $manual_status = ''; // '' = no change, 'auto' = clear, 'return_to_bac', 'for_end_user_compliance'
 
+    // Edit Remarks Modal (per pmu_po row)
+    public bool $showEditRemarksModal = false;
+    public ?int $editRemarksPoId = null;
+    public string $editRemarksValue = '';
+
+    // Edit NOA Remarks Modal (pmu.received_remarks)
+    public ?string $noaRemarks = null;
+    public bool $showEditNoaRemarksModal = false;
+    public string $editNoaRemarksValue = '';
+
     private \Illuminate\Support\Collection|null $combinedRowsCache = null;
 
     public function mount(string $id): void
@@ -61,6 +71,7 @@ class PmuEditPage extends Component
             ->value('notice_of_award');
 
         $this->date_forwarded = $record->date_forwarded ? $record->date_forwarded->format(self::DATE_FORMAT) : '';
+        $this->noaRemarks = $record->received_remarks;
     }
 
     public function update(): void
@@ -403,6 +414,89 @@ class PmuEditPage extends Component
         }
         $pmuPo->update(['manual_status' => $status]);
         $this->combinedRowsCache = null;
+    }
+
+    public function openEditRemarksModal(int $pmuPoId): void
+    {
+        $pmuPo = PmuPo::find($pmuPoId);
+        if (!$pmuPo) {
+            return;
+        }
+        $this->editRemarksPoId = $pmuPoId;
+        $this->editRemarksValue = $pmuPo->remarks ?? '';
+        $this->showEditRemarksModal = true;
+    }
+
+    public function confirmEditRemarks(): void
+    {
+        $this->validate([
+            'editRemarksValue' => 'nullable|string|max:1000',
+        ], [
+            'editRemarksValue.max' => 'Remarks must not exceed 1000 characters.',
+        ]);
+
+        $pmuPo = PmuPo::find($this->editRemarksPoId);
+        if (!$pmuPo) {
+            LivewireAlert::title('Error')->error()->text('Record not found.')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $pmuPo->update(['remarks' => $this->editRemarksValue ?: null]);
+        $this->combinedRowsCache = null;
+
+        $this->closeEditRemarksModal();
+
+        LivewireAlert::title('Remarks Saved!')
+            ->success()
+            ->text('Remarks have been updated.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeEditRemarksModal(): void
+    {
+        $this->showEditRemarksModal = false;
+        $this->editRemarksPoId = null;
+        $this->editRemarksValue = '';
+        $this->resetValidation(['editRemarksValue']);
+    }
+
+    // ─── NOA Remarks ───────────────────────────────────────────────────────────
+
+    public function openEditNoaRemarksModal(): void
+    {
+        $this->editNoaRemarksValue = $this->noaRemarks ?? '';
+        $this->showEditNoaRemarksModal = true;
+    }
+
+    public function confirmEditNoaRemarks(): void
+    {
+        $this->validate([
+            'editNoaRemarksValue' => 'nullable|string|max:1000',
+        ], [
+            'editNoaRemarksValue.max' => 'Remarks must not exceed 1000 characters.',
+        ]);
+
+        $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+        $pmu->update(['received_remarks' => $this->editNoaRemarksValue ?: null]);
+        $this->noaRemarks = $this->editNoaRemarksValue ?: null;
+
+        $this->closeEditNoaRemarksModal();
+
+        LivewireAlert::title('Remarks Saved!')
+            ->success()
+            ->text('NOA remarks have been updated.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeEditNoaRemarksModal(): void
+    {
+        $this->showEditNoaRemarksModal = false;
+        $this->editNoaRemarksValue = '';
+        $this->resetValidation(['editNoaRemarksValue']);
     }
 
     private function fetchCombinedRows(): \Illuminate\Support\Collection

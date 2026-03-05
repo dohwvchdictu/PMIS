@@ -35,8 +35,28 @@
                 </p>
             </div>
 
-            {{-- Spacer --}}
-            <div class="flex-1"></div>
+            {{-- Divider --}}
+            <div class="w-px bg-gray-200 dark:bg-neutral-600 hidden sm:block"></div>
+
+            {{-- NOA Remarks --}}
+            <div class="flex-1 min-w-0 px-5 py-4 flex flex-col justify-center">
+                <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Remarks</p>
+                <div class="flex items-center gap-2 min-w-0">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate min-w-0 flex-1"
+                        title="{{ $noaRemarks ?? '' }}">
+                        {{ $noaRemarks ?: '—' }}
+                    </p>
+                    <button wire:click="openEditNoaRemarksModal"
+                        class="shrink-0 p-1 rounded text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
+                        title="Edit NOA remarks">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -329,8 +349,21 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                <div class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[10rem]"
-                                    title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}
+                                <div class="flex items-center gap-1.5 max-w-[12rem]">
+                                    <span class="flex-1 truncate"
+                                        title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}</span>
+                                    @if ($po)
+                                        <button wire:click="openEditRemarksModal({{ $po->id }})"
+                                            class="shrink-0 p-1 rounded text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
+                                            title="Edit remarks">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                             {{-- Status Column --}}
@@ -716,6 +749,135 @@
 
 
 
+
+    {{-- Edit NOA Remarks Modal --}}
+    @if ($showEditNoaRemarksModal)
+        <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            wire:click.self="closeEditNoaRemarksModal">
+            <div
+                class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full max-w-md mx-4">
+                {{-- Header --}}
+                <div
+                    class="flex items-center justify-between px-5 py-4 border-b border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 rounded-t-xl">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-emerald-900 dark:text-emerald-100">Edit NOA Remarks</h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400">{{ $noticeOfAwardNumber }}</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeEditNoaRemarksModal"
+                        class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Remarks <span class="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea wire:model="editNoaRemarksValue" rows="4" placeholder="Enter remarks about this NOA..."
+                        class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-700 dark:text-white resize-none
+                            @error('editNoaRemarksValue') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror"></textarea>
+                    @error('editNoaRemarksValue')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Footer --}}
+                <div
+                    class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-neutral-700">
+                    <button wire:click="closeEditNoaRemarksModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button wire:click="confirmEditNoaRemarks" wire:loading.attr="disabled"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Remarks
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Edit Remarks Modal --}}
+    @if ($showEditRemarksModal)
+        <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            wire:click.self="closeEditRemarksModal">
+            <div
+                class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full max-w-md mx-4">
+                {{-- Header --}}
+                <div
+                    class="flex items-center justify-between px-5 py-4 border-b border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 rounded-t-xl">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-emerald-900 dark:text-emerald-100">Edit Remarks</h3>
+                    </div>
+                    <button wire:click="closeEditRemarksModal"
+                        class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Remarks <span class="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea wire:model="editRemarksValue" rows="4" placeholder="Enter remarks..."
+                        class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-700 dark:text-white resize-none
+                            @error('editRemarksValue') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror"></textarea>
+                    @error('editRemarksValue')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Footer --}}
+                <div
+                    class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-neutral-700">
+                    <button wire:click="closeEditRemarksModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button wire:click="confirmEditRemarks" wire:loading.attr="disabled"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Remarks
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Forward to Supply Modal --}}
     <x-forms.modal wire:model="showForwardConfirm" title="Forward to Supply" size="max-w-lg"
