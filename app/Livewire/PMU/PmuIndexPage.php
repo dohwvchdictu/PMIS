@@ -177,6 +177,7 @@ class PmuIndexPage extends Component
         $receivedItems = $unionResults['received'];
         $expandedPaginator = $unionResults['expanded'];
         $warningCounts = $unionResults['warnings'];
+        $poIssuanceCounts = $unionResults['poIssuance'];
 
         return view('livewire.pmu.pmu-index-page', [
             'pendingItems' => $pendingItems,
@@ -184,6 +185,7 @@ class PmuIndexPage extends Component
             'expandedPaginator' => $expandedPaginator,
             'modalPaginator' => $this->buildModalPaginator(),
             'warningCounts' => $warningCounts,
+            'poIssuanceCounts' => $poIssuanceCounts,
         ]);
     }
 
@@ -284,6 +286,7 @@ class PmuIndexPage extends Component
             'received' => $receivedItems,
             'expanded' => $this->buildExpandedPaginator(),
             'warnings' => $this->buildWarningCounts(),
+            'poIssuance' => $this->buildPoIssuanceCounts(),
         ];
     }
 
@@ -333,7 +336,9 @@ class PmuIndexPage extends Component
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
-                'pmu_po.remarks as pmu_remarks'
+                'pmu_po.remarks as pmu_remarks',
+                'pmu_po.manual_status as pmu_manual_status',
+                'pmu_po.id as pmu_po_id'
             )
             ->get();
 
@@ -375,7 +380,9 @@ class PmuIndexPage extends Component
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
-                'pmu_po.remarks as pmu_remarks'
+                'pmu_po.remarks as pmu_remarks',
+                'pmu_po.manual_status as pmu_manual_status',
+                'pmu_po.id as pmu_po_id'
             )
             ->orderBy('procurements.pr_number')
             ->orderBy('pr_items.item_no')
@@ -410,6 +417,27 @@ class PmuIndexPage extends Component
                 \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NOT NULL AND pmu_po.po_date > pmu_po.po_date_deadline THEN 1 ELSE 0 END) as exceeded_count"),
                 \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline < '{$today}' THEN 1 ELSE 0 END) as overdue_count"),
                 \DB::raw("SUM(CASE WHEN pmu_po.po_date IS NULL AND pmu_po.po_date_deadline >= '{$today}' AND pmu_po.po_date_deadline <= '{$soonDate}' THEN 1 ELSE 0 END) as soon_count")
+            )
+            ->groupBy('pmus.notice_of_award_number')
+            ->get()
+            ->keyBy('notice_of_award_number');
+    }
+
+    private function buildPoIssuanceCounts(): \Illuminate\Support\Collection
+    {
+        // Per NOA: count total pmu_po rows, PO Preparation (po_date + po_contract_number filled),
+        // and For Approval of USEC (contract_amount filled).
+        return \DB::table('pmus')
+            ->join('pmu_po', 'pmu_po.pmu_id', '=', 'pmus.id')
+            ->whereNull('pmus.deleted_at')
+            ->whereNull('pmu_po.deleted_at')
+            ->select(
+                'pmus.notice_of_award_number',
+                \DB::raw('COUNT(*) as total_count'),
+                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.po_date IS NOT NULL AND pmu_po.po_contract_number IS NOT NULL THEN 1 ELSE 0 END) as po_prep_count'),
+                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.contract_amount IS NOT NULL THEN 1 ELSE 0 END) as usec_count'),
+                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'return_to_bac' THEN 1 ELSE 0 END) as return_to_bac_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'for_end_user_compliance' THEN 1 ELSE 0 END) as end_user_count")
             )
             ->groupBy('pmus.notice_of_award_number')
             ->get()
@@ -677,6 +705,22 @@ class PmuIndexPage extends Component
     public function clearSelection(): void
     {
         $this->selectedNoaNumbers = [];
+    }
+
+    public function setManualStatus(int $pmuPoId, ?string $status): void
+    {
+        $allowed = [null, 'return_to_bac', 'for_end_user_compliance'];
+        if (!in_array($status, $allowed, true)) {
+            return;
+        }
+
+        $pmuPo = \App\Models\PmuPo::find($pmuPoId);
+        if (!$pmuPo) {
+            return;
+        }
+
+        $pmuPo->update(['manual_status' => $status]);
+        $this->renderQueryCache = null;
     }
 
     private function invalidateRenderCache(): void

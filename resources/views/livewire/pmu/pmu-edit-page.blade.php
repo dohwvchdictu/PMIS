@@ -77,8 +77,7 @@
                         class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
                         bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
                         <span class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                             </svg>
@@ -175,6 +174,9 @@
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Remarks</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            PO Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -331,10 +333,54 @@
                                     title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}
                                 </div>
                             </td>
+                            {{-- Status Column --}}
+                            <td class="px-3 py-2 whitespace-nowrap">
+                                @php
+                                    $manualStatus = $po?->manual_status ?? null;
+                                    $manualStatusLabel = match ($manualStatus) {
+                                        'return_to_bac' => 'Return to BAC',
+                                        'for_end_user_compliance' => 'For End-User Compliance',
+                                        default => null,
+                                    };
+
+                                    // Compute auto status based on filled fields
+                                    $hasPoDate = !empty($po?->po_date);
+                                    $hasPoNumber = !empty($po?->po_contract_number);
+                                    $hasContractAmount =
+                                        !empty($po?->contract_amount) && (float) $po->contract_amount > 0;
+
+                                    if ($hasPoDate && $hasPoNumber && $hasContractAmount) {
+                                        $autoStatusLabel = 'For Approval of USEC';
+                                        $autoStatusClass =
+                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+                                    } elseif ($hasPoDate && $hasPoNumber) {
+                                        $autoStatusLabel = 'PO Preparation';
+                                        $autoStatusClass =
+                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+                                    } else {
+                                        $autoStatusLabel = null;
+                                        $autoStatusClass = '';
+                                    }
+                                @endphp
+                                @if ($manualStatusLabel)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                                        {{ $manualStatus === 'return_to_bac' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' }}">
+                                        {{ $manualStatusLabel }}
+                                    </span>
+                                @elseif ($autoStatusLabel)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $autoStatusClass }}">
+                                        {{ $autoStatusLabel }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500 text-xs">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="18" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="19" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No linked PRs or items found.
                             </td>
                         </tr>
@@ -605,6 +651,28 @@
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
+                {{-- Status --}}
+                <div class="sm:col-span-2">
+                    <label for="modal_manual_status"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        PO Status
+                        <span class="ml-1 font-normal text-gray-400">(leave as "— No Change —" to keep existing
+                            per-item status)</span>
+                    </label>
+                    <select id="modal_manual_status" wire:model="manual_status"
+                        class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                        <option value="">— No Change —</option>
+                        <option value="auto">Auto (Clear Manual Status)</option>
+                        <option value="return_to_bac">Return to BAC</option>
+                        <option value="for_end_user_compliance">For End-User Compliance</option>
+                    </select>
+                    @if ($manual_status !== '' && $manual_status !== 'auto')
+                        <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                            This will override the computed stage badge for all selected items.
+                        </p>
+                    @endif
+                </div>
+
                 {{-- Remarks --}}
                 <div class="sm:col-span-6">
                     <label for="modal_remarks"
@@ -618,6 +686,7 @@
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
+
 
             </div>
 
@@ -649,8 +718,8 @@
 
 
     {{-- Forward to Supply Modal --}}
-    <x-forms.modal wire:model="showForwardConfirm" title="Forward to Supply" size="max-w-lg" model="showForwardConfirm"
-        closeMethod="closeForwardConfirm">
+    <x-forms.modal wire:model="showForwardConfirm" title="Forward to Supply" size="max-w-lg"
+        model="showForwardConfirm" closeMethod="closeForwardConfirm">
         <div class="px-4 py-3">
             {{-- Summary Pills --}}
             @if ($forwardedToSupplySummary['forwarded'] > 0 || $forwardedToSupplySummary['pending'] > 0)

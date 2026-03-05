@@ -45,6 +45,9 @@ class PmuEditPage extends Component
     public bool $showForwardConfirm = false;
     public ?string $actualDateForwarded = null;
 
+    // Manual status
+    public string $manual_status = ''; // '' = no change, 'auto' = clear, 'return_to_bac', 'for_end_user_compliance'
+
     private \Illuminate\Support\Collection|null $combinedRowsCache = null;
 
     public function mount(string $id): void
@@ -139,6 +142,11 @@ class PmuEditPage extends Component
                 'notice_to_proceed_date' => $this->notice_to_proceed_date ?: null,
                 'remarks' => $this->remarks ?: null,
             ];
+
+            // Only touch manual_status if the user explicitly picked a value in the modal
+            if ($this->manual_status !== '') {
+                $data['manual_status'] = $this->manual_status === 'auto' ? null : $this->manual_status;
+            }
 
             foreach ($this->selectedItems as $rowKey) {
                 $pmuPo = PmuPo::where('ref_id', $rowKey)
@@ -341,6 +349,15 @@ class PmuEditPage extends Component
         $this->notice_to_proceed_date = $data['notice_to_proceed_date'];
         $this->remarks = $data['remarks'];
 
+        // Pre-fill manual_status: use common value if all selected items share the same status
+        $statuses = collect($this->selectedItems)
+            ->map(fn($rowKey) => $existing->get($rowKey)?->manual_status)
+            ->values();
+        $uniqueStatuses = $statuses->unique();
+        $this->manual_status = $uniqueStatuses->count() === 1
+            ? ($uniqueStatuses->first() === null ? 'auto' : $uniqueStatuses->first())
+            : ''; // mixed → no change
+
         $this->showBulkEditModal = true;
     }
 
@@ -358,6 +375,7 @@ class PmuEditPage extends Component
         $this->contract_signing_date = '';
         $this->notice_to_proceed_date = '';
         $this->remarks = '';
+        $this->manual_status = '';
         $this->resetErrorBag();
     }
 
@@ -371,6 +389,20 @@ class PmuEditPage extends Component
     {
         $this->editPage = 1;
         $this->clearSelections();
+    }
+
+    public function setManualStatus(int $pmuPoId, ?string $status): void
+    {
+        $allowed = [null, 'return_to_bac', 'for_end_user_compliance'];
+        if (!in_array($status, $allowed, true)) {
+            return;
+        }
+        $pmuPo = \App\Models\PmuPo::find($pmuPoId);
+        if (!$pmuPo) {
+            return;
+        }
+        $pmuPo->update(['manual_status' => $status]);
+        $this->combinedRowsCache = null;
     }
 
     private function fetchCombinedRows(): \Illuminate\Support\Collection

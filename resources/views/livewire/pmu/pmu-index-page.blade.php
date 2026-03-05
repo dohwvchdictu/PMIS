@@ -213,6 +213,9 @@
                                 PO Status</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                PO Issuance</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                 Remarks</th>
                         </tr>
                     </thead>
@@ -321,7 +324,70 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
                                 </td>
-                                <!-- PO Status warnings -->
+                                <!-- PO Status -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $ic = $poIssuanceCounts->get($group->notice_of_award_number);
+                                        $poTotal = (int) ($ic->total_count ?? 0);
+                                        $poPrep = (int) ($ic->po_prep_count ?? 0);
+                                        $usecCount = (int) ($ic->usec_count ?? 0);
+                                        $rtoBAC = (int) ($ic->return_to_bac_count ?? 0);
+                                        $endUser = (int) ($ic->end_user_count ?? 0);
+                                    @endphp
+                                    <div class="flex flex-wrap gap-1">
+                                        @if ($poTotal === 0)
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
+                                                title="No PO records entered yet">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+                                                Not Started
+                                            </span>
+                                        @else
+                                            @if ($usecCount > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of USEC">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of USEC
+                                                </span>
+                                            @endif
+                                            @if ($poPrep > 0 && $usecCount < $poTotal)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                                                    title="{{ $poPrep }} of {{ $poTotal }} item(s) have PO Date and PO/Contract No. filled — PO Preparation">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                                                    {{ $poPrep }}/{{ $poTotal }} PO Preparation
+                                                </span>
+                                            @endif
+                                            @if ($rtoBAC > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                                                    title="{{ $rtoBAC }} of {{ $poTotal }} item(s) flagged as Return to BAC">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    {{ $rtoBAC }}/{{ $poTotal }} Return to BAC
+                                                </span>
+                                            @endif
+                                            @if ($endUser > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
+                                                    title="{{ $endUser }} of {{ $poTotal }} item(s) flagged as For End-User Compliance">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                                    {{ $endUser }}/{{ $poTotal }} For End-User Compliance
+                                                </span>
+                                            @endif
+                                            @if ($usecCount === 0 && $poPrep === 0 && $rtoBAC === 0 && $endUser === 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
+                                                    title="No PO Preparation or USEC approval data recorded yet">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                    Pending Entry
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
+                                <!-- PO Issuance -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
                                         $wc = $warningCounts->get($group->notice_of_award_number);

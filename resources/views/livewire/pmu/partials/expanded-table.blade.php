@@ -31,6 +31,12 @@
                                                             class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             PO / Contract No.</th>
                                                         <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PO Status</th>
+                                                        <th
+                                                            class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                                                            PO Issuance</th>
+                                                        <th
                                                             class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                                                             Contract Amount</th>
                                                         <th
@@ -81,9 +87,8 @@
                                                                 {{ $procRow->awarded_amount ? '₱ ' . number_format($procRow->awarded_amount, 2) : '—' }}
                                                             </td>
                                                             <td
-                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                                                <div
-                                                                    class="break-words whitespace-normal max-w-[10rem]">
+                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 min-w-[16rem]">
+                                                                <div class="break-words whitespace-normal">
                                                                     {{ $procRow->supplier_name ?? '—' }}</div>
                                                             </td>
                                                             <td
@@ -183,6 +188,105 @@
                                                                         class="text-gray-400 dark:text-gray-500">—</span>
                                                                 @endif
                                                             </td>
+                                                            {{-- PO Status Column (moved here) --}}
+                                                            <td class="px-4 py-3 min-w-[13rem]">
+                                                                @php
+                                                                    $manualStatus = $procRow->pmu_manual_status ?? null;
+                                                                    $manualStatusLabel = match ($manualStatus) {
+                                                                        'return_to_bac' => 'Return to BAC',
+                                                                        'for_end_user_compliance'
+                                                                            => 'For End-User Compliance',
+                                                                        default => null,
+                                                                    };
+                                                                    $hasPoDate = !empty($procRow->po_date);
+                                                                    $hasPoNumber = !empty($procRow->po_contract_number);
+                                                                    $hasContractAmount =
+                                                                        !empty($procRow->pmu_contract_amount) &&
+                                                                        (float) $procRow->pmu_contract_amount > 0;
+                                                                    if (
+                                                                        $hasPoDate &&
+                                                                        $hasPoNumber &&
+                                                                        $hasContractAmount
+                                                                    ) {
+                                                                        $autoStatusLabel = 'For Approval of USEC';
+                                                                        $autoStatusClass =
+                                                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+                                                                    } elseif ($hasPoDate && $hasPoNumber) {
+                                                                        $autoStatusLabel = 'PO Preparation';
+                                                                        $autoStatusClass =
+                                                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+                                                                    } else {
+                                                                        $autoStatusLabel = null;
+                                                                        $autoStatusClass = '';
+                                                                    }
+                                                                @endphp
+                                                                @if ($manualStatusLabel)
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                                                                        {{ $manualStatus === 'return_to_bac' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' }}">
+                                                                        {{ $manualStatusLabel }}
+                                                                    </span>
+                                                                @elseif ($autoStatusLabel)
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $autoStatusClass }}">
+                                                                        {{ $autoStatusLabel }}
+                                                                    </span>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500 text-xs">—</span>
+                                                                @endif
+                                                            </td>
+                                                            {{-- PO Issuance Column --}}
+                                                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                                                @if ($deadlineWarning === 'exceeded')
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                                        <svg class="w-3 h-3" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                        Exceeded
+                                                                    </span>
+                                                                @elseif ($deadlineWarning === 'overdue')
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                                                        <svg class="w-3 h-3" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                        Overdue
+                                                                    </span>
+                                                                @elseif ($deadlineWarning === 'soon')
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                                        <svg class="w-3 h-3" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                        Due Soon
+                                                                    </span>
+                                                                @elseif ($procRow->po_date_deadline)
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                                                        <svg class="w-3 h-3" fill="currentColor"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                        On Track
+                                                                    </span>
+                                                                @else
+                                                                    <span
+                                                                        class="text-gray-400 dark:text-gray-500">—</span>
+                                                                @endif
+                                                            </td>
                                                             <td
                                                                 class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
                                                                 {{ $procRow->pmu_contract_amount ? '₱ ' . number_format($procRow->pmu_contract_amount, 2) : '—' }}
@@ -197,8 +301,8 @@
                                                             </td>
                                                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                                                 @if ($procRow->ntp_link)
-                                                                    <a href="{{ $procRow->ntp_link }}"
-                                                                        target="_blank" rel="noopener noreferrer"
+                                                                    <a href="{{ $procRow->ntp_link }}" target="_blank"
+                                                                        rel="noopener noreferrer"
                                                                         class="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 underline underline-offset-2 transition-colors">
                                                                         View NTP
                                                                     </a>
@@ -208,10 +312,10 @@
                                                                 @endif
                                                             </td>
                                                             <td
-                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                                                class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 min-w-[16rem] w-60">
                                                                 @if ($procRow->pmu_remarks)
                                                                     <span title="{{ $procRow->pmu_remarks }}"
-                                                                        class="cursor-help">{{ \Illuminate\Support\Str::limit($procRow->pmu_remarks, 40) }}</span>
+                                                                        class="cursor-help break-words whitespace-normal">{{ $procRow->pmu_remarks }}</span>
                                                                 @else
                                                                     <span
                                                                         class="text-gray-400 dark:text-gray-500">—</span>
@@ -220,7 +324,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="14"
+                                                            <td colspan="16"
                                                                 class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                                                                 No items found.
                                                             </td>

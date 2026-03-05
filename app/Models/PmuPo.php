@@ -28,6 +28,7 @@ class PmuPo extends Model implements Auditable
         'contract_signing_date',
         'notice_to_proceed_date',
         'remarks',
+        'manual_status',
     ];
 
     protected $auditInclude = [
@@ -44,6 +45,7 @@ class PmuPo extends Model implements Auditable
         'contract_signing_date',
         'notice_to_proceed_date',
         'remarks',
+        'manual_status',
     ];
 
     protected $auditTimestamps = true;
