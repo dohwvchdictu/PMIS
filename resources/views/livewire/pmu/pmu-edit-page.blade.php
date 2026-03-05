@@ -93,17 +93,19 @@
                             </svg>Edit
                         </span>
                     </button>
-                    <button wire:click="openForwardConfirm" type="button"
-                        class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
-                        bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
-                        <span class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                            </svg>
-                            Forward to Supply
-                        </span>
-                    </button>
+                    @if ($allSelectedComplete)
+                        <button wire:click="openForwardConfirm" type="button"
+                            class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+                            bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                </svg>
+                                Forward to Supply
+                            </span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -349,22 +351,8 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                <div class="flex items-center gap-1.5 max-w-[12rem]">
-                                    <span class="flex-1 truncate"
-                                        title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}</span>
-                                    @if ($po)
-                                        <button wire:click="openEditRemarksModal({{ $po->id }})"
-                                            class="shrink-0 p-1 rounded text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
-                                            title="Edit remarks">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                                stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
-                                            </svg>
-                                        </button>
-                                    @endif
-                                </div>
+                                <span class="block truncate max-w-[12rem]"
+                                    title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}</span>
                             </td>
                             {{-- Status Column --}}
                             <td class="px-3 py-2 whitespace-nowrap">
@@ -377,12 +365,17 @@
                                     };
 
                                     // Compute auto status based on filled fields
+                                    $isComplete = $completedRows[$row->rowKey] ?? false;
                                     $hasPoDate = !empty($po?->po_date);
                                     $hasPoNumber = !empty($po?->po_contract_number);
                                     $hasContractAmount =
                                         !empty($po?->contract_amount) && (float) $po->contract_amount > 0;
 
-                                    if ($hasPoDate && $hasPoNumber && $hasContractAmount) {
+                                    if ($isComplete) {
+                                        $autoStatusLabel = 'Ready to Forward';
+                                        $autoStatusClass =
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+                                    } elseif ($hasPoDate && $hasPoNumber && $hasContractAmount) {
                                         $autoStatusLabel = 'For Approval of USEC';
                                         $autoStatusClass =
                                             'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
@@ -395,7 +388,12 @@
                                         $autoStatusClass = '';
                                     }
                                 @endphp
-                                @if ($manualStatusLabel)
+                                @if ($isComplete)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                        Ready to Forward
+                                    </span>
+                                @elseif ($manualStatusLabel)
                                     <span
                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
                                         {{ $manualStatus === 'return_to_bac' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' }}">
@@ -542,7 +540,17 @@
 
                 {{-- Contract Amount --}}
                 <div x-data="{
-                    display: {{ $contract_amount && is_numeric($contract_amount) ? "'" . number_format((float) $contract_amount, 2) . "'" : "''" }},
+                    display: '',
+                    focused: false,
+                    init() {
+                        const raw = $wire.contract_amount;
+                        this.display = raw ? this.format(raw) : '';
+                        $wire.$watch('contract_amount', (val) => {
+                            if (!this.focused) {
+                                this.display = val ? this.format(val) : '';
+                            }
+                        });
+                    },
                     format(val) {
                         let n = parseFloat(String(val).replace(/,/g, ''));
                         return isNaN(n) ? '' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -552,9 +560,9 @@
                         let parts = raw.split('.');
                         if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
                         this.display = raw;
-                        $wire.set('contract_amount', raw === '' ? '' : raw);
                     },
                     handleBlur() {
+                        this.focused = false;
                         let raw = String(this.display).replace(/,/g, '');
                         let n = parseFloat(raw);
                         if (!isNaN(n)) {
@@ -574,7 +582,8 @@
                         <span
                             class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400 pointer-events-none">₱</span>
                         <input type="text" id="modal_contract_amount" x-model="display"
-                            x-on:input="handleInput($event)" x-on:blur="handleBlur()" placeholder="0.00"
+                            x-on:focus="focused = true" x-on:input="handleInput($event)" x-on:blur="handleBlur()"
+                            placeholder="0.00"
                             class="w-full pl-6 pr-3 py-2 text-xs text-right border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
                             @error('contract_amount') border-red-500 @else border-gray-300 @enderror">
                     </div>
@@ -694,8 +703,7 @@
                     </label>
                     <select id="modal_manual_status" wire:model="manual_status"
                         class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
-                        <option value="">— No Change —</option>
-                        <option value="auto">Auto (Clear Manual Status)</option>
+                        <option value="auto">Auto</option>
                         <option value="return_to_bac">Return to BAC</option>
                         <option value="for_end_user_compliance">For End-User Compliance</option>
                     </select>

@@ -329,6 +329,7 @@
                                     @php
                                         $ic = $poIssuanceCounts->get($group->notice_of_award_number);
                                         $poTotal = (int) ($ic->total_count ?? 0);
+                                        $readyToForward = (int) ($ic->ready_to_forward_count ?? 0);
                                         $poPrep = (int) ($ic->po_prep_count ?? 0);
                                         $usecCount = (int) ($ic->usec_count ?? 0);
                                         $rtoBAC = (int) ($ic->return_to_bac_count ?? 0);
@@ -344,20 +345,12 @@
                                                 Not Started
                                             </span>
                                         @else
-                                            @if ($usecCount > 0)
+                                            @if ($readyToForward > 0)
                                                 <span
-                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
-                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of USEC">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of USEC
-                                                </span>
-                                            @endif
-                                            @if ($poPrep > 0 && $usecCount < $poTotal)
-                                                <span
-                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
-                                                    title="{{ $poPrep }} of {{ $poTotal }} item(s) have PO Date and PO/Contract No. filled — PO Preparation">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                                                    {{ $poPrep }}/{{ $poTotal }} PO Preparation
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                    title="{{ $readyToForward }} of {{ $poTotal }} item(s) have all required fields complete — Ready to Forward">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    {{ $readyToForward }}/{{ $poTotal }} Ready to Forward
                                                 </span>
                                             @endif
                                             @if ($rtoBAC > 0)
@@ -376,10 +369,26 @@
                                                     {{ $endUser }}/{{ $poTotal }} For End-User Compliance
                                                 </span>
                                             @endif
-                                            @if ($usecCount === 0 && $poPrep === 0 && $rtoBAC === 0 && $endUser === 0)
+                                            @if ($usecCount > 0 && $usecCount > $readyToForward)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of USEC">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of USEC
+                                                </span>
+                                            @endif
+                                            @if ($poPrep > 0 && $poPrep > $usecCount)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                                                    title="{{ $poPrep }} of {{ $poTotal }} item(s) have PO Date and PO/Contract No. filled — PO Preparation">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    {{ $poPrep }}/{{ $poTotal }} PO Preparation
+                                                </span>
+                                            @endif
+                                            @if ($readyToForward === 0 && $usecCount === 0 && $poPrep === 0 && $rtoBAC === 0 && $endUser === 0)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
-                                                    title="No PO Preparation or USEC approval data recorded yet">
+                                                    title="No PO data recorded yet">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                                                     Pending Entry
                                                 </span>

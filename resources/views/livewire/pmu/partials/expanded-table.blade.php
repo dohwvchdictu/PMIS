@@ -198,6 +198,23 @@
                                                                             => 'For End-User Compliance',
                                                                         default => null,
                                                                     };
+                                                                    $isRowComplete =
+                                                                        !empty($procRow->po_date) &&
+                                                                        !empty($procRow->po_contract_number) &&
+                                                                        (!empty($procRow->pmu_contract_amount) &&
+                                                                            (float) $procRow->pmu_contract_amount >
+                                                                                0) &&
+                                                                        !empty($procRow->pmu_contract_signing_date) &&
+                                                                        !empty($procRow->pmu_notice_to_proceed_date) &&
+                                                                        !empty($procRow->po_contract_number_link) &&
+                                                                        !empty(
+                                                                            $procRow->pmu_date_po_receipt_by_supplier ??
+                                                                                null
+                                                                        ) &&
+                                                                        !empty(
+                                                                            $procRow->pmu_date_coa_stamped_received ??
+                                                                                null
+                                                                        );
                                                                     $hasPoDate = !empty($procRow->po_date);
                                                                     $hasPoNumber = !empty($procRow->po_contract_number);
                                                                     $hasContractAmount =
@@ -220,7 +237,12 @@
                                                                         $autoStatusClass = '';
                                                                     }
                                                                 @endphp
-                                                                @if ($manualStatusLabel)
+                                                                @if ($isRowComplete)
+                                                                    <span
+                                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                                        Ready to Forward
+                                                                    </span>
+                                                                @elseif ($manualStatusLabel)
                                                                     <span
                                                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
                                                                         {{ $manualStatus === 'return_to_bac' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' }}">

@@ -108,25 +108,24 @@ class PmuEditPage extends Component
             return;
         }
 
-        // Validate contract amount does not exceed awarded amount
+        // Validate contract amount must equal each selected item's awarded amount
         if ($this->contract_amount !== '') {
             $contractAmount = (float) $this->contract_amount;
 
-            // Get awarded amounts for all selected items
             $combined = $this->fetchCombinedRows();
-            $awardedAmounts = $combined
-                ->whereIn('rowKey', $this->selectedItems)
-                ->pluck('awarded_amount')
-                ->filter()  // Remove null values
-                ->map(fn($amount) => (float) $amount);
+            $selectedRows = $combined->whereIn('rowKey', $this->selectedItems);
 
-            if ($awardedAmounts->isNotEmpty()) {
-                $minAwardedAmount = $awardedAmounts->min();
+            foreach ($selectedRows as $row) {
+                if ($row->awarded_amount === null) {
+                    continue; // skip rows with no awarded amount set
+                }
 
-                if ($contractAmount > $minAwardedAmount) {
-                    LivewireAlert::title('Contract Amount Exceeds Awarded Amount')
+                $awardedAmount = (float) $row->awarded_amount;
+
+                if ($contractAmount !== $awardedAmount) {
+                    LivewireAlert::title('Contract Amount Mismatch')
                         ->warning()
-                        ->text("Contract amount (₱" . number_format($contractAmount, 2) . ") cannot exceed the minimum awarded amount (₱" . number_format($minAwardedAmount, 2) . ") among selected items.")
+                        ->text("Contract amount (₱" . number_format($contractAmount, 2) . ") must equal the awarded amount (₱" . number_format($awardedAmount, 2) . ") for PR " . $row->pr_number . ".")
                         ->toast()
                         ->timer(5000)
                         ->position('top-end')
@@ -605,6 +604,8 @@ class PmuEditPage extends Component
         return !empty($pmuPo->po_date)
             && !empty($pmuPo->po_contract_number)
             && !empty($pmuPo->contract_amount)
+            && !empty($pmuPo->contract_signing_date)
+            && !empty($pmuPo->notice_to_proceed_date)
             && !empty($pmuPo->po_contract_number_link)
             && !empty($pmuPo->date_po_receipt_by_supplier)
             && !empty($pmuPo->date_coa_stamped_received);
@@ -768,6 +769,9 @@ class PmuEditPage extends Component
             $completedRows[$refId] = $this->isRowComplete($pmuPo);
         }
 
+        $allSelectedComplete = !empty($this->selectedItems) && collect($this->selectedItems)
+            ->every(fn($rowKey) => $completedRows[$rowKey] ?? false);
+
         return view('livewire.pmu.pmu-edit-page', [
             'noticeOfAwardNumber' => $this->noticeOfAwardNumber,
             'pmuRecord' => $pmuRecord,
@@ -776,6 +780,7 @@ class PmuEditPage extends Component
             'noticeOfAward' => $this->noticeOfAward,
             'editPaginator' => $this->buildEditPaginator(),
             'forwardedToSupplySummary' => $this->forwardedToSupplySummary,
+            'allSelectedComplete' => $allSelectedComplete,
         ])->layout('components.layouts.app');
     }
 }

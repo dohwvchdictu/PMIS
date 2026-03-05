@@ -336,6 +336,8 @@ class PmuIndexPage extends Component
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.date_po_receipt_by_supplier as pmu_date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received as pmu_date_coa_stamped_received',
                 'pmu_po.remarks as pmu_remarks',
                 'pmu_po.manual_status as pmu_manual_status',
                 'pmu_po.id as pmu_po_id'
@@ -380,6 +382,8 @@ class PmuIndexPage extends Component
                 'pmu_po.contract_amount as pmu_contract_amount',
                 'pmu_po.contract_signing_date as pmu_contract_signing_date',
                 'pmu_po.notice_to_proceed_date as pmu_notice_to_proceed_date',
+                'pmu_po.date_po_receipt_by_supplier as pmu_date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received as pmu_date_coa_stamped_received',
                 'pmu_po.remarks as pmu_remarks',
                 'pmu_po.manual_status as pmu_manual_status',
                 'pmu_po.id as pmu_po_id'
@@ -434,10 +438,38 @@ class PmuIndexPage extends Component
             ->select(
                 'pmus.notice_of_award_number',
                 \DB::raw('COUNT(*) as total_count'),
+                \DB::raw('SUM(CASE WHEN
+                    pmu_po.po_date IS NOT NULL AND
+                    pmu_po.po_contract_number IS NOT NULL AND
+                    pmu_po.contract_amount IS NOT NULL AND
+                    pmu_po.contract_signing_date IS NOT NULL AND
+                    pmu_po.notice_to_proceed_date IS NOT NULL AND
+                    pmu_po.po_contract_number_link IS NOT NULL AND
+                    pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
+                    pmu_po.date_coa_stamped_received IS NOT NULL
+                THEN 1 ELSE 0 END) as ready_to_forward_count'),
                 \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.po_date IS NOT NULL AND pmu_po.po_contract_number IS NOT NULL THEN 1 ELSE 0 END) as po_prep_count'),
                 \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.contract_amount IS NOT NULL THEN 1 ELSE 0 END) as usec_count'),
-                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'return_to_bac' THEN 1 ELSE 0 END) as return_to_bac_count"),
-                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'for_end_user_compliance' THEN 1 ELSE 0 END) as end_user_count")
+                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'return_to_bac' AND NOT (
+                    pmu_po.po_date IS NOT NULL AND
+                    pmu_po.po_contract_number IS NOT NULL AND
+                    pmu_po.contract_amount IS NOT NULL AND
+                    pmu_po.contract_signing_date IS NOT NULL AND
+                    pmu_po.notice_to_proceed_date IS NOT NULL AND
+                    pmu_po.po_contract_number_link IS NOT NULL AND
+                    pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
+                    pmu_po.date_coa_stamped_received IS NOT NULL
+                ) THEN 1 ELSE 0 END) as return_to_bac_count"),
+                \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'for_end_user_compliance' AND NOT (
+                    pmu_po.po_date IS NOT NULL AND
+                    pmu_po.po_contract_number IS NOT NULL AND
+                    pmu_po.contract_amount IS NOT NULL AND
+                    pmu_po.contract_signing_date IS NOT NULL AND
+                    pmu_po.notice_to_proceed_date IS NOT NULL AND
+                    pmu_po.po_contract_number_link IS NOT NULL AND
+                    pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
+                    pmu_po.date_coa_stamped_received IS NOT NULL
+                ) THEN 1 ELSE 0 END) as end_user_count")
             )
             ->groupBy('pmus.notice_of_award_number')
             ->get()
