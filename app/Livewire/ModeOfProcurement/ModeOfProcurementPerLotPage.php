@@ -673,6 +673,21 @@ class ModeOfProcurementPerLotPage extends Component
             if ($this->isCompetitiveBidding($modeId)) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
+                // Mode 2 specific: bidding_number must be unique across all schedules
+                if ($modeId === 2 && $this->hasValue($item['bidding_number'] ?? null)) {
+                    $biddingNumber = $item['bidding_number'];
+                    $duplicate = BidSchedule::where('bidding_number', $biddingNumber)
+                        ->where('mop_uid', '!=', $item['uid'])
+                        ->exists();
+                    if ($duplicate) {
+                        $msg = "Bidding Number \"{$biddingNumber}\" already exists for {$modeName}.";
+                        if (!in_array($msg, $this->scheduleValidationErrors)) {
+                            $this->scheduleValidationErrors[] = $msg;
+                        }
+                        $isValid = false;
+                    }
+                }
+
                 $hasBiddingData = $this->hasAnyValue($biddingFields);
 
                 if ($existingBidSchedule && !$hasBiddingData) {
