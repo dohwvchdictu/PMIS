@@ -35,6 +35,12 @@ class PmuIndexPage extends Component
     public int $pendingPage = 1;
     public int $receivedPage = 1;
 
+    // Sort & Filters (received table)
+    public string $sortBy = 'date_received';
+    public string $sortDir = 'desc';
+    public string $poStatusFilter = '';
+    public string $poIssuanceFilter = '';
+
     // Search
     public string $search = '';
 
@@ -69,6 +75,10 @@ class PmuIndexPage extends Component
         'search' => ['except' => ''],
         'pendingPerPage' => ['except' => 10],
         'receivedPerPage' => ['except' => 10],
+        'sortBy' => ['except' => 'date_received'],
+        'sortDir' => ['except' => 'desc'],
+        'poStatusFilter' => ['except' => ''],
+        'poIssuanceFilter' => ['except' => ''],
     ];
 
     public function mount(): void
@@ -135,7 +145,38 @@ class PmuIndexPage extends Component
 
     public function updatingSearch(): void
     {
-        $this->resetPage();
+        $this->receivedPage = 1;
+        $this->pendingPage = 1;
+    }
+
+    public function updatingPoStatusFilter(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    public function updatingPoIssuanceFilter(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    public function updatingSortBy(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    public function updatingSortDir(): void
+    {
+        $this->receivedPage = 1;
+    }
+
+    public function clearReceivedFilters(): void
+    {
+        $this->sortBy = 'date_received';
+        $this->sortDir = 'desc';
+        $this->poStatusFilter = '';
+        $this->poIssuanceFilter = '';
+        $this->search = '';
+        $this->receivedPage = 1;
     }
 
     public function setPendingPage(int $page): void
@@ -279,9 +320,121 @@ class PmuIndexPage extends Component
             ->whereNull('date_received')
             ->paginate($this->pendingPerPage, ['*'], 'pending_page', $this->pendingPage);
 
-        $receivedItems = (clone $outerBase)
-            ->whereNotNull('date_received')
-            ->reorder('date_received', 'desc')
+        $receivedQuery = (clone $outerBase)->whereNotNull('date_received');
+
+        // ── PO Status filter ──────────────────────────────────────────────────
+        // Re-use the same aggregation that drives the display badges to guarantee
+        // the filter matches exactly what the user sees on screen.
+        if ($this->poStatusFilter !== '') {
+            $iCounts = $this->buildPoIssuanceCounts(); // keyed by notice_of_award_number
+
+            // All received NOA numbers (needed for "not started" / "pending_entry")
+            $allReceivedNoas = \DB::table('pmus')
+                ->whereNotNull('date_received')
+                ->whereNull('deleted_at')
+                ->pluck('notice_of_award_number');
+
+            $poNoas = match ($this->poStatusFilter) {
+                // Not Started: poTotal === 0 → NOA has no pmu_po records at all
+                'not_started' => $allReceivedNoas->filter(
+                    fn($noa) => !$iCounts->has($noa)
+                ),
+
+                // Pending Entry: poTotal > 0 but all derived counts are zero
+                'pending_entry' => $iCounts->filter(function ($ic) {
+                        return (int) $ic->total_count > 0
+                        && (int) $ic->ready_to_forward_count === 0
+                        && (int) $ic->po_prep_count === 0
+                        && (int) $ic->usec_count === 0
+                        && (int) $ic->return_to_bac_count === 0
+                        && (int) $ic->end_user_count === 0
+                        && (int) $ic->forwarded_to_supply_count === 0;
+                    })->keys(),
+
+                // forwarded_to_supply > 0
+                'forwarded_to_supply' => $iCounts
+                    ->filter(fn($ic) => (int) $ic->forwarded_to_supply_count > 0)
+                    ->keys(),
+
+                // return_to_bac > 0
+                'return_to_bac' => $iCounts
+                    ->filter(fn($ic) => (int) $ic->return_to_bac_count > 0)
+                    ->keys(),
+
+                // end_user > 0
+                'for_end_user_compliance' => $iCounts
+                    ->filter(fn($ic) => (int) $ic->end_user_count > 0)
+                    ->keys(),
+
+                // USEC badge: usec_count > 0 && usec_count > ready_to_forward_count
+                'usec' => $iCounts->filter(function ($ic) {
+                        $usec = (int) $ic->usec_count;
+                        return $usec > 0 && $usec > (int) $ic->ready_to_forward_count;
+                    })->keys(),
+
+                // PO Prep badge: po_prep_count > 0 && po_prep_count > usec_count
+                'po_prep' => $iCounts->filter(function ($ic) {
+                        $prep = (int) $ic->po_prep_count;
+                        return $prep > 0 && $prep > (int) $ic->usec_count;
+                    })->keys(),
+
+                default => null,
+            };
+
+            if ($poNoas !== null) {
+                $receivedQuery->whereIn('notice_of_award_number', $poNoas->values()->toArray());
+            }
+        }
+
+        // ── PO Issuance filter ────────────────────────────────────────────────
+        // Re-use the same aggregation that drives the display badges to guarantee
+        // the filter matches exactly what the user sees on screen.
+        if ($this->poIssuanceFilter !== '') {
+            $warnCounts = $this->buildWarningCounts(); // keyed by notice_of_award_number
+
+            $warnNoas = match ($this->poIssuanceFilter) {
+                'exceeded' => $warnCounts
+                    ->filter(fn($wc) => (int) $wc->exceeded_count > 0)
+                    ->keys(),
+
+                'overdue' => $warnCounts
+                    ->filter(fn($wc) => (int) $wc->overdue_count > 0)
+                    ->keys(),
+
+                'due_soon' => $warnCounts
+                    ->filter(fn($wc) => (int) $wc->soon_count > 0)
+                    ->keys(),
+
+                // On Track = badge shows when ALL counts are zero.
+                // Must also include NOAs with no pmu_po deadline records (wc is null → all-zero).
+                // Fetch all received NOA numbers then exclude any that have exceeded/overdue/due-soon.
+                'on_track' => \DB::table('pmus')
+                    ->whereNotNull('date_received')
+                    ->whereNull('deleted_at')
+                    ->pluck('notice_of_award_number')
+                    ->filter(function ($noa) use ($warnCounts) {
+                            $wc = $warnCounts->get($noa);
+                            return !$wc
+                            || ((int) $wc->exceeded_count === 0
+                                && (int) $wc->overdue_count === 0
+                                && (int) $wc->soon_count === 0);
+                        }),
+
+                default => null,
+            };
+
+            if ($warnNoas !== null) {
+                $receivedQuery->whereIn('notice_of_award_number', $warnNoas->values()->toArray());
+            }
+        }
+
+        // ── Dynamic sort ──────────────────────────────────────────────────────
+        $allowedSorts = ['date_received', 'notice_of_award_number'];
+        $sortCol = in_array($this->sortBy, $allowedSorts, true) ? $this->sortBy : 'date_received';
+        $sortDir = $this->sortDir === 'asc' ? 'asc' : 'desc';
+
+        $receivedItems = $receivedQuery
+            ->reorder($sortCol, $sortDir)
             ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
         return [
