@@ -101,7 +101,16 @@
                                         </td>
                                     @endcan
 
-                                    <td class="px-4 py-4 whitespace-nowrap"></td>
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <button wire:click="toggleExpand('{{ $supply->po_contract_number }}')"
+                                            class="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                            <svg class="w-5 h-5 transition-transform {{ $expandedPoNumber === $supply->po_contract_number ? 'rotate-90' : '' }}"
+                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </td>
 
                                     <td class="px-6 py-3 whitespace-nowrap">
                                         <span
@@ -135,6 +144,20 @@
                                         {{ $supply->remarks ?? '—' }}
                                     </td>
                                 </tr>
+
+                                {{-- Expanded Procurement Details --}}
+                                @if ($expandedPoNumber === $supply->po_contract_number)
+                                    <tr class="bg-gray-50 dark:bg-neutral-900">
+                                        <td colspan="99" class="px-4 py-3">
+                                            <div
+                                                class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
+                                                @include('livewire.supply.partials.expanded-table', [
+                                                    'expandedPaginator' => $expandedPaginator,
+                                                ])
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
                             @empty
                                 <tr>
                                     <td colspan="10" class="px-6 py-12 text-center">
@@ -175,7 +198,8 @@
             <div
                 class="px-4 py-2.5 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex justify-start">
                 <div class="relative w-72">
-                    <input type="text" wire:model.live="search" placeholder="Search PO/contract number, remarks..."
+                    <input type="text" wire:model.live="search"
+                        placeholder="Search PO/contract number, remarks..."
                         class="w-full px-4 py-2 pl-9 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
                     <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,6 +215,7 @@
                     <thead
                         class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800">
                         <tr>
+                            <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                             <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
@@ -211,6 +236,17 @@
                             <tr
                                 class="transition-colors bg-white hover:bg-gray-50 dark:bg-neutral-800 dark:hover:bg-neutral-700">
 
+                                {{-- Toggle --}}
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <button wire:click="toggleExpand('{{ $supply->po_contract_number }}')"
+                                        class="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                        <svg class="w-5 h-5 transition-transform {{ $expandedPoNumber === $supply->po_contract_number ? 'rotate-90' : '' }}"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </td>
                                 {{-- Actions Dropdown --}}
                                 <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
                                     <div x-data="{ open: false }" class="relative inline-block" x-ref="menuWrapper">
@@ -296,6 +332,20 @@
                                     @endif
                                 </td>
                             </tr>
+
+                            {{-- Expanded Procurement Details --}}
+                            @if ($expandedPoNumber === $supply->po_contract_number)
+                                <tr class="bg-gray-50 dark:bg-neutral-900">
+                                    <td colspan="99" class="px-4 py-3">
+                                        <div
+                                            class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
+                                            @include('livewire.supply.partials.expanded-table', [
+                                                'expandedPaginator' => $expandedPaginator,
+                                            ])
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         @empty
                             <tr>
                                 <td colspan="10" class="px-6 py-12 text-center">

@@ -22,9 +22,14 @@ class SupplyIndexPage extends Component
     public int $receivedPerPage = 10;
     public int $pendingPage = 1;
     public int $receivedPage = 1;
+    public int $expandedPage = 1;
+    public int $expandedPerPage = 10;
 
     // Search
     public string $search = '';
+
+    // Expand/collapse
+    public ?string $expandedPoNumber = null;
 
     // Receive Modal
     public bool $showReceiveModal = false;
@@ -81,6 +86,26 @@ class SupplyIndexPage extends Component
         $this->receivedPage = 1;
     }
 
+    public function toggleExpand(string $poNumber): void
+    {
+        if ($this->expandedPoNumber === $poNumber) {
+            $this->expandedPoNumber = null;
+        } else {
+            $this->expandedPoNumber = $poNumber;
+            $this->expandedPage = 1;
+        }
+    }
+
+    public function setExpandedPage(int $page): void
+    {
+        $this->expandedPage = $page;
+    }
+
+    public function updatingExpandedPerPage(): void
+    {
+        $this->expandedPage = 1;
+    }
+
     public function setPendingPage(int $page): void
     {
         $this->pendingPage = $page;
@@ -117,7 +142,73 @@ class SupplyIndexPage extends Component
         return view('livewire.supply.supply-index-page', [
             'pendingItems' => $pendingItems,
             'receivedItems' => $receivedItems,
+            'expandedPaginator' => $this->buildExpandedRows(),
         ]);
+    }
+
+    // ─── Expanded Procurement Details ───────────────────────────────────────
+
+    private function buildExpandedRows(): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        if (!$this->expandedPoNumber) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->expandedPerPage, $this->expandedPage);
+        }
+
+        // Lot-based rows: pmu_po.ref_id = procurements.procID
+        $lots = \Illuminate\Support\Facades\DB::table('pmu_po')
+            ->join('procurements', 'procurements.procID', '=', 'pmu_po.ref_id')
+            ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->whereNotExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pr_items')
+                    ->whereColumn('pr_items.prItemID', 'pmu_po.ref_id');
+            })
+            ->where('pmu_po.po_contract_number', $this->expandedPoNumber)
+            ->whereNull('pmu_po.deleted_at')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                \DB::raw('procurements.procurement_program_project as description'),
+                'suppliers.name as supplier_name',
+                'pmu_po.po_date',
+                'pmu_po.po_contract_number',
+                'pmu_po.contract_amount',
+            )
+            ->get();
+
+        // Item-based rows: pmu_po.ref_id = pr_items.prItemID
+        $items = \Illuminate\Support\Facades\DB::table('pmu_po')
+            ->join('pr_items', 'pr_items.prItemID', '=', 'pmu_po.ref_id')
+            ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
+            ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->where('pmu_po.po_contract_number', $this->expandedPoNumber)
+            ->whereNull('pmu_po.deleted_at')
+            ->select(
+                'procurements.procID',
+                'procurements.pr_number',
+                'pr_items.description',
+                'suppliers.name as supplier_name',
+                'pmu_po.po_date',
+                'pmu_po.po_contract_number',
+                'pmu_po.contract_amount',
+            )
+            ->get();
+
+        $combined = $lots->merge($items);
+        $total = $combined->count();
+        $perPage = max(1, (int) $this->expandedPerPage);
+        $page = max(1, (int) $this->expandedPage);
+        $sliced = $combined->forPage($page, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $sliced,
+            $total,
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
     }
 
     // ─── Single Receive Modal ────────────────────────────────────────────────
