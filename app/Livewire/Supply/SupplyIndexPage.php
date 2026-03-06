@@ -121,6 +121,28 @@ class SupplyIndexPage extends Component
     public function render()
     {
         $baseQuery = Supply::query()
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pmu_po')
+                    ->whereColumn('pmu_po.po_contract_number', 'supplies.po_contract_number')
+                    ->whereNull('pmu_po.deleted_at')
+                    ->where(function ($q2) {
+                        // Lot-based: pr_lot_prstage has stage 14
+                        $q2->whereExists(function ($q3) {
+                            $q3->select(\DB::raw(1))
+                                ->from('pr_lot_prstage')
+                                ->whereColumn('pr_lot_prstage.procID', 'pmu_po.ref_id')
+                                ->where('pr_lot_prstage.pr_stage_id', 14);
+                        })
+                            // Item-based: pr_item_prstage has stage 14
+                            ->orWhereExists(function ($q3) {
+                            $q3->select(\DB::raw(1))
+                                ->from('pr_item_prstage')
+                                ->whereColumn('pr_item_prstage.prItemID', 'pmu_po.ref_id')
+                                ->where('pr_item_prstage.pr_stage_id', 14);
+                        });
+                    });
+            })
             ->when(!empty($this->search), function ($q) {
                 $s = '%' . $this->search . '%';
                 $q->where(function ($q2) use ($s) {
@@ -168,6 +190,12 @@ class SupplyIndexPage extends Component
             })
             ->where('pmu_po.po_contract_number', $this->expandedPoNumber)
             ->whereNull('pmu_po.deleted_at')
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pr_lot_prstage')
+                    ->whereColumn('pr_lot_prstage.procID', 'pmu_po.ref_id')
+                    ->where('pr_lot_prstage.pr_stage_id', 14);
+            })
             ->select(
                 'procurements.procID',
                 'procurements.pr_number',
@@ -187,6 +215,12 @@ class SupplyIndexPage extends Component
             ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
             ->where('pmu_po.po_contract_number', $this->expandedPoNumber)
             ->whereNull('pmu_po.deleted_at')
+            ->whereExists(function ($q) {
+                $q->select(\DB::raw(1))
+                    ->from('pr_item_prstage')
+                    ->whereColumn('pr_item_prstage.prItemID', 'pmu_po.ref_id')
+                    ->where('pr_item_prstage.pr_stage_id', 14);
+            })
             ->select(
                 'procurements.procID',
                 'procurements.pr_number',

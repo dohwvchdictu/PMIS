@@ -531,7 +531,7 @@
                                                     {{ $endUser }}/{{ $poTotal }} For End-User Compliance
                                                 </span>
                                             @endif
-                                            @if ($usecCount > 0 && $usecCount > $readyToForward)
+                                            @if ($usecCount > 0)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                                                     title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of HOPE">
@@ -539,7 +539,7 @@
                                                     {{ $usecCount }}/{{ $poTotal }} For Approval of HOPE
                                                 </span>
                                             @endif
-                                            @if ($poPrep > 0 && $poPrep > $usecCount)
+                                            @if ($poPrep > 0)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
                                                     title="{{ $poPrep }} of {{ $poTotal }} item(s) have PO Date and PO/Contract No. filled — PO Preparation">
