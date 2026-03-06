@@ -175,7 +175,7 @@
                         $hasContractAmount =
                             !empty($procRow->pmu_contract_amount) && (float) $procRow->pmu_contract_amount > 0;
                         if ($hasPoDate && $hasPoNumber && $hasContractAmount) {
-                            $autoStatusLabel = 'For Approval of USEC';
+                            $autoStatusLabel = 'For Approval of HOPE';
                             $autoStatusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
                         } elseif ($hasPoDate && $hasPoNumber) {
                             $autoStatusLabel = 'PO Preparation';

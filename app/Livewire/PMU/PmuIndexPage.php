@@ -382,7 +382,19 @@ class PmuIndexPage extends Component
             };
 
             if ($poNoas !== null) {
-                $receivedQuery->whereIn('notice_of_award_number', $poNoas->values()->toArray());
+                // Use whereRaw + addBinding('union') instead of whereIn to avoid
+                // a binding-order bug: mergeBindings() places the union subquery's
+                // item-side bindings in the 'union' bucket, but whereIn() inserts
+                // its bindings into the 'where' bucket (before 'union' in getBindings()).
+                // This causes MySQL to receive [7, noa, 7] instead of [7, 7, noa].
+                $noaArr = $poNoas->values()->toArray();
+                if (count($noaArr) > 0) {
+                    $placeholders = implode(',', array_fill(0, count($noaArr), '?'));
+                    $receivedQuery->whereRaw("notice_of_award_number IN ({$placeholders})");
+                    $receivedQuery->addBinding($noaArr, 'union');
+                } else {
+                    $receivedQuery->whereRaw('1=0');
+                }
             }
         }
 
@@ -424,7 +436,15 @@ class PmuIndexPage extends Component
             };
 
             if ($warnNoas !== null) {
-                $receivedQuery->whereIn('notice_of_award_number', $warnNoas->values()->toArray());
+                // Same binding-order fix as above.
+                $noaArr = $warnNoas->values()->toArray();
+                if (count($noaArr) > 0) {
+                    $placeholders = implode(',', array_fill(0, count($noaArr), '?'));
+                    $receivedQuery->whereRaw("notice_of_award_number IN ({$placeholders})");
+                    $receivedQuery->addBinding($noaArr, 'union');
+                } else {
+                    $receivedQuery->whereRaw('1=0');
+                }
             }
         }
 
@@ -586,7 +606,7 @@ class PmuIndexPage extends Component
     private function buildPoIssuanceCounts(): \Illuminate\Support\Collection
     {
         // Per NOA: count total pmu_po rows, PO Preparation (po_date + po_contract_number filled),
-        // and For Approval of USEC (contract_amount filled).
+        // and For Approval of HOPE (contract_amount filled).
         return \DB::table('pmus')
             ->join('pmu_po', 'pmu_po.pmu_id', '=', 'pmus.id')
             ->whereNull('pmus.deleted_at')

@@ -303,7 +303,7 @@
                                 <option value="">All</option>
                                 <option value="pending_entry">Pending Entry</option>
                                 <option value="po_prep">PO Preparation</option>
-                                <option value="usec">For Approval of USEC</option>
+                                <option value="usec">For Approval of HOPE</option>
                                 <option value="return_to_bac">Return to BAC</option>
                                 <option value="for_end_user_compliance">For End-User Compliance</option>
                                 <option value="forwarded_to_supply">Forwarded to Supply</option>
@@ -534,9 +534,9 @@
                                             @if ($usecCount > 0 && $usecCount > $readyToForward)
                                                 <span
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of USEC">
+                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of HOPE">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of USEC
+                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of HOPE
                                                 </span>
                                             @endif
                                             @if ($poPrep > 0 && $poPrep > $usecCount)

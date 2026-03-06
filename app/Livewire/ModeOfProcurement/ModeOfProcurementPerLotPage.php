@@ -635,7 +635,16 @@ class ModeOfProcurementPerLotPage extends Component
     {
         $isValid = true;
 
-        foreach ($this->form['items'] as $index => $item) {
+        $allItems = $this->form['items'];
+        $totalItems = count($allItems);
+
+        foreach ($allItems as $index => $item) {
+            // History items (all except the last/current) are already saved — skip validation
+            $isHistoryItem = ($index !== $totalItems - 1);
+            if ($isHistoryItem) {
+                continue;
+            }
+
             $modeId = $item['mode_of_procurement_id'] ?? null;
             if (!$modeId)
                 continue;

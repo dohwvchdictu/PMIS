@@ -628,12 +628,22 @@ class ModeOfProcurementPerItemPage extends Component
         $isValid = true;
         $this->scheduleValidationErrors = [];
 
+        // Items are sorted by mode_order DESC, so the first occurrence of each prItemID is current.
+        // Skip history items (subsequent occurrences) to avoid false duplicate/stale validation errors.
+        $validatedPrItemIds = [];
+
         foreach ($this->form['items'] as $index => $item) {
             $modeId = $item['mode_of_procurement_id'] ?? null;
             if (!$modeId)
                 continue;
 
             $prItemID = $item['prItemID'];
+
+            // Skip history items — only validate the current (first seen) entry per prItemID
+            if (in_array($prItemID, $validatedPrItemIds)) {
+                continue;
+            }
+            $validatedPrItemIds[] = $prItemID;
             $itemNumber = $item['item_no'] ?? ($index + 1);
             $itemDesc = $item['description'] ?? 'Unknown Item';
             $shortDesc = strlen($itemDesc) > 50 ? substr($itemDesc, 0, 50) . '...' : $itemDesc;
