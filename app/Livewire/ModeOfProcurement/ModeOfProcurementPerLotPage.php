@@ -12,11 +12,13 @@ use App\Models\Supplier;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\Procurement;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
 
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementPerLotPage extends Component
 {
     // Constants for mode types
@@ -672,6 +674,21 @@ class ModeOfProcurementPerLotPage extends Component
             // COMPETITIVE BIDDING MODES
             if ($this->isCompetitiveBidding($modeId)) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
+
+                // Mode 2 specific: bidding_number must be unique across all schedules
+                if ($modeId === 2 && $this->hasValue($item['bidding_number'] ?? null)) {
+                    $biddingNumber = $item['bidding_number'];
+                    $duplicate = BidSchedule::where('bidding_number', $biddingNumber)
+                        ->where('mop_uid', '!=', $item['uid'])
+                        ->exists();
+                    if ($duplicate) {
+                        $msg = "Bidding Number \"{$biddingNumber}\" already exists for {$modeName}.";
+                        if (!in_array($msg, $this->scheduleValidationErrors)) {
+                            $this->scheduleValidationErrors[] = $msg;
+                        }
+                        $isValid = false;
+                    }
+                }
 
                 $hasBiddingData = $this->hasAnyValue($biddingFields);
 

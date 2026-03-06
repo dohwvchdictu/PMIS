@@ -12,7 +12,9 @@ use App\Models\MopLot;
 use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use App\Models\ModeOfProcurement;
+use Livewire\Attributes\Title;
 
+#[Title("PR's Received (B) | PMIS")]
 class BacPrsReceivedBPage extends Component
 {
     use WithPagination;

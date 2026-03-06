@@ -14,10 +14,12 @@ use App\Models\VenueSpecific;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Illuminate\Validation\Rule;
 use App\Models\Procurement;
 
+#[Title('Procurement | PMIS')]
 class ProcurementEditPage extends Component
 {
     public Procurement $procurement;

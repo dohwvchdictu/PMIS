@@ -4,10 +4,12 @@ namespace App\Livewire;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
+#[Title('Users | PMIS')]
 class UserPage extends Component
 {
     use WithPagination;

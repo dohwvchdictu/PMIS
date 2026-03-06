@@ -3,9 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\Procurement;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Post | PMIS')]
 class PostPage extends Component
 {
     use WithPagination;

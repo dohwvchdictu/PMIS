@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination; // <-- ADDED
 
+#[Title('Schedule for PR | PMIS')]
 class ScheduleForPrEditPage extends Component
 {
     use WithPagination; // <-- ADDED

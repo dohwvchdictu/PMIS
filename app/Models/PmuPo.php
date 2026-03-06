@@ -19,6 +19,8 @@ class PmuPo extends Model implements Auditable
         'ref_id',
         'po_date_deadline',
         'po_date',
+        'date_coa_stamped_received',
+        'date_po_receipt_by_supplier',
         'contract_amount',
         'po_contract_number',
         'po_contract_number_link',
@@ -26,6 +28,8 @@ class PmuPo extends Model implements Auditable
         'contract_signing_date',
         'notice_to_proceed_date',
         'remarks',
+        'manual_status',
+        'forwarded_to_supply_at',
     ];
 
     protected $auditInclude = [
@@ -33,6 +37,8 @@ class PmuPo extends Model implements Auditable
         'ref_id',
         'po_date_deadline',
         'po_date',
+        'date_coa_stamped_received',
+        'date_po_receipt_by_supplier',
         'contract_amount',
         'po_contract_number',
         'po_contract_number_link',
@@ -40,6 +46,8 @@ class PmuPo extends Model implements Auditable
         'contract_signing_date',
         'notice_to_proceed_date',
         'remarks',
+        'manual_status',
+        'forwarded_to_supply_at',
     ];
 
     protected $auditTimestamps = true;
@@ -49,9 +57,12 @@ class PmuPo extends Model implements Auditable
     protected $casts = [
         'po_date_deadline' => 'date',
         'po_date' => 'date',
+        'date_coa_stamped_received' => 'date',
+        'date_po_receipt_by_supplier' => 'date',
         'contract_signing_date' => 'date',
         'notice_to_proceed_date' => 'date',
         'contract_amount' => 'decimal:2',
+        'forwarded_to_supply_at' => 'datetime',
     ];
 
     public function generateTags(): array

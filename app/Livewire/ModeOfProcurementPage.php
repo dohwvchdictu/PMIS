@@ -3,9 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\Procurement;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementPage extends Component
 {
     use WithPagination;

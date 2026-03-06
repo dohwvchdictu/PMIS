@@ -35,8 +35,28 @@
                 </p>
             </div>
 
-            {{-- Spacer --}}
-            <div class="flex-1"></div>
+            {{-- Divider --}}
+            <div class="w-px bg-gray-200 dark:bg-neutral-600 hidden sm:block"></div>
+
+            {{-- NOA Remarks --}}
+            <div class="flex-1 min-w-0 px-5 py-4 flex flex-col justify-center">
+                <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Remarks</p>
+                <div class="flex items-center gap-2 min-w-0">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate min-w-0 flex-1"
+                        title="{{ $noaRemarks ?? '' }}">
+                        {{ $noaRemarks ?: '—' }}
+                    </p>
+                    <button wire:click="openEditNoaRemarksModal"
+                        class="shrink-0 p-1 rounded text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
+                        title="Edit NOA remarks">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -61,21 +81,31 @@
                 </div>
                 <div class="flex gap-2">
                     <button wire:click="clearSelections" type="button"
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Clear
+                        class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                        Clear Selection
                     </button>
                     <button wire:click="openBulkEditModal" type="button"
-                        class="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit ({{ count($selectedItems) }})
+                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>Edit
+                        </span>
                     </button>
+                    @if ($allSelectedComplete)
+                        <button wire:click="openForwardConfirm" type="button"
+                            class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
+                            bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                </svg>
+                                Forward to Supply
+                            </span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -153,6 +183,12 @@
                             Notice to Proceed Date</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date Receipt of PO / NTP from Supplier</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Stamped Received of COA</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             PO / Contract No. Link</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
@@ -160,6 +196,9 @@
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Remarks</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            PO Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -272,6 +311,12 @@
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $po?->notice_to_proceed_date ? \Carbon\Carbon::parse($po->notice_to_proceed_date)->format('M d, Y') : '—' }}
                             </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $po?->date_po_receipt_by_supplier ? \Carbon\Carbon::parse($po->date_po_receipt_by_supplier)->format('M d, Y') : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $po?->date_coa_stamped_received ? \Carbon\Carbon::parse($po->date_coa_stamped_received)->format('M d, Y') : '—' }}
+                            </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs">
                                 @if ($po?->po_contract_number_link)
                                     <a href="{{ $po->po_contract_number_link }}" target="_blank"
@@ -306,14 +351,73 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                                <div class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[10rem]"
-                                    title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}
-                                </div>
+                                <span class="block truncate max-w-[12rem]"
+                                    title="{{ $po?->remarks ?? '' }}">{{ $po?->remarks ?? '—' }}</span>
+                            </td>
+                            {{-- Status Column --}}
+                            <td class="px-3 py-2 whitespace-nowrap">
+                                @php
+                                    $manualStatus = $po?->manual_status ?? null;
+                                    $manualStatusLabel = match ($manualStatus) {
+                                        'return_to_bac' => 'Return to BAC',
+                                        'for_end_user_compliance' => 'For End-User Compliance',
+                                        'forwarded_to_supply' => 'Forwarded to Supply',
+                                        default => null,
+                                    };
+
+                                    // Compute auto status based on filled fields
+                                    $isComplete = $completedRows[$row->rowKey] ?? false;
+                                    $hasPoDate = !empty($po?->po_date);
+                                    $hasPoNumber = !empty($po?->po_contract_number);
+                                    $hasContractAmount =
+                                        !empty($po?->contract_amount) && (float) $po->contract_amount > 0;
+
+                                    if ($isComplete) {
+                                        $autoStatusLabel = 'Ready to Forward';
+                                        $autoStatusClass =
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+                                    } elseif ($hasPoDate && $hasPoNumber && $hasContractAmount) {
+                                        $autoStatusLabel = 'For Approval of USEC';
+                                        $autoStatusClass =
+                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+                                    } elseif ($hasPoDate && $hasPoNumber) {
+                                        $autoStatusLabel = 'PO Preparation';
+                                        $autoStatusClass =
+                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+                                    } else {
+                                        $autoStatusLabel = null;
+                                        $autoStatusClass = '';
+                                    }
+                                @endphp
+                                @if ($manualStatus === 'forwarded_to_supply')
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                        Forwarded to Supply
+                                    </span>
+                                @elseif ($isComplete)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                        Ready to Forward
+                                    </span>
+                                @elseif ($manualStatusLabel)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                                        {{ $manualStatus === 'return_to_bac' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' }}">
+                                        {{ $manualStatusLabel }}
+                                    </span>
+                                @elseif ($autoStatusLabel)
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $autoStatusClass }}">
+                                        {{ $autoStatusLabel }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 dark:text-gray-500 text-xs">—</span>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="15" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="19" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No linked PRs or items found.
                             </td>
                         </tr>
@@ -442,7 +546,17 @@
 
                 {{-- Contract Amount --}}
                 <div x-data="{
-                    display: {{ $contract_amount && is_numeric($contract_amount) ? "'" . number_format((float) $contract_amount, 2) . "'" : "''" }},
+                    display: '',
+                    focused: false,
+                    init() {
+                        const raw = $wire.contract_amount;
+                        this.display = raw ? this.format(raw) : '';
+                        $wire.$watch('contract_amount', (val) => {
+                            if (!this.focused) {
+                                this.display = val ? this.format(val) : '';
+                            }
+                        });
+                    },
                     format(val) {
                         let n = parseFloat(String(val).replace(/,/g, ''));
                         return isNaN(n) ? '' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -452,9 +566,9 @@
                         let parts = raw.split('.');
                         if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
                         this.display = raw;
-                        $wire.set('contract_amount', raw === '' ? '' : raw);
                     },
                     handleBlur() {
+                        this.focused = false;
                         let raw = String(this.display).replace(/,/g, '');
                         let n = parseFloat(raw);
                         if (!isNaN(n)) {
@@ -474,7 +588,8 @@
                         <span
                             class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400 pointer-events-none">₱</span>
                         <input type="text" id="modal_contract_amount" x-model="display"
-                            x-on:input="handleInput($event)" x-on:blur="handleBlur()" placeholder="0.00"
+                            x-on:focus="focused = true" x-on:input="handleInput($event)" x-on:blur="handleBlur()"
+                            placeholder="0.00"
                             class="w-full pl-6 pr-3 py-2 text-xs text-right border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
                             @error('contract_amount') border-red-500 @else border-gray-300 @enderror">
                     </div>
@@ -557,6 +672,53 @@
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
+                {{-- Date of PO Receipt by Supplier --}}
+                <div>
+                    <label for="modal_date_po_receipt_by_supplier"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Date Receipt of PO<br><span>/ NTP from Supplier</span>
+                    </label>
+                    <input type="date" id="modal_date_po_receipt_by_supplier"
+                        wire:model="date_po_receipt_by_supplier"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('date_po_receipt_by_supplier') border-red-500 @else border-gray-300 @enderror">
+                    @error('date_po_receipt_by_supplier')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                {{-- Stamped Received of COA (date) --}}
+                <div>
+                    <label for="modal_date_coa_stamped_received"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        <br><span>&nbsp;</span>Stamped Received of COA
+                    </label>
+                    <input type="date" id="modal_date_coa_stamped_received" wire:model="date_coa_stamped_received"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('date_coa_stamped_received') border-red-500 @else border-gray-300 @enderror">
+                    @error('date_coa_stamped_received')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                {{-- Status --}}
+                <div class="sm:col-span-2">
+                    <label for="modal_manual_status"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        PO Status
+                        <span class="ml-1 font-normal text-gray-400">(leave as "— No Change —" to keep existing
+                            per-item status)</span>
+                    </label>
+                    <select id="modal_manual_status" wire:model="manual_status"
+                        class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                        <option value="auto">Auto</option>
+                        <option value="return_to_bac">Return to BAC</option>
+                        <option value="for_end_user_compliance">For End-User Compliance</option>
+                    </select>
+                    @if ($manual_status !== '' && $manual_status !== 'auto')
+                        <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                            This will override the computed stage badge for all selected items.
+                        </p>
+                    @endif
+                </div>
 
                 {{-- Remarks --}}
                 <div class="sm:col-span-6">
@@ -571,6 +733,7 @@
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
+
 
             </div>
 
@@ -599,6 +762,210 @@
     </x-forms.modal>
 
 
+
+
+    {{-- Edit NOA Remarks Modal --}}
+    @if ($showEditNoaRemarksModal)
+        <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            wire:click.self="closeEditNoaRemarksModal">
+            <div
+                class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full max-w-md mx-4">
+                {{-- Header --}}
+                <div
+                    class="flex items-center justify-between px-5 py-4 border-b border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 rounded-t-xl">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-emerald-900 dark:text-emerald-100">Edit NOA Remarks</h3>
+                            <p class="text-xs text-emerald-700 dark:text-emerald-400">{{ $noticeOfAwardNumber }}</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeEditNoaRemarksModal"
+                        class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Remarks <span class="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea wire:model="editNoaRemarksValue" rows="4" placeholder="Enter remarks about this NOA..."
+                        class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-700 dark:text-white resize-none
+                            @error('editNoaRemarksValue') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror"></textarea>
+                    @error('editNoaRemarksValue')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Footer --}}
+                <div
+                    class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-neutral-700">
+                    <button wire:click="closeEditNoaRemarksModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button wire:click="confirmEditNoaRemarks" wire:loading.attr="disabled"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Remarks
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Edit Remarks Modal --}}
+    @if ($showEditRemarksModal)
+        <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            wire:click.self="closeEditRemarksModal">
+            <div
+                class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full max-w-md mx-4">
+                {{-- Header --}}
+                <div
+                    class="flex items-center justify-between px-5 py-4 border-b border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 rounded-t-xl">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.232 5.232l3.536 3.536M9 13l6.5-6.5a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-.707.464l-3.121 1.04 1.04-3.121A2 2 0 019 13z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-emerald-900 dark:text-emerald-100">Edit Remarks</h3>
+                    </div>
+                    <button wire:click="closeEditRemarksModal"
+                        class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Remarks <span class="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea wire:model="editRemarksValue" rows="4" placeholder="Enter remarks..."
+                        class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-700 dark:text-white resize-none
+                            @error('editRemarksValue') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror"></textarea>
+                    @error('editRemarksValue')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Footer --}}
+                <div
+                    class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-neutral-700">
+                    <button wire:click="closeEditRemarksModal"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
+                        Cancel
+                    </button>
+                    <button wire:click="confirmEditRemarks" wire:loading.attr="disabled"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Remarks
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Forward to Supply Modal --}}
+    <x-forms.modal wire:model="showForwardConfirm" title="Forward to Supply" size="max-w-lg"
+        model="showForwardConfirm" closeMethod="closeForwardConfirm">
+        <div class="px-4 py-3">
+            {{-- Summary Pills --}}
+            @if ($forwardedToSupplySummary['forwarded'] > 0 || $forwardedToSupplySummary['pending'] > 0)
+                <div class="mb-4 flex flex-wrap gap-2">
+                    @if ($forwardedToSupplySummary['forwarded'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            {{ $forwardedToSupplySummary['forwarded'] }} already forwarded
+                        </div>
+                    @endif
+                    @if ($forwardedToSupplySummary['pending'] > 0)
+                        <div
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ $forwardedToSupplySummary['pending'] }} pending
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Already Forwarded Note --}}
+            @if ($forwardedToSupplySummary['forwarded'] > 0)
+                <div
+                    class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>Note:</strong> {{ $forwardedToSupplySummary['forwarded'] }} item(s) already forwarded —
+                    their date will be updated to the date you enter below.
+                </div>
+            @endif
+
+            {{-- Date Input Field --}}
+            <div class="mb-4">
+                <label for="actualDateForwarded"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Actual Date &amp; Time Forwarded <span class="text-red-500">*</span>
+                </label>
+                <input type="datetime-local" id="actualDateForwarded" wire:model.defer="actualDateForwarded"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-neutral-800 dark:text-white"
+                    required>
+                @error('actualDateForwarded')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-4 flex items-center justify-end">
+                <div class="flex gap-2">
+                    <button type="button" wire:click="closeForwardConfirm"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="forwardToSupply"
+                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Confirm Forward
+                    </button>
+                </div>
+            </div>
+        </div>
+    </x-forms.modal>
 
 
     {{-- Fixed Bottom Footer --}}

@@ -10,12 +10,14 @@ use App\Models\PmuPo;
 use App\Models\PrSvp;
 use Illuminate\Support\Collection;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\Procurement;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementBulkEditPerLotPage extends Component
 {
     // Constants for mode types

@@ -4,10 +4,12 @@ namespace App\Livewire;
 
 use App\Models\Procurement;
 use App\Models\Division;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 
+#[Title('WVCHD PMIS')]
 class HomePage extends Component
 {
     use WithPagination;

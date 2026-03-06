@@ -2,8 +2,10 @@
 
 namespace App\Livewire\ModeOfProcurement;
 
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementViewPage extends Component
 {
     public function render()

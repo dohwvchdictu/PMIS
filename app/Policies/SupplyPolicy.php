@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Pmu;
+use App\Models\Supply;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class PmuPolicy
+class SupplyPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class PmuPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_pmu');
+        return $user->can('view_any_supply');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Pmu $pmu): bool
+    public function view(User $user, Supply $supply): bool
     {
-        return $user->can('view_pmu');
+        return $user->can('view_supply');
     }
 
     /**
@@ -31,23 +31,23 @@ class PmuPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_pmu');
+        return $user->can('create_supply');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Pmu $pmu): bool
+    public function update(User $user, Supply $supply): bool
     {
-        return $user->can('update_pmu');
+        return $user->can('update_supply');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Pmu $pmu): bool
+    public function delete(User $user, Supply $supply): bool
     {
-        return $user->can('delete_pmu');
+        return $user->can('delete_supply');
     }
 
     /**
@@ -61,7 +61,7 @@ class PmuPolicy
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, Pmu $pmu): bool
+    public function forceDelete(User $user, Supply $supply): bool
     {
         return $user->can('{{ ForceDelete }}');
     }
@@ -77,7 +77,7 @@ class PmuPolicy
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, Pmu $pmu): bool
+    public function restore(User $user, Supply $supply): bool
     {
         return $user->can('{{ Restore }}');
     }
@@ -93,7 +93,7 @@ class PmuPolicy
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, Pmu $pmu): bool
+    public function replicate(User $user, Supply $supply): bool
     {
         return $user->can('{{ Replicate }}');
     }

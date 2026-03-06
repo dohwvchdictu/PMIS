@@ -2,8 +2,10 @@
 
 namespace App\Livewire\BacApprovedPr;
 
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('BAC Approved PR | PMIS')]
 class BacApprovedPrViewPage extends Component
 {
     public function render()

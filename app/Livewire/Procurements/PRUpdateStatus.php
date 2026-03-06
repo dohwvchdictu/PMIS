@@ -12,9 +12,11 @@ use App\Models\Division;
 use App\Models\Remarks;
 use App\Models\PrItem;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
+#[Title('Procurement | PMIS')]
 class PRUpdateStatus extends Component
 {
     public Procurement $procurement;

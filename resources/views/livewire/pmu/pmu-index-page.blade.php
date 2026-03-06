@@ -161,9 +161,53 @@
                 </div>
 
                 <div x-show="open" x-transition>
-                    @if ($pendingItems->hasPages())
-                        <div class="px-6 py-4 border-t border-orange-200 dark:border-orange-800/50">
-                            {{ $pendingItems->links() }}
+                    @if ($pendingItems->hasPages() || $pendingItems->total() > 0)
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full px-4 py-3 border-t border-orange-200 dark:border-orange-800/50 gap-3">
+                            <div class="flex items-center gap-x-2">
+                                <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
+                                <select wire:model.live="pendingPerPage"
+                                    class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center gap-2 flex-1">
+                                <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    Showing
+                                    <span
+                                        class="text-orange-600 dark:text-orange-400 font-semibold">{{ $pendingItems->firstItem() ?? 0 }}</span>
+                                    to
+                                    <span
+                                        class="text-orange-600 dark:text-orange-400 font-semibold">{{ $pendingItems->lastItem() ?? 0 }}</span>
+                                    of
+                                    <span
+                                        class="text-orange-600 dark:text-orange-400 font-semibold">{{ $pendingItems->total() }}</span>
+                                    items
+                                </div>
+                                @if ($pendingItems->hasPages())
+                                    <div class="flex items-center gap-1">
+                                        <button wire:click="setPendingPage({{ $pendingItems->currentPage() - 1 }})"
+                                            @disabled($pendingItems->onFirstPage())
+                                            class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                            Previous
+                                        </button>
+                                        @for ($p = 1; $p <= $pendingItems->lastPage(); $p++)
+                                            <button wire:click="setPendingPage({{ $p }})"
+                                                class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $p === $pendingItems->currentPage() ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                                {{ $p }}
+                                            </button>
+                                        @endfor
+                                        <button wire:click="setPendingPage({{ $pendingItems->currentPage() + 1 }})"
+                                            @disabled(!$pendingItems->hasMorePages())
+                                            class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                            Next
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -211,6 +255,9 @@
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                 PO Status</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                                PO Issuance</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                 Remarks</th>
@@ -321,7 +368,94 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $group->notice_of_award ? \Carbon\Carbon::parse($group->notice_of_award)->format('M d, Y') : '—' }}
                                 </td>
-                                <!-- PO Status warnings -->
+                                <!-- PO Status -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $ic = $poIssuanceCounts->get($group->notice_of_award_number);
+                                        $poTotal = (int) ($ic->total_count ?? 0);
+                                        $readyToForward = (int) ($ic->ready_to_forward_count ?? 0);
+                                        $poPrep = (int) ($ic->po_prep_count ?? 0);
+                                        $usecCount = (int) ($ic->usec_count ?? 0);
+                                        $rtoBAC = (int) ($ic->return_to_bac_count ?? 0);
+                                        $endUser = (int) ($ic->end_user_count ?? 0);
+                                        $forwardedToSupply = (int) ($ic->forwarded_to_supply_count ?? 0);
+                                    @endphp
+                                    <div class="flex flex-wrap gap-1">
+                                        @if ($poTotal === 0)
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
+                                                title="No PO records entered yet">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+                                                Not Started
+                                            </span>
+                                        @else
+                                            @if ($forwardedToSupply > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                                                    title="{{ $forwardedToSupply }} of {{ $poTotal }} item(s) forwarded to Supply">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                                                    {{ $forwardedToSupply }}/{{ $poTotal }} Forwarded to Supply
+                                                </span>
+                                            @endif
+                                            @if ($readyToForward > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                    title="{{ $readyToForward }} of {{ $poTotal }} item(s) have all required fields complete — Ready to Forward">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    {{ $readyToForward }}/{{ $poTotal }} Ready to Forward
+                                                </span>
+                                            @endif
+                                            @if ($rtoBAC > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                                                    title="{{ $rtoBAC }} of {{ $poTotal }} item(s) flagged as Return to BAC">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    {{ $rtoBAC }}/{{ $poTotal }} Return to BAC
+                                                </span>
+                                            @endif
+                                            @if ($endUser > 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
+                                                    title="{{ $endUser }} of {{ $poTotal }} item(s) flagged as For End-User Compliance">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                                    {{ $endUser }}/{{ $poTotal }} For End-User Compliance
+                                                </span>
+                                            @endif
+                                            @if ($usecCount > 0 && $usecCount > $readyToForward)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                                    title="{{ $usecCount }} of {{ $poTotal }} item(s) with Contract Amount filled — For Approval of USEC">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                    {{ $usecCount }}/{{ $poTotal }} For Approval of USEC
+                                                </span>
+                                            @endif
+                                            @if ($poPrep > 0 && $poPrep > $usecCount)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                                                    title="{{ $poPrep }} of {{ $poTotal }} item(s) have PO Date and PO/Contract No. filled — PO Preparation">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    {{ $poPrep }}/{{ $poTotal }} PO Preparation
+                                                </span>
+                                            @endif
+                                            @if (
+                                                $readyToForward === 0 &&
+                                                    $usecCount === 0 &&
+                                                    $poPrep === 0 &&
+                                                    $rtoBAC === 0 &&
+                                                    $endUser === 0 &&
+                                                    $forwardedToSupply === 0)
+                                                <span
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-gray-400"
+                                                    title="No PO data recorded yet">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                    Pending Entry
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
+                                <!-- PO Issuance -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
                                         $wc = $warningCounts->get($group->notice_of_award_number);
@@ -421,9 +555,53 @@
                 </table>
             </div>
 
-            @if ($receivedItems->hasPages())
-                <div class="px-6 py-4 border-t border-gray-200 dark:border-neutral-700">
-                    {{ $receivedItems->links() }}
+            @if ($receivedItems->hasPages() || $receivedItems->total() > 0)
+                <div
+                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full px-4 py-3 border-t border-gray-200 dark:border-neutral-700 gap-3 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-900 dark:to-neutral-800">
+                    <div class="flex items-center gap-x-2">
+                        <label class="text-xs font-medium text-gray-600 dark:text-gray-300">Show</label>
+                        <select wire:model.live="receivedPerPage"
+                            class="text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">per page</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center gap-2 flex-1">
+                        <div class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                            Showing
+                            <span
+                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $receivedItems->firstItem() ?? 0 }}</span>
+                            to
+                            <span
+                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $receivedItems->lastItem() ?? 0 }}</span>
+                            of
+                            <span
+                                class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $receivedItems->total() }}</span>
+                            items
+                        </div>
+                        @if ($receivedItems->hasPages())
+                            <div class="flex items-center gap-1">
+                                <button wire:click="setReceivedPage({{ $receivedItems->currentPage() - 1 }})"
+                                    @disabled($receivedItems->onFirstPage())
+                                    class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    Previous
+                                </button>
+                                @for ($p = 1; $p <= $receivedItems->lastPage(); $p++)
+                                    <button wire:click="setReceivedPage({{ $p }})"
+                                        class="px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors duration-150 {{ $p === $receivedItems->currentPage() ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' : 'border-gray-300 hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white' }}">
+                                        {{ $p }}
+                                    </button>
+                                @endfor
+                                <button wire:click="setReceivedPage({{ $receivedItems->currentPage() + 1 }})"
+                                    @disabled(!$receivedItems->hasMorePages())
+                                    class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-neutral-600 dark:hover:bg-neutral-700 dark:text-white transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    Next
+                                </button>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             @endif
         </div>

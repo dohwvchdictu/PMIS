@@ -5,11 +5,15 @@ namespace App\Livewire\PMU;
 use App\Models\Pmu;
 use App\Models\PmuPo;
 use App\Models\Procurement;
+use App\Models\Supply;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
+#[Title('PMU | PMIS')]
 class PmuEditPage extends Component
 {
     private const DATE_FORMAT = 'Y-m-d';
@@ -30,6 +34,8 @@ class PmuEditPage extends Component
     public string $date_forwarded = '';
     public string $po_date = '';
     public ?string $po_date_deadline_display = null; // Earliest PO Date Deadline among selected items (read-only, for warning)
+    public string $date_coa_stamped_received = '';
+    public string $date_po_receipt_by_supplier = '';
     public string $contract_amount = '';
     public string $po_contract_number = '';
     public string $po_contract_number_link = '';
@@ -37,6 +43,23 @@ class PmuEditPage extends Component
     public string $contract_signing_date = '';
     public string $notice_to_proceed_date = '';
     public string $remarks = '';
+
+    // Bulk forward to supply
+    public bool $showForwardConfirm = false;
+    public ?string $actualDateForwarded = null;
+
+    // Manual status
+    public string $manual_status = ''; // '' = no change, 'auto' = clear, 'return_to_bac', 'for_end_user_compliance'
+
+    // Edit Remarks Modal (per pmu_po row)
+    public bool $showEditRemarksModal = false;
+    public ?int $editRemarksPoId = null;
+    public string $editRemarksValue = '';
+
+    // Edit NOA Remarks Modal (pmu.received_remarks)
+    public ?string $noaRemarks = null;
+    public bool $showEditNoaRemarksModal = false;
+    public string $editNoaRemarksValue = '';
 
     private \Illuminate\Support\Collection|null $combinedRowsCache = null;
 
@@ -51,12 +74,15 @@ class PmuEditPage extends Component
             ->value('notice_of_award');
 
         $this->date_forwarded = $record->date_forwarded ? $record->date_forwarded->format(self::DATE_FORMAT) : '';
+        $this->noaRemarks = $record->received_remarks;
     }
 
     public function update(): void
     {
         $this->validate([
             'po_date' => 'nullable|date',
+            'date_coa_stamped_received' => 'nullable|date',
+            'date_po_receipt_by_supplier' => 'nullable|date',
             'contract_amount' => 'nullable|numeric|min:0',
             'po_contract_number' => 'required|string|max:255',
             'po_contract_number_link' => 'nullable|url|max:2048',
@@ -66,6 +92,8 @@ class PmuEditPage extends Component
             'remarks' => 'nullable|string',
         ], [
             'po_date.date' => 'PO Date must be a valid date.',
+            'date_coa_stamped_received.date' => 'Stamped received of COA must be a valid date.',
+            'date_po_receipt_by_supplier.date' => 'Date of PO Receipt by Supplier must be a valid date.',
             'contract_amount.numeric' => 'Contract amount must be a valid number.',
             'contract_amount.min' => 'Contract amount must be 0 or greater.',
             'po_contract_number.required' => 'PO / Contract number is required.',
@@ -83,6 +111,33 @@ class PmuEditPage extends Component
             return;
         }
 
+        // Validate contract amount must equal each selected item's awarded amount
+        if ($this->contract_amount !== '') {
+            $contractAmount = (float) $this->contract_amount;
+
+            $combined = $this->fetchCombinedRows();
+            $selectedRows = $combined->whereIn('rowKey', $this->selectedItems);
+
+            foreach ($selectedRows as $row) {
+                if ($row->awarded_amount === null) {
+                    continue; // skip rows with no awarded amount set
+                }
+
+                $awardedAmount = (float) $row->awarded_amount;
+
+                if ($contractAmount !== $awardedAmount) {
+                    LivewireAlert::title('Contract Amount Mismatch')
+                        ->warning()
+                        ->text("Contract amount (₱" . number_format($contractAmount, 2) . ") must equal the awarded amount (₱" . number_format($awardedAmount, 2) . ") for PR " . $row->pr_number . ".")
+                        ->toast()
+                        ->timer(5000)
+                        ->position('top-end')
+                        ->show();
+                    return;
+                }
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -90,6 +145,8 @@ class PmuEditPage extends Component
 
             $data = [
                 'po_date' => ($this->po_contract_number && $this->po_date) ? $this->po_date : null,
+                'date_coa_stamped_received' => $this->date_coa_stamped_received ?: null,
+                'date_po_receipt_by_supplier' => $this->date_po_receipt_by_supplier ?: null,
                 'contract_amount' => $this->contract_amount !== '' ? $this->contract_amount : null,
                 'po_contract_number' => $this->po_contract_number ?: null,
                 'po_contract_number_link' => $this->po_contract_number_link ?: null,
@@ -99,14 +156,28 @@ class PmuEditPage extends Component
                 'remarks' => $this->remarks ?: null,
             ];
 
+            // Only touch manual_status if the user explicitly picked a value in the modal
+            if ($this->manual_status !== '') {
+                $data['manual_status'] = $this->manual_status === 'auto' ? null : $this->manual_status;
+            }
+
             foreach ($this->selectedItems as $rowKey) {
                 $pmuPo = PmuPo::where('ref_id', $rowKey)
                     ->where('pmu_id', $pmu->id)
                     ->first();
 
                 if ($pmuPo) {
+                    $rowData = $data;
+                    // Protect forwarded_to_supply: never overwrite it via bulk edit unless explicitly set
+                    if (
+                        isset($rowData['manual_status']) &&
+                        $rowData['manual_status'] === null &&
+                        $pmuPo->manual_status === 'forwarded_to_supply'
+                    ) {
+                        unset($rowData['manual_status']);
+                    }
                     // Update existing record to trigger audit events
-                    $pmuPo->update($data);
+                    $pmuPo->update($rowData);
                 } else {
                     // Create new record to trigger audit events
                     PmuPo::create([
@@ -263,6 +334,8 @@ class PmuEditPage extends Component
             $row = $existing->get($rowKey);
             return [
                 'po_date' => $row && $row->po_date ? $row->po_date->format(self::DATE_FORMAT) : '',
+                'date_coa_stamped_received' => $row && $row->date_coa_stamped_received ? $row->date_coa_stamped_received->format(self::DATE_FORMAT) : '',
+                'date_po_receipt_by_supplier' => $row && $row->date_po_receipt_by_supplier ? $row->date_po_receipt_by_supplier->format(self::DATE_FORMAT) : '',
                 'contract_amount' => $row ? (string) $row->contract_amount : '',
                 'po_contract_number' => $row ? ($row->po_contract_number ?? '') : '',
                 'po_contract_number_link' => $row ? ($row->po_contract_number_link ?? '') : '',
@@ -288,6 +361,8 @@ class PmuEditPage extends Component
         // Pre-fill form with common data; po_date falls back to PO Date Deadline if not yet set
         $data = $snapshots->first();
         $this->po_date = $data['po_date'] ?: ($this->po_date_deadline_display ?? '');
+        $this->date_coa_stamped_received = $data['date_coa_stamped_received'];
+        $this->date_po_receipt_by_supplier = $data['date_po_receipt_by_supplier'];
         $this->contract_amount = $data['contract_amount'];
         $this->po_contract_number = $data['po_contract_number'];
         $this->po_contract_number_link = $data['po_contract_number_link'];
@@ -295,6 +370,15 @@ class PmuEditPage extends Component
         $this->contract_signing_date = $data['contract_signing_date'];
         $this->notice_to_proceed_date = $data['notice_to_proceed_date'];
         $this->remarks = $data['remarks'];
+
+        // Pre-fill manual_status: use common value if all selected items share the same status
+        $statuses = collect($this->selectedItems)
+            ->map(fn($rowKey) => $existing->get($rowKey)?->manual_status)
+            ->values();
+        $uniqueStatuses = $statuses->unique();
+        $this->manual_status = $uniqueStatuses->count() === 1
+            ? ($uniqueStatuses->first() === null ? 'auto' : $uniqueStatuses->first())
+            : ''; // mixed → no change
 
         $this->showBulkEditModal = true;
     }
@@ -304,6 +388,8 @@ class PmuEditPage extends Component
         $this->showBulkEditModal = false;
         $this->po_date = '';
         $this->po_date_deadline_display = null;
+        $this->date_coa_stamped_received = '';
+        $this->date_po_receipt_by_supplier = '';
         $this->contract_amount = '';
         $this->po_contract_number = '';
         $this->po_contract_number_link = '';
@@ -311,6 +397,7 @@ class PmuEditPage extends Component
         $this->contract_signing_date = '';
         $this->notice_to_proceed_date = '';
         $this->remarks = '';
+        $this->manual_status = '';
         $this->resetErrorBag();
     }
 
@@ -324,6 +411,103 @@ class PmuEditPage extends Component
     {
         $this->editPage = 1;
         $this->clearSelections();
+    }
+
+    public function setManualStatus(int $pmuPoId, ?string $status): void
+    {
+        $allowed = [null, 'return_to_bac', 'for_end_user_compliance', 'forwarded_to_supply'];
+        if (!in_array($status, $allowed, true)) {
+            return;
+        }
+        $pmuPo = \App\Models\PmuPo::find($pmuPoId);
+        if (!$pmuPo) {
+            return;
+        }
+        $pmuPo->update(['manual_status' => $status]);
+        $this->combinedRowsCache = null;
+    }
+
+    public function openEditRemarksModal(int $pmuPoId): void
+    {
+        $pmuPo = PmuPo::find($pmuPoId);
+        if (!$pmuPo) {
+            return;
+        }
+        $this->editRemarksPoId = $pmuPoId;
+        $this->editRemarksValue = $pmuPo->remarks ?? '';
+        $this->showEditRemarksModal = true;
+    }
+
+    public function confirmEditRemarks(): void
+    {
+        $this->validate([
+            'editRemarksValue' => 'nullable|string|max:1000',
+        ], [
+            'editRemarksValue.max' => 'Remarks must not exceed 1000 characters.',
+        ]);
+
+        $pmuPo = PmuPo::find($this->editRemarksPoId);
+        if (!$pmuPo) {
+            LivewireAlert::title('Error')->error()->text('Record not found.')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $pmuPo->update(['remarks' => $this->editRemarksValue ?: null]);
+        $this->combinedRowsCache = null;
+
+        $this->closeEditRemarksModal();
+
+        LivewireAlert::title('Remarks Saved!')
+            ->success()
+            ->text('Remarks have been updated.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeEditRemarksModal(): void
+    {
+        $this->showEditRemarksModal = false;
+        $this->editRemarksPoId = null;
+        $this->editRemarksValue = '';
+        $this->resetValidation(['editRemarksValue']);
+    }
+
+    // ─── NOA Remarks ───────────────────────────────────────────────────────────
+
+    public function openEditNoaRemarksModal(): void
+    {
+        $this->editNoaRemarksValue = $this->noaRemarks ?? '';
+        $this->showEditNoaRemarksModal = true;
+    }
+
+    public function confirmEditNoaRemarks(): void
+    {
+        $this->validate([
+            'editNoaRemarksValue' => 'nullable|string|max:1000',
+        ], [
+            'editNoaRemarksValue.max' => 'Remarks must not exceed 1000 characters.',
+        ]);
+
+        $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+        $pmu->update(['received_remarks' => $this->editNoaRemarksValue ?: null]);
+        $this->noaRemarks = $this->editNoaRemarksValue ?: null;
+
+        $this->closeEditNoaRemarksModal();
+
+        LivewireAlert::title('Remarks Saved!')
+            ->success()
+            ->text('NOA remarks have been updated.')
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function closeEditNoaRemarksModal(): void
+    {
+        $this->showEditNoaRemarksModal = false;
+        $this->editNoaRemarksValue = '';
+        $this->resetValidation(['editNoaRemarksValue']);
     }
 
     private function fetchCombinedRows(): \Illuminate\Support\Collection
@@ -422,6 +606,176 @@ class PmuEditPage extends Component
         );
     }
 
+    public function isRowComplete(?PmuPo $pmuPo): bool
+    {
+        if (!$pmuPo) {
+            return false;
+        }
+
+        // Check if all required fields are filled
+        return !empty($pmuPo->po_date)
+            && !empty($pmuPo->po_contract_number)
+            && !empty($pmuPo->contract_amount)
+            && !empty($pmuPo->contract_signing_date)
+            && !empty($pmuPo->notice_to_proceed_date)
+            && !empty($pmuPo->po_contract_number_link)
+            && !empty($pmuPo->date_po_receipt_by_supplier)
+            && !empty($pmuPo->date_coa_stamped_received);
+    }
+
+    public function getForwardedToSupplySummaryProperty(): array
+    {
+        $forwarded = 0;
+        $pending = 0;
+        $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->first();
+
+        if (!$pmu) {
+            return ['forwarded' => 0, 'pending' => 0];
+        }
+
+        foreach ($this->selectedItems as $rowKey) {
+            $pmuPo = PmuPo::where('ref_id', $rowKey)
+                ->where('pmu_id', $pmu->id)
+                ->first();
+
+            if ($pmuPo && !empty($pmuPo->forwarded_to_supply_at)) {
+                $forwarded++;
+            } else {
+                $pending++;
+            }
+        }
+
+        return ['forwarded' => $forwarded, 'pending' => $pending];
+    }
+
+    public function openForwardConfirm(): void
+    {
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No items selected')
+                ->warning()
+                ->text('Please select at least one item.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Validate all selected items are complete
+        $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+        $incompleteItems = [];
+
+        foreach ($this->selectedItems as $rowKey) {
+            $pmuPo = PmuPo::where('ref_id', $rowKey)
+                ->where('pmu_id', $pmu->id)
+                ->first();
+
+            if (!$this->isRowComplete($pmuPo)) {
+                $incompleteItems[] = $rowKey;
+            }
+        }
+
+        if (!empty($incompleteItems)) {
+            LivewireAlert::title('Incomplete Data')
+                ->warning()
+                ->text('Some selected items have incomplete data. Please fill all required fields before forwarding to supply.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Set the datetime to current time (Manila timezone)
+        $this->actualDateForwarded = now('Asia/Manila')->format('Y-m-d\TH:i');
+
+        $this->showForwardConfirm = true;
+    }
+
+    public function closeForwardConfirm(): void
+    {
+        $this->showForwardConfirm = false;
+        $this->actualDateForwarded = null;
+    }
+
+    public function forwardToSupply(): void
+    {
+        // Validate the datetime input
+        $this->validate([
+            'actualDateForwarded' => 'required|date',
+        ], [
+            'actualDateForwarded.required' => 'Please enter the actual date and time forwarded.',
+            'actualDateForwarded.date' => 'Please enter a valid date and time.'
+        ]);
+
+        if (empty($this->selectedItems)) {
+            LivewireAlert::title('No items selected')
+                ->warning()
+                ->text('Please select at least one item.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Convert the Manila timezone datetime to UTC for storage
+            $utcDateForwarded = Carbon::createFromFormat('Y-m-d\TH:i', $this->actualDateForwarded, 'Asia/Manila')
+                ->setTimezone('UTC');
+
+            $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
+            $forwardedCount = 0;
+
+            foreach ($this->selectedItems as $rowKey) {
+                $pmuPo = PmuPo::where('ref_id', $rowKey)
+                    ->where('pmu_id', $pmu->id)
+                    ->first();
+
+                if ($pmuPo && $this->isRowComplete($pmuPo)) {
+                    // Mark as forwarded to supply with the specified datetime and update status
+                    $pmuPo->update([
+                        'forwarded_to_supply_at' => $utcDateForwarded,
+                        'manual_status' => 'forwarded_to_supply',
+                    ]);
+
+                    // Upsert Supply record for tracking on the supply side
+                    if (!empty($pmuPo->po_contract_number)) {
+                        Supply::updateOrCreate(
+                            ['po_contract_number' => $pmuPo->po_contract_number],
+                            ['date_forwarded' => $utcDateForwarded]
+                        );
+                    }
+
+                    $forwardedCount++;
+                }
+            }
+
+            DB::commit();
+
+            $this->closeForwardConfirm();
+            $this->clearSelections();
+
+            LivewireAlert::title('Forwarded to Supply!')
+                ->success()
+                ->text("{$forwardedCount} item(s) forwarded to supply successfully.")
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('PmuEditPage: Failed to forward records to supply', [
+                'pmu_id' => $this->noticeOfAwardNumber,
+                'error' => $e->getMessage(),
+            ]);
+            LivewireAlert::title('Error')
+                ->error()
+                ->text('Failed to forward records. Please try again or contact support.')
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
+    }
+
     public function render()
     {
         $pmuRecord = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->first();
@@ -431,12 +785,24 @@ class PmuEditPage extends Component
             ? PmuPo::where('pmu_id', $pmuRecord->id)->get()->keyBy('ref_id')
             : collect();
 
+        // Build a map of which rows are complete
+        $completedRows = collect();
+        foreach ($pmuPoByProcId as $refId => $pmuPo) {
+            $completedRows[$refId] = $this->isRowComplete($pmuPo);
+        }
+
+        $allSelectedComplete = !empty($this->selectedItems) && collect($this->selectedItems)
+            ->every(fn($rowKey) => $completedRows[$rowKey] ?? false);
+
         return view('livewire.pmu.pmu-edit-page', [
             'noticeOfAwardNumber' => $this->noticeOfAwardNumber,
             'pmuRecord' => $pmuRecord,
             'pmuPoByProcId' => $pmuPoByProcId,
+            'completedRows' => $completedRows,
             'noticeOfAward' => $this->noticeOfAward,
             'editPaginator' => $this->buildEditPaginator(),
+            'forwardedToSupplySummary' => $this->forwardedToSupplySummary,
+            'allSelectedComplete' => $allSelectedComplete,
         ])->layout('components.layouts.app');
     }
 }
