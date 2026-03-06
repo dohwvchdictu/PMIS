@@ -8,7 +8,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
-#[Title('Edit BAC Approved PR | PMIS')]
+#[Title('BAC Approved PR | PMIS')]
 class BacApprovedPrEditPage extends Component
 {
     public BACApprovedPR $bacapprovedpr;

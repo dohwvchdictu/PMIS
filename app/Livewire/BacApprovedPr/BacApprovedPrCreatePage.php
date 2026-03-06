@@ -9,7 +9,7 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('Create BAC Approved PR | PMIS')]
+#[Title('BAC Approved PR | PMIS')]
 class BacApprovedPrCreatePage extends Component
 {
     public $form = [];

@@ -20,7 +20,7 @@ use App\Models\MopItem;
 use App\Models\PrLotPrstage;
 use App\Models\PrItemPrstage;
 
-#[Title('Create Procurement | PMIS')]
+#[Title('Procurement | PMIS')]
 class ProcurementCreatePage extends Component
 {
     public string $procID = '';

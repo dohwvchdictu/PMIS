@@ -19,7 +19,7 @@ use App\Models\Procurement;
 use App\Models\MopItem;
 use Illuminate\Support\Facades\DB;
 
-#[Title('Mode of Procurement (Per Item) | PMIS')]
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementPerItemPage extends Component
 {
     // Constants for mode types

@@ -19,7 +19,7 @@ use Livewire\Component;
 use Illuminate\Validation\Rule;
 use App\Models\Procurement;
 
-#[Title('Edit Procurement | PMIS')]
+#[Title('Procurement | PMIS')]
 class ProcurementEditPage extends Component
 {
     public Procurement $procurement;

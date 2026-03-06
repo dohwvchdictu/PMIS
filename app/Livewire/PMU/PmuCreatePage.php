@@ -7,7 +7,7 @@ use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 
-#[Title('Create PMU | PMIS')]
+#[Title('PMU | PMIS')]
 class PmuCreatePage extends Component
 {
     // Form fields

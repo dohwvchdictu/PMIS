@@ -16,7 +16,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination; // <-- ADDED
 
-#[Title('Edit Schedule for PR | PMIS')]
+#[Title('Schedule for PR | PMIS')]
 class ScheduleForPrEditPage extends Component
 {
     use WithPagination; // <-- ADDED

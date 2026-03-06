@@ -10,7 +10,7 @@ use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 
-#[Title('View PMU | PMIS')]
+#[Title('PMU | PMIS')]
 class PmuViewPage extends Component
 {
     public $noticeOfAwardNumber;

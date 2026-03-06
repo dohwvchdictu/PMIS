@@ -26,7 +26,7 @@ use App\Models\NtfBidSchedule;
 use App\Models\PrSvp;
 use Livewire\WithPagination;
 
-#[Title('Create Mode of Procurement | PMIS')]
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementCreatePage extends Component
 {
     use WithPagination;

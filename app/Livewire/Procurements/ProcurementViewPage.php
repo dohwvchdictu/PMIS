@@ -24,7 +24,7 @@ use App\Models\{
 };
 use Illuminate\Support\Collection;
 
-#[Title('View Procurement | PMIS')]
+#[Title('Procurement | PMIS')]
 class ProcurementViewPage extends Component
 {
     public Procurement $procurement;

@@ -18,7 +18,7 @@ use App\Models\Procurement;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
 
-#[Title('Mode of Procurement (Per Lot) | PMIS')]
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementPerLotPage extends Component
 {
     // Constants for mode types
