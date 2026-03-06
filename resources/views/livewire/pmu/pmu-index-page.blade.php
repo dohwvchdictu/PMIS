@@ -218,17 +218,126 @@
         <div
             class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-800 dark:border-neutral-700 flex flex-col mb-6">
 
-            <!-- Received Search Bar -->
-            <div
-                class="px-4 py-2.5 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex justify-start">
-                <div class="relative w-72">
-                    <input type="text" wire:model.live="search" placeholder="Search NOA numbers, PR numbers..."
-                        class="w-full px-4 py-2 pl-9 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
-                    <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+            <!-- Received Header: Search + Filter Toggle -->
+            <div x-data="{ showFilters: false }"
+                class="sticky top-0 z-10 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
+
+                <!-- Search Row -->
+                <div class="px-4 py-2.5 flex items-center justify-between gap-3">
+                    <div class="relative w-72">
+                        <input type="text" wire:model.live="search"
+                            placeholder="Search NOA numbers, PR numbers..."
+                            class="w-full px-4 py-2 pl-9 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
+                        <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    <!-- Filter Toggle Button -->
+                    @php
+                        $activeFilterCount =
+                            (int) ($poStatusFilter !== '') +
+                            (int) ($poIssuanceFilter !== '') +
+                            (int) ($sortBy !== 'date_received' || $sortDir !== 'desc');
+                    @endphp
+                    <button @click="showFilters = !showFilters"
+                        class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200"
+                        :class="showFilters
+                            ?
+                            'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300' :
+                            'bg-gray-100 dark:bg-neutral-700 border-gray-200 dark:border-neutral-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <span>Filters</span>
+                        @if ($activeFilterCount > 0)
+                            <span
+                                class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                                {{ $activeFilterCount }}
+                            </span>
+                        @endif
+                    </button>
+                </div>
+
+                <!-- Expandable Filter Panel -->
+                <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="border-t border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900/50 px-4 py-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+
+                        <!-- Sort By -->
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1.5">Sort
+                                By</label>
+                            <select wire:model.live="sortBy"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                                <option value="date_received">Date Received</option>
+                                <option value="notice_of_award_number">NOA Number</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Direction -->
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1.5">Sort
+                                Direction</label>
+                            <select wire:model.live="sortDir"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                                <option value="desc">Newest First</option>
+                                <option value="asc">Oldest First</option>
+                            </select>
+                        </div>
+
+                        <!-- PO Status -->
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1.5">PO
+                                Status</label>
+                            <select wire:model.live="poStatusFilter"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                                <option value="">All</option>
+                                <option value="pending_entry">Pending Entry</option>
+                                <option value="po_prep">PO Preparation</option>
+                                <option value="usec">For Approval of USEC</option>
+                                <option value="return_to_bac">Return to BAC</option>
+                                <option value="for_end_user_compliance">For End-User Compliance</option>
+                                <option value="forwarded_to_supply">Forwarded to Supply</option>
+                            </select>
+                        </div>
+
+                        <!-- PO Issuance -->
+                        <div>
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-1.5">PO
+                                Issuance</label>
+                            <select wire:model.live="poIssuanceFilter"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                                <option value="">All</option>
+                                <option value="on_track">On Track</option>
+                                <option value="due_soon">Due Soon</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="exceeded">Exceeded Deadline</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Clear Filters -->
+                    @if ($activeFilterCount > 0 || $search !== '')
+                        <div class="mt-3 flex justify-end">
+                            <button wire:click="clearReceivedFilters"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Clear Filters
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </div>
 
