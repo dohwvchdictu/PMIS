@@ -4,6 +4,7 @@ namespace App\Livewire\Procurements;
 
 use App\Models\Remarks;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Procurement;
@@ -13,6 +14,7 @@ use App\Models\EndUser;
 use App\Models\FundSource;
 use App\Models\Remark;
 
+#[Title('Procurement | PMIS')]
 class ProcurementIndexPage extends Component
 {
     use WithPagination;

@@ -15,6 +15,9 @@ use App\Models\Procurement;
 use App\Models\MopItem;
 use App\Models\MopLot;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
+
+#[Title('Update Mode of Procurement | PMIS')]
 class ModeOfProcurementUpdatePage extends Component
 {
     public Procurement $procurement;

@@ -5,10 +5,12 @@ namespace App\Livewire\PMU;
 use App\Models\Pmu;
 use App\Models\Procurement;
 use App\Models\PostProcurement;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 
+#[Title('View PMU | PMIS')]
 class PmuViewPage extends Component
 {
     public $noticeOfAwardNumber;

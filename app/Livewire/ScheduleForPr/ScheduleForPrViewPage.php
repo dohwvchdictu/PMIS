@@ -2,8 +2,10 @@
 
 namespace App\Livewire\ScheduleForPr;
 
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('View Schedule for PR | PMIS')]
 class ScheduleForPrViewPage extends Component
 {
     public function render()

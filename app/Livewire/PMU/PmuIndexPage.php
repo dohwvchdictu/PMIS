@@ -6,11 +6,13 @@ use App\Models\Procurement;
 use App\Models\PostProcurement;
 use App\Models\Pmu;
 use App\Models\Supplier;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 
+#[Title('PMU | PMIS')]
 class PmuIndexPage extends Component
 {
     use WithPagination;

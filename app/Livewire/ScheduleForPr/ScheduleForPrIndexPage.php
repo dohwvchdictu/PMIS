@@ -4,9 +4,11 @@ namespace App\Livewire\ScheduleForPr;
 
 use App\Models\ScheduleForProcurement;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Schedule for PR | PMIS')]
 class ScheduleForPrIndexPage extends Component
 {
     use WithPagination;

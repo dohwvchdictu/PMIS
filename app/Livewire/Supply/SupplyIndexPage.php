@@ -3,10 +3,12 @@
 namespace App\Livewire\Supply;
 
 use App\Models\Supply;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
+#[Title('Supply | PMIS')]
 class SupplyIndexPage extends Component
 {
     use WithPagination;

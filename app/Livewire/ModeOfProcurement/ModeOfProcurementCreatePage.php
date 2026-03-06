@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\Procurement;
 use App\Models\ModeOfProcurement;
@@ -25,6 +26,7 @@ use App\Models\NtfBidSchedule;
 use App\Models\PrSvp;
 use Livewire\WithPagination;
 
+#[Title('Create Mode of Procurement | PMIS')]
 class ModeOfProcurementCreatePage extends Component
 {
     use WithPagination;

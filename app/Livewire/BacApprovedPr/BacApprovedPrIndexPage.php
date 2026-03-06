@@ -4,9 +4,11 @@ namespace App\Livewire\BacApprovedPr;
 
 use App\Models\BACApprovedPR;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('BAC Approved PR | PMIS')]
 class BacApprovedPrIndexPage extends Component
 {
     use WithPagination;

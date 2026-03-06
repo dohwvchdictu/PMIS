@@ -5,12 +5,14 @@ namespace App\Livewire;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 use App\Services\ApiService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+#[Title('Login | PMIS')]
 class LoginPage extends Component
 {
     #[Layout('components.layouts.login')]

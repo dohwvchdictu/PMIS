@@ -6,8 +6,10 @@ use App\Models\BacApprovedPr;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\Validator;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Create BAC Approved PR | PMIS')]
 class BacApprovedPrCreatePage extends Component
 {
     public $form = [];

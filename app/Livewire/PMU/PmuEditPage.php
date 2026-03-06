@@ -6,12 +6,14 @@ use App\Models\Pmu;
 use App\Models\PmuPo;
 use App\Models\Procurement;
 use App\Models\Supply;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
+#[Title('PMU | PMIS')]
 class PmuEditPage extends Component
 {
     private const DATE_FORMAT = 'Y-m-d';

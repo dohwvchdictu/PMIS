@@ -4,9 +4,11 @@ namespace App\Livewire\BacApprovedPr;
 
 use App\Models\BACApprovedPR;
 use App\Models\Procurement;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
+#[Title('Edit BAC Approved PR | PMIS')]
 class BacApprovedPrEditPage extends Component
 {
     public BACApprovedPR $bacapprovedpr;

@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\MopGroup;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\MopItem;
 use App\Models\MopLot;
@@ -15,6 +16,7 @@ use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use Livewire\WithPagination;
 
+#[Title('Mode of Procurement | PMIS')]
 class ModeOfProcurementIndexPage extends Component
 {
     use WithPagination;

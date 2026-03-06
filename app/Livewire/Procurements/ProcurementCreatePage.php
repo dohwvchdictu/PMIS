@@ -12,6 +12,7 @@ use App\Models\VenueSpecific;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\Procurement;
 use App\Models\MopLot;
@@ -19,6 +20,7 @@ use App\Models\MopItem;
 use App\Models\PrLotPrstage;
 use App\Models\PrItemPrstage;
 
+#[Title('Create Procurement | PMIS')]
 class ProcurementCreatePage extends Component
 {
     public string $procID = '';

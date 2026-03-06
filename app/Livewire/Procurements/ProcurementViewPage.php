@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Procurements;
 
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
 use App\Models\{
@@ -23,6 +24,7 @@ use App\Models\{
 };
 use Illuminate\Support\Collection;
 
+#[Title('View Procurement | PMIS')]
 class ProcurementViewPage extends Component
 {
     public Procurement $procurement;
