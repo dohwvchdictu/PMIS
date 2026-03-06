@@ -281,6 +281,7 @@ class PmuIndexPage extends Component
 
         $receivedItems = (clone $outerBase)
             ->whereNotNull('date_received')
+            ->reorder('date_received', 'desc')
             ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
         return [
