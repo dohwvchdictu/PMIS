@@ -16,6 +16,7 @@ use App\Livewire\PMU\PmuCreatePage;
 use App\Livewire\PMU\PmuEditPage;
 use App\Livewire\PMU\PmuViewPage;
 use App\Livewire\Supply\SupplyIndexPage;
+use App\Livewire\Supply\SupplyEditPage;
 use App\Livewire\Procurements\ProcurementCreatePage;
 use App\Livewire\Procurements\ProcurementEditPage;
 use App\Livewire\Procurements\ProcurementIndexPage;
@@ -151,6 +152,10 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('/', SupplyIndexPage::class)
             ->name('index')
             ->middleware('can:view_any_supply');
+
+        Route::get('/{id}/edit', SupplyEditPage::class)
+            ->name('edit')
+            ->middleware('can:update_supply');
     });
 
     // Reports routes

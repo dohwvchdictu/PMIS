@@ -77,6 +77,7 @@
                                         title="Select / deselect all visible" />
                                 </th>
                                 <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
+                                <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     PO / Contract No.</th>
@@ -110,6 +111,18 @@
                                                     d="M9 5l7 7-7 7" />
                                             </svg>
                                         </button>
+                                    </td>
+
+                                    {{-- Actions --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                        @can('update_supply')
+                                            <a href="{{ route('supply.edit', $supply->id) }}"
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 dark:hover:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow"
+                                                title="Edit">
+                                                <x-heroicon-o-pencil-square
+                                                    class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                            </a>
+                                        @endcan
                                     </td>
 
                                     <td class="px-6 py-3 whitespace-nowrap">
@@ -278,13 +291,13 @@
                                                 <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
                                                     @can('update_supply')
                                                         <li>
-                                                            <button wire:click="openReceiveModal({{ $supply->id }})"
+                                                            <a href="{{ route('supply.edit', $supply->id) }}"
                                                                 @click="open = false"
-                                                                class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-emerald-100 dark:hover:from-emerald-900/30 dark:hover:to-emerald-800/30 text-emerald-600 dark:text-emerald-400 transition-all duration-150 group/item">
+                                                                class="w-full flex items-center gap-2.5 text-left px-4 py-2.5 hover:bg-gradient-to-r hover:from-amber-50 hover:to-amber-100 dark:hover:from-amber-900/30 dark:hover:to-amber-800/30 text-amber-600 dark:text-amber-400 transition-all duration-150 group/item">
                                                                 <x-heroicon-o-pencil-square
                                                                     class="w-4 h-4 group-hover/item:scale-110 transition-transform" />
-                                                                <span class="font-medium">Edit Received</span>
-                                                            </button>
+                                                                <span class="font-medium">Edit</span>
+                                                            </a>
                                                         </li>
                                                     @endcan
                                                 </ul>

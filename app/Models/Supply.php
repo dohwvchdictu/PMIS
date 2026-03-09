@@ -20,4 +20,14 @@ class Supply extends Model
         'date_forwarded' => 'date',
         'date_received' => 'date',
     ];
+
+    public function details()
+    {
+        return $this->hasMany(SupplyDetail::class, 'ref_id');
+    }
+
+    public function supplyPos()
+    {
+        return $this->hasMany(\App\Models\SupplyPo::class);
+    }
 }
