@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::dropIfExists('supply_details');
+    }
+
+    public function down(): void
+    {
+        Schema::create('supply_details', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('ref_id')->constrained('supplies')->cascadeOnDelete();
+            $table->string('batch_no')->nullable();
+            $table->date('delivery_completion')->nullable();
+            $table->datetime('date_received_from_end_user')->nullable();
+            $table->decimal('soa_amount', 15, 2)->nullable();
+            $table->datetime('date_forwarded_to_budget')->nullable();
+            $table->timestamps();
+        });
+    }
+};

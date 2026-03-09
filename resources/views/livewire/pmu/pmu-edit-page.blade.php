@@ -93,7 +93,7 @@
                             </svg>Edit
                         </span>
                     </button>
-                    @if ($allSelectedComplete)
+                    @if ($allSelectedComplete && $anySelectedNotYetForwarded)
                         <button wire:click="openForwardConfirm" type="button"
                             class="px-5 py-2 text-sm font-semibold rounded-lg shadow-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform
                             bg-blue-600 hover:bg-blue-700 text-white hover:shadow-xl hover:scale-105 focus:ring-blue-500">
@@ -203,13 +203,56 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
                     @forelse ($editPaginator as $row)
+                        @php $isForwardedToSupply = ($pmuPoByProcId->get($row->rowKey)?->manual_status ?? null) === 'forwarded_to_supply'; @endphp
                         <tr
-                            class="bg-white dark:bg-neutral-700 hover:bg-emerald-50 dark:hover:bg-neutral-800 transition-colors
+                            class="hover:bg-emerald-50 dark:hover:bg-neutral-800 transition-colors
+                            {{ $isForwardedToSupply ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'bg-white dark:bg-neutral-700' }}
                             {{ in_array($row->rowKey, $selectedItems) ? '!bg-emerald-50 dark:!bg-emerald-900/20' : '' }}">
                             {{-- Checkbox --}}
                             <td class="px-3 py-2 whitespace-nowrap text-center">
-                                <input type="checkbox" wire:model.live="selectedItems" value="{{ $row->rowKey }}"
-                                    class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                @if ($isForwardedToSupply)
+                                    @php $forwardedAt = $pmuPoByProcId->get($row->rowKey)?->forwarded_to_supply_at; @endphp
+                                    <div class="relative flex justify-center items-center" x-data="{ open: false }"
+                                        @click.outside="open = false">
+                                        <button type="button" @click="open = !open" @mouseenter="open = true"
+                                            @mouseleave="open = false"
+                                            class="p-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 hover:bg-indigo-200 dark:hover:bg-indigo-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            title="Forwarded to Supply">
+                                            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </button>
+                                        <div x-show="open" x-transition:enter="transition ease-out duration-150"
+                                            x-transition:enter-start="opacity-0 scale-95"
+                                            x-transition:enter-end="opacity-100 scale-100"
+                                            x-transition:leave="transition ease-in duration-100"
+                                            x-transition:leave-start="opacity-100 scale-100"
+                                            x-transition:leave-end="opacity-0 scale-95"
+                                            class="absolute left-8 top-1/2 -translate-y-1/2 z-50 w-52 bg-white dark:bg-neutral-800 border border-indigo-200 dark:border-indigo-700 rounded-lg shadow-lg p-3 text-left pointer-events-none"
+                                            style="display: none;">
+                                            <div class="flex items-center gap-1.5 mb-1.5">
+                                                <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                </svg>
+                                                <span
+                                                    class="text-xs font-semibold text-indigo-700 dark:text-indigo-300">Forwarded
+                                                    to Supply</span>
+                                            </div>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
+                                                {{ $forwardedAt ? \Carbon\Carbon::parse($forwardedAt)->setTimezone('Asia/Manila')->format('F d, Y g:i A') : 'N/A' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <input type="checkbox" wire:model.live="selectedItems"
+                                        value="{{ $row->rowKey }}"
+                                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                @endif
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap">
                                 @can('view_procurement')

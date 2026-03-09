@@ -308,6 +308,7 @@ class ScheduleForPrCreatePage extends Component
                 'ABC' => $this->totalAbc,
                 'two_percent' => $this->totalAbc * 0.02,
                 'five_percent' => $this->totalAbc * 0.05,
+                'thirty_percent' => $this->totalAbc * 0.30,
             ]);
 
             // --- 4. Link Selected Lots and Items ---

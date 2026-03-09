@@ -366,16 +366,14 @@ class PmuIndexPage extends Component
                     ->filter(fn($ic) => (int) $ic->end_user_count > 0)
                     ->keys(),
 
-                // USEC badge: usec_count > 0 && usec_count > ready_to_forward_count
+                // USEC badge: usec_count > 0 (counts are now mutually exclusive with ready_to_forward)
                 'usec' => $iCounts->filter(function ($ic) {
-                        $usec = (int) $ic->usec_count;
-                        return $usec > 0 && $usec > (int) $ic->ready_to_forward_count;
+                        return (int) $ic->usec_count > 0;
                     })->keys(),
 
-                // PO Prep badge: po_prep_count > 0 && po_prep_count > usec_count
+                // PO Prep badge: po_prep_count > 0 (counts are now mutually exclusive with usec and ready_to_forward)
                 'po_prep' => $iCounts->filter(function ($ic) {
-                        $prep = (int) $ic->po_prep_count;
-                        return $prep > 0 && $prep > (int) $ic->usec_count;
+                        return (int) $ic->po_prep_count > 0;
                     })->keys(),
 
                 default => null,
@@ -625,8 +623,18 @@ class PmuIndexPage extends Component
                     pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
                     pmu_po.date_coa_stamped_received IS NOT NULL
                 THEN 1 ELSE 0 END) as ready_to_forward_count'),
-                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.po_date IS NOT NULL AND pmu_po.po_contract_number IS NOT NULL THEN 1 ELSE 0 END) as po_prep_count'),
-                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.contract_amount IS NOT NULL THEN 1 ELSE 0 END) as usec_count'),
+                // po_prep: has PO Date + PO/Contract No., but NOT contract_amount yet (which would push it to usec/ready_to_forward)
+                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.po_date IS NOT NULL AND pmu_po.po_contract_number IS NOT NULL AND pmu_po.contract_amount IS NULL THEN 1 ELSE 0 END) as po_prep_count'),
+                // usec: has contract_amount, but NOT yet fully ready_to_forward (at least one required field is still missing)
+                \DB::raw('SUM(CASE WHEN pmu_po.manual_status IS NULL AND pmu_po.contract_amount IS NOT NULL AND NOT (
+                    pmu_po.po_date IS NOT NULL AND
+                    pmu_po.po_contract_number IS NOT NULL AND
+                    pmu_po.contract_signing_date IS NOT NULL AND
+                    pmu_po.notice_to_proceed_date IS NOT NULL AND
+                    pmu_po.po_contract_number_link IS NOT NULL AND
+                    pmu_po.date_po_receipt_by_supplier IS NOT NULL AND
+                    pmu_po.date_coa_stamped_received IS NOT NULL
+                ) THEN 1 ELSE 0 END) as usec_count'),
                 \DB::raw("SUM(CASE WHEN pmu_po.manual_status = 'return_to_bac' AND NOT (
                     pmu_po.po_date IS NOT NULL AND
                     pmu_po.po_contract_number IS NOT NULL AND

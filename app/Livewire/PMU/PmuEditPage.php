@@ -5,6 +5,8 @@ namespace App\Livewire\PMU;
 use App\Models\Pmu;
 use App\Models\PmuPo;
 use App\Models\Procurement;
+use App\Models\PrLotPrstage;
+use App\Models\PrItemPrstage;
 use App\Models\Supply;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -276,8 +278,21 @@ class PmuEditPage extends Component
             ->unique()->values()->map(fn($id) => (string) $id)->toArray();
 
         if ($value) {
+            // Exclude already-forwarded rows from selection
+            $pmuRecord = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->first();
+            $forwardedRowKeys = $pmuRecord
+                ? PmuPo::where('pmu_id', $pmuRecord->id)
+                    ->where('manual_status', 'forwarded_to_supply')
+                    ->whereIn('ref_id', $pageIds)
+                    ->pluck('ref_id')
+                    ->map(fn($id) => (string) $id)
+                    ->toArray()
+                : [];
+
+            $selectableIds = array_values(array_diff($pageIds, $forwardedRowKeys));
+
             $this->selectedItems = array_values(array_unique(
-                array_merge($this->selectedItems, $pageIds)
+                array_merge($this->selectedItems, $selectableIds)
             ));
         } else {
             $this->selectedItems = array_values(
@@ -726,6 +741,9 @@ class PmuEditPage extends Component
             $pmu = Pmu::where('notice_of_award_number', $this->noticeOfAwardNumber)->firstOrFail();
             $forwardedCount = 0;
 
+            // Build a rowKey → rowType map from the combined rows
+            $combinedRowMap = $this->fetchCombinedRows()->keyBy(fn($r) => (string) $r->rowKey);
+
             foreach ($this->selectedItems as $rowKey) {
                 $pmuPo = PmuPo::where('ref_id', $rowKey)
                     ->where('pmu_id', $pmu->id)
@@ -737,6 +755,53 @@ class PmuEditPage extends Component
                         'forwarded_to_supply_at' => $utcDateForwarded,
                         'manual_status' => 'forwarded_to_supply',
                     ]);
+
+                    // Create / update stage-14 record (mirrors stage-7 creation in forwardToPmu)
+                    $rowMeta = $combinedRowMap->get((string) $rowKey);
+                    if ($rowMeta && $rowMeta->rowType === 'item') {
+                        $prItem = DB::table('pr_items')->where('prItemID', $rowKey)->first();
+                        $latestStage = PrItemPrstage::where('prItemID', $rowKey)
+                            ->orderByDesc('created_at')->orderByDesc('id')->first();
+
+                        if ($latestStage && $latestStage->pr_stage_id == 14) {
+                            $previousStage = PrItemPrstage::where('prItemID', $rowKey)
+                                ->where('id', '<', $latestStage->id)
+                                ->orderByDesc('created_at')->orderByDesc('id')->first();
+                            $latestStage->update([
+                                'stage_history' => $previousStage ? (string) $previousStage->pr_stage_id : null,
+                                'actual_date_forwarded' => $utcDateForwarded,
+                            ]);
+                        } else {
+                            PrItemPrstage::create([
+                                'procID' => $prItem?->procID,
+                                'prItemID' => $rowKey,
+                                'pr_stage_id' => 14,
+                                'stage_history' => $latestStage ? (string) $latestStage->pr_stage_id : null,
+                                'actual_date_forwarded' => $utcDateForwarded,
+                            ]);
+                        }
+                    } else {
+                        // lot — ref_id is procID
+                        $latestStage = PrLotPrstage::where('procID', $rowKey)
+                            ->orderByDesc('created_at')->orderByDesc('id')->first();
+
+                        if ($latestStage && $latestStage->pr_stage_id == 14) {
+                            $previousStage = PrLotPrstage::where('procID', $rowKey)
+                                ->where('id', '<', $latestStage->id)
+                                ->orderByDesc('created_at')->orderByDesc('id')->first();
+                            $latestStage->update([
+                                'stage_history' => $previousStage ? (string) $previousStage->pr_stage_id : null,
+                                'actual_date_forwarded' => $utcDateForwarded,
+                            ]);
+                        } else {
+                            PrLotPrstage::create([
+                                'procID' => $rowKey,
+                                'pr_stage_id' => 14,
+                                'stage_history' => $latestStage ? (string) $latestStage->pr_stage_id : null,
+                                'actual_date_forwarded' => $utcDateForwarded,
+                            ]);
+                        }
+                    }
 
                     // Upsert Supply record for tracking on the supply side
                     if (!empty($pmuPo->po_contract_number)) {
@@ -794,6 +859,10 @@ class PmuEditPage extends Component
         $allSelectedComplete = !empty($this->selectedItems) && collect($this->selectedItems)
             ->every(fn($rowKey) => $completedRows[$rowKey] ?? false);
 
+        // True when at least one selected item has NOT yet been forwarded to supply
+        $anySelectedNotYetForwarded = !empty($this->selectedItems) && collect($this->selectedItems)
+            ->some(fn($rowKey) => ($pmuPoByProcId->get($rowKey)?->manual_status ?? null) !== 'forwarded_to_supply');
+
         return view('livewire.pmu.pmu-edit-page', [
             'noticeOfAwardNumber' => $this->noticeOfAwardNumber,
             'pmuRecord' => $pmuRecord,
@@ -803,6 +872,7 @@ class PmuEditPage extends Component
             'editPaginator' => $this->buildEditPaginator(),
             'forwardedToSupplySummary' => $this->forwardedToSupplySummary,
             'allSelectedComplete' => $allSelectedComplete,
+            'anySelectedNotYetForwarded' => $anySelectedNotYetForwarded,
         ])->layout('components.layouts.app');
     }
 }
