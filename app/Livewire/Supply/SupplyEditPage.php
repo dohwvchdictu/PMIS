@@ -187,6 +187,42 @@ class SupplyEditPage extends Component
         }
 
         $this->resetBulkFields();
+
+        // Pre-fill from existing supply_po records
+        $existing = SupplyPo::where('supply_id', $this->supplyId)
+            ->whereIn('ref_id', $this->selectedItems)
+            ->get()
+            ->keyBy('ref_id');
+
+        $snapshots = collect($this->selectedItems)->map(function ($rowKey) use ($existing) {
+            $row = $existing->get($rowKey);
+            return [
+                'batch_no' => $row?->batch_no ?? '',
+                'delivery_completion' => $row && $row->delivery_completion ? $row->delivery_completion->format('Y-m-d') : '',
+                'date_received_from_end_user' => $row && $row->date_received_from_end_user ? $row->date_received_from_end_user->format('Y-m-d') : '',
+                'soa_amount' => $row ? (string) ($row->soa_amount ?? '') : '',
+            ];
+        })->values();
+
+        // Block if selected items have conflicting data
+        if ($snapshots->unique()->count() > 1) {
+            LivewireAlert::title('Conflicting Data')
+                ->error()
+                ->text('The selected items have different supply details. Please select items with identical data or edit them one at a time.')
+                ->toast()
+                ->timer(5000)
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        // Pre-fill form with common data
+        $data = $snapshots->first() ?? [];
+        $this->bulk_batch_no = $data['batch_no'];
+        $this->bulk_delivery_completion = $data['delivery_completion'];
+        $this->bulk_date_received_from_end_user = $data['date_received_from_end_user'];
+        $this->bulk_soa_amount = $data['soa_amount'];
+
         $this->showBulkEditModal = true;
     }
 
@@ -561,9 +597,14 @@ class SupplyEditPage extends Component
     {
         $supply = Supply::findOrFail($this->supplyId);
 
+        $supplyPoByRefId = SupplyPo::where('supply_id', $this->supplyId)
+            ->get()
+            ->keyBy('ref_id');
+
         return view('livewire.supply.supply-edit-page', [
             'supply' => $supply,
             'expandedPaginator' => $this->buildExpandedRows(),
+            'supplyPoByRefId' => $supplyPoByRefId,
         ])->layout('components.layouts.app');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Supply;
 
 use App\Models\Supply;
+use App\Models\SupplyPo;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -163,10 +164,21 @@ class SupplyIndexPage extends Component
             ->orderByDesc('id')
             ->paginate($this->receivedPerPage, ['*'], 'received_page', $this->receivedPage);
 
+        $supplyPoByRefId = collect();
+        if ($this->expandedPoNumber) {
+            $expandedSupply = Supply::where('po_contract_number', $this->expandedPoNumber)->first();
+            if ($expandedSupply) {
+                $supplyPoByRefId = SupplyPo::where('supply_id', $expandedSupply->id)
+                    ->get()
+                    ->keyBy('ref_id');
+            }
+        }
+
         return view('livewire.supply.supply-index-page', [
             'pendingItems' => $pendingItems,
             'receivedItems' => $receivedItems,
             'expandedPaginator' => $this->buildExpandedRows(),
+            'supplyPoByRefId' => $supplyPoByRefId,
         ]);
     }
 
@@ -197,6 +209,7 @@ class SupplyIndexPage extends Component
                     ->where('pr_lot_prstage.pr_stage_id', 14);
             })
             ->select(
+                'pmu_po.ref_id as rowKey',
                 'procurements.procID',
                 'procurements.pr_number',
                 \DB::raw('procurements.procurement_program_project as description'),
@@ -227,6 +240,7 @@ class SupplyIndexPage extends Component
                 'pr_items.description',
                 'suppliers.name as supplier_name',
                 'pmu_po.po_date',
+                'pmu_po.ref_id as rowKey',
                 'pmu_po.po_contract_number',
                 'pmu_po.contract_amount',
             )
