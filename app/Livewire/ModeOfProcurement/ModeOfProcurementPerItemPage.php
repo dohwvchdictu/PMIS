@@ -640,10 +640,14 @@ class ModeOfProcurementPerItemPage extends Component
             $prItemID = $item['prItemID'];
 
             // Skip history items — only validate the current (first seen) entry per prItemID
-            if (in_array($prItemID, $validatedPrItemIds)) {
+            // EXCEPT when editing a specific history item via the modal ($this->editingIndex)
+            $isBeingEdited = ($this->editingIndex !== null && $index === $this->editingIndex);
+            if (in_array($prItemID, $validatedPrItemIds) && !$isBeingEdited) {
                 continue;
             }
-            $validatedPrItemIds[] = $prItemID;
+            if (!in_array($prItemID, $validatedPrItemIds)) {
+                $validatedPrItemIds[] = $prItemID;
+            }
             $itemNumber = $item['item_no'] ?? ($index + 1);
             $itemDesc = $item['description'] ?? 'Unknown Item';
             $shortDesc = strlen($itemDesc) > 50 ? substr($itemDesc, 0, 50) . '...' : $itemDesc;
@@ -718,6 +722,46 @@ class ModeOfProcurementPerItemPage extends Component
 
             // COMPETITIVE BIDDING MODES (2, 3, 4, 5, 6)
             if ($this->isCompetitiveBidding($modeId)) {
+                // Bidding number must match the expected sequence from the BidSchedule uid
+                // e.g. uid MOP-2-1-1 → last segment is 1, so bidding number must be 1
+                if ($this->hasValue($item['bidding_number'] ?? null)) {
+                    $enteredBiddingNumber = (string) $item['bidding_number'];
+
+                    if ($existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
+                        // Existing record: derive expected from saved uid's last segment
+                        $uidParts = explode('-', $existingBidSchedule->uid);
+                        $expectedBiddingNumber = (string) end($uidParts);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = sprintf(
+                                "<strong>Item %s</strong> (%s): Bidding Number must be \"%s\" (based on record uid: %s).",
+                                $itemNumber,
+                                $shortDesc,
+                                $expectedBiddingNumber,
+                                $existingBidSchedule->uid
+                            );
+                            $isValid = false;
+                        }
+                    } elseif (!$existingBidSchedule) {
+                        // New record: compute expected sequence (same logic as saveRelatedSchedules)
+                        $relatedMopUids = MopItem::where('prItemID', $prItemID)
+                            ->where('mode_of_procurement_id', $modeId)
+                            ->pluck('uid');
+                        $count = BidSchedule::where('ref_id', $prItemID)
+                            ->whereIn('mop_uid', $relatedMopUids)
+                            ->count();
+                        $expectedBiddingNumber = (string) ($count + 1);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = sprintf(
+                                "<strong>Item %s</strong> (%s): Bidding Number must be \"%s\" (next available sequence).",
+                                $itemNumber,
+                                $shortDesc,
+                                $expectedBiddingNumber
+                            );
+                            $isValid = false;
+                        }
+                    }
+                }
+
                 // If there's an existing record but all data was removed, show error
                 if ($existingBidSchedule && !$hasAnyBiddingData && !$hasResolutionNumber) {
                     $this->scheduleValidationErrors[] = sprintf(
@@ -2309,6 +2353,49 @@ class ModeOfProcurementPerItemPage extends Component
 
         // COMPETITIVE BIDDING MODES
         if ($this->isCompetitiveBidding($modeId)) {
+            // Validate bidding number per item against expected sequence
+            if ($this->hasValue($this->bulkEditData['bidding_number'] ?? '')) {
+                $enteredBiddingNumber = (string) $this->bulkEditData['bidding_number'];
+
+                foreach ($this->selectedItems as $index) {
+                    $item = $this->form['items'][$index] ?? null;
+                    if (!$item)
+                        continue;
+
+                    $prItemID = $item['prItemID'];
+                    $itemNo = $item['item_no'] ?? "Item #{$index}";
+                    $mopUid = $item['uid'] ?? null;
+                    if (!$mopUid)
+                        continue;
+
+                    $matchCriteria = ['ref_id' => $prItemID, 'mop_uid' => $mopUid];
+                    $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
+
+                    if ($existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
+                        $uidParts = explode('-', $existingBidSchedule->uid);
+                        $expectedBiddingNumber = (string) end($uidParts);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->bulkEditErrors[] = "Item {$itemNo}: Bidding Number must be \"{$expectedBiddingNumber}\" (based on record uid: {$existingBidSchedule->uid}).";
+                        }
+                    } else {
+                        $relatedMopUids = MopItem::where('prItemID', $prItemID)
+                            ->where('mode_of_procurement_id', $modeId)
+                            ->pluck('uid');
+                        $count = BidSchedule::where('ref_id', $prItemID)
+                            ->whereIn('mop_uid', $relatedMopUids)
+                            ->count();
+                        $expectedBiddingNumber = (string) ($count + 1);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->bulkEditErrors[] = "Item {$itemNo}: Bidding Number must be \"{$expectedBiddingNumber}\" (next available sequence).";
+                        }
+                    }
+                }
+
+                if (!empty($this->bulkEditErrors)) {
+                    return false;
+                }
+            }
+
             // Validate Bidding Result dependencies
             $biddingResult = $this->bulkEditData['bidding_result'] ?? null;
 

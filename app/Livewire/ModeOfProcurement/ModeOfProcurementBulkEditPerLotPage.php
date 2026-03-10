@@ -578,6 +578,52 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
         // COMPETITIVE BIDDING MODES
         if (in_array($modeId, self::BIDDING_MODES)) {
+            // Validate bidding number per PR against expected sequence
+            if ($this->hasValue($this->bulkEdit['bidding_number'] ?? '')) {
+                $enteredBiddingNumber = (string) $this->bulkEdit['bidding_number'];
+
+                foreach ($currentItems as $item) {
+                    $prNumber = $item['pr_number'] ?? $item['procID'];
+                    $mopUid = $item['mop_uid'] ?? null;
+
+                    if (!$mopUid) {
+                        continue;
+                    }
+
+                    $matchCriteria = [
+                        'ref_id' => $item['procID'],
+                        'mop_uid' => $mopUid,
+                    ];
+
+                    $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
+
+                    if ($existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
+                        // Existing record: expected = last segment of saved uid
+                        $uidParts = explode('-', $existingBidSchedule->uid);
+                        $expectedBiddingNumber = (string) end($uidParts);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = "PR {$prNumber}: Bidding Number must be \"{$expectedBiddingNumber}\" (based on record uid: {$existingBidSchedule->uid}).";
+                        }
+                    } else {
+                        // New record: expected = count of existing BidSchedules for this mode + 1
+                        $relatedMopUids = MopLot::where('procID', $item['procID'])
+                            ->where('mode_of_procurement_id', $modeId)
+                            ->pluck('uid');
+                        $count = BidSchedule::where('ref_id', $item['procID'])
+                            ->whereIn('mop_uid', $relatedMopUids)
+                            ->count();
+                        $expectedBiddingNumber = (string) ($count + 1);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = "PR {$prNumber}: Bidding Number must be \"{$expectedBiddingNumber}\" (next available sequence).";
+                        }
+                    }
+                }
+
+                if (!empty($this->scheduleValidationErrors)) {
+                    return false;
+                }
+            }
+
             // Validate Bidding Result dependencies
             $biddingResult = $this->bulkEdit['bidding_result'] ?? null;
 

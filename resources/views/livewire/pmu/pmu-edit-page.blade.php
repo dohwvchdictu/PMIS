@@ -1010,26 +1010,6 @@
         </div>
     </x-forms.modal>
 
-
-    {{-- Fixed Bottom Footer --}}
-    <div
-        class="fixed bottom-4 right-0 left-0 lg:left-48 flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 z-30">
-        <div class="w-full max-w-[110rem] mx-auto sm:px-6 lg:px-8 flex justify-end gap-3">
-            <button type="button" wire:click="cancel"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">
-                Cancel
-            </button>
-            <button wire:click="save"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Save
-            </button>
-        </div>
-    </div>
-
     <!-- Bottom Spacer -->
     <div class="h-16"></div>
 

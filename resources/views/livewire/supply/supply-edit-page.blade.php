@@ -485,33 +485,4 @@
             </div>
         </div>
     @endif
-
-    {{-- ═══ FIXED BOTTOM FOOTER ════════════════════════════════════════════════════ --}}
-    <div
-        class="fixed bottom-4 right-0 left-0 lg:left-48 flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 shadow-lg z-30">
-        <div class="flex items-center gap-3 px-4">
-            <button type="button" wire:click="cancel"
-                class="px-5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
-                Cancel
-            </button>
-            @can('update_supply')
-                <button type="button" wire:click="save" wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 rounded-lg transition-colors shadow">
-                    <svg wire:loading wire:target="save" class="w-4 h-4 animate-spin" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
-                        </path>
-                    </svg>
-                    <svg wire:loading.remove wire:target="save" class="w-4 h-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Save Changes
-                </button>
-            @endcan
-        </div>
-    </div>
-
 </div>
