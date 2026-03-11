@@ -207,20 +207,20 @@
     </div>
     <!-- Enhanced Table Section -->
     <div class="overflow-auto flex-1">
-        <table class="table-auto w-full min-w-[2400px] divide-y divide-gray-200 dark:divide-neutral-700">
+        <table class="table-auto w-full min-w-[5400px] divide-y divide-gray-200 dark:divide-neutral-700">
             <thead
                 class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-30">
                 <tr>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">
                         PR Number
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">
                         IB No
                     </th>
                     <th
-                        class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-72">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-[52rem]">
                         Procurement Program / Project
                     </th>
                     <th
@@ -232,11 +232,11 @@
                         DTrack No
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-56">
                         Division
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">
                         Unit / Cluster
                     </th>
                     <th
@@ -244,27 +244,27 @@
                         Category
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-64">
                         End-User
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-96">
                         Category / Venue
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-96">
                         Immediate Date Needed
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-96">
                         Date Needed
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-56">
                         Fund Source
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-56">
                         Fund Source Group
                     </th>
                     <th
@@ -280,15 +280,15 @@
                         EPA
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-60">
                         Procurement Stage
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-72">
                         Remarks
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-72">
                         Current Mode
                     </th>
                     <th
@@ -296,7 +296,7 @@
                         Awarded Amount
                     </th>
                     <th
-                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-80">
                         Supplier
                     </th>
                     <th
@@ -331,7 +331,7 @@
 
                         <!-- Procurement Program / Project -->
                         <td class="px-3 py-4 text-left text-xs text-gray-900 dark:text-gray-100">
-                            <div class="font-medium break-words whitespace-normal"
+                            <div class="font-medium break-words whitespace-normal min-h-[2.5rem] max-h-[2.8rem] line-clamp-2 leading-[1.4]"
                                 title="{{ $procurement->procurement_program_project }}">
                                 {{ $procurement->procurement_program_project }}
                             </div>
@@ -362,14 +362,16 @@
 
                         <!-- Division -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->division?->divisions }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->division?->divisions }}">
                                 {{ $procurement->division?->divisions ?? 'N/A' }}
                             </div>
                         </td>
 
                         <!-- Unit / Cluster -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->clusterCommittee?->clustercommittee }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->clusterCommittee?->clustercommittee }}">
                                 {{ $procurement->clusterCommittee?->clustercommittee ?? 'N/A' }}
                             </div>
                         </td>
@@ -383,22 +385,25 @@
 
                         <!-- End-User -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->endUser?->endusers }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->endUser?->endusers }}">
                                 {{ $procurement->endUser?->endusers ?? 'N/A' }}
                             </div>
                         </td>
 
                         <!-- Category / Venue -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->category_venue }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] line-clamp-2"
+                                title="{{ $procurement->category_venue }}">
                                 {{ $procurement->category_venue ?? 'N/A' }}
                             </div>
                         </td>
 
                         <!-- Immediate Date Needed -->
-                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                        <td class="px-3 py-4 text-center text-xs text-gray-700 dark:text-gray-200">
                             @if ($procurement->immediate_date_needed)
-                                <span class="text-xs">
+                                <div class="break-words whitespace-normal line-clamp-2 min-h-[2.5rem]"
+                                    title="{{ $procurement->immediate_date_needed }}">
                                     @php
                                         try {
                                             echo \Carbon\Carbon::parse($procurement->immediate_date_needed)->format(
@@ -408,16 +413,19 @@
                                             echo $procurement->immediate_date_needed;
                                         }
                                     @endphp
-                                </span>
+                                </div>
                             @else
                                 <span class="text-gray-400 italic text-xs">N/A</span>
                             @endif
                         </td>
 
                         <!-- Date Needed -->
-                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                        <td class="px-3 py-4 text-center text-xs text-gray-700 dark:text-gray-200">
                             @if ($procurement->date_needed)
-                                <span class="text-xs">{{ $procurement->date_needed }}</span>
+                                <div class="break-words whitespace-normal line-clamp-2 min-h-[2.5rem]"
+                                    title="{{ $procurement->date_needed }}">
+                                    {{ $procurement->date_needed }}
+                                </div>
                             @else
                                 <span class="text-gray-400 italic text-xs">N/A</span>
                             @endif
@@ -425,14 +433,16 @@
 
                         <!-- Fund Source -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->fundSource?->fundsources }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->fundSource?->fundsources }}">
                                 {{ $procurement->fundSource?->fundsources ?? 'N/A' }}
                             </div>
                         </td>
 
                         <!-- Fund Source Group -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->fundSource?->fundSourceGroup?->name }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->fundSource?->fundSourceGroup?->name }}">
                                 {{ $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A' }}
                             </div>
                         </td>
@@ -475,35 +485,89 @@
 
                         <!-- Procurement Stage -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            @if ($procurement->currentPrStage)
-                                <span
-                                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700 shadow-sm">
-                                    {{ $procurement->currentPrStage->procurementStage?->procurementstage ?? 'N/A' }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 italic text-xs">No Stage</span>
-                            @endif
+                            <div class="min-h-[2.5rem] flex items-center justify-center">
+                                @if ($procurement->currentPrStage)
+                                    <span
+                                        class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-center bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700 shadow-sm break-words whitespace-normal">
+                                        {{ $procurement->currentPrStage->procurementStage?->procurementstage ?? 'N/A' }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 italic text-xs">No Stage</span>
+                                @endif
+                            </div>
                         </td>
 
                         <!-- Remarks -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            @if ($procurement->currentLotRemark?->remark)
-                                <span class="text-xs">{{ $procurement->currentLotRemark->remark->remarks }}</span>
-                            @else
-                                <span class="text-gray-400 italic text-xs">N/A</span>
-                            @endif
+                            <div class="min-h-[2.5rem] flex items-center justify-center">
+                                @if ($procurement->currentLotRemark?->remark)
+                                    @php
+                                        $remarkText = $procurement->currentLotRemark->remark->remarks;
+                                        $r = strtolower($remarkText);
+                                        $badge = match (true) {
+                                            str_contains($r, 'award') ||
+                                                str_contains($r, 'complet') ||
+                                                str_contains($r, 'approved') ||
+                                                str_contains($r, 'done')
+                                                => 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700',
+                                            str_contains($r, 'cancel') ||
+                                                str_contains($r, 'terminat') ||
+                                                str_contains($r, 'reject') ||
+                                                str_contains($r, 'disapprov') ||
+                                                str_contains($r, 'failed') ||
+                                                str_contains($r, 'lapsed')
+                                                => 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700',
+                                            str_contains($r, 'hold') ||
+                                                str_contains($r, 'suspend') ||
+                                                str_contains($r, 'defer') ||
+                                                str_contains($r, 'return') ||
+                                                str_contains($r, 'revert')
+                                                => 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700',
+                                            str_contains($r, 'ongoing') ||
+                                                str_contains($r, 'in progress') ||
+                                                str_contains($r, 'active') ||
+                                                str_contains($r, 'proceed') ||
+                                                str_contains($r, 'posted') ||
+                                                str_contains($r, 'publish')
+                                                => 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700',
+                                            str_contains($r, 'pending') ||
+                                                str_contains($r, 'for eval') ||
+                                                str_contains($r, 'for review') ||
+                                                str_contains($r, 'for approval') ||
+                                                str_contains($r, 'waiting') ||
+                                                str_contains($r, 'endors')
+                                                => 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700',
+                                            str_contains($r, 'rebid') ||
+                                                str_contains($r, 're-bid') ||
+                                                str_contains($r, 'repeat')
+                                                => 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700',
+                                            default
+                                                => 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-neutral-700 dark:text-gray-300 dark:border-neutral-600',
+                                        };
+                                    @endphp
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border break-words whitespace-normal text-center {{ $badge }}"
+                                        title="{{ $remarkText }}">
+                                        {{ $remarkText }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 italic text-xs">N/A</span>
+                                @endif
+                            </div>
                         </td>
 
                         <!-- Current Mode -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            @if ($procurement->currentMode)
-                                <span
-                                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300 dark:from-purple-900/40 dark:to-purple-800/40 dark:text-purple-200 dark:border-purple-700 shadow-sm">
-                                    {{ $procurement->currentMode->modeofprocurements }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 italic text-xs">No Mode</span>
-                            @endif
+                            <div class="min-h-[2.5rem] flex items-center justify-center">
+                                @if ($procurement->currentMode)
+                                    <span
+                                        class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-center bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300 dark:from-purple-900/40 dark:to-purple-800/40 dark:text-purple-200 dark:border-purple-700 shadow-sm break-words whitespace-normal">
+                                        {{ $procurement->currentMode->modeofprocurements }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 italic text-xs">No Mode</span>
+                                @endif
+                            </div>
                         </td>
 
                         <!-- Awarded Amount -->
@@ -521,7 +585,8 @@
 
                         <!-- Supplier -->
                         <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
-                            <div class="truncate" title="{{ $procurement->postProcurement?->supplier?->name }}">
+                            <div class="break-words whitespace-normal min-h-[2.5rem] flex items-center justify-center"
+                                title="{{ $procurement->postProcurement?->supplier?->name }}">
                                 {{ $procurement->postProcurement?->supplier?->name ?? 'N/A' }}
                             </div>
                         </td>
