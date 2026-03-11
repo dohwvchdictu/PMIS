@@ -12,6 +12,7 @@ use App\Models\MopLot;
 use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use App\Models\ModeOfProcurement;
+use App\Models\Remarks;
 use Livewire\Attributes\Title;
 
 #[Title("PR's Received (A) | PMIS")]
@@ -28,6 +29,7 @@ class BacPrsReceivedPage extends Component
         'startDate' => ['except' => ''],
         'endDate' => ['except' => ''],
         'currentModeFilter' => ['except' => null],
+        'remarksFilter' => ['except' => null],
     ];
     protected $paginationTheme = 'tailwind';
 
@@ -38,6 +40,7 @@ class BacPrsReceivedPage extends Component
     public $startDate = '';
     public $endDate = '';
     public $currentModeFilter = null;
+    public $remarksFilter = null;
 
     public function mount()
     {
@@ -75,6 +78,11 @@ class BacPrsReceivedPage extends Component
         $this->resetPage();
     }
 
+    public function updatedRemarksFilter()
+    {
+        $this->resetPage();
+    }
+
     /**
      * Clear all filters
      */
@@ -84,6 +92,7 @@ class BacPrsReceivedPage extends Component
         $this->startDate = '';
         $this->endDate = '';
         $this->currentModeFilter = null;
+        $this->remarksFilter = null;
         $this->resetPage();
     }
 
@@ -128,7 +137,8 @@ class BacPrsReceivedPage extends Component
                 'fundSource.fundSourceGroup',
                 'endUser',
                 'mopLots.modeOfProcurement',
-                'pr_items.mopItems.modeOfProcurement'
+                'pr_items.mopItems.modeOfProcurement',
+                'currentLotRemark.remark'
             ])
             ->whereHas('category', function ($q) {
                 $q->where('bac_type_id', 1);
@@ -165,6 +175,14 @@ class BacPrsReceivedPage extends Component
             });
         }
 
+        // Remarks filter
+        if ($this->remarksFilter) {
+            $query->whereHas('prLotRemarks', function ($q) {
+                $q->where('remarks_id', $this->remarksFilter)
+                    ->whereRaw('remark_history = (SELECT MAX(remark_history) FROM pr_lot_remark WHERE procID = procurements.procID)');
+            });
+        }
+
         $procurements = $query->paginate($this->perPage);
 
         // Add current mode, status and IB No to each procurement
@@ -178,6 +196,7 @@ class BacPrsReceivedPage extends Component
         return view('livewire.reports.bac-prs-received-page', [
             'procurements' => $procurements,
             'modes' => $this->modes,
+            'remarksOptions' => $this->remarksOptions,
         ]);
     }
 
@@ -189,6 +208,19 @@ class BacPrsReceivedPage extends Component
                 return [
                     'id' => $mode->id,
                     'name' => $mode->modeofprocurements,
+                ];
+            });
+    }
+
+    public function getRemarksOptionsProperty()
+    {
+        return Remarks::where('is_active', true)
+            ->orderBy('remarks', 'asc')
+            ->get()
+            ->map(function ($remark) {
+                return [
+                    'id' => $remark->id,
+                    'name' => $remark->remarks,
                 ];
             });
     }
