@@ -9,7 +9,12 @@ class FundSource extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['fundsources', 'slug', 'is_active'];
+    protected $fillable = ['fundsources', 'fund_source_group_id', 'slug', 'is_active'];
+
+    public function fundSourceGroup()
+    {
+        return $this->belongsTo(FundSourceGroup::class);
+    }
 
     public function procurements()
     {

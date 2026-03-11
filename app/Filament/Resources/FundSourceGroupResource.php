@@ -2,14 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\FundSourceResource\Pages;
-use App\Filament\Resources\FundSourceResource\RelationManagers;
-use App\Models\FundSource;
+use App\Filament\Resources\FundSourceGroupResource\Pages;
 use App\Models\FundSourceGroup;
-use Filament\Forms;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -17,19 +13,20 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
-class FundSourceResource extends Resource
+class FundSourceGroupResource extends Resource
 {
-    protected static ?string $model = FundSource::class;
+    protected static ?string $model = FundSourceGroup::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-library';
+    protected static ?string $navigationIcon = 'heroicon-o-folder-open';
+
+    protected static ?string $navigationGroup = 'Fund Management';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -38,8 +35,8 @@ class FundSourceResource extends Resource
                 Section::make([
                     Grid::make()
                         ->schema([
-                            TextInput::make('fundsources')
-                                ->label('Fund Source')
+                            TextInput::make('name')
+                                ->label('Fund Source Group')
                                 ->required()
                                 ->maxLength(255)
                                 ->live(onBlur: true)
@@ -51,23 +48,13 @@ class FundSourceResource extends Resource
                                 ->disabled()
                                 ->required()
                                 ->dehydrated()
-                                ->unique(FundSource::class, 'slug', ignoreRecord: true),
-
-                            Select::make('fund_source_group_id')
-                                ->label('Fund Source Group')
-                                ->relationship('fundSourceGroup', 'name')
-                                ->options(FundSourceGroup::where('is_active', true)->pluck('name', 'id'))
-                                ->searchable()
-                                ->preload()
-                                ->nullable(),
+                                ->unique(FundSourceGroup::class, 'slug', ignoreRecord: true),
                         ]),
-
-
 
                     Toggle::make('is_active')
                         ->required()
-                        ->default(true)
-                ])
+                        ->default(true),
+                ]),
             ]);
     }
 
@@ -75,17 +62,17 @@ class FundSourceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('fundsources')
-                    ->label('Fund Source')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('fundSourceGroup.name')
+                Tables\Columns\TextColumn::make('name')
                     ->label('Fund Source Group')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('fund_sources_count')
+                    ->label('Fund Sources')
+                    ->counts('fundSources')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -102,29 +89,24 @@ class FundSourceResource extends Resource
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),
-                    // DeleteAction::make(),
-                ])
+                ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\BulkActionGroup::make([]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFundSources::route('/'),
-            'create' => Pages\CreateFundSource::route('/create'),
-            'edit' => Pages\EditFundSource::route('/{record}/edit'),
+            'index' => Pages\ListFundSourceGroups::route('/'),
+            'create' => Pages\CreateFundSourceGroup::route('/create'),
+            'edit' => Pages\EditFundSourceGroup::route('/{record}/edit'),
         ];
     }
 }
