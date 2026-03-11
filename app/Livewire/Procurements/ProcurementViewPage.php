@@ -97,6 +97,17 @@ class ProcurementViewPage extends Component
         $this->form['category_type'] = $procurement->category?->categoryType?->category_type ?? null;
         $this->form['rbac_sbac'] = $procurement->category?->bacType?->abbreviation ?? null;
 
+        // Format date fields to "M j, Y" (e.g. May 6, 2026)
+        foreach (['date_receipt', 'date_needed', 'immediate_date_needed'] as $dateField) {
+            if (!empty($this->form[$dateField])) {
+                try {
+                    $this->form[$dateField] = \Carbon\Carbon::parse($this->form[$dateField])->format('M j, Y');
+                } catch (\Exception $e) {
+                    // leave as-is if parse fails
+                }
+            }
+        }
+
         // Normalize procurement_type
         if (!in_array($this->form['procurement_type'] ?? null, ['perItem', 'perLot'])) {
             $this->form['procurement_type'] = 'perLot';
@@ -259,21 +270,21 @@ class ProcurementViewPage extends Component
             $map[$uid] = [
                 'ib_number' => $schedule->ib_number,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
-                'pre_proc_conference' => $schedule->pre_proc_conference,
-                'ads_post_ib' => $schedule->ads_post_ib,
+                'pre_proc_conference' => $this->formatDate($schedule->pre_proc_conference),
+                'ads_post_ib' => $this->formatDate($schedule->ads_post_ib),
                 'list_invited_observers' => $schedule->list_invited_observers,
                 'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
                 'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
                 'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
                 'obsrvr_bid' => $schedule->obsrvr_bid,
                 'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
-                'pre_bid_conf' => $schedule->pre_bid_conf,
-                'eligibility_check' => $schedule->eligibility_check,
-                'sub_open_bids' => $schedule->sub_open_bids,
-                'bid_evaluation_date' => $schedule->bid_evaluation_date,
-                'post_qualification_date' => $schedule->post_qualification_date,
+                'pre_bid_conf' => $this->formatDate($schedule->pre_bid_conf),
+                'eligibility_check' => $this->formatDate($schedule->eligibility_check),
+                'sub_open_bids' => $this->formatDate($schedule->sub_open_bids),
+                'bid_evaluation_date' => $this->formatDate($schedule->bid_evaluation_date),
+                'post_qualification_date' => $this->formatDate($schedule->post_qualification_date),
                 'bidding_number' => $schedule->bidding_number,
-                'bidding_date' => $schedule->bidding_date,
+                'bidding_date' => $this->formatDate($schedule->bidding_date),
                 'bidding_result' => $schedule->bidding_result,
                 'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
@@ -283,12 +294,12 @@ class ProcurementViewPage extends Component
             $existing = $map->get($uid, []);
             $map[$uid] = array_merge($existing, [
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
-                'ads_post_ib' => $schedule->ads_post_ib,
+                'ads_post_ib' => $this->formatDate($schedule->ads_post_ib),
                 'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
-                'canvass_date' => $schedule->canvass_date,
-                'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
-                'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
+                'canvass_date' => $this->formatDate($schedule->canvass_date),
+                'date_returned_of_canvass' => $this->formatDate($schedule->date_returned_of_canvass),
+                'abstract_of_canvass_date' => $this->formatDate($schedule->abstract_of_canvass_date),
             ]);
         }
 
@@ -308,21 +319,21 @@ class ProcurementViewPage extends Component
                 'mop_uid' => $schedule->mop_uid,
                 'ib_number' => $schedule->ib_number,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
-                'pre_proc_conference' => $schedule->pre_proc_conference,
-                'ads_post_ib' => $schedule->ads_post_ib,
+                'pre_proc_conference' => $this->formatDate($schedule->pre_proc_conference),
+                'ads_post_ib' => $this->formatDate($schedule->ads_post_ib),
                 'list_invited_observers' => $schedule->list_invited_observers,
                 'obsrvr_prebid_conf' => $schedule->obsrvr_prebid_conf,
                 'obsrvr_eligibility' => $schedule->obsrvr_eligibility,
                 'obsrvr_sub_open_of_bid' => $schedule->obsrvr_sub_open_of_bid,
                 'obsrvr_bid' => $schedule->obsrvr_bid,
                 'obsrvr_post_qual' => $schedule->obsrvr_post_qual,
-                'pre_bid_conf' => $schedule->pre_bid_conf,
-                'eligibility_check' => $schedule->eligibility_check,
-                'sub_open_bids' => $schedule->sub_open_bids,
-                'bid_evaluation_date' => $schedule->bid_evaluation_date,
-                'post_qualification_date' => $schedule->post_qualification_date,
+                'pre_bid_conf' => $this->formatDate($schedule->pre_bid_conf),
+                'eligibility_check' => $this->formatDate($schedule->eligibility_check),
+                'sub_open_bids' => $this->formatDate($schedule->sub_open_bids),
+                'bid_evaluation_date' => $this->formatDate($schedule->bid_evaluation_date),
+                'post_qualification_date' => $this->formatDate($schedule->post_qualification_date),
                 'bidding_number' => $schedule->bidding_number,
-                'bidding_date' => $schedule->bidding_date,
+                'bidding_date' => $this->formatDate($schedule->bidding_date),
                 'bidding_result' => $schedule->bidding_result,
                 'resolution_number_mop' => $schedule->resolution_number_mop,
             ];
@@ -340,12 +351,12 @@ class ProcurementViewPage extends Component
             $map[$refId][$mopUid] = array_merge($existing, [
                 'mop_uid' => $schedule->mop_uid,
                 'philgeps_posting_ref_no' => $schedule->philgeps_posting_ref_no,
-                'ads_post_ib' => $schedule->ads_post_ib,
+                'ads_post_ib' => $this->formatDate($schedule->ads_post_ib),
                 'resolution_number_mop' => $schedule->resolution_number_mop,
                 'rfq_no' => $schedule->rfq_no,
-                'canvass_date' => $schedule->canvass_date,
-                'date_returned_of_canvass' => $schedule->date_returned_of_canvass,
-                'abstract_of_canvass_date' => $schedule->abstract_of_canvass_date,
+                'canvass_date' => $this->formatDate($schedule->canvass_date),
+                'date_returned_of_canvass' => $this->formatDate($schedule->date_returned_of_canvass),
+                'abstract_of_canvass_date' => $this->formatDate($schedule->abstract_of_canvass_date),
             ]);
         }
 
@@ -439,15 +450,15 @@ class ProcurementViewPage extends Component
 
             if ($post) {
                 $this->resolutionAwardNumber = $post->resolution_award_number;
-                $this->resolutionAwardDate = $post->resolution_award_date;
-                $this->bidEvaluationDate = $post->bid_evaluation_date;
-                $this->postQualDate = $post->post_qual_date;
+                $this->resolutionAwardDate = $this->formatDate($post->resolution_award_date);
+                $this->bidEvaluationDate = $this->formatDate($post->bid_evaluation_date);
+                $this->postQualDate = $this->formatDate($post->post_qual_date);
                 $this->noticeOfAwardNumber = $post->notice_of_award_number;
-                $this->noticeOfAward = $post->notice_of_award;
+                $this->noticeOfAward = $this->formatDate($post->notice_of_award);
                 $this->recommendingForAward = $post->recommending_for_award;
                 $this->awardedAmount = $post->awarded_amount;
                 $this->philgepsNoticeOfAwardNo = $post->philgeps_notice_of_award_no;
-                $this->philgepsPostingOfAward = $post->philgeps_posting_of_award;
+                $this->philgepsPostingOfAward = $this->formatDate($post->philgeps_posting_of_award);
                 $this->supplier_id = $post->supplier_id;
 
                 // Load PMU record for perLot
@@ -461,13 +472,13 @@ class ProcurementViewPage extends Component
                             ->first();
                         if ($pmuPo) {
                             $this->pmuRecord = [
-                                'po_date' => $pmuPo->po_date?->format('Y-m-d'),
+                                'po_date' => $pmuPo->po_date?->format('M j, Y'),
                                 'po_contract_number' => $pmuPo->po_contract_number,
                                 'po_contract_number_link' => $pmuPo->po_contract_number_link,
                                 'ntp_link' => $pmuPo->ntp_link,
                                 'contract_amount' => $pmuPo->contract_amount,
-                                'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
-                                'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                                'contract_signing_date' => $pmuPo->contract_signing_date?->format('M j, Y'),
+                                'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('M j, Y'),
                             ];
                         }
                     }
@@ -493,15 +504,15 @@ class ProcurementViewPage extends Component
                     $this->postItems[$prItemID] = [
                         'ref_id' => $prItemID,
                         'resolutionAwardNumber' => $post->resolution_award_number,
-                        'resolutionAwardDate' => $post->resolution_award_date,
-                        'bidEvaluationDate' => $post->bid_evaluation_date,
-                        'postQualDate' => $post->post_qual_date,
+                        'resolutionAwardDate' => $this->formatDate($post->resolution_award_date),
+                        'bidEvaluationDate' => $this->formatDate($post->bid_evaluation_date),
+                        'postQualDate' => $this->formatDate($post->post_qual_date),
                         'noticeOfAwardNumber' => $post->notice_of_award_number,
-                        'noticeOfAward' => $post->notice_of_award,
+                        'noticeOfAward' => $this->formatDate($post->notice_of_award),
                         'recommendingForAward' => $post->recommending_for_award,
                         'awardedAmount' => $post->awarded_amount,
                         'philgepsNoticeOfAwardNo' => $post->philgeps_notice_of_award_no,
-                        'philgepsPostingOfAward' => $post->philgeps_posting_of_award,
+                        'philgepsPostingOfAward' => $this->formatDate($post->philgeps_posting_of_award),
                         'supplier_id' => $post->supplier_id,
                     ];
 
@@ -518,14 +529,14 @@ class ProcurementViewPage extends Component
                                 $this->pmuItems[$prItemID] = [
                                     'notice_of_award_number' => $post->notice_of_award_number,
                                     'notice_of_award' => $post->notice_of_award,
-                                    'date_forwarded' => $pmu->date_forwarded?->format('Y-m-d'),
-                                    'po_date' => $pmuPo->po_date?->format('Y-m-d'),
+                                    'date_forwarded' => $pmu->date_forwarded?->format('M j, Y'),
+                                    'po_date' => $pmuPo->po_date?->format('M j, Y'),
                                     'po_contract_number' => $pmuPo->po_contract_number,
                                     'po_contract_number_link' => $pmuPo->po_contract_number_link,
                                     'ntp_link' => $pmuPo->ntp_link,
                                     'contract_amount' => $pmuPo->contract_amount,
-                                    'contract_signing_date' => $pmuPo->contract_signing_date?->format('Y-m-d'),
-                                    'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('Y-m-d'),
+                                    'contract_signing_date' => $pmuPo->contract_signing_date?->format('M j, Y'),
+                                    'notice_to_proceed_date' => $pmuPo->notice_to_proceed_date?->format('M j, Y'),
                                 ];
                             }
                         }
@@ -709,7 +720,7 @@ class ProcurementViewPage extends Component
 
             $history[] = [
                 'stage' => $stageName,
-                'date' => $auditDate?->setTimezone('Asia/Manila')->format('M d, Y h:i A') ?? 'N/A',
+                'date' => $auditDate?->setTimezone('Asia/Manila')->format('M j, Y h:i A') ?? 'N/A',
                 'user' => $userName,
                 'timestamp' => $auditDate?->timestamp ?? 0,
             ];
@@ -755,6 +766,18 @@ class ProcurementViewPage extends Component
     {
         $this->postPage = 1;
     }
+    private function formatDate(?string $date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+        try {
+            return \Carbon\Carbon::parse($date)->format('M j, Y');
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+
     public function render()
     {
         return view('livewire.procurements.procurement-view-page', [
