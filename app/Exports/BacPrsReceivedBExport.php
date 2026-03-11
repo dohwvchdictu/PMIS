@@ -21,15 +21,35 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
     protected $startDate;
     protected $endDate;
     protected $currentModeFilter;
+    protected $clusterFilter;
+    protected $procurementStageFilter;
+    protected $fundSourceFilter;
+    protected $fundSourceGroupFilter;
+    protected $remarksFilter;
     protected $bacTypeId;
 
-    public function __construct($search, $startDate, $endDate, $currentModeFilter, $bacTypeId)
-    {
+    public function __construct(
+        $search,
+        $startDate,
+        $endDate,
+        $currentModeFilter,
+        $bacTypeId,
+        $clusterFilter = null,
+        $procurementStageFilter = null,
+        $fundSourceFilter = null,
+        $fundSourceGroupFilter = null,
+        $remarksFilter = null
+    ) {
         $this->search = $search;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->currentModeFilter = $currentModeFilter;
         $this->bacTypeId = $bacTypeId;
+        $this->clusterFilter = $clusterFilter;
+        $this->procurementStageFilter = $procurementStageFilter;
+        $this->fundSourceFilter = $fundSourceFilter;
+        $this->fundSourceGroupFilter = $fundSourceGroupFilter;
+        $this->remarksFilter = $remarksFilter;
     }
 
     public function collection()
@@ -44,7 +64,12 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
-                'pr_items'
+                'pr_items',
+                'currentLotRemark.remark',
+                'postProcurement.supplier',
+                'postProcurement.pmu',
+                'pr_items.postProcurement.supplier',
+                'pr_items.postProcurement.pmu',
             ])
             ->whereHas('category', function ($q) {
                 $q->where('bac_type_id', $this->bacTypeId);
@@ -86,6 +111,38 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             });
         }
 
+        // Cluster / Unit filter
+        if ($this->clusterFilter) {
+            $query->where('cluster_committees_id', $this->clusterFilter);
+        }
+
+        // Procurement Stage filter
+        if ($this->procurementStageFilter) {
+            $query->whereHas('currentPrStage', function ($q) {
+                $q->where('pr_stage_id', $this->procurementStageFilter);
+            });
+        }
+
+        // Fund Source filter
+        if ($this->fundSourceFilter) {
+            $query->where('fund_source_id', $this->fundSourceFilter);
+        }
+
+        // Fund Source Group filter
+        if ($this->fundSourceGroupFilter) {
+            $query->whereHas('fundSource', function ($q) {
+                $q->where('fund_source_group_id', $this->fundSourceGroupFilter);
+            });
+        }
+
+        // Remarks filter
+        if ($this->remarksFilter) {
+            $query->whereHas('prLotRemarks', function ($q) {
+                $q->where('remarks_id', $this->remarksFilter)
+                    ->whereRaw('remark_history = (SELECT MAX(remark_history) FROM pr_lot_remark WHERE procID = procurements.procID)');
+            });
+        }
+
         $procurements = $query->get();
         $rows = collect();
 
@@ -124,6 +181,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'EPA',
             'Procurement Stage',
             'Current Mode',
+            'Remarks',
+            'Awarded Amount',
+            'Supplier',
+            'Date Forwarded to PMU',
         ];
     }
 
@@ -181,6 +242,12 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
             $currentMode,
+            $procurement->currentLotRemark?->remark?->remarks ?? 'N/A',
+            $procurement->postProcurement?->awarded_amount ? (float) $procurement->postProcurement->awarded_amount : 'N/A',
+            $procurement->postProcurement?->supplier?->name ?? 'N/A',
+            $procurement->postProcurement?->pmu?->date_forwarded
+            ? $formatDate($procurement->postProcurement->pmu->date_forwarded)
+            : 'N/A',
         ];
     }
 
@@ -226,6 +293,12 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
             $currentMode,
+            $procurement->currentLotRemark?->remark?->remarks ?? 'N/A',
+            $item->postProcurement?->awarded_amount ? (float) $item->postProcurement->awarded_amount : 'N/A',
+            $item->postProcurement?->supplier?->name ?? 'N/A',
+            $item->postProcurement?->pmu?->date_forwarded
+            ? $formatDate($item->postProcurement->pmu->date_forwarded)
+            : 'N/A',
         ];
     }
 
@@ -234,7 +307,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:S1')->applyFromArray([
+        $sheet->getStyle('A1:W1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -258,7 +331,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         ]);
 
         // Center align all data cells
-        $sheet->getStyle('A2:S' . $highestRow)->applyFromArray([
+        $sheet->getStyle('A2:W' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -330,6 +403,35 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             ],
         ]);
 
+        // Wrap text for Remarks column (T)
+        $sheet->getStyle('T2:T' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
+        // Right align and accounting format for Awarded Amount column (U)
+        $sheet->getStyle('U2:U' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_RIGHT,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle('U2:U' . $highestRow)
+            ->getNumberFormat()
+            ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
+
+        // Wrap text for Supplier column (V)
+        $sheet->getStyle('V2:V' . $highestRow)->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ]);
+
         return [];
     }
 
@@ -355,6 +457,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'Q' => 10, // EPA
             'R' => 30, // Procurement Stage
             'S' => 25, // Current Mode
+            'T' => 25, // Remarks
+            'U' => 18, // Awarded Amount
+            'V' => 30, // Supplier
+            'W' => 22, // Date Forwarded to PMU
         ];
     }
 }

@@ -164,7 +164,12 @@ class BacPrsReceivedBPage extends Component
                 $this->startDate,
                 $this->endDate,
                 $this->currentModeFilter,
-                2
+                2,
+                $this->clusterFilter,
+                $this->procurementStageFilter,
+                $this->fundSourceFilter,
+                $this->fundSourceGroupFilter,
+                $this->remarksFilter
             ),
             $fileName
         );
