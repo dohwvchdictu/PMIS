@@ -264,4 +264,9 @@ class Procurement extends Model implements Auditable
         return $this->hasOne(PrLotRemark::class, 'procID', 'procID')
             ->latest('remark_history');
     }
+
+    public function prLotRemarks()
+    {
+        return $this->hasMany(PrLotRemark::class, 'procID', 'procID');
+    }
 }

@@ -44,6 +44,14 @@
                         <x-forms.searchable-select wire:model.live="currentModeFilter" :options="$modes" labelKey="name"
                             valueKey="id" placeholder="All Modes" />
                     </div>
+
+                    <!-- Remarks -->
+                    <div class="relative z-50 w-48">
+                        <label
+                            class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Remarks</label>
+                        <x-forms.searchable-select wire:model.live="remarksFilter" :options="$remarksOptions" labelKey="name"
+                            valueKey="id" placeholder="All Remarks" />
+                    </div>
                 </div>
 
                 <!-- Export Button -->
@@ -151,6 +159,10 @@
                     <th
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Procurement Stage
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
+                        Remarks
                     </th>
                     <th
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
@@ -335,6 +347,15 @@
                                     </span>
                                 @else
                                     <span class="text-gray-400 italic text-xs">No Stage</span>
+                                @endif
+                            </td>
+
+                            <!-- Remarks -->
+                            <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                                @if ($procurement->currentLotRemark?->remark)
+                                    <span class="text-xs">{{ $procurement->currentLotRemark->remark->remarks }}</span>
+                                @else
+                                    <span class="text-gray-400 italic text-xs">N/A</span>
                                 @endif
                             </td>
 
@@ -528,6 +549,16 @@
                                     @endif
                                 </td>
 
+                                <!-- Remarks -->
+                                <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                                    @if ($procurement->currentLotRemark?->remark)
+                                        <span
+                                            class="text-xs">{{ $procurement->currentLotRemark->remark->remarks }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic text-xs">N/A</span>
+                                    @endif
+                                </td>
+
                                 <!-- Current Mode -->
                                 <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                                     @php
@@ -548,7 +579,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="18" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="19" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
