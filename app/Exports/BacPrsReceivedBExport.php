@@ -174,7 +174,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->immediate_date_needed ?? 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
-            number_format($procurement->abc ?? 0, 2),
+            (float) ($procurement->abc ?? 0),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
@@ -218,7 +218,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->immediate_date_needed ?? 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
-            number_format($item->amount ?? 0, 2),
+            (float) ($item->amount ?? 0),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
@@ -262,13 +262,16 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             ],
         ]);
 
-        // Right align ABC Amount column (N)
+        // Right align and accounting format for ABC Amount column (N)
         $sheet->getStyle('N2:N' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_RIGHT,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
+        $sheet->getStyle('N2:N' . $highestRow)
+            ->getNumberFormat()
+            ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
 
         // Wrap text for Description column (C)
         $sheet->getStyle('C2:C' . $highestRow)->applyFromArray([
