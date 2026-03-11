@@ -13,12 +13,19 @@ use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use App\Models\ModeOfProcurement;
 use App\Models\Remarks;
+use App\Models\ClusterCommittee;
+use App\Models\ProcurementStage;
+use App\Models\FundSource;
+use App\Models\FundSourceGroup;
 use Livewire\Attributes\Title;
 
 #[Title("PR's Received (A) | PMIS")]
 class BacPrsReceivedPage extends Component
 {
     use WithPagination;
+
+    // Filter panel visibility
+    public bool $showFilters = false;
 
     // Pagination
     public $perPage = 10;
@@ -29,6 +36,10 @@ class BacPrsReceivedPage extends Component
         'startDate' => ['except' => ''],
         'endDate' => ['except' => ''],
         'currentModeFilter' => ['except' => null],
+        'clusterFilter' => ['except' => null],
+        'procurementStageFilter' => ['except' => null],
+        'fundSourceFilter' => ['except' => null],
+        'fundSourceGroupFilter' => ['except' => null],
         'remarksFilter' => ['except' => null],
     ];
     protected $paginationTheme = 'tailwind';
@@ -40,6 +51,10 @@ class BacPrsReceivedPage extends Component
     public $startDate = '';
     public $endDate = '';
     public $currentModeFilter = null;
+    public $clusterFilter = null;
+    public $procurementStageFilter = null;
+    public $fundSourceFilter = null;
+    public $fundSourceGroupFilter = null;
     public $remarksFilter = null;
 
     public function mount()
@@ -78,9 +93,34 @@ class BacPrsReceivedPage extends Component
         $this->resetPage();
     }
 
+    public function updatedClusterFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProcurementStageFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFundSourceFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFundSourceGroupFilter()
+    {
+        $this->resetPage();
+    }
+
     public function updatedRemarksFilter()
     {
         $this->resetPage();
+    }
+
+    public function toggleFilters()
+    {
+        $this->showFilters = !$this->showFilters;
     }
 
     /**
@@ -92,6 +132,10 @@ class BacPrsReceivedPage extends Component
         $this->startDate = '';
         $this->endDate = '';
         $this->currentModeFilter = null;
+        $this->clusterFilter = null;
+        $this->procurementStageFilter = null;
+        $this->fundSourceFilter = null;
+        $this->fundSourceGroupFilter = null;
         $this->remarksFilter = null;
         $this->resetPage();
     }
@@ -138,7 +182,9 @@ class BacPrsReceivedPage extends Component
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
-                'currentLotRemark.remark'
+                'currentLotRemark.remark',
+                'postProcurement.supplier',
+                'postProcurement.pmu',
             ])
             ->whereHas('category', function ($q) {
                 $q->where('bac_type_id', 1);
@@ -175,6 +221,30 @@ class BacPrsReceivedPage extends Component
             });
         }
 
+        // Cluster / Unit filter
+        if ($this->clusterFilter) {
+            $query->where('cluster_committees_id', $this->clusterFilter);
+        }
+
+        // Procurement Stage filter
+        if ($this->procurementStageFilter) {
+            $query->whereHas('currentPrStage', function ($q) {
+                $q->where('pr_stage_id', $this->procurementStageFilter);
+            });
+        }
+
+        // Fund Source filter
+        if ($this->fundSourceFilter) {
+            $query->where('fund_source_id', $this->fundSourceFilter);
+        }
+
+        // Fund Source Group filter
+        if ($this->fundSourceGroupFilter) {
+            $query->whereHas('fundSource', function ($q) {
+                $q->where('fund_source_group_id', $this->fundSourceGroupFilter);
+            });
+        }
+
         // Remarks filter
         if ($this->remarksFilter) {
             $query->whereHas('prLotRemarks', function ($q) {
@@ -196,6 +266,10 @@ class BacPrsReceivedPage extends Component
         return view('livewire.reports.bac-prs-received-page', [
             'procurements' => $procurements,
             'modes' => $this->modes,
+            'clusterOptions' => $this->clusterOptions,
+            'procurementStages' => $this->procurementStages,
+            'fundSources' => $this->fundSources,
+            'fundSourceGroups' => $this->fundSourceGroups,
             'remarksOptions' => $this->remarksOptions,
         ]);
     }
@@ -208,6 +282,56 @@ class BacPrsReceivedPage extends Component
                 return [
                     'id' => $mode->id,
                     'name' => $mode->modeofprocurements,
+                ];
+            });
+    }
+
+    public function getClusterOptionsProperty()
+    {
+        return ClusterCommittee::orderBy('clustercommittee', 'asc')
+            ->get()
+            ->map(function ($cluster) {
+                return [
+                    'id' => $cluster->id,
+                    'name' => $cluster->clustercommittee,
+                ];
+            });
+    }
+
+    public function getProcurementStagesProperty()
+    {
+        return ProcurementStage::where('is_active', true)
+            ->orderBy('procurementstage', 'asc')
+            ->get()
+            ->map(function ($stage) {
+                return [
+                    'id' => $stage->id,
+                    'name' => $stage->procurementstage,
+                ];
+            });
+    }
+
+    public function getFundSourcesProperty()
+    {
+        return FundSource::orderBy('fundsources', 'asc')
+            ->get()
+            ->map(function ($fs) {
+                return [
+                    'id' => $fs->id,
+                    'name' => $fs->fundsources,
+                ];
+            });
+    }
+
+    public function getFundSourceGroupsProperty()
+    {
+        return FundSourceGroup::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($fsg) {
+                return [
+                    'id' => $fsg->id,
+                    'name' => $fsg->name,
                 ];
             });
     }

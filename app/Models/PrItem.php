@@ -68,6 +68,11 @@ class PrItem extends Model
         return $this->hasOne(PrItemRemark::class, 'prItemID', 'prItemID')
             ->latest('remark_history');
     }
+
+    public function postProcurement()
+    {
+        return $this->hasOne(PostProcurement::class, 'ref_id', 'prItemID');
+    }
 }
 
 

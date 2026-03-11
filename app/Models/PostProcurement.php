@@ -46,4 +46,14 @@ class PostProcurement extends Model implements Auditable
     {
         return $this->belongsTo(Procurement::class, 'ref_id', 'procID');
     }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function pmu()
+    {
+        return $this->hasOne(Pmu::class, 'notice_of_award_number', 'notice_of_award_number');
+    }
 }
