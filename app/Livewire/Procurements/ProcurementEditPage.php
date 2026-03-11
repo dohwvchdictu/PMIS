@@ -470,13 +470,13 @@ class ProcurementEditPage extends Component
     public function render()
     {
         return view('livewire.procurements.procurement-edit-page', [
-            'divisions' => Division::all(),
-            'categories' => Category::with(['categoryType', 'bacType'])->get(),
+            'divisions' => Division::orderBy('divisions')->get(),
+            'categories' => Category::with(['categoryType', 'bacType'])->orderBy('category')->get(),
             'clusterCommittees' => ClusterCommittee::all(),
-            'venueSpecifics' => VenueSpecific::all(),     // <-- restored original names
-            'venueProvinces' => ProvinceHuc::all(),
+            'venueSpecifics' => VenueSpecific::orderBy('name')->get(),
+            'venueProvinces' => ProvinceHuc::orderBy('province_huc')->get(),
             'endUsers' => EndUser::all(),
-            'fundSources' => FundSource::all(),
+            'fundSources' => FundSource::orderBy('fundsources')->get(),
             'form' => $this->form,
         ]);
     }
