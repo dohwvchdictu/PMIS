@@ -597,15 +597,17 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
                     $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
-                    if ($existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
-                        // Existing record: expected = last segment of saved uid
+                    // When adding a new mode (rebid), always compute the next sequence number
+                    // instead of matching the existing record's uid segment.
+                    if (!$this->showAddForm && $existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
+                        // Existing record being updated: expected = last segment of saved uid
                         $uidParts = explode('-', $existingBidSchedule->uid);
                         $expectedBiddingNumber = (string) end($uidParts);
                         if ($enteredBiddingNumber !== $expectedBiddingNumber) {
                             $this->scheduleValidationErrors[] = "PR {$prNumber}: Bidding Number must be \"{$expectedBiddingNumber}\" (based on record uid: {$existingBidSchedule->uid}).";
                         }
                     } else {
-                        // New record: expected = count of existing BidSchedules for this mode + 1
+                        // New record (or rebid): expected = count of existing BidSchedules for this mode + 1
                         $relatedMopUids = MopLot::where('procID', $item['procID'])
                             ->where('mode_of_procurement_id', $modeId)
                             ->pluck('uid');
