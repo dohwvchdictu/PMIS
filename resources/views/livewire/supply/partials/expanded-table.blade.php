@@ -19,10 +19,23 @@
             <th
                 class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                 Contract Amount</th>
+            <th
+                class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                Batch No.</th>
+            <th
+                class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                Delivery Completion</th>
+            <th
+                class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                Date Received from End User</th>
+            <th
+                class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                SOA Amount</th>
         </tr>
     </thead>
     <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
         @forelse ($expandedPaginator as $row)
+            @php $spo = ($supplyPoByRefId ?? collect())->get($row->rowKey ?? null); @endphp
             <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                 {{-- PR Number --}}
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-emerald-700 dark:text-emerald-300">
@@ -67,10 +80,30 @@
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
                     {{ $row->contract_amount !== null ? '₱ ' . number_format((float) $row->contract_amount, 2) : '—' }}
                 </td>
+
+                {{-- Batch No. --}}
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {{ $spo?->batch_no ?? '—' }}
+                </td>
+
+                {{-- Delivery Completion --}}
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {{ $spo?->delivery_completion ? \Carbon\Carbon::parse($spo->delivery_completion)->timezone('Asia/Manila')->format('M d, Y') : '—' }}
+                </td>
+
+                {{-- Date Received from End User --}}
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {{ $spo?->date_received_from_end_user ? \Carbon\Carbon::parse($spo->date_received_from_end_user)->timezone('Asia/Manila')->format('M d, Y') : '—' }}
+                </td>
+
+                {{-- SOA Amount --}}
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
+                    {{ $spo?->soa_amount ? '₱ ' . number_format((float) $spo->soa_amount, 2) : '—' }}
+                </td>
             </tr>
         @empty
             <tr>
-                <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colspan="10" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     No items found.
                 </td>
             </tr>

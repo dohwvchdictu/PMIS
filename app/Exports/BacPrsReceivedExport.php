@@ -41,7 +41,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
                 'division',
                 'clusterCommittee',
                 'category.bacType',
-                'fundSource',
+                'fundSource.fundSourceGroup',
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
@@ -114,6 +114,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             'Immediate Date Needed',
             'Date Needed',
             'Fund Source',
+            'Fund Source Group',
             'ABC Amount',
             'Approved PPMP',
             'EPA',
@@ -170,7 +171,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             $procurement->immediate_date_needed ?? 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
-            number_format($procurement->abc ?? 0, 2),
+            $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A',
+            (float) ($procurement->abc ?? 0),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
@@ -214,7 +216,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             $procurement->immediate_date_needed ?? 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
-            number_format($item->amount ?? 0, 2),
+            $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A',
+            (float) ($item->amount ?? 0),
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
@@ -227,7 +230,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:R1')->applyFromArray([
+        $sheet->getStyle('A1:S1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -251,20 +254,23 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         ]);
 
         // Center align all data cells
-        $sheet->getStyle('A2:R' . $highestRow)->applyFromArray([
+        $sheet->getStyle('A2:S' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
-        // Right align ABC Amount column (N)
-        $sheet->getStyle('N2:N' . $highestRow)->applyFromArray([
+        // Right align and accounting format for ABC Amount column (O)
+        $sheet->getStyle('O2:O' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_RIGHT,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
+        $sheet->getStyle('O2:O' . $highestRow)
+            ->getNumberFormat()
+            ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
 
         // Wrap text for Procurement Program / Project column (C)
         $sheet->getStyle('C2:C' . $highestRow)->applyFromArray([
@@ -302,8 +308,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Wrap text for Procurement Stage column (Q)
-        $sheet->getStyle('Q2:Q' . $highestRow)->applyFromArray([
+        // Wrap text for Procurement Stage column (R)
+        $sheet->getStyle('R2:R' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -311,8 +317,8 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             ],
         ]);
 
-        // Wrap text for Current Mode column (R)
-        $sheet->getStyle('R2:R' . $highestRow)->applyFromArray([
+        // Wrap text for Current Mode column (S)
+        $sheet->getStyle('S2:S' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -339,11 +345,12 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             'K' => 22, // Immediate Date Needed
             'L' => 22, // Date Needed
             'M' => 25, // Fund Source
-            'N' => 18, // ABC Amount
-            'O' => 18, // Approved PPMP
-            'P' => 10, // EPA
-            'Q' => 30, // Procurement Stage
-            'R' => 25, // Current Mode
+            'N' => 25, // Fund Source Group
+            'O' => 18, // ABC Amount
+            'P' => 18, // Approved PPMP
+            'Q' => 10, // EPA
+            'R' => 30, // Procurement Stage
+            'S' => 25, // Current Mode
         ];
     }
 }

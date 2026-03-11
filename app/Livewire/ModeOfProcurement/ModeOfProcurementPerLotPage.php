@@ -640,8 +640,10 @@ class ModeOfProcurementPerLotPage extends Component
 
         foreach ($allItems as $index => $item) {
             // History items (all except the last/current) are already saved — skip validation
+            // EXCEPT when editing a specific history item via the modal ($this->editingIndex)
             $isHistoryItem = ($index !== $totalItems - 1);
-            if ($isHistoryItem) {
+            $isBeingEdited = ($this->editingIndex !== null && $index === $this->editingIndex);
+            if ($isHistoryItem && !$isBeingEdited) {
                 continue;
             }
 
@@ -684,18 +686,33 @@ class ModeOfProcurementPerLotPage extends Component
             if ($this->isCompetitiveBidding($modeId)) {
                 $existingBidSchedule = BidSchedule::where($matchCriteria)->first();
 
-                // Mode 2 specific: bidding_number must be unique across all schedules
-                if ($modeId === 2 && $this->hasValue($item['bidding_number'] ?? null)) {
-                    $biddingNumber = $item['bidding_number'];
-                    $duplicate = BidSchedule::where('bidding_number', $biddingNumber)
-                        ->where('mop_uid', '!=', $item['uid'])
-                        ->exists();
-                    if ($duplicate) {
-                        $msg = "Bidding Number \"{$biddingNumber}\" already exists for {$modeName}.";
-                        if (!in_array($msg, $this->scheduleValidationErrors)) {
-                            $this->scheduleValidationErrors[] = $msg;
+                // Bidding number must match the expected sequence based on the BidSchedule uid
+                // e.g. uid MOP-2-2-1 → last segment is 1, so bidding number must be 1
+                // For new records, expected = total existing BidSchedules for this mode + 1
+                if ($this->hasValue($item['bidding_number'] ?? null)) {
+                    $enteredBiddingNumber = (string) $item['bidding_number'];
+
+                    if ($existingBidSchedule && $this->hasValue($existingBidSchedule->uid)) {
+                        // Existing record: derive expected number from saved uid's last segment
+                        $uidParts = explode('-', $existingBidSchedule->uid);
+                        $expectedBiddingNumber = (string) end($uidParts);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = "{$modeName}: Bidding Number must be \"{$expectedBiddingNumber}\" (based on record uid: {$existingBidSchedule->uid}).";
+                            $isValid = false;
                         }
-                        $isValid = false;
+                    } elseif (!$existingBidSchedule) {
+                        // New record: compute expected sequence (same logic as saveRelatedSchedules)
+                        $relatedMopUids = MopLot::where('procID', $this->procID)
+                            ->where('mode_of_procurement_id', $modeId)
+                            ->pluck('uid');
+                        $count = BidSchedule::where('ref_id', $this->procID)
+                            ->whereIn('mop_uid', $relatedMopUids)
+                            ->count();
+                        $expectedBiddingNumber = (string) ($count + 1);
+                        if ($enteredBiddingNumber !== $expectedBiddingNumber) {
+                            $this->scheduleValidationErrors[] = "{$modeName}: Bidding Number must be \"{$expectedBiddingNumber}\" (next available sequence).";
+                            $isValid = false;
+                        }
                     }
                 }
 

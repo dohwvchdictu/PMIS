@@ -166,6 +166,7 @@
                                                 class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
                                                 @include('livewire.supply.partials.expanded-table', [
                                                     'expandedPaginator' => $expandedPaginator,
+                                                    'supplyPoByRefId' => $supplyPoByRefId,
                                                 ])
                                             </div>
                                         </td>
@@ -354,6 +355,7 @@
                                             class="overflow-x-auto overflow-y-auto max-h-[55vh] rounded-lg border border-gray-200 dark:border-neutral-700">
                                             @include('livewire.supply.partials.expanded-table', [
                                                 'expandedPaginator' => $expandedPaginator,
+                                                'supplyPoByRefId' => $supplyPoByRefId,
                                             ])
                                         </div>
                                     </td>

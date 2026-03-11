@@ -129,6 +129,7 @@ class AdminPanelProvider extends PanelProvider
             \App\Filament\Resources\ClusterCommitteeResource::class,
             \App\Filament\Resources\DivisionResource::class,
             \App\Filament\Resources\EndUserResource::class,
+            \App\Filament\Resources\FundSourceGroupResource::class,
             \App\Filament\Resources\FundSourceResource::class,
             \App\Filament\Resources\ModeOfProcurementResource::class,
             \App\Filament\Resources\ProcurementStageResource::class,

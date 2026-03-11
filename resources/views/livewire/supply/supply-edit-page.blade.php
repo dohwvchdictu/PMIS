@@ -144,6 +144,18 @@
                         <th
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             Contract Amount</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Batch No.</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Delivery Completion</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date Received from End User</th>
+                        <th
+                            class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            SOA Amount</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -182,10 +194,24 @@
                             <td class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
                                 {{ $row->contract_amount ? '₱ ' . number_format($row->contract_amount, 2) : '—' }}
                             </td>
+                            @php $spo = $supplyPoByRefId->get($row->rowKey); @endphp
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $spo?->batch_no ?? '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $spo?->delivery_completion ? \Carbon\Carbon::parse($spo->delivery_completion)->format('M d, Y') : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $spo?->date_received_from_end_user ? \Carbon\Carbon::parse($spo->date_received_from_end_user)->setTimezone('Asia/Manila')->format('M d, Y g:i A') : '—' }}
+                            </td>
+                            <td
+                                class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
+                                {{ $spo?->soa_amount ? '₱ ' . number_format($spo->soa_amount, 2) : '—' }}
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                            <td colspan="10" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
                                 No linked procurement records found.
                             </td>
                         </tr>
@@ -260,133 +286,139 @@
     {{-- ═══ MODALS ════════════════════════════════════════════════════════════════ --}}
 
     {{-- Bulk Edit Modal --}}
-    @if ($showBulkEditModal)
-        <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            wire:click.self="closeBulkEditModal">
-            <div
-                class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full max-w-lg mx-4">
+    <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" title="Edit — Supply Details" size="max-w-4xl">
 
-                {{-- Header --}}
-                <div
-                    class="flex items-center justify-between px-5 py-4 border-b border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 rounded-t-xl">
-                    <div class="flex items-center gap-2.5">
-                        <div
-                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Bulk Edit Supply
-                                Details</h3>
-                            <p class="text-xs text-emerald-600 dark:text-emerald-400">
-                                Editing {{ count($selectedItems) }} selected item(s)</p>
-                        </div>
-                    </div>
-                    <button wire:click="closeBulkEditModal"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+        <div class="px-4 py-4">
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+                {{-- Batch No --}}
+                <div>
+                    <label for="bulk_batch_no"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Batch No.
+                    </label>
+                    <input type="text" id="bulk_batch_no" wire:model="bulk_batch_no" placeholder="e.g. Batch 1"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('bulk_batch_no') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_batch_no')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
 
-                {{-- Body --}}
-                <div class="px-5 py-4 space-y-4">
-
-                    {{-- Batch No --}}
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Batch No. <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <input type="text" wire:model="bulk_batch_no" placeholder="e.g. Batch 1"
-                            class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
-                            @error('bulk_batch_no') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror" />
-                        @error('bulk_batch_no')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Delivery Completion --}}
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Delivery Completion <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <input type="date" wire:model="bulk_delivery_completion"
-                            class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
-                            @error('bulk_delivery_completion') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror" />
-                        @error('bulk_delivery_completion')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Date Received from End User --}}
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Date Received from End User <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <input type="datetime-local" wire:model="bulk_date_received_from_end_user"
-                            class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
-                            @error('bulk_date_received_from_end_user') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror" />
-                        @error('bulk_date_received_from_end_user')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- SOA Amount --}}
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            SOA Amount <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <input type="number" wire:model="bulk_soa_amount" step="0.01" min="0"
-                            placeholder="0.00"
-                            class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
-                            @error('bulk_soa_amount') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror" />
-                        @error('bulk_soa_amount')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Date Forwarded to Budget --}}
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Date Forwarded to Budget <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <input type="datetime-local" wire:model="bulk_date_forwarded_to_budget"
-                            class="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-700 dark:text-white
-                            @error('bulk_date_forwarded_to_budget') border-red-400 dark:border-red-500 @else border-gray-300 dark:border-neutral-600 @enderror" />
-                        @error('bulk_date_forwarded_to_budget')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
+                {{-- Delivery Completion --}}
+                <div>
+                    <label for="bulk_delivery_completion"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Delivery Completion
+                    </label>
+                    <input type="date" id="bulk_delivery_completion" wire:model="bulk_delivery_completion"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('bulk_delivery_completion') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_delivery_completion')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
 
-                {{-- Footer --}}
-                <div
-                    class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-neutral-700">
-                    <button wire:click="closeBulkEditModal"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-700 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-600 transition-colors">
-                        Cancel
-                    </button>
-                    <button wire:click="saveBulkEdit" wire:loading.attr="disabled"
-                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 rounded-lg transition-colors">
-                        <svg wire:loading wire:target="saveBulkEdit" class="w-4 h-4 animate-spin" fill="none"
-                            viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                        Save Changes
-                    </button>
+                {{-- Date Received from End User --}}
+                <div>
+                    <label for="bulk_date_received_from_end_user"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Date Received from End User
+                    </label>
+                    <input type="datetime-local" id="bulk_date_received_from_end_user"
+                        wire:model="bulk_date_received_from_end_user"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('bulk_date_received_from_end_user') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_date_received_from_end_user')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
+
+                {{-- SOA Amount --}}
+                <div x-data="{
+                    display: '',
+                    focused: false,
+                    init() {
+                        const raw = $wire.bulk_soa_amount;
+                        this.display = raw ? this.format(raw) : '';
+                        $wire.$watch('bulk_soa_amount', (val) => {
+                            if (!this.focused) {
+                                this.display = val ? this.format(val) : '';
+                            }
+                        });
+                    },
+                    format(val) {
+                        let n = parseFloat(String(val).replace(/,/g, ''));
+                        return isNaN(n) ? '' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    },
+                    handleInput(e) {
+                        let raw = e.target.value.replace(/[^0-9.]/g, '');
+                        let parts = raw.split('.');
+                        if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+                        this.display = raw;
+                    },
+                    handleBlur() {
+                        this.focused = false;
+                        let raw = String(this.display).replace(/,/g, '');
+                        let n = parseFloat(raw);
+                        if (!isNaN(n)) {
+                            this.display = this.format(n);
+                            $wire.set('bulk_soa_amount', n);
+                        } else {
+                            this.display = '';
+                            $wire.set('bulk_soa_amount', '');
+                        }
+                    }
+                }">
+                    <label for="bulk_soa_amount"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        SOA Amount
+                    </label>
+                    <div class="relative">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400 pointer-events-none">₱</span>
+                        <input type="text" id="bulk_soa_amount" x-model="display" x-on:focus="focused = true"
+                            x-on:input="handleInput($event)" x-on:blur="handleBlur()" placeholder="0.00"
+                            class="w-full pl-6 pr-3 py-2 text-xs text-right border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                            @error('bulk_soa_amount') border-red-500 @else border-gray-300 @enderror">
+                    </div>
+                    @error('bulk_soa_amount')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
             </div>
+
+            {{-- Footer --}}
+            <div class="mt-5 pt-4 border-t border-gray-200 dark:border-neutral-600 flex justify-end gap-3">
+                <button type="button" wire:click="closeBulkEditModal"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Cancel
+                </button>
+                <button type="button" wire:click="saveBulkEdit" wire:loading.attr="disabled"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-60">
+                    <svg wire:loading wire:target="saveBulkEdit" class="w-4 h-4 animate-spin" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                    <svg wire:loading.remove wire:target="saveBulkEdit" class="w-4 h-4" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save
+                </button>
+            </div>
+
         </div>
-    @endif
+
+    </x-forms.modal>
 
     {{-- Edit Remarks Modal --}}
     @if ($showEditRemarksModal)
@@ -453,33 +485,4 @@
             </div>
         </div>
     @endif
-
-    {{-- ═══ FIXED BOTTOM FOOTER ════════════════════════════════════════════════════ --}}
-    <div
-        class="fixed bottom-4 right-0 left-0 lg:left-48 flex justify-end p-2 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-700 shadow-lg z-30">
-        <div class="flex items-center gap-3 px-4">
-            <button type="button" wire:click="cancel"
-                class="px-5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
-                Cancel
-            </button>
-            @can('update_supply')
-                <button type="button" wire:click="save" wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 rounded-lg transition-colors shadow">
-                    <svg wire:loading wire:target="save" class="w-4 h-4 animate-spin" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
-                        </path>
-                    </svg>
-                    <svg wire:loading.remove wire:target="save" class="w-4 h-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Save Changes
-                </button>
-            @endcan
-        </div>
-    </div>
-
 </div>

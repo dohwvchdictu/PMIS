@@ -133,6 +133,10 @@
                         Fund Source
                     </th>
                     <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
+                        Fund Source Group
+                    </th>
+                    <th
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
                         ABC Amount
                     </th>
@@ -279,6 +283,14 @@
                             <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                                 <div class="truncate" title="{{ $procurement->fundSource?->fundsources }}">
                                     {{ $procurement->fundSource?->fundsources ?? 'N/A' }}
+                                </div>
+                            </td>
+
+                            <!-- Fund Source Group -->
+                            <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                                <div class="truncate"
+                                    title="{{ $procurement->fundSource?->fundSourceGroup?->name }}">
+                                    {{ $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A' }}
                                 </div>
                             </td>
 
@@ -461,6 +473,14 @@
                                 <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                                     <div class="truncate" title="{{ $procurement->fundSource?->fundsources }}">
                                         {{ $procurement->fundSource?->fundsources ?? 'N/A' }}
+                                    </div>
+                                </td>
+
+                                <!-- Fund Source Group -->
+                                <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                                    <div class="truncate"
+                                        title="{{ $procurement->fundSource?->fundSourceGroup?->name }}">
+                                        {{ $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A' }}
                                     </div>
                                 </td>
 
