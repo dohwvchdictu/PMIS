@@ -3366,6 +3366,16 @@ class ModeOfProcurementPerItemPage extends Component
     }
 
     /**
+     * Open the Forward to PMU modal pre-selected for a single item
+     * Used by the edit pencil button on already-forwarded rows
+     */
+    public function openForwardModalForItem(string $prItemID): void
+    {
+        $this->selectedPostItems = [$prItemID];
+        $this->openForwardModal();
+    }
+
+    /**
      * Close the Forward to PMU modal
      */
     public function closeForwardModal(): void

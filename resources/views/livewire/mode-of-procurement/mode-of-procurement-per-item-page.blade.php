@@ -1315,46 +1315,62 @@
                                                 {{ $isSelectedPost ? 'border-2 border-emerald-400 ' . ($isForwarded ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30') : '' }}">
                                             <td class="px-2 py-2 text-center align-middle">
                                                 @if ($isForwarded)
-                                                    <div class="relative flex justify-center items-center"
-                                                        x-data="{ open: false }" @click.outside="open = false">
-                                                        <button type="button" @click="open = !open"
-                                                            @mouseenter="open = true" @mouseleave="open = false"
-                                                            class="p-1 rounded-full bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                                            title="Forwarded to PMU">
-                                                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                                                fill="none" stroke="currentColor"
-                                                                viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                            </svg>
-                                                        </button>
-                                                        <div x-show="open"
-                                                            x-transition:enter="transition ease-out duration-150"
-                                                            x-transition:enter-start="opacity-0 scale-95"
-                                                            x-transition:enter-end="opacity-100 scale-100"
-                                                            x-transition:leave="transition ease-in duration-100"
-                                                            x-transition:leave-start="opacity-100 scale-100"
-                                                            x-transition:leave-end="opacity-0 scale-95"
-                                                            class="absolute left-8 top-1/2 -translate-y-1/2 z-50 w-52 bg-white dark:bg-neutral-800 border border-blue-200 dark:border-blue-700 rounded-lg shadow-lg p-3 text-left pointer-events-none"
-                                                            style="display: none;">
-                                                            <div class="flex items-center gap-1.5 mb-1.5">
-                                                                <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                                    <div class="flex flex-col items-center gap-0.5">
+                                                        <div class="relative flex justify-center items-center"
+                                                            x-data="{ open: false }" @click.outside="open = false">
+                                                            <button type="button" @click="open = !open"
+                                                                @mouseenter="open = true" @mouseleave="open = false"
+                                                                class="p-1 rounded-full bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                                title="Forwarded to PMU">
+                                                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400"
                                                                     fill="none" stroke="currentColor"
                                                                     viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round"
                                                                         stroke-linejoin="round" stroke-width="2"
                                                                         d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                                 </svg>
-                                                                <span
-                                                                    class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
-                                                                    to PMU</span>
-                                                            </div>
-                                                            <div class="text-xs text-gray-600 dark:text-gray-400">
-                                                                <span
-                                                                    class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
-                                                                {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') : 'N/A' }}
+                                                            </button>
+                                                            <div x-show="open"
+                                                                x-transition:enter="transition ease-out duration-150"
+                                                                x-transition:enter-start="opacity-0 scale-95"
+                                                                x-transition:enter-end="opacity-100 scale-100"
+                                                                x-transition:leave="transition ease-in duration-100"
+                                                                x-transition:leave-start="opacity-100 scale-100"
+                                                                x-transition:leave-end="opacity-0 scale-95"
+                                                                class="absolute left-8 top-1/2 -translate-y-1/2 z-50 w-52 bg-white dark:bg-neutral-800 border border-blue-200 dark:border-blue-700 rounded-lg shadow-lg p-3 text-left pointer-events-none"
+                                                                style="display: none;">
+                                                                <div class="flex items-center gap-1.5 mb-1.5">
+                                                                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                                                        fill="none" stroke="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                                    </svg>
+                                                                    <span
+                                                                        class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                                                        to PMU</span>
+                                                                </div>
+                                                                <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                                    <span
+                                                                        class="font-medium text-gray-700 dark:text-gray-300">Date:</span>
+                                                                    {{ $forwardedDate ? \Carbon\Carbon::parse($forwardedDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') : 'N/A' }}
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                        @can('edit_mode::of::procurement')
+                                                            <button type="button"
+                                                                wire:click="openForwardModalForItem('{{ $prItemID }}')"
+                                                                class="p-0.5 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
+                                                                title="Edit forwarded date">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                </svg>
+                                                            </button>
+                                                        @endcan
                                                     </div>
                                                 @else
                                                     <input type="checkbox"
@@ -2223,8 +2239,8 @@
                     class="border-t border-gray-200 dark:border-neutral-700 pt-4 mt-6 flex items-center justify-end gap-2">
                     <button type="button" wire:click="closeBulkEditModal"
                         class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-600 border border-gray-300 dark:border-neutral-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                         Cancel

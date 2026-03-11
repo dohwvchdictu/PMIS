@@ -704,21 +704,35 @@
                             </div>
                             {{-- Forward to PMU: right side of header --}}
                             @if ($this->isForwardedToPmu)
-                                <div
-                                    class="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded-lg flex-shrink-0">
-                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div class="leading-tight">
-                                        <span class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
-                                            to PMU</span>
-                                        @if ($this->forwardedToPmuDate)
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <div
+                                        class="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600 rounded-lg">
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div class="leading-tight">
                                             <span
-                                                class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') }}</span>
-                                        @endif
+                                                class="text-xs font-semibold text-blue-700 dark:text-blue-300">Forwarded
+                                                to PMU</span>
+                                            @if ($this->forwardedToPmuDate)
+                                                <span
+                                                    class="block text-xs text-blue-600 dark:text-blue-400">{{ \Carbon\Carbon::parse($this->forwardedToPmuDate)->setTimezone('Asia/Manila')->format('F d, Y g:i A') }}</span>
+                                            @endif
+                                        </div>
                                     </div>
+                                    @can('edit_mode::of::procurement')
+                                        <button wire:click="openForwardModal" type="button"
+                                            class="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                                            title="Edit forwarded date">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                        </button>
+                                    @endcan
                                 </div>
                             @elseif ($this->canForwardToPmu)
                                 <button wire:click="openForwardModal" type="button"
