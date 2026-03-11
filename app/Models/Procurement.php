@@ -199,7 +199,7 @@ class Procurement extends Model implements Auditable
 
     public function postProcurement()
     {
-        return $this->hasOne(PostProcurement::class, 'procID');
+        return $this->hasOne(PostProcurement::class, 'ref_id', 'procID');
     }
 
     public function pr_items()

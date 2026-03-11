@@ -13,12 +13,19 @@ use App\Models\BidSchedule;
 use App\Models\PrSvp;
 use App\Models\ModeOfProcurement;
 use App\Models\Remarks;
+use App\Models\ClusterCommittee;
+use App\Models\ProcurementStage;
+use App\Models\FundSource;
+use App\Models\FundSourceGroup;
 use Livewire\Attributes\Title;
 
 #[Title("PR's Received (B) | PMIS")]
 class BacPrsReceivedBPage extends Component
 {
     use WithPagination;
+
+    // Filter panel visibility
+    public bool $showFilters = false;
 
     // Pagination
     public $perPage = 10;
@@ -29,6 +36,10 @@ class BacPrsReceivedBPage extends Component
         'startDate' => ['except' => ''],
         'endDate' => ['except' => ''],
         'currentModeFilter' => ['except' => null],
+        'clusterFilter' => ['except' => null],
+        'procurementStageFilter' => ['except' => null],
+        'fundSourceFilter' => ['except' => null],
+        'fundSourceGroupFilter' => ['except' => null],
         'remarksFilter' => ['except' => null],
     ];
     protected $paginationTheme = 'tailwind';
@@ -40,6 +51,10 @@ class BacPrsReceivedBPage extends Component
     public $startDate = '';
     public $endDate = '';
     public $currentModeFilter = null;
+    public $clusterFilter = null;
+    public $procurementStageFilter = null;
+    public $fundSourceFilter = null;
+    public $fundSourceGroupFilter = null;
     public $remarksFilter = null;
 
     public function mount()
@@ -78,9 +93,34 @@ class BacPrsReceivedBPage extends Component
         $this->resetPage();
     }
 
+    public function updatedClusterFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProcurementStageFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFundSourceFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFundSourceGroupFilter()
+    {
+        $this->resetPage();
+    }
+
     public function updatedRemarksFilter()
     {
         $this->resetPage();
+    }
+
+    public function toggleFilters()
+    {
+        $this->showFilters = !$this->showFilters;
     }
 
     /**
@@ -92,6 +132,10 @@ class BacPrsReceivedBPage extends Component
         $this->startDate = '';
         $this->endDate = '';
         $this->currentModeFilter = null;
+        $this->clusterFilter = null;
+        $this->procurementStageFilter = null;
+        $this->fundSourceFilter = null;
+        $this->fundSourceGroupFilter = null;
         $this->remarksFilter = null;
         $this->resetPage();
     }
@@ -120,7 +164,12 @@ class BacPrsReceivedBPage extends Component
                 $this->startDate,
                 $this->endDate,
                 $this->currentModeFilter,
-                2
+                2,
+                $this->clusterFilter,
+                $this->procurementStageFilter,
+                $this->fundSourceFilter,
+                $this->fundSourceGroupFilter,
+                $this->remarksFilter
             ),
             $fileName
         );
@@ -138,8 +187,12 @@ class BacPrsReceivedBPage extends Component
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
+                'pr_items.postProcurement.supplier',
+                'pr_items.postProcurement.pmu',
                 'pr_items',
-                'currentLotRemark.remark'
+                'currentLotRemark.remark',
+                'postProcurement.supplier',
+                'postProcurement.pmu',
             ])
             ->whereHas('category', function ($q) {
                 $q->where('bac_type_id', 2);
@@ -179,6 +232,30 @@ class BacPrsReceivedBPage extends Component
                         $subQ->where('mode_of_procurement_id', $this->currentModeFilter)
                             ->whereRaw('mode_order = (SELECT MAX(mode_order) FROM mop_item WHERE prItemID = pr_items.prItemID)');
                     });
+            });
+        }
+
+        // Cluster / Unit filter
+        if ($this->clusterFilter) {
+            $query->where('cluster_committees_id', $this->clusterFilter);
+        }
+
+        // Procurement Stage filter
+        if ($this->procurementStageFilter) {
+            $query->whereHas('currentPrStage', function ($q) {
+                $q->where('pr_stage_id', $this->procurementStageFilter);
+            });
+        }
+
+        // Fund Source filter
+        if ($this->fundSourceFilter) {
+            $query->where('fund_source_id', $this->fundSourceFilter);
+        }
+
+        // Fund Source Group filter
+        if ($this->fundSourceGroupFilter) {
+            $query->whereHas('fundSource', function ($q) {
+                $q->where('fund_source_group_id', $this->fundSourceGroupFilter);
             });
         }
 
@@ -227,6 +304,10 @@ class BacPrsReceivedBPage extends Component
         return view('livewire.reports.bac-prs-received-b-page', [
             'procurements' => $procurements,
             'modes' => $this->modes,
+            'clusterOptions' => $this->clusterOptions,
+            'procurementStages' => $this->procurementStages,
+            'fundSources' => $this->fundSources,
+            'fundSourceGroups' => $this->fundSourceGroups,
             'remarksOptions' => $this->remarksOptions,
             'startRow' => $startRow,
             'endRow' => $endRow,
@@ -242,6 +323,56 @@ class BacPrsReceivedBPage extends Component
                 return [
                     'id' => $mode->id,
                     'name' => $mode->modeofprocurements,
+                ];
+            });
+    }
+
+    public function getClusterOptionsProperty()
+    {
+        return ClusterCommittee::orderBy('clustercommittee', 'asc')
+            ->get()
+            ->map(function ($cluster) {
+                return [
+                    'id' => $cluster->id,
+                    'name' => $cluster->clustercommittee,
+                ];
+            });
+    }
+
+    public function getProcurementStagesProperty()
+    {
+        return ProcurementStage::where('is_active', true)
+            ->orderBy('procurementstage', 'asc')
+            ->get()
+            ->map(function ($stage) {
+                return [
+                    'id' => $stage->id,
+                    'name' => $stage->procurementstage,
+                ];
+            });
+    }
+
+    public function getFundSourcesProperty()
+    {
+        return FundSource::orderBy('fundsources', 'asc')
+            ->get()
+            ->map(function ($fs) {
+                return [
+                    'id' => $fs->id,
+                    'name' => $fs->fundsources,
+                ];
+            });
+    }
+
+    public function getFundSourceGroupsProperty()
+    {
+        return FundSourceGroup::where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($fsg) {
+                return [
+                    'id' => $fsg->id,
+                    'name' => $fsg->name,
                 ];
             });
     }

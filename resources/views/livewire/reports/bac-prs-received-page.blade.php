@@ -5,83 +5,206 @@
     <div class="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 w-full">
         <!-- Title Row -->
         <div class="px-6 py-3 border-b border-gray-200 dark:border-neutral-700">
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                    class="size-6 text-emerald-600 dark:text-emerald-400">
-                    <path
-                        d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                    <path
-                        d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                </svg>
-                <h2 class="text-lg font-bold text-gray-800 dark:text-white">PR's Received (Category A) Report</h2>
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                        class="size-6 text-emerald-600 dark:text-emerald-400">
+                        <path
+                            d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                        <path
+                            d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                    </svg>
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white">PR's Received (Category A) Report</h2>
+                </div>
+                <!-- Export to Excel -->
+                <button type="button" wire:click="exportToExcel"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    wire:loading.attr="disabled">
+                    <!-- Excel icon -->
+                    <svg wire:loading.remove wire:target="exportToExcel" class="w-4 h-4" viewBox="0 0 24 24"
+                        fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM10.5 15.5L9 14L7.5 15.5L6.5 14.5L8 13L6.5 11.5L7.5 10.5L9 12L10.5 10.5L11.5 11.5L10 13L11.5 14.5L10.5 15.5ZM13 13.5H17V15H13V13.5ZM13 11H17V12.5H13V11Z" />
+                    </svg>
+                    <svg wire:loading wire:target="exportToExcel" class="animate-spin w-4 h-4"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    Export
+                </button>
             </div>
         </div>
 
-        <!-- Search and Filters Row -->
-        <div class="px-6 py-3 bg-gray-50 dark:bg-neutral-900/50">
-            <div class="flex items-end justify-between gap-3">
-                <div class="flex items-end gap-3">
-                    <!-- Period From -->
-                    <div>
-                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Period
-                            From</label>
+        <!-- Toolbar: Search + Dates + Filter Toggle + Actions -->
+        <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-900/50 border-b border-gray-100 dark:border-neutral-700">
+            @php
+                $hasFilters =
+                    $currentModeFilter ||
+                    $clusterFilter ||
+                    $procurementStageFilter ||
+                    $fundSourceFilter ||
+                    $fundSourceGroupFilter ||
+                    $remarksFilter;
+                $activeCount = collect([
+                    $currentModeFilter,
+                    $clusterFilter,
+                    $procurementStageFilter,
+                    $fundSourceFilter,
+                    $fundSourceGroupFilter,
+                    $remarksFilter,
+                ])
+                    ->filter()
+                    ->count();
+            @endphp
+            <div class="flex items-end gap-2">
+
+                <!-- Search -->
+                <div class="relative flex-1 min-w-0">
+                    <span
+                        class="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Search</span>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="search"
+                            placeholder="Search PR Number or Program/Project..."
+                            class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-800 dark:text-white dark:border-neutral-600 dark:placeholder-gray-400" />
+                    </div>
+                </div>
+
+                <!-- Date Received group -->
+                <div class="shrink-0">
+                    <span
+                        class="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Date
+                        Received</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">From</span>
                         <input type="date" wire:model.live="startDate"
                             class="w-36 px-2.5 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-800 dark:text-white dark:border-neutral-600" />
-                    </div>
-
-                    <!-- Period To -->
-                    <div>
-                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Period
-                            To</label>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">To</span>
                         <input type="date" wire:model.live="endDate"
                             class="w-36 px-2.5 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-neutral-800 dark:text-white dark:border-neutral-600" />
                     </div>
+                </div>
+
+                <div class="w-px h-8 bg-gray-300 dark:bg-neutral-600 shrink-0 self-end"></div>
+
+                <!-- Filters Toggle -->
+                <div class="shrink-0">
+                    <span
+                        class="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Filters</span>
+                    <button type="button" wire:click="toggleFilters"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors duration-150
+                            {{ $showFilters || $hasFilters
+                                ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700'
+                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100 dark:bg-neutral-800 dark:text-gray-300 dark:border-neutral-600 dark:hover:bg-neutral-700' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                        </svg>
+                        @if ($activeCount > 0)
+                            <span
+                                class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full bg-white text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                                {{ $activeCount }}
+                            </span>
+                        @else
+                            <svg class="w-3 h-3 {{ $showFilters ? 'rotate-180' : '' }} transition-transform duration-200"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        @endif
+                    </button>
+                </div>
+
+                <!-- Clear all -->
+                @if ($search || $startDate || $endDate || $hasFilters)
+                    <div class="shrink-0">
+                        <span class="text-[10px] font-semibold text-transparent block mb-1">‎</span>
+                        <button type="button" wire:click="clearFilters"
+                            class="inline-flex items-center gap-1 px-2.5 py-2 text-xs font-semibold text-red-500 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors duration-150 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                @endif
+
+            </div>
+        </div>
+
+        <!-- Collapsible Filter Panel -->
+        @if ($showFilters || $hasFilters)
+            <div class="px-4 py-3 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+
+                    <!-- Unit / Cluster -->
+                    <div class="relative z-50">
+                        <label
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Unit
+                            / Cluster</label>
+                        <x-forms.searchable-select wire:model.live="clusterFilter" :options="$clusterOptions" labelKey="name"
+                            valueKey="id" placeholder="All" />
+                    </div>
+
+                    <!-- Procurement Stage -->
+                    <div class="relative z-50">
+                        <label
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">PR
+                            Stage</label>
+                        <x-forms.searchable-select wire:model.live="procurementStageFilter" :options="$procurementStages"
+                            labelKey="name" valueKey="id" placeholder="All" />
+                    </div>
+
+                    <!-- Fund Source -->
+                    <div class="relative z-40">
+                        <label
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Fund
+                            Source</label>
+                        <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources"
+                            labelKey="name" valueKey="id" placeholder="All" />
+                    </div>
+
+                    <!-- Fund Source Group -->
+                    <div class="relative z-40">
+                        <label
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Fund
+                            Source Group</label>
+                        <x-forms.searchable-select wire:model.live="fundSourceGroupFilter" :options="$fundSourceGroups"
+                            labelKey="name" valueKey="id" placeholder="All" />
+                    </div>
 
                     <!-- Current Mode -->
-                    <div class="relative z-50 w-56">
-                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Current
+                    <div class="relative z-30">
+                        <label
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Current
                             Mode</label>
-                        <x-forms.searchable-select wire:model.live="currentModeFilter" :options="$modes" labelKey="name"
-                            valueKey="id" placeholder="All Modes" />
+                        <x-forms.searchable-select wire:model.live="currentModeFilter" :options="$modes"
+                            labelKey="name" valueKey="id" placeholder="All" />
                     </div>
 
                     <!-- Remarks -->
-                    <div class="relative z-50 w-48">
+                    <div class="relative z-30">
                         <label
-                            class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-1.5">Remarks</label>
+                            class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Remarks</label>
                         <x-forms.searchable-select wire:model.live="remarksFilter" :options="$remarksOptions" labelKey="name"
-                            valueKey="id" placeholder="All Remarks" />
+                            valueKey="id" placeholder="All" />
                     </div>
-                </div>
 
-                <!-- Export Button -->
-                <div class="flex-shrink-0">
-                    <label class="text-xs font-semibold text-transparent block mb-1.5">Export</label>
-                    <button type="button" wire:click="exportToExcel" title="Export to Excel"
-                        class="inline-flex items-center justify-center w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md dark:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        wire:loading.attr="disabled">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"
-                            wire:loading.remove wire:target="exportToExcel">
-                            <path fill-rule="evenodd"
-                                d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Zm5.845 17.03a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V12a.75.75 0 0 0-1.5 0v4.19l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3Z"
-                                clip-rule="evenodd" />
-                            <path
-                                d="M14.25 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 16.5 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z" />
-                        </svg>
-                        <svg wire:loading wire:target="exportToExcel" class="animate-spin h-6 w-6"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                    </button>
                 </div>
             </div>
-        </div>
-    </div>
+        @endif
 
+    </div>
     <!-- Enhanced Table Section -->
     <div class="overflow-auto flex-1">
         <table class="table-auto w-full min-w-[2400px] divide-y divide-gray-200 dark:divide-neutral-700">
@@ -167,6 +290,18 @@
                     <th
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-44">
                         Current Mode
+                    </th>
+                    <th
+                        class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-40">
+                        Awarded Amount
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-52">
+                        Supplier
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-40">
+                        Date Forwarded to PMU
                     </th>
                 </tr>
             </thead>
@@ -370,10 +505,41 @@
                                 <span class="text-gray-400 italic text-xs">No Mode</span>
                             @endif
                         </td>
+
+                        <!-- Awarded Amount -->
+                        <td class="px-3 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">
+                            @if ($procurement->postProcurement?->awarded_amount)
+                                <div class="inline-flex items-baseline gap-0.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">₱</span>
+                                    <span
+                                        class="text-emerald-700 dark:text-emerald-400">{{ number_format($procurement->postProcurement->awarded_amount, 2) }}</span>
+                                </div>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
+
+                        <!-- Supplier -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            <div class="truncate" title="{{ $procurement->postProcurement?->supplier?->name }}">
+                                {{ $procurement->postProcurement?->supplier?->name ?? 'N/A' }}
+                            </div>
+                        </td>
+
+                        <!-- Date Forwarded to PMU -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($procurement->postProcurement?->pmu?->date_forwarded)
+                                <span class="text-xs">
+                                    {{ \Carbon\Carbon::parse($procurement->postProcurement->pmu->date_forwarded)->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="19" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="22" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
