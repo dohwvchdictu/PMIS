@@ -180,8 +180,8 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'Approved PPMP',
             'EPA',
             'Procurement Stage',
-            'Current Mode',
             'Remarks',
+            'Current Mode',
             'Awarded Amount',
             'Supplier',
             'Date Forwarded to PMU',
@@ -214,7 +214,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
                 ->orderBy('created_at', 'desc')
                 ->first();
-            $ibNo = $bidSchedule?->ib_number ?? 'N/A';
+            $ibNo = $bidSchedule?->ib_number ?: 'N/A';
         }
 
         $approvedPpmp = $procurement->approved_ppmp;
@@ -233,7 +233,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->category?->category ?? 'N/A',
             $procurement->endUser?->endusers ?? 'N/A',
             $procurement->category_venue ?? 'N/A',
-            $procurement->immediate_date_needed ?? 'N/A',
+            $procurement->immediate_date_needed ? $formatDate($procurement->immediate_date_needed) : 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
             $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A',
@@ -241,8 +241,8 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $procurement->currentPrStage?->procurementStage?->procurementstage ?? 'No Stage',
-            $currentMode,
             $procurement->currentLotRemark?->remark?->remarks ?? 'N/A',
+            $currentMode,
             $procurement->postProcurement?->awarded_amount ? (float) $procurement->postProcurement->awarded_amount : 'N/A',
             $procurement->postProcurement?->supplier?->name ?? 'N/A',
             $procurement->postProcurement?->pmu?->date_forwarded
@@ -284,7 +284,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->category?->category ?? 'N/A',
             $procurement->endUser?->endusers ?? 'N/A',
             $procurement->category_venue ?? 'N/A',
-            $procurement->immediate_date_needed ?? 'N/A',
+            $procurement->immediate_date_needed ? $formatDate($procurement->immediate_date_needed) : 'N/A',
             $procurement->date_needed ?? 'N/A',
             $procurement->fundSource?->fundsources ?? 'N/A',
             $procurement->fundSource?->fundSourceGroup?->name ?? 'N/A',
@@ -292,8 +292,8 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
-            $currentMode,
             $procurement->currentLotRemark?->remark?->remarks ?? 'N/A',
+            $currentMode,
             $item->postProcurement?->awarded_amount ? (float) $item->postProcurement->awarded_amount : 'N/A',
             $item->postProcurement?->supplier?->name ?? 'N/A',
             $item->postProcurement?->pmu?->date_forwarded
