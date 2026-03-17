@@ -647,7 +647,7 @@
                                             $currentMode['philgeps_posting_ref_no'] ||
                                             $currentMode['ads_post_ib'] ||
                                             $currentMode['pre_proc_conference'] ||
-                                            $currentMode['list_invited_observerspre_bid_conf'] ||
+                                            $currentMode['list_invited_observers'] ||
                                             $currentMode['obsrvr_prebid_conf'] ||
                                             $currentMode['obsrvr_eligibility'] ||
                                             $currentMode['obsrvr_sub_open_of_bid'] ||
@@ -964,7 +964,7 @@
                                                             $currentMode['philgeps_posting_ref_no'] ||
                                                             $currentMode['ads_post_ib'] ||
                                                             $currentMode['pre_proc_conference'] ||
-                                                            $currentMode['list_invited_observerspre_bid_conf'] ||
+                                                            $currentMode['list_invited_observers'] ||
                                                             $currentMode['obsrvr_prebid_conf'] ||
                                                             $currentMode['obsrvr_eligibility'] ||
                                                             $currentMode['obsrvr_sub_open_of_bid'] ||
@@ -1352,7 +1352,12 @@
                         {{-- PER ITEM DISPLAY WITH SEARCH AND PAGINATION --}}
                         @php
                             // Group items by prItemID to show current mode + history
-                            $groupedItems = collect($form['items'] ?? [])->groupBy('prItemID');
+                            $groupedItems = collect($form['items'] ?? [])
+                                ->filter(
+                                    fn($item) => !empty($item['mode_of_procurement_id']) &&
+                                        $item['mode_of_procurement_id'] != 1,
+                                )
+                                ->groupBy('prItemID');
 
                             // Apply search filter
                             if (!empty($mopSearchTerm)) {
@@ -1525,7 +1530,7 @@
                                                 $currentItem['philgeps_posting_ref_no'] ||
                                                 $currentItem['ads_post_ib'] ||
                                                 $currentItem['pre_proc_conference'] ||
-                                                $currentItem['list_invited_observerspre_bid_conf'] ||
+                                                $currentItem['list_invited_observers'] ||
                                                 $currentItem['obsrvr_prebid_conf'] ||
                                                 $currentItem['obsrvr_eligibility'] ||
                                                 $currentItem['obsrvr_sub_open_of_bid'] ||
@@ -1857,7 +1862,7 @@
                                                                 $currentMode['philgeps_posting_ref_no'] ||
                                                                 $currentMode['ads_post_ib'] ||
                                                                 $currentMode['pre_proc_conference'] ||
-                                                                $currentMode['list_invited_observerspre_bid_conf'] ||
+                                                                $currentMode['list_invited_observers'] ||
                                                                 $currentMode['obsrvr_prebid_conf'] ||
                                                                 $currentMode['obsrvr_eligibility'] ||
                                                                 $currentMode['obsrvr_sub_open_of_bid'] ||

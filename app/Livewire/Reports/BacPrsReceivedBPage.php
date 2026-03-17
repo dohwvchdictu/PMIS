@@ -187,6 +187,8 @@ class BacPrsReceivedBPage extends Component
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
+                'pr_items.prstage.stage',
+                'pr_items.currentItemRemark.remark',
                 'pr_items.postProcurement.supplier',
                 'pr_items.postProcurement.pmu',
                 'pr_items',
@@ -242,8 +244,24 @@ class BacPrsReceivedBPage extends Component
 
         // Procurement Stage filter
         if ($this->procurementStageFilter) {
-            $query->whereHas('currentPrStage', function ($q) {
-                $q->where('pr_stage_id', $this->procurementStageFilter);
+            $stageId = $this->procurementStageFilter;
+            $query->where(function ($q) use ($stageId) {
+                // perLot: filter by lot-level current stage
+                $q->where(function ($sub) use ($stageId) {
+                    $sub->where('procurement_type', 'perLot')
+                        ->whereHas('currentPrStage', function ($sq) use ($stageId) {
+                            $sq->where('pr_stage_id', $stageId);
+                        });
+                })
+                    // perItem: filter if any item has that stage as its current stage
+                    ->orWhere(function ($sub) use ($stageId) {
+                        $sub->where('procurement_type', 'perItem')
+                            ->whereHas('pr_items', function ($sq) use ($stageId) {
+                                $sq->whereHas('prstage', function ($s) use ($stageId) {
+                                    $s->where('pr_stage_id', $stageId);
+                                });
+                            });
+                    });
             });
         }
 
@@ -293,12 +311,45 @@ class BacPrsReceivedBPage extends Component
             return $p->procurement_type === 'perLot' ? 1 : $p->pr_items->count();
         });
 
+        // Batch-load BidSchedules for perItem procurements (to resolve IB No per item)
+        $allItemIds = [];
+        foreach ($procurements->items() as $procurement) {
+            if ($procurement->procurement_type === 'perItem') {
+                foreach ($procurement->pr_items as $item) {
+                    $allItemIds[] = $item->prItemID;
+                }
+            }
+        }
+        $itemBidScheduleMap = collect();
+        if (!empty($allItemIds)) {
+            $itemBidScheduleMap = BidSchedule::whereIn('ref_id', $allItemIds)
+                ->get()
+                ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
+        }
+
         // Add current mode, status and IB No to each procurement
         foreach ($procurements as $procurement) {
             $modeStatus = $this->getCurrentModeAndStatus($procurement);
             $procurement->currentMode = $modeStatus['mode'];
             $procurement->currentStatus = $modeStatus['status'];
             $procurement->currentIbNo = $modeStatus['ibNo'];
+
+            // For perItem: attach ibNo to each item
+            if ($procurement->procurement_type === 'perItem') {
+                foreach ($procurement->pr_items as $item) {
+                    $latestMop = $item->mopItems
+                        ->filter(fn($m) => $m->uid !== 'MOP-1-1')
+                        ->sortByDesc('mode_order')
+                        ->first();
+                    $ibNo = null;
+                    if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
+                        $compositeKey = $item->prItemID . '_' . $latestMop->uid;
+                        $bidSchedule = $itemBidScheduleMap->get($compositeKey);
+                        $ibNo = $bidSchedule?->ib_number;
+                    }
+                    $item->ibNo = $ibNo;
+                }
+            }
         }
 
         return view('livewire.reports.bac-prs-received-b-page', [

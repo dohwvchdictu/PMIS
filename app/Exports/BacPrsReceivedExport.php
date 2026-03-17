@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
 use App\Models\BidSchedule;
+use App\Models\PrSvp;
 
 class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
 {
@@ -65,7 +66,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
-                'pr_items',
+                'pr_items.prstage.stage',
                 'currentLotRemark.remark',
                 'postProcurement.supplier',
                 'postProcurement.pmu',
@@ -138,11 +139,37 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         }
 
         $procurements = $query->get();
+
+        // Batch-load BidSchedule and PrSvp to avoid N+1 queries.
+        // Key by composite ref_id_mop_uid — mop_uid alone (e.g. "MOP-2-1") is NOT globally unique
+        // across different procurements.
+        // Only collect the LATEST mop uid per procurement (the only one used in mapProcurement).
+        $allUids = [];
+        $allProcIds = $procurements->pluck('procID')->filter()->toArray();
+
+        foreach ($procurements as $procurement) {
+            if ($procurement->procurement_type === 'perLot') {
+                $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
+                if ($latestMop?->uid) {
+                    $allUids[] = $latestMop->uid;
+                }
+            }
+        }
+
+        $bidScheduleMap = collect();
+
+        if (!empty($allUids) && !empty($allProcIds)) {
+            $bidScheduleMap = BidSchedule::whereIn('mop_uid', $allUids)
+                ->whereIn('ref_id', $allProcIds)
+                ->get()
+                ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
+        }
+
         $rows = collect();
 
         foreach ($procurements as $procurement) {
             if ($procurement->procurement_type === 'perLot') {
-                $rows->push($this->mapProcurement($procurement));
+                $rows->push($this->mapProcurement($procurement, $bidScheduleMap));
             } else {
                 foreach ($procurement->pr_items as $item) {
                     $rows->push($this->mapItem($procurement, $item));
@@ -187,7 +214,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         return $row;
     }
 
-    private function mapProcurement($procurement): array
+    private function mapProcurement($procurement, $bidScheduleMap = null): array
     {
         // Helper function to safely format dates
         $formatDate = function ($date) {
@@ -200,15 +227,14 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
             }
         };
 
-        // Get current mode and IB No
+        // Get current mode and IB No using pre-loaded batch map (no per-row query)
         $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
         $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
         $ibNo = 'N/A';
         if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
-            $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
-                ->orderBy('created_at', 'desc')
-                ->first();
-            $ibNo = $bidSchedule?->ib_number ?? 'N/A';
+            $compositeKey = $procurement->procID . '_' . $latestMop->uid;
+            $bidSchedule = $bidScheduleMap ? $bidScheduleMap->get($compositeKey) : null;
+            $ibNo = $bidSchedule?->ib_number ?: 'N/A';
         }
 
         $approvedPpmp = $procurement->approved_ppmp;

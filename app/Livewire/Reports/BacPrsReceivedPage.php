@@ -186,7 +186,6 @@ class BacPrsReceivedPage extends Component
                 'fundSource.fundSourceGroup',
                 'endUser',
                 'mopLots.modeOfProcurement',
-                'pr_items.mopItems.modeOfProcurement',
                 'currentLotRemark.remark',
                 'postProcurement.supplier',
                 'postProcurement.pmu',
@@ -260,9 +259,41 @@ class BacPrsReceivedPage extends Component
 
         $procurements = $query->paginate($this->perPage);
 
+        // Batch-load BidSchedule and PrSvp to avoid N+1 queries.
+        // Only collect the LATEST mop_lot uid per procurement (highest mode_order) —
+        // that is the only one used in getCurrentModeAndStatus().
+        $allUids = [];
+        $allProcIds = $procurements->pluck('procID')->filter()->toArray();
+
+        foreach ($procurements as $procurement) {
+            if ($procurement->procurement_type === 'perLot') {
+                $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
+                if ($latestMop?->uid) {
+                    $allUids[] = $latestMop->uid;
+                }
+            }
+        }
+
+        $bidScheduleMap = collect();
+        $prSvpMap = collect();
+
+        if (!empty($allUids) && !empty($allProcIds)) {
+            // Key by composite ref_id_mop_uid — mop_uid alone (e.g. "MOP-2-1") is NOT globally unique;
+            // multiple procurements can share the same mop_uid value.
+            $bidScheduleMap = BidSchedule::whereIn('mop_uid', $allUids)
+                ->whereIn('ref_id', $allProcIds)
+                ->get()
+                ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
+
+            $prSvpMap = PrSvp::whereIn('mop_uid', $allUids)
+                ->whereIn('ref_id', $allProcIds)
+                ->get()
+                ->keyBy(fn($s) => $s->ref_id . '_' . $s->mop_uid);
+        }
+
         // Add current mode, status and IB No to each procurement
         foreach ($procurements as $procurement) {
-            $modeStatus = $this->getCurrentModeAndStatus($procurement);
+            $modeStatus = $this->getCurrentModeAndStatus($procurement, $bidScheduleMap, $prSvpMap);
             $procurement->currentMode = $modeStatus['mode'];
             $procurement->currentStatus = $modeStatus['status'];
             $procurement->currentIbNo = $modeStatus['ibNo'];
@@ -355,17 +386,17 @@ class BacPrsReceivedPage extends Component
     }
 
     /**
-     * Get the current mode of procurement and status for a procurement
+     * Get the current mode of procurement and status for a procurement.
+     * Uses pre-loaded batch maps to avoid N+1 queries.
      */
-    private function getCurrentModeAndStatus($procurement)
+    private function getCurrentModeAndStatus($procurement, $bidScheduleMap = null, $prSvpMap = null)
     {
         if ($procurement->procurement_type === 'perLot') {
-            $latestMop = $procurement->mopLots()
-                ->orderBy('mode_order', 'desc')
-                ->first();
+            // Use the eager-loaded collection — no extra DB query
+            $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
 
             if (!$latestMop) {
-                return ['mode' => null, 'status' => null];
+                return ['mode' => null, 'status' => null, 'ibNo' => null];
             }
 
             $status = null;
@@ -380,12 +411,13 @@ class BacPrsReceivedPage extends Component
                 ];
             }
 
-            // Check bidding modes (2-6)
+            // Composite key matches how the map was keyed — avoids cross-procurement collisions
+            $compositeKey = $procurement->procID . '_' . $latestMop->uid;
+
+            // Check bidding modes (2-6) using pre-loaded map
             $ibNo = null;
             if (in_array($modeId, [2, 3, 4, 5, 6])) {
-                $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+                $bidSchedule = $bidScheduleMap ? $bidScheduleMap->get($compositeKey) : null;
 
                 if ($bidSchedule) {
                     $ibNo = $bidSchedule->ib_number;
@@ -395,13 +427,12 @@ class BacPrsReceivedPage extends Component
                 }
             }
 
-            // Check SVP modes (7-24)
+            // Check SVP modes (7-24) using pre-loaded map
+            // Correct field is resolution_number_mop (matches ModeOfProcurementPerLotPage)
             if (in_array($modeId, [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])) {
-                $prSvp = PrSvp::where('mop_uid', $latestMop->uid)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+                $prSvp = $prSvpMap ? $prSvpMap->get($compositeKey) : null;
 
-                if ($prSvp && $prSvp->resolution_number) {
+                if ($prSvp && $prSvp->resolution_number_mop) {
                     $status = 'Completed';
                 }
             }
