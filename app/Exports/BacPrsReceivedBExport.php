@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Procurement;
 use App\Models\BidSchedule;
+use App\Models\PrSvp;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -64,12 +65,13 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
                 'endUser',
                 'mopLots.modeOfProcurement',
                 'pr_items.mopItems.modeOfProcurement',
-                'pr_items',
+                'pr_items.prstage.stage',
+                'pr_items.currentItemRemark.remark',
+                'pr_items.postProcurement.supplier',
+                'pr_items.postProcurement.pmu',
                 'currentLotRemark.remark',
                 'postProcurement.supplier',
                 'postProcurement.pmu',
-                'pr_items.postProcurement.supplier',
-                'pr_items.postProcurement.pmu',
             ])
             ->whereHas('category', function ($q) {
                 $q->where('bac_type_id', $this->bacTypeId);
@@ -118,8 +120,24 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
 
         // Procurement Stage filter
         if ($this->procurementStageFilter) {
-            $query->whereHas('currentPrStage', function ($q) {
-                $q->where('pr_stage_id', $this->procurementStageFilter);
+            $stageId = $this->procurementStageFilter;
+            $query->where(function ($q) use ($stageId) {
+                // perLot: filter by lot-level current stage
+                $q->where(function ($sub) use ($stageId) {
+                    $sub->where('procurement_type', 'perLot')
+                        ->whereHas('currentPrStage', function ($sq) use ($stageId) {
+                            $sq->where('pr_stage_id', $stageId);
+                        });
+                })
+                    // perItem: filter if any item has that stage as its current stage
+                    ->orWhere(function ($sub) use ($stageId) {
+                        $sub->where('procurement_type', 'perItem')
+                            ->whereHas('pr_items', function ($sq) use ($stageId) {
+                                $sq->whereHas('prstage', function ($s) use ($stageId) {
+                                    $s->where('pr_stage_id', $stageId);
+                                });
+                            });
+                    });
             });
         }
 
@@ -144,14 +162,53 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         }
 
         $procurements = $query->get();
+
+        // Batch-load BidSchedule to avoid N+1 queries.
+        // perLot : ref_id = procID,   composite key = procID_mop_uid
+        // perItem: ref_id = prItemID, composite key = prItemID_mop_uid
+        $allLotUids = [];
+        $allLotProcIds = [];
+        $allItemIds = [];
+
+        foreach ($procurements as $procurement) {
+            if ($procurement->procurement_type === 'perLot') {
+                $allLotProcIds[] = $procurement->procID;
+                $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
+                if ($latestMop?->uid) {
+                    $allLotUids[] = $latestMop->uid;
+                }
+            } else {
+                foreach ($procurement->pr_items as $item) {
+                    $allItemIds[] = $item->prItemID;
+                }
+            }
+        }
+
+        $bidScheduleMap = collect();
+
+        if (!empty($allLotUids) && !empty($allLotProcIds)) {
+            $bidScheduleMap = BidSchedule::whereIn('mop_uid', $allLotUids)
+                ->whereIn('ref_id', $allLotProcIds)
+                ->get()
+                ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
+        }
+
+        $itemBidScheduleMap = collect();
+
+        if (!empty($allItemIds)) {
+            $itemBidScheduleMap = BidSchedule::whereIn('ref_id', $allItemIds)
+                ->get()
+                ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
+        }
+
         $rows = collect();
 
         foreach ($procurements as $procurement) {
             if ($procurement->procurement_type === 'perLot') {
-                $rows->push($this->mapProcurement($procurement));
+                $rows->push($this->mapProcurement($procurement, $bidScheduleMap));
             } else {
                 foreach ($procurement->pr_items as $item) {
-                    $rows->push($this->mapItem($procurement, $item));
+                    $rows->push($this->mapItem($procurement, $item, $itemBidScheduleMap));
                 }
             }
         }
@@ -193,7 +250,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         return $row;
     }
 
-    private function mapProcurement($procurement): array
+    private function mapProcurement($procurement, $bidScheduleMap = null): array
     {
         // Helper function to safely format dates
         $formatDate = function ($date) {
@@ -206,14 +263,13 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             }
         };
 
-        // Get current mode and IB No
+        // Get current mode and IB No using pre-loaded batch map (no per-row query)
         $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
         $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
         $ibNo = 'N/A';
         if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
-            $bidSchedule = BidSchedule::where('mop_uid', $latestMop->uid)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $compositeKey = $procurement->procID . '_' . $latestMop->uid;
+            $bidSchedule = $bidScheduleMap ? $bidScheduleMap->get($compositeKey) : null;
             $ibNo = $bidSchedule?->ib_number ?: 'N/A';
         }
 
@@ -251,7 +307,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 
-    private function mapItem($procurement, $item): array
+    private function mapItem($procurement, $item, $itemBidScheduleMap = null): array
     {
         // Helper function to safely format dates
         $formatDate = function ($date) {
@@ -264,9 +320,15 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             }
         };
 
-        // Get current mode for the item
-        $latestMop = $item->mopItems->sortByDesc('mode_order')->first();
+        // Get current mode and IB No for the item using pre-loaded batch map
+        $latestMop = $item->mopItems->filter(fn($m) => $m->uid !== 'MOP-1-1')->sortByDesc('mode_order')->first();
         $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
+        $ibNo = 'N/A';
+        if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
+            $compositeKey = $item->prItemID . '_' . $latestMop->uid;
+            $bidSchedule = $itemBidScheduleMap ? $itemBidScheduleMap->get($compositeKey) : null;
+            $ibNo = $bidSchedule?->ib_number ?: 'N/A';
+        }
 
         $approvedPpmp = $procurement->approved_ppmp;
         $approvedPpmpLabel = ($approvedPpmp === null || $approvedPpmp === '')
@@ -275,7 +337,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
 
         return [
             $procurement->pr_number,
-            'N/A',
+            $ibNo,
             $item->description,
             $formatDate($procurement->date_receipt),
             $procurement->dtrack_no ?? 'N/A',
@@ -292,7 +354,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $approvedPpmpLabel,
             $procurement->early_procurement ? 'Yes' : 'No',
             $item->prstage?->stage?->procurementstage ?? 'No Stage',
-            $procurement->currentLotRemark?->remark?->remarks ?? 'N/A',
+            $item->currentItemRemark?->remark?->remarks ?? 'N/A',
             $currentMode,
             $item->postProcurement?->awarded_amount ? (float) $item->postProcurement->awarded_amount : 'N/A',
             $item->postProcurement?->supplier?->name ?? 'N/A',

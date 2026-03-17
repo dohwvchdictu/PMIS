@@ -622,7 +622,14 @@
                                 <!-- IB No -->
                                 <td
                                     class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                                    <span class="text-gray-400 italic text-xs">N/A</span>
+                                    @if ($item->ibNo)
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-md font-mono text-xs text-amber-700 dark:text-amber-300">
+                                            {{ $item->ibNo }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400 italic text-xs">N/A</span>
+                                    @endif
                                 </td>
 
                                 <!-- Description -->
@@ -793,9 +800,9 @@
                                 <!-- Remarks -->
                                 <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                                     <div class="min-h-[2.5rem] flex items-center justify-center">
-                                        @if ($procurement->currentLotRemark?->remark)
+                                        @if ($item->currentItemRemark?->remark)
                                             @php
-                                                $remarkText = $procurement->currentLotRemark->remark->remarks;
+                                                $remarkText = $item->currentItemRemark->remark->remarks;
                                                 $r = strtolower($remarkText);
                                                 $badge = match (true) {
                                                     str_contains($r, 'award') ||
@@ -853,7 +860,10 @@
                                 <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
                                     <div class="min-h-[2.5rem] flex items-center justify-center">
                                         @php
-                                            $latestMop = $item->mopItems->sortByDesc('mode_order')->first();
+                                            $latestMop = $item->mopItems
+                                                ->filter(fn($m) => $m->uid !== 'MOP-1-1')
+                                                ->sortByDesc('mode_order')
+                                                ->first();
                                             $currentMode = $latestMop?->modeOfProcurement?->modeofprocurements ?? 'N/A';
                                         @endphp
                                         @if ($currentMode !== 'N/A')

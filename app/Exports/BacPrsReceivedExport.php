@@ -234,7 +234,7 @@ class BacPrsReceivedExport implements FromCollection, WithHeadings, WithMapping,
         if ($latestMop && in_array($latestMop->mode_of_procurement_id, [2, 3, 4, 5, 6])) {
             $compositeKey = $procurement->procID . '_' . $latestMop->uid;
             $bidSchedule = $bidScheduleMap ? $bidScheduleMap->get($compositeKey) : null;
-            $ibNo = $bidSchedule?->ib_number ?? 'N/A';
+            $ibNo = $bidSchedule?->ib_number ?: 'N/A';
         }
 
         $approvedPpmp = $procurement->approved_ppmp;
