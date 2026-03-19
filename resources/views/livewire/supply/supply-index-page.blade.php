@@ -77,7 +77,6 @@
                                         title="Select / deselect all visible" />
                                 </th>
                                 <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
-                                <th class="px-2 py-1 bg-gray-100 dark:bg-neutral-900 w-12"></th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                                     PO / Contract No.</th>
@@ -113,41 +112,16 @@
                                         </button>
                                     </td>
 
-                                    {{-- Actions --}}
-                                    <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        @can('update_supply')
-                                            <a href="{{ route('supply.edit', $supply->id) }}"
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-neutral-700 border border-gray-200 dark:border-neutral-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 dark:hover:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow"
-                                                title="Edit">
-                                                <x-heroicon-o-pencil-square
-                                                    class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                            </a>
-                                        @endcan
-                                    </td>
-
                                     <td class="px-6 py-3 whitespace-nowrap">
                                         <span
                                             class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
-                                            <svg class="w-3.5 h-3.5 text-orange-400 flex-shrink-0" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
                                             {{ $supply->po_contract_number }}
                                         </span>
                                     </td>
 
                                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                                        @if ($supply->date_forwarded)
-                                            <span class="inline-flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                {{ \Carbon\Carbon::parse($supply->date_forwarded)->format('M d, Y') }}
-                                            </span>
+                                        @if ($supply->forwarded_to_supply_at)
+                                            {{ \Carbon\Carbon::parse($supply->forwarded_to_supply_at)->format('M d, Y g:i A') }}
                                         @else
                                             <span class="text-gray-400 dark:text-gray-500">—</span>
                                         @endif
@@ -212,8 +186,7 @@
             <div
                 class="px-4 py-2.5 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex justify-start">
                 <div class="relative w-72">
-                    <input type="text" wire:model.live="search"
-                        placeholder="Search PO/contract number, remarks..."
+                    <input type="text" wire:model.live="search" placeholder="Search PO/contract number, remarks..."
                         class="w-full px-4 py-2 pl-9 text-sm border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 dark:text-white dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
                     <svg class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,15 +288,8 @@
                                 </td>
 
                                 <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                                    @if ($supply->date_forwarded)
-                                        <span class="inline-flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ \Carbon\Carbon::parse($supply->date_forwarded)->format('M d, Y') }}
-                                        </span>
+                                    @if ($supply->forwarded_to_supply_at)
+                                        {{ \Carbon\Carbon::parse($supply->forwarded_to_supply_at)->format('M d, Y g:i A') }}
                                     @else
                                         <span class="text-gray-400 dark:text-gray-500">—</span>
                                     @endif
