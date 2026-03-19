@@ -6,6 +6,7 @@ use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrItemPrstage;
+use App\Models\PrItemRemark;
 use App\Models\Pmu;
 use App\Models\PmuPo;
 use App\Models\PrSvp;
@@ -1004,6 +1005,7 @@ class ModeOfProcurementPerItemPage extends Component
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
         }
 
+        $this->autoUpdateStageForSvpModePerItem();
         $this->mount($this->procurement);
     }
 
@@ -1178,6 +1180,126 @@ class ModeOfProcurementPerItemPage extends Component
                 );
                 $checkStatus($model);
             }
+        }
+    }
+
+    /**
+     * Auto-update procurement stage and remarks per PR item for SVP modes after a successful save.
+     *
+     * Each PR item is evaluated independently based on its own SVP schedule data
+     * and its own post-procurement data (stored in $this->postItems[$prItemID]).
+     *
+     * For items with rebid history, only the current item (highest mode_order) is evaluated.
+     * Uses PrItemPrstage and PrItemRemark (per-item equivalents of the per-lot models).
+     *
+     * Hierarchy (low → high):
+     *   Stage 15 – Resolution to Recommend for Other Mode  (resolution_number_mop filled)
+     *   Stage 29 – Canvass                                 (canvass_date filled)
+     *   Stage 16 – Abstract of Canvass                     (abstract_of_canvass_date filled)
+     *   Stage  8 – Resolution to Award (other mode)        (resolutionAwardNumber + resolutionAwardDate filled)
+     *   Stage 17 – NOA for Approval of HoPE                (noticeOfAward + supplier_id filled)
+     *   Stage  7 – Forwarded to PMU                        (handled separately via forwardToPmu)
+     */
+    private function autoUpdateStageForSvpModePerItem(): void
+    {
+        // Group form items by prItemID and keep only the current (highest mode_order) per item
+        $currentItemsByPrItemID = [];
+        foreach ($this->form['items'] as $item) {
+            $prItemID = $item['prItemID'] ?? null;
+            if (!$prItemID) {
+                continue;
+            }
+            $existingOrder = $currentItemsByPrItemID[$prItemID]['mode_order'] ?? -1;
+            if (($item['mode_order'] ?? 0) > $existingOrder) {
+                $currentItemsByPrItemID[$prItemID] = $item;
+            }
+        }
+
+        foreach ($currentItemsByPrItemID as $prItemID => $item) {
+            $modeId = $item['mode_of_procurement_id'] ?? null;
+
+            if (!$this->isSvpMode($modeId)) {
+                continue;
+            }
+
+            // Get the latest stage for this specific item
+            $latestStage = PrItemPrstage::where('procID', $this->procID)
+                ->where('prItemID', $prItemID)
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            // Stage 7 (Forwarded to PMU) is an explicit human action – never override it
+            if ($latestStage && $latestStage->pr_stage_id == 7) {
+                continue;
+            }
+
+            // Walk up the hierarchy; last matching condition wins (highest stage)
+            $targetStageId = null;
+
+            // Stage 15 – Resolution to Recommend for Other Mode
+            if ($this->hasValue($item['resolution_number_mop'] ?? null)) {
+                $targetStageId = 15;
+            }
+
+            // Stage 29 – Canvass
+            if ($this->hasValue($item['canvass_date'] ?? null)) {
+                $targetStageId = 29;
+            }
+
+            // Stage 16 – Abstract of Canvass
+            if ($this->hasValue($item['abstract_of_canvass_date'] ?? null)) {
+                $targetStageId = 16;
+            }
+
+            // Get per-item post data (keyed by prItemID in $this->postItems)
+            $postItem = $this->postItems[$prItemID] ?? null;
+
+            // Stage 8 – Resolution to Award (other mode): both fields required
+            if (
+                $postItem
+                && $this->hasValue($postItem['resolutionAwardNumber'] ?? null)
+                && $this->hasValue($postItem['resolutionAwardDate'] ?? null)
+            ) {
+                $targetStageId = 8;
+            }
+
+            // Stage 17 – NOA for Approval of HoPE: both fields required
+            if (
+                $postItem
+                && $this->hasValue($postItem['noticeOfAward'] ?? null)
+                && !empty($postItem['supplier_id'])
+            ) {
+                $targetStageId = 17;
+            }
+
+            if ($targetStageId === null) {
+                continue; // No applicable stage determined
+            }
+
+            $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+            // Only write to DB if the stage actually changed
+            if ($targetStageId === $currentStageId) {
+                continue;
+            }
+
+            DB::transaction(function () use ($prItemID, $targetStageId, $currentStageId) {
+                PrItemPrstage::create([
+                    'procID' => $this->procID,
+                    'prItemID' => $prItemID,
+                    'pr_stage_id' => $targetStageId,
+                    'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                ]);
+
+                PrItemRemark::create([
+                    'procID' => $this->procID,
+                    'prItemID' => $prItemID,
+                    'remarks_id' => 3, // Ongoing
+                    'notes' => null,
+                    'remark_history' => now(),
+                ]);
+            });
         }
     }
 
@@ -1395,6 +1517,7 @@ class ModeOfProcurementPerItemPage extends Component
         }
 
         // Reload data to refresh postItems
+        $this->autoUpdateStageForSvpModePerItem();
         $this->mount($this->procurement);
     }
     public function getHistoryItemsProperty()
