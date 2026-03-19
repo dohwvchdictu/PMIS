@@ -6,6 +6,7 @@ use App\Models\BidSchedule;
 use App\Models\ModeOfProcurement;
 use App\Models\PostProcurement;
 use App\Models\PrLotPrstage;
+use App\Models\PrLotRemark;
 use App\Models\PmuPo;
 use App\Models\PrSvp;
 use Illuminate\Support\Collection;
@@ -1325,6 +1326,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         }
 
         // Reload data to reflect changes
+        $this->autoUpdateStageForSvpModeForProcIDs($this->selectedItems);
         $this->loadProcurementData();
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
@@ -2038,9 +2040,124 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         }
 
         // Reload data to reflect changes
+        $this->autoUpdateStageForSvpModeForProcIDs(
+            array_column($this->getCurrentItems(), 'procID')
+        );
         $this->loadProcurementData();
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
+    }
+
+    /**
+     * Auto-update procurement stage and remarks for each SVP-mode procurement
+     * after a successful save (Tab 1 or Tab 2).
+     *
+     * Reads the freshest data directly from the database so it works correctly
+     * regardless of whether $this->items has been reloaded yet.
+     *
+     * Hierarchy (low → high):
+     *   Stage 15 – Resolution to Recommend for Other Mode  (resolution_number_mop filled)
+     *   Stage 29 – Canvass                                 (canvass_date filled)
+     *   Stage 16 – Abstract of Canvass                     (abstract_of_canvass_date filled)
+     *   Stage  8 – Resolution to Award (other mode)        (resolutionAwardNumber + resolutionAwardDate filled)
+     *   Stage 17 – NOA for Approval of HoPE                (noticeOfAward + supplier_id filled)
+     *   Stage  7 – Forwarded to PMU                        (handled separately via forwardToPmu)
+     */
+    private function autoUpdateStageForSvpModeForProcIDs(array $procIDs): void
+    {
+        if (empty($procIDs)) {
+            return;
+        }
+
+        foreach ($procIDs as $procID) {
+            // Get the latest MopLot for this procurement (highest mode_order = current)
+            $latestMopLot = MopLot::where('procID', $procID)
+                ->orderBy('mode_order', 'desc')
+                ->first();
+
+            if (!$latestMopLot) {
+                continue;
+            }
+
+            $modeId = (int) $latestMopLot->mode_of_procurement_id;
+
+            if (!$this->isSvpMode($modeId)) {
+                continue;
+            }
+
+            // Get the latest stage for this procurement
+            $latestStage = PrLotPrstage::where('procID', $procID)
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            // Stage 7 (Forwarded to PMU) is an explicit human action – never override it
+            if ($latestStage && $latestStage->pr_stage_id == 7) {
+                continue;
+            }
+
+            // Get the freshest SVP schedule data from the database
+            $prSvp = PrSvp::where('ref_id', $procID)
+                ->where('mop_uid', $latestMopLot->uid)
+                ->first();
+
+            // Get post-procurement data
+            $post = PostProcurement::where('ref_id', $procID)->first();
+
+            // Walk up the hierarchy; last matching condition wins (highest stage)
+            $targetStageId = null;
+
+            // Stage 15 – Resolution to Recommend for Other Mode
+            if ($prSvp && $this->hasValue($prSvp->resolution_number_mop)) {
+                $targetStageId = 15;
+            }
+
+            // Stage 29 – Canvass
+            if ($prSvp && $this->hasValue($prSvp->canvass_date)) {
+                $targetStageId = 29;
+            }
+
+            // Stage 16 – Abstract of Canvass
+            if ($prSvp && $this->hasValue($prSvp->abstract_of_canvass_date)) {
+                $targetStageId = 16;
+            }
+
+            // Stage 8 – Resolution to Award (other mode): both fields required
+            if ($post && $this->hasValue($post->resolution_award_number) && $this->hasValue($post->resolution_award_date)) {
+                $targetStageId = 8;
+            }
+
+            // Stage 17 – NOA for Approval of HoPE: both fields required
+            if ($post && $this->hasValue($post->notice_of_award) && !empty($post->supplier_id)) {
+                $targetStageId = 17;
+            }
+
+            if ($targetStageId === null) {
+                continue; // No applicable stage determined
+            }
+
+            $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+            // Only write to DB if the stage actually changed
+            if ($targetStageId === $currentStageId) {
+                continue;
+            }
+
+            DB::transaction(function () use ($procID, $targetStageId, $currentStageId) {
+                PrLotPrstage::create([
+                    'procID' => $procID,
+                    'pr_stage_id' => $targetStageId,
+                    'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                ]);
+
+                PrLotRemark::create([
+                    'procID' => $procID,
+                    'remarks_id' => 3, // Ongoing
+                    'notes' => null,
+                    'remark_history' => now(),
+                ]);
+            });
+        }
     }
 
     /**

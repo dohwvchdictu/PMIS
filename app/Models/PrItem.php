@@ -33,7 +33,7 @@ class PrItem extends Model
     public function prstage()
     {
         return $this->hasOne(PrItemPrstage::class, 'prItemID', 'prItemID')
-            ->latest('stage_history'); // Get the most recent stage
+            ->latest('id'); // Get the most recently inserted stage record
     }
 
     public function getStageNameAttribute()
