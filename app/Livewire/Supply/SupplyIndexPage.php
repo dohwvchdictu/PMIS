@@ -122,6 +122,10 @@ class SupplyIndexPage extends Component
     public function render()
     {
         $baseQuery = Supply::query()
+            ->addSelect([
+                'supplies.*',
+                \DB::raw('(SELECT MAX(pmu_po.forwarded_to_supply_at) FROM pmu_po WHERE pmu_po.po_contract_number = supplies.po_contract_number AND pmu_po.deleted_at IS NULL) as forwarded_to_supply_at'),
+            ])
             ->whereExists(function ($q) {
                 $q->select(\DB::raw(1))
                     ->from('pmu_po')
@@ -154,7 +158,7 @@ class SupplyIndexPage extends Component
 
         $pendingItems = (clone $baseQuery)
             ->whereNull('date_received')
-            ->orderByDesc('date_forwarded')
+            ->orderByDesc('forwarded_to_supply_at')
             ->orderByDesc('id')
             ->paginate($this->pendingPerPage, ['*'], 'pending_page', $this->pendingPage);
 
