@@ -637,24 +637,39 @@ class ProcurementViewPage extends Component
             return false;
         }
 
-        // Check if procurement stage is "Forwarded to PMU" or id is 7
-        if ($this->form['procurement_type'] === 'perLot') {
-            $currentStage = $this->procurement->currentPrStage?->procurementStage;
-            if ($currentStage) {
-                return $currentStage->procurementstage === 'Forwarded to PMU' || $currentStage->id === 7;
-            }
-        } else {
-            // For perItem, check if any item has stage "Forwarded to PMU" or id 7
-            $items = $this->form['items'] ?? [];
-            foreach ($items as $item) {
-                if (isset($item['stage']) && ($item['stage'] === 'Forwarded to PMU')) {
-                    return true;
-                }
-            }
-        }
+        // PMU tab is active only if stage id 7 ("Forwarded to PMU") exists in the stage history.
+        // Stage id 14 ("Forwarded to Supply") alone does NOT activate it.
+        // If both 7 and 14 exist (7 occurred at some point), it IS active.
+        $procID = $this->procurement->procID;
 
-        return false;
+        if ($this->form['procurement_type'] === 'perLot') {
+            return \App\Models\PrLotPrstage::where('procID', $procID)
+                ->where('pr_stage_id', 7)
+                ->exists();
+        } else {
+            // For perItem: active if any item in this procurement ever reached stage 7
+            return \App\Models\PrItemPrstage::where('procID', $procID)
+                ->where('pr_stage_id', 7)
+                ->exists();
+        }
     }
+
+    public function getHasSupplyDataProperty(): bool
+    {
+        // Supply tab is active only if stage id 14 ("Forwarded to Supply") exists in the stage history.
+        $procID = $this->procurement->procID;
+
+        if ($this->form['procurement_type'] === 'perLot') {
+            return \App\Models\PrLotPrstage::where('procID', $procID)
+                ->where('pr_stage_id', 14)
+                ->exists();
+        } else {
+            return \App\Models\PrItemPrstage::where('procID', $procID)
+                ->where('pr_stage_id', 14)
+                ->exists();
+        }
+    }
+
     public function toggleMopSection($index)
     {
         if (isset($this->mopToggles[$index])) {

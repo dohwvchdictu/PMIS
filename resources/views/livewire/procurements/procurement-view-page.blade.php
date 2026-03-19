@@ -136,7 +136,7 @@
                 </li>
 
                 {{-- Step 4: PMU --}}
-                <li class="flex items-center">
+                <li class="flex items-center flex-1">
                     <button type="button" wire:click="setStep(4)" @if (!$this->hasPmuData) disabled @endif
                         class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 4 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasPmuData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
                         4
@@ -144,6 +144,21 @@
                     <span
                         class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 4 || $this->hasPmuData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
                         PMU
+                    </span>
+                    <div
+                        class="h-px flex-1 mx-3 transition-all duration-300 {{ $activeTab > 4 || $this->hasSupplyData ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-600' }}">
+                    </div>
+                </li>
+
+                {{-- Step 5: Supply --}}
+                <li class="flex items-center">
+                    <button type="button" wire:click="setStep(5)" @if (!$this->hasSupplyData) disabled @endif
+                        class="size-10 flex justify-center items-center rounded-full font-semibold text-sm transition-all duration-200 shadow-md {{ $activeTab == 5 ? 'bg-emerald-600 text-white ring-3 ring-emerald-400 dark:ring-emerald-400 hover:scale-105' : ($this->hasSupplyData ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-neutral-600') }}">
+                        5
+                    </button>
+                    <span
+                        class="ml-2 text-sm font-semibold whitespace-nowrap {{ $activeTab >= 5 || $this->hasSupplyData ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
+                        Supply
                     </span>
                 </li>
             </ul>
@@ -2873,7 +2888,8 @@
                                             class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2"
                                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                             PO / Contract Details
@@ -3243,6 +3259,37 @@
                             </div>
                         @endif
                     @endif
+                </div>
+            @endif
+
+            @if ($activeTab == 5)
+                {{-- Supply Tab --}}
+                <div class="space-y-6 mb-6">
+                    <div
+                        class="bg-white rounded-xl p-6 shadow border border-gray-200 dark:bg-neutral-700 dark:border-neutral-700">
+                        <div class="mb-4 pb-3 border-b border-gray-200 dark:border-neutral-600">
+                            <h4
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                                </svg>
+                                Supply Information
+                            </h4>
+                        </div>
+                        <div class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-emerald-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                            </svg>
+                            <p class="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">Forwarded to Supply
+                            </p>
+                            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">This procurement has been
+                                forwarded to the Supply office.</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
