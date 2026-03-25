@@ -629,6 +629,7 @@ class ModeOfProcurementPerLotPage extends Component
             LivewireAlert::title('No Changes')->info()->text('No changes were detected.')->toast()->position('top-end')->show();
         }
 
+        $this->autoUpdateStageForModeFromPending();
         $this->autoUpdateStageForSvpMode();
         $this->mount($this->procurement);
     }
@@ -1733,6 +1734,85 @@ class ModeOfProcurementPerLotPage extends Component
         }
 
         return number_format((float) $value, 2, '.', ',');
+    }
+
+    /**
+     * Auto-update procurement stage when the mode first changes away from the default
+     * pending mode (mode_id = 1) created at PR creation.
+     *
+     * Fires ONLY when:
+     *   - The item immediately before the current one had mode_id = 1 (pending)
+     *   - The current (latest) item has a non-pending mode
+     *   - The procurement stage is still at the initial pending stage (1)
+     *
+     * Stage mapping:
+     *   Mode  2-6  (Competitive Bidding)  → Stage 31
+     *   Mode 7-24  (SVP / Alternative)    → Stage 32
+     */
+    private function autoUpdateStageForModeFromPending(): void
+    {
+        // Sort form items by mode_order descending (highest = current)
+        $sortedItems = $this->form['items'];
+        usort($sortedItems, fn($a, $b) => ($b['mode_order'] ?? 0) <=> ($a['mode_order'] ?? 0));
+
+        // Need at least 2 items: the default mode-1 record + a newly selected mode
+        if (count($sortedItems) < 2) {
+            return;
+        }
+
+        $latestModeId = (int) ($sortedItems[0]['mode_of_procurement_id'] ?? 0);
+        $previousModeId = (int) ($sortedItems[1]['mode_of_procurement_id'] ?? 0);
+
+        // Only trigger when the immediately preceding mode was 1 (pending)
+        if ($previousModeId !== 1) {
+            return;
+        }
+
+        // Determine target stage from the new mode
+        if ($this->isCompetitiveBidding($latestModeId)) {
+            $targetStageId = 31;
+        } elseif ($this->isSvpMode($latestModeId)) {
+            $targetStageId = 32;
+        } else {
+            return; // New mode is still 1 or unrecognised
+        }
+
+        $latestStage = PrLotPrstage::where('procID', $this->procID)
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // Never override stage 7 (Forwarded to PMU)
+        if ($latestStage && $latestStage->pr_stage_id == 7) {
+            return;
+        }
+
+        $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+        // Only fire while the procurement is still at the initial pending stage (1).
+        // This prevents re-triggering on every subsequent save once the mode is set.
+        if ($currentStageId !== null && $currentStageId !== 1) {
+            return;
+        }
+
+        if ($targetStageId === $currentStageId) {
+            return;
+        }
+
+        DB::transaction(function () use ($targetStageId, $currentStageId) {
+            PrLotPrstage::create([
+                'procID' => $this->procID,
+                'pr_stage_id' => $targetStageId,
+                'stage_history' => $currentStageId ? (string) $currentStageId : null,
+            ]);
+
+            PrLotRemark::create([
+                'procID' => $this->procID,
+                'remarks_id' => 3, // Ongoing
+                'notes' => null,
+                'remark_history' => now(),
+            ]);
+        });
     }
 
     /**
