@@ -301,18 +301,14 @@ class PmuIndexPage extends Component
             ->mergeBindings($unionQuery)
             ->select(
                 'notice_of_award_number',
-                'date_forwarded',
-                'notice_of_award',
-                'date_received',
-                'received_remarks',
+                \DB::raw('MAX(date_forwarded) as date_forwarded'),
+                \DB::raw('MAX(notice_of_award) as notice_of_award'),
+                \DB::raw('MAX(date_received) as date_received'),
+                \DB::raw('MAX(received_remarks) as received_remarks'),
                 \DB::raw('COUNT(*) as procurement_count')
             )
             ->groupBy(
-                'notice_of_award_number',
-                'date_forwarded',
-                'notice_of_award',
-                'date_received',
-                'received_remarks'
+                'notice_of_award_number'
             )
             ->orderBy('notice_of_award_number', 'desc');
 

@@ -389,7 +389,7 @@
                                         </svg>
                                         <span
                                             class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 min-w-[20px]">
-                                            {{ $group->procurement_count }}
+                                            {{ $poIssuanceCounts->get($group->notice_of_award_number)->total_count ?? $group->procurement_count }}
                                         </span>
                                     </button>
                                 </td>
