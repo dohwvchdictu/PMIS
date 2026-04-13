@@ -140,22 +140,22 @@
                             Supplier</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            PO Date</th>
-                        <th
-                            class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Contract Amount</th>
-                        <th
-                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Batch No.</th>
-                        <th
-                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Delivery Completion</th>
-                        <th
-                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            Date Received from End User</th>
+                            Description / Item(s)</th>
                         <th
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             SOA Amount</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            End User</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            PO Date Received by Supplier</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date of Acceptance</th>
+                        <th
+                            class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
+                            Date to COA</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-neutral-800">
@@ -188,25 +188,26 @@
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $row->supplier_name ?? '—' }}
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $row->po_date ? \Carbon\Carbon::parse($row->po_date)->format('M d, Y') : '—' }}
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
-                                {{ $row->contract_amount ? '₱ ' . number_format($row->contract_amount, 2) : '—' }}
-                            </td>
                             @php $spo = $supplyPoByRefId->get($row->rowKey); @endphp
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $spo?->batch_no ?? '—' }}
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $spo?->delivery_completion ? \Carbon\Carbon::parse($spo->delivery_completion)->format('M d, Y') : '—' }}
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
-                                {{ $spo?->date_received_from_end_user ? \Carbon\Carbon::parse($spo->date_received_from_end_user)->setTimezone('Asia/Manila')->format('M d, Y g:i A') : '—' }}
+                            <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300 max-w-[200px]">
+                                <div class="whitespace-nowrap overflow-hidden text-ellipsis"
+                                    title="{{ $spo?->description ?? '' }}">{{ $spo?->description ?? '—' }}</div>
                             </td>
                             <td
                                 class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
                                 {{ $spo?->soa_amount ? '₱ ' . number_format($spo->soa_amount, 2) : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $row->end_user_name ?? '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $row->date_po_receipt_by_supplier ? \Carbon\Carbon::parse($row->date_po_receipt_by_supplier)->format('M d, Y') : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $spo?->date_of_acceptance ? \Carbon\Carbon::parse($spo->date_of_acceptance)->format('M d, Y') : '—' }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                {{ $row->date_coa_stamped_received ? \Carbon\Carbon::parse($row->date_coa_stamped_received)->format('M d, Y') : '—' }}
                             </td>
                         </tr>
                     @empty
@@ -292,16 +293,59 @@
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-                {{-- Batch No --}}
-                <div>
-                    <label for="bulk_batch_no"
+                {{-- Description / Item(s) --}}
+                <div class="col-span-2 sm:col-span-4">
+                    <label for="bulk_description"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Batch No.
+                        Description / Item(s)
                     </label>
-                    <input type="text" id="bulk_batch_no" wire:model="bulk_batch_no" placeholder="e.g. Batch 1"
+                    <textarea id="bulk_description" wire:model="bulk_description" rows="2"
+                        placeholder="Enter description or items..."
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600 resize-none
+                        @error('bulk_description') border-red-500 @else border-gray-300 @enderror"></textarea>
+                    @error('bulk_description')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Deadline --}}
+                <div>
+                    <label for="bulk_deadline"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Deadline
+                    </label>
+                    <input type="date" id="bulk_deadline" wire:model="bulk_deadline"
                         class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
-                        @error('bulk_batch_no') border-red-500 @else border-gray-300 @enderror">
-                    @error('bulk_batch_no')
+                        @error('bulk_deadline') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_deadline')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Date of Delivery --}}
+                <div>
+                    <label for="bulk_date_of_delivery"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Date of Delivery
+                    </label>
+                    <input type="date" id="bulk_date_of_delivery" wire:model="bulk_date_of_delivery"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('bulk_date_of_delivery') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_date_of_delivery')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Date of Acceptance --}}
+                <div>
+                    <label for="bulk_date_of_acceptance"
+                        class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Date of Acceptance
+                    </label>
+                    <input type="date" id="bulk_date_of_acceptance" wire:model="bulk_date_of_acceptance"
+                        class="w-full px-3 py-2 text-xs border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
+                        @error('bulk_date_of_acceptance') border-red-500 @else border-gray-300 @enderror">
+                    @error('bulk_date_of_acceptance')
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>

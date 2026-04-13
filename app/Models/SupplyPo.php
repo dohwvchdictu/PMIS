@@ -12,7 +12,10 @@ class SupplyPo extends Model
     protected $fillable = [
         'supply_id',
         'ref_id',
-        'batch_no',
+        'description',
+        'deadline',
+        'date_of_delivery',
+        'date_of_acceptance',
         'delivery_completion',
         'date_received_from_end_user',
         'soa_amount',
@@ -20,6 +23,9 @@ class SupplyPo extends Model
     ];
 
     protected $casts = [
+        'deadline' => 'date',
+        'date_of_delivery' => 'date',
+        'date_of_acceptance' => 'date',
         'delivery_completion' => 'date',
         'date_received_from_end_user' => 'datetime',
         'date_forwarded_to_budget' => 'datetime',

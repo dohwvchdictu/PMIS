@@ -38,7 +38,10 @@ class SupplyEditPage extends Component
 
     // ─── Bulk edit modal ─────────────────────────────────────────────────────
     public bool $showBulkEditModal = false;
-    public string $bulk_batch_no = '';
+    public string $bulk_description = '';
+    public string $bulk_deadline = '';
+    public string $bulk_date_of_delivery = '';
+    public string $bulk_date_of_acceptance = '';
     public string $bulk_delivery_completion = '';
     public string $bulk_date_received_from_end_user = '';
     public string $bulk_soa_amount = '';
@@ -197,7 +200,10 @@ class SupplyEditPage extends Component
         $snapshots = collect($this->selectedItems)->map(function ($rowKey) use ($existing) {
             $row = $existing->get($rowKey);
             return [
-                'batch_no' => $row?->batch_no ?? '',
+                'description' => $row?->description ?? '',
+                'deadline' => $row && $row->deadline ? $row->deadline->format('Y-m-d') : '',
+                'date_of_delivery' => $row && $row->date_of_delivery ? $row->date_of_delivery->format('Y-m-d') : '',
+                'date_of_acceptance' => $row && $row->date_of_acceptance ? $row->date_of_acceptance->format('Y-m-d') : '',
                 'delivery_completion' => $row && $row->delivery_completion ? $row->delivery_completion->format('Y-m-d') : '',
                 'date_received_from_end_user' => $row && $row->date_received_from_end_user ? $row->date_received_from_end_user->format('Y-m-d') : '',
                 'soa_amount' => $row ? (string) ($row->soa_amount ?? '') : '',
@@ -218,7 +224,10 @@ class SupplyEditPage extends Component
 
         // Pre-fill form with common data
         $data = $snapshots->first() ?? [];
-        $this->bulk_batch_no = $data['batch_no'];
+        $this->bulk_description = $data['description'];
+        $this->bulk_deadline = $data['deadline'];
+        $this->bulk_date_of_delivery = $data['date_of_delivery'];
+        $this->bulk_date_of_acceptance = $data['date_of_acceptance'];
         $this->bulk_delivery_completion = $data['delivery_completion'];
         $this->bulk_date_received_from_end_user = $data['date_received_from_end_user'];
         $this->bulk_soa_amount = $data['soa_amount'];
@@ -231,7 +240,10 @@ class SupplyEditPage extends Component
         $this->showBulkEditModal = false;
         $this->resetBulkFields();
         $this->resetValidation([
-            'bulk_batch_no',
+            'bulk_description',
+            'bulk_deadline',
+            'bulk_date_of_delivery',
+            'bulk_date_of_acceptance',
             'bulk_delivery_completion',
             'bulk_date_received_from_end_user',
             'bulk_soa_amount',
@@ -242,12 +254,18 @@ class SupplyEditPage extends Component
     public function saveBulkEdit(): void
     {
         $this->validate([
-            'bulk_batch_no' => 'nullable|string|max:255',
+            'bulk_description' => 'nullable|string|max:1000',
+            'bulk_deadline' => 'nullable|date',
+            'bulk_date_of_delivery' => 'nullable|date',
+            'bulk_date_of_acceptance' => 'nullable|date',
             'bulk_delivery_completion' => 'nullable|date',
             'bulk_date_received_from_end_user' => 'nullable|date',
             'bulk_soa_amount' => 'nullable|numeric|min:0',
             'bulk_date_forwarded_to_budget' => 'nullable|date',
         ], [
+            'bulk_deadline.date' => 'Deadline must be a valid date.',
+            'bulk_date_of_delivery.date' => 'Date of Delivery must be a valid date.',
+            'bulk_date_of_acceptance.date' => 'Date of Acceptance must be a valid date.',
             'bulk_delivery_completion.date' => 'Delivery Completion must be a valid date.',
             'bulk_date_received_from_end_user.date' => 'Date Received from End User must be a valid date.',
             'bulk_soa_amount.numeric' => 'SOA Amount must be a valid number.',
@@ -264,7 +282,10 @@ class SupplyEditPage extends Component
                 SupplyPo::updateOrCreate(
                     ['supply_id' => $this->supplyId, 'ref_id' => $rowKey],
                     [
-                        'batch_no' => $this->bulk_batch_no ?: null,
+                        'description' => $this->bulk_description ?: null,
+                        'deadline' => $this->bulk_deadline ?: null,
+                        'date_of_delivery' => $this->bulk_date_of_delivery ?: null,
+                        'date_of_acceptance' => $this->bulk_date_of_acceptance ?: null,
                         'delivery_completion' => $this->bulk_delivery_completion ?: null,
                         'date_received_from_end_user' => $this->bulk_date_received_from_end_user ?: null,
                         'soa_amount' => $this->bulk_soa_amount !== '' ? $this->bulk_soa_amount : null,
@@ -301,7 +322,10 @@ class SupplyEditPage extends Component
 
     private function resetBulkFields(): void
     {
-        $this->bulk_batch_no = '';
+        $this->bulk_description = '';
+        $this->bulk_deadline = '';
+        $this->bulk_date_of_delivery = '';
+        $this->bulk_date_of_acceptance = '';
         $this->bulk_delivery_completion = '';
         $this->bulk_date_received_from_end_user = '';
         $this->bulk_soa_amount = '';
@@ -525,6 +549,7 @@ class SupplyEditPage extends Component
             ->join('procurements', 'procurements.procID', '=', 'pmu_po.ref_id')
             ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
             ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('end_users', 'end_users.id', '=', 'procurements.end_users_id')
             ->whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
                     ->from('pr_items')
@@ -544,9 +569,9 @@ class SupplyEditPage extends Component
                 'procurements.pr_number',
                 DB::raw('procurements.procurement_program_project as description'),
                 'suppliers.name as supplier_name',
-                'pmu_po.po_date',
-                'pmu_po.po_contract_number',
-                'pmu_po.contract_amount',
+                'end_users.endusers as end_user_name',
+                'pmu_po.date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received',
             )
             ->get();
 
@@ -556,6 +581,7 @@ class SupplyEditPage extends Component
             ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
             ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
             ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('end_users', 'end_users.id', '=', 'procurements.end_users_id')
             ->where('pmu_po.po_contract_number', $poNumber)
             ->whereNull('pmu_po.deleted_at')
             ->whereExists(function ($q) {
@@ -570,9 +596,9 @@ class SupplyEditPage extends Component
                 'procurements.pr_number',
                 'pr_items.description',
                 'suppliers.name as supplier_name',
-                'pmu_po.po_date',
-                'pmu_po.po_contract_number',
-                'pmu_po.contract_amount',
+                'end_users.endusers as end_user_name',
+                'pmu_po.date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received',
             )
             ->get();
 
