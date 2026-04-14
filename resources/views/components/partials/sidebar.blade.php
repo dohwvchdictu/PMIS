@@ -314,7 +314,7 @@
 
         <!-- Fixed Admin Button -->
         @can('view_any_administrator')
-            <div class="sidebar-bottom px-4 py-0.5 bg-white">
+            <div class="sidebar-bottom px-4 py-0.5 bg-white dark:bg-neutral-700">
                 <a href="{{ url('/administrator') }}" target="_blank" rel="noopener noreferrer" title="Administrator"
                     class="sidebar-nav-item flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg mt-4 mb-4
                             transition-all duration-200 border-l-4
