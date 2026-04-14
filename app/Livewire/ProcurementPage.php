@@ -25,11 +25,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Title('Procurement | PMIS')]
+#[Lazy]
 class ProcurementPage extends Component
 {
     use WithPagination;
@@ -166,6 +168,11 @@ class ProcurementPage extends Component
         $this->viewOnlyTab1 = false;
         $this->viewOnlyTab2 = false;
         $this->viewOnlyTab3 = false;
+    }
+
+    public function placeholder()
+    {
+        return view('livewire.procurement-page-skeleton');
     }
 
     public function render()
