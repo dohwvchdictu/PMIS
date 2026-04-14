@@ -3660,6 +3660,15 @@ class ModeOfProcurementPerItemPage extends Component
                             'stage_history' => $latestItemStage ? (string) $latestItemStage->pr_stage_id : null,
                             'actual_date_forwarded' => $utcDateForwarded,
                         ]);
+
+                        PrItemRemark::create([
+                            'procID' => $prItem['procID'],
+                            'prItemID' => $prItemID,
+                            'remarks_id' => 1, // Awarded
+                            'notes' => null,
+                            'remark_history' => now(),
+                        ]);
+
                         $forwarded++;
                     }
                 }

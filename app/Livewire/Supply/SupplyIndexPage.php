@@ -199,6 +199,7 @@ class SupplyIndexPage extends Component
             ->join('procurements', 'procurements.procID', '=', 'pmu_po.ref_id')
             ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
             ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('end_users', 'end_users.id', '=', 'procurements.end_users_id')
             ->whereNotExists(function ($q) {
                 $q->select(\DB::raw(1))
                     ->from('pr_items')
@@ -218,8 +219,9 @@ class SupplyIndexPage extends Component
                 'procurements.pr_number',
                 \DB::raw('procurements.procurement_program_project as description'),
                 'suppliers.name as supplier_name',
-                'pmu_po.po_date',
-                'pmu_po.po_contract_number',
+                'end_users.endusers as end_user_name',
+                'pmu_po.date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received',
                 'pmu_po.contract_amount',
             )
             ->get();
@@ -230,6 +232,7 @@ class SupplyIndexPage extends Component
             ->join('procurements', 'procurements.procID', '=', 'pr_items.procID')
             ->leftJoin('post_procurements', 'post_procurements.ref_id', '=', 'pmu_po.ref_id')
             ->leftJoin('suppliers', 'suppliers.id', '=', 'post_procurements.supplier_id')
+            ->leftJoin('end_users', 'end_users.id', '=', 'procurements.end_users_id')
             ->where('pmu_po.po_contract_number', $this->expandedPoNumber)
             ->whereNull('pmu_po.deleted_at')
             ->whereExists(function ($q) {
@@ -243,9 +246,10 @@ class SupplyIndexPage extends Component
                 'procurements.pr_number',
                 'pr_items.description',
                 'suppliers.name as supplier_name',
-                'pmu_po.po_date',
+                'end_users.endusers as end_user_name',
                 'pmu_po.ref_id as rowKey',
-                'pmu_po.po_contract_number',
+                'pmu_po.date_po_receipt_by_supplier',
+                'pmu_po.date_coa_stamped_received',
                 'pmu_po.contract_amount',
             )
             ->get();

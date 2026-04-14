@@ -3134,6 +3134,13 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                             'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
+                        PrLotRemark::create([
+                            'procID' => $refId,
+                            'remarks_id' => 1, // Awarded
+                            'notes' => null,
+                            'remark_history' => now(),
+                        ]);
+
                         $forwarded++;
                     }
 
