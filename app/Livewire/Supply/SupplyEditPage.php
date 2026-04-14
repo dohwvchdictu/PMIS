@@ -19,7 +19,6 @@ class SupplyEditPage extends Component
 
     private const TIMEZONE = 'Asia/Manila';
     private const DATE_FORMAT = 'Y-m-d';
-    private const DT_FORMAT = 'Y-m-d\TH:i';
 
     public int $supplyId;
 
@@ -44,30 +43,12 @@ class SupplyEditPage extends Component
     public string $bulk_date_of_acceptance = '';
     public string $bulk_delivery_completion = '';
     public string $bulk_date_received_from_end_user = '';
-    public string $bulk_soa_amount = '';
     public string $bulk_date_forwarded_to_budget = '';
-
-    // ─── Detail modal ─────────────────────────────────────────────────────────
-    public bool $showDetailModal = false;
-    public ?int $editingDetailId = null;   // null = new row
-    public string $batch_no = '';
-    public string $delivery_completion = '';
-    public string $date_received_from_end_user = '';
-    public string $soa_amount = '';
-    public string $date_forwarded_to_budget = '';
 
     // ─── Edit Remarks modal ───────────────────────────────────────────────────
     public bool $showEditRemarksModal = false;
 
     public string $editRemarksValue = '';
-
-    // ─── Delete confirm ───────────────────────────────────────────────────────
-    public bool $showDeleteConfirm = false;
-    public ?int $deletingDetailId = null;
-
-    // ─── Detail pagination ────────────────────────────────────────────────────
-    public int $detailPage = 1;
-    public int $detailPerPage = 10;
 
     public function mount(int $id): void
     {
@@ -206,7 +187,6 @@ class SupplyEditPage extends Component
                 'date_of_acceptance' => $row && $row->date_of_acceptance ? $row->date_of_acceptance->format('Y-m-d') : '',
                 'delivery_completion' => $row && $row->delivery_completion ? $row->delivery_completion->format('Y-m-d') : '',
                 'date_received_from_end_user' => $row && $row->date_received_from_end_user ? $row->date_received_from_end_user->format('Y-m-d') : '',
-                'soa_amount' => $row ? (string) ($row->soa_amount ?? '') : '',
             ];
         })->values();
 
@@ -230,7 +210,6 @@ class SupplyEditPage extends Component
         $this->bulk_date_of_acceptance = $data['date_of_acceptance'];
         $this->bulk_delivery_completion = $data['delivery_completion'];
         $this->bulk_date_received_from_end_user = $data['date_received_from_end_user'];
-        $this->bulk_soa_amount = $data['soa_amount'];
 
         $this->showBulkEditModal = true;
     }
@@ -246,7 +225,6 @@ class SupplyEditPage extends Component
             'bulk_date_of_acceptance',
             'bulk_delivery_completion',
             'bulk_date_received_from_end_user',
-            'bulk_soa_amount',
             'bulk_date_forwarded_to_budget',
         ]);
     }
@@ -260,7 +238,6 @@ class SupplyEditPage extends Component
             'bulk_date_of_acceptance' => 'nullable|date',
             'bulk_delivery_completion' => 'nullable|date',
             'bulk_date_received_from_end_user' => 'nullable|date',
-            'bulk_soa_amount' => 'nullable|numeric|min:0',
             'bulk_date_forwarded_to_budget' => 'nullable|date',
         ], [
             'bulk_deadline.date' => 'Deadline must be a valid date.',
@@ -268,8 +245,6 @@ class SupplyEditPage extends Component
             'bulk_date_of_acceptance.date' => 'Date of Acceptance must be a valid date.',
             'bulk_delivery_completion.date' => 'Delivery Completion must be a valid date.',
             'bulk_date_received_from_end_user.date' => 'Date Received from End User must be a valid date.',
-            'bulk_soa_amount.numeric' => 'SOA Amount must be a valid number.',
-            'bulk_soa_amount.min' => 'SOA Amount must be 0 or greater.',
             'bulk_date_forwarded_to_budget.date' => 'Date Forwarded to Budget must be a valid date.',
         ]);
 
@@ -288,7 +263,6 @@ class SupplyEditPage extends Component
                         'date_of_acceptance' => $this->bulk_date_of_acceptance ?: null,
                         'delivery_completion' => $this->bulk_delivery_completion ?: null,
                         'date_received_from_end_user' => $this->bulk_date_received_from_end_user ?: null,
-                        'soa_amount' => $this->bulk_soa_amount !== '' ? $this->bulk_soa_amount : null,
                         'date_forwarded_to_budget' => $this->bulk_date_forwarded_to_budget ?: null,
                     ]
                 );
@@ -328,7 +302,6 @@ class SupplyEditPage extends Component
         $this->bulk_date_of_acceptance = '';
         $this->bulk_delivery_completion = '';
         $this->bulk_date_received_from_end_user = '';
-        $this->bulk_soa_amount = '';
         $this->bulk_date_forwarded_to_budget = '';
     }
 
@@ -376,143 +349,6 @@ class SupplyEditPage extends Component
         $this->resetValidation(['editRemarksValue']);
     }
 
-    // ─── Supply Detail CRUD ───────────────────────────────────────────────────
-
-    public function openDetailModal(?int $detailId = null): void
-    {
-        $this->editingDetailId = $detailId;
-
-        if ($detailId) {
-            $detail = SupplyDetail::findOrFail($detailId);
-            $this->batch_no = $detail->batch_no ?? '';
-            $this->delivery_completion = $detail->delivery_completion ? $detail->delivery_completion->format(self::DATE_FORMAT) : '';
-            $this->date_received_from_end_user = $detail->date_received_from_end_user ? $detail->date_received_from_end_user->format(self::DT_FORMAT) : '';
-            $this->soa_amount = $detail->soa_amount !== null ? (string) $detail->soa_amount : '';
-            $this->date_forwarded_to_budget = $detail->date_forwarded_to_budget ? $detail->date_forwarded_to_budget->format(self::DT_FORMAT) : '';
-        } else {
-            $this->resetDetailFields();
-        }
-
-        $this->showDetailModal = true;
-    }
-
-    public function saveDetail(): void
-    {
-        $this->validate([
-            'batch_no' => 'nullable|string|max:255',
-            'delivery_completion' => 'nullable|date',
-            'date_received_from_end_user' => 'nullable|date',
-            'soa_amount' => 'nullable|numeric|min:0',
-            'date_forwarded_to_budget' => 'nullable|date',
-        ], [
-            'delivery_completion.date' => 'Delivery Completion must be a valid date.',
-            'date_received_from_end_user.date' => 'Date Received from End User must be a valid date.',
-            'soa_amount.numeric' => 'SOA Amount must be a valid number.',
-            'soa_amount.min' => 'SOA Amount must be 0 or greater.',
-            'date_forwarded_to_budget.date' => 'Date Forwarded to Budget must be a valid date.',
-        ]);
-
-        try {
-            $data = [
-                'ref_id' => $this->supplyId,
-                'batch_no' => $this->batch_no ?: null,
-                'delivery_completion' => $this->delivery_completion ?: null,
-                'date_received_from_end_user' => $this->date_received_from_end_user ?: null,
-                'soa_amount' => $this->soa_amount !== '' ? $this->soa_amount : null,
-                'date_forwarded_to_budget' => $this->date_forwarded_to_budget ?: null,
-            ];
-
-            if ($this->editingDetailId) {
-                SupplyDetail::findOrFail($this->editingDetailId)->update($data);
-                $message = 'Supply detail updated successfully.';
-            } else {
-                SupplyDetail::create($data);
-                $message = 'Supply detail added successfully.';
-            }
-
-            $this->closeDetailModal();
-
-            LivewireAlert::title('Saved!')
-                ->success()
-                ->text($message)
-                ->toast()
-                ->position('top-end')
-                ->show();
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('SupplyEditPage: Failed to save detail', [
-                'error' => $e->getMessage(),
-            ]);
-            LivewireAlert::title('Error')
-                ->error()
-                ->text('Failed to save supply detail. Please try again.')
-                ->toast()
-                ->position('top-end')
-                ->show();
-        }
-    }
-
-    public function closeDetailModal(): void
-    {
-        $this->showDetailModal = false;
-        $this->editingDetailId = null;
-        $this->resetDetailFields();
-        $this->resetValidation([
-            'batch_no',
-            'delivery_completion',
-            'date_received_from_end_user',
-            'soa_amount',
-            'date_forwarded_to_budget',
-        ]);
-    }
-
-    public function confirmDeleteDetail(int $detailId): void
-    {
-        $this->deletingDetailId = $detailId;
-        $this->showDeleteConfirm = true;
-    }
-
-    public function deleteDetail(): void
-    {
-        try {
-            SupplyDetail::findOrFail($this->deletingDetailId)->delete();
-
-            $this->showDeleteConfirm = false;
-            $this->deletingDetailId = null;
-
-            LivewireAlert::title('Deleted!')
-                ->success()
-                ->text('Supply detail removed.')
-                ->toast()
-                ->position('top-end')
-                ->show();
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('SupplyEditPage: Failed to delete detail', [
-                'error' => $e->getMessage(),
-            ]);
-            LivewireAlert::title('Error')
-                ->error()
-                ->text('Failed to delete supply detail. Please try again.')
-                ->toast()
-                ->position('top-end')
-                ->show();
-        }
-    }
-
-    public function cancelDelete(): void
-    {
-        $this->showDeleteConfirm = false;
-        $this->deletingDetailId = null;
-    }
-
-    private function resetDetailFields(): void
-    {
-        $this->batch_no = '';
-        $this->delivery_completion = '';
-        $this->date_received_from_end_user = '';
-        $this->soa_amount = '';
-        $this->date_forwarded_to_budget = '';
-    }
-
     // ─── Expanded procurement rows (same logic as index page) ─────────────────
 
     public function setExpandedPage(int $page): void
@@ -523,16 +359,6 @@ class SupplyEditPage extends Component
     public function updatingExpandedPerPage(): void
     {
         $this->expandedPage = 1;
-    }
-
-    public function setDetailPage(int $page): void
-    {
-        $this->detailPage = $page;
-    }
-
-    public function updatingDetailPerPage(): void
-    {
-        $this->detailPage = 1;
     }
 
     private function buildExpandedRows(): \Illuminate\Pagination\LengthAwarePaginator
@@ -572,6 +398,7 @@ class SupplyEditPage extends Component
                 'end_users.endusers as end_user_name',
                 'pmu_po.date_po_receipt_by_supplier',
                 'pmu_po.date_coa_stamped_received',
+                'pmu_po.contract_amount',
             )
             ->get();
 
@@ -599,6 +426,7 @@ class SupplyEditPage extends Component
                 'end_users.endusers as end_user_name',
                 'pmu_po.date_po_receipt_by_supplier',
                 'pmu_po.date_coa_stamped_received',
+                'pmu_po.contract_amount',
             )
             ->get();
 

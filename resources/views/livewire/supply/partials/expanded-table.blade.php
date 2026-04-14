@@ -12,25 +12,22 @@
                 Supplier</th>
             <th
                 class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                PO Date</th>
-            <th
-                class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                PO / Contract No.</th>
+                Description / Item(s)</th>
             <th
                 class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
                 Contract Amount</th>
             <th
                 class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                Batch No.</th>
+                End User</th>
             <th
                 class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                Delivery Completion</th>
+                PO Date Received by Supplier</th>
             <th
                 class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                Date Received from End User</th>
+                Date of Acceptance</th>
             <th
-                class="px-4 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
-                SOA Amount</th>
+                class="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap">
+                Date to COA</th>
         </tr>
     </thead>
     <tbody class="bg-white divide-y divide-gray-200 dark:bg-neutral-800 dark:divide-neutral-700">
@@ -66,39 +63,36 @@
                     </div>
                 </td>
 
-                {{-- PO Date --}}
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                    {{ $row->po_date ? \Carbon\Carbon::parse($row->po_date)->format('M d, Y') : '—' }}
-                </td>
-
-                {{-- PO / Contract No. --}}
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                    {{ $row->po_contract_number ?? '—' }}
+                {{-- Description / Item(s) --}}
+                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-[200px]">
+                    <div class="whitespace-nowrap overflow-hidden text-ellipsis" title="{{ $spo?->description ?? '' }}">
+                        {{ $spo?->description ?? '—' }}
+                    </div>
                 </td>
 
                 {{-- Contract Amount --}}
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
-                    {{ $row->contract_amount !== null ? '₱ ' . number_format((float) $row->contract_amount, 2) : '—' }}
+                    {{ $row->contract_amount ? '₱ ' . number_format((float) $row->contract_amount, 2) : '—' }}
                 </td>
 
-                {{-- Batch No. --}}
+                {{-- End User --}}
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                    {{ $spo?->batch_no ?? '—' }}
+                    {{ $row->end_user_name ?? '—' }}
                 </td>
 
-                {{-- Delivery Completion --}}
+                {{-- PO Date Received by Supplier --}}
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                    {{ $spo?->delivery_completion ? \Carbon\Carbon::parse($spo->delivery_completion)->timezone('Asia/Manila')->format('M d, Y') : '—' }}
+                    {{ $row->date_po_receipt_by_supplier ? \Carbon\Carbon::parse($row->date_po_receipt_by_supplier)->format('M d, Y') : '—' }}
                 </td>
 
-                {{-- Date Received from End User --}}
+                {{-- Date of Acceptance --}}
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                    {{ $spo?->date_received_from_end_user ? \Carbon\Carbon::parse($spo->date_received_from_end_user)->timezone('Asia/Manila')->format('M d, Y') : '—' }}
+                    {{ $spo?->date_of_acceptance ? \Carbon\Carbon::parse($spo->date_of_acceptance)->format('M d, Y') : '—' }}
                 </td>
 
-                {{-- SOA Amount --}}
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
-                    {{ $spo?->soa_amount ? '₱ ' . number_format((float) $spo->soa_amount, 2) : '—' }}
+                {{-- Date to COA --}}
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {{ $row->date_coa_stamped_received ? \Carbon\Carbon::parse($row->date_coa_stamped_received)->format('M d, Y') : '—' }}
                 </td>
             </tr>
         @empty

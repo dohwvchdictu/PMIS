@@ -1604,6 +1604,13 @@ class ModeOfProcurementPerLotPage extends Component
                             'actual_date_forwarded' => $utcDateForwarded,
                         ]);
 
+                        PrLotRemark::create([
+                            'procID' => $this->procID,
+                            'remarks_id' => 1, // Awarded
+                            'notes' => null,
+                            'remark_history' => now(),
+                        ]);
+
                         // Insert/update PMU record
                         $post = PostProcurement::where('ref_id', $this->procID)->first();
                         if ($post && $this->hasValue($post->notice_of_award_number)) {
@@ -1635,6 +1642,13 @@ class ModeOfProcurementPerLotPage extends Component
                         'pr_stage_id' => 7, // PMU Stage
                         'stage_history' => null, // No previous stage
                         'actual_date_forwarded' => $utcDateForwarded,
+                    ]);
+
+                    PrLotRemark::create([
+                        'procID' => $this->procID,
+                        'remarks_id' => 1, // Awarded
+                        'notes' => null,
+                        'remark_history' => now(),
                     ]);
 
                     // Insert/update PMU record

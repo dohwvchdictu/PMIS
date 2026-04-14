@@ -143,7 +143,7 @@
                             Description / Item(s)</th>
                         <th
                             class="px-3 py-3 text-right font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
-                            SOA Amount</th>
+                            Contract Amount</th>
                         <th
                             class="px-3 py-3 text-left font-semibold text-black dark:text-white border-b border-gray-300 dark:border-neutral-600 whitespace-nowrap">
                             End User</th>
@@ -195,7 +195,7 @@
                             </td>
                             <td
                                 class="px-3 py-2 whitespace-nowrap text-right text-xs text-gray-700 dark:text-gray-300">
-                                {{ $spo?->soa_amount ? '₱ ' . number_format($spo->soa_amount, 2) : '—' }}
+                                {{ $row->contract_amount ? '₱ ' . number_format($row->contract_amount, 2) : '—' }}
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
                                 {{ $row->end_user_name ?? '—' }}
@@ -289,12 +289,30 @@
     {{-- Bulk Edit Modal --}}
     <x-forms.modal :model="'showBulkEditModal'" :closeMethod="'closeBulkEditModal'" title="Edit — Supply Details" size="max-w-4xl">
 
-        <div class="px-4 py-4">
+        <div class="px-4 py-4" x-data="{
+            category: '',
+            subCategory: '',
+            resetSub() { this.subCategory = ''; },
+            get subOptions() {
+                if (this.category === 'Pharma') return [
+                    { value: 'Sub 1', label: 'Sub 1 — Prescription / Rx Drugs' },
+                    { value: 'Sub 2', label: 'Sub 2 — OTC / Herbal / Vitamins' }
+                ];
+                if (this.category === 'Non-Pharma') return [
+                    { value: 'Sub 1', label: 'Sub 1 — Equipment / Devices' },
+                    { value: 'Sub 2', label: 'Sub 2 — Office Supplies / Consumables' }
+                ];
+                return [
+                    { value: 'Sub 1', label: 'Sub 1' },
+                    { value: 'Sub 2', label: 'Sub 2' }
+                ];
+            }
+        }">
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-4">
 
                 {{-- Description / Item(s) --}}
-                <div class="col-span-2 sm:col-span-4">
+                <div class="col-span-2 sm:col-span-5">
                     <label for="bulk_description"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Description / Item(s)
@@ -379,59 +397,281 @@
                     @enderror
                 </div>
 
-                {{-- SOA Amount --}}
-                <div x-data="{
-                    display: '',
-                    focused: false,
-                    init() {
-                        const raw = $wire.bulk_soa_amount;
-                        this.display = raw ? this.format(raw) : '';
-                        $wire.$watch('bulk_soa_amount', (val) => {
-                            if (!this.focused) {
-                                this.display = val ? this.format(val) : '';
-                            }
-                        });
-                    },
-                    format(val) {
-                        let n = parseFloat(String(val).replace(/,/g, ''));
-                        return isNaN(n) ? '' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    },
-                    handleInput(e) {
-                        let raw = e.target.value.replace(/[^0-9.]/g, '');
-                        let parts = raw.split('.');
-                        if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
-                        this.display = raw;
-                    },
-                    handleBlur() {
-                        this.focused = false;
-                        let raw = String(this.display).replace(/,/g, '');
-                        let n = parseFloat(raw);
-                        if (!isNaN(n)) {
-                            this.display = this.format(n);
-                            $wire.set('bulk_soa_amount', n);
-                        } else {
-                            this.display = '';
-                            $wire.set('bulk_soa_amount', '');
-                        }
-                    }
-                }">
-                    <label for="bulk_soa_amount"
+                {{-- Supply Category --}}
+                <div>
+                    <label for="bulk_supply_category"
                         class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        SOA Amount
+                        Supply Category
                     </label>
-                    <div class="relative">
-                        <span
-                            class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400 pointer-events-none">₱</span>
-                        <input type="text" id="bulk_soa_amount" x-model="display" x-on:focus="focused = true"
-                            x-on:input="handleInput($event)" x-on:blur="handleBlur()" placeholder="0.00"
-                            class="w-full pl-6 pr-3 py-2 text-xs text-right border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600
-                            @error('bulk_soa_amount') border-red-500 @else border-gray-300 @enderror">
-                    </div>
-                    @error('bulk_soa_amount')
-                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                    <select id="bulk_supply_category" x-model="category" @change="resetSub()"
+                        class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                        <option value="">— Select Category —</option>
+                        <option value="Pharma">Pharma</option>
+                        <option value="Non-Pharma">Non-Pharma</option>
+                    </select>
                 </div>
 
+                {{-- Sub Category (both Pharma & Non-Pharma) --}}
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        Sub Category
+                    </label>
+                    <select x-model="subCategory" :disabled="category === ''"
+                        class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                        <option value="">— Select Sub Category —</option>
+                        <template x-for="opt in subOptions" :key="opt.value">
+                            <option :value="opt.value" x-text="opt.label"></option>
+                        </template>
+                    </select>
+                </div>
+
+            </div>
+
+            {{-- ─── Pharma · Sub 1: Prescription / Rx Drugs ────────────────────────── --}}
+            <div x-show="category === 'Pharma' && subCategory === 'Sub 1'" x-transition.duration.200ms
+                class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <h4 class="text-xs font-semibold text-blue-700 dark:text-blue-300">Pharma — Sub 1: Prescription /
+                        Rx Drugs</h4>
+                    <span
+                        class="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 rounded">Sample
+                        UI Only</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Generic
+                            Name</label>
+                        <input type="text" placeholder="e.g. Amoxicillin"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dosage
+                            Form</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>Tablet</option>
+                            <option>Capsule</option>
+                            <option>Syrup</option>
+                            <option>Injectable</option>
+                            <option>Ointment</option>
+                            <option>Suppository</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Strength /
+                            Concentration</label>
+                        <input type="text" placeholder="e.g. 500mg"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Lot
+                            Number</label>
+                        <input type="text" placeholder="e.g. LOT-2025-001"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expiry
+                            Date</label>
+                        <input type="date"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Batch
+                            Number</label>
+                        <input type="text" placeholder="e.g. BATCH-001"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                </div>
+            </div>
+
+            {{-- ─── Pharma · Sub 2: OTC / Herbal / Vitamins ─────────────────────────── --}}
+            <div x-show="category === 'Pharma' && subCategory === 'Sub 2'" x-transition.duration.200ms
+                class="mt-4 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                    <h4 class="text-xs font-semibold text-sky-700 dark:text-sky-300">Pharma — Sub 2: OTC / Herbal /
+                        Vitamins</h4>
+                    <span
+                        class="px-1.5 py-0.5 text-[10px] font-medium text-sky-600 bg-sky-100 dark:bg-sky-900/40 dark:text-sky-300 rounded">Sample
+                        UI Only</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Product
+                            Name</label>
+                        <input type="text" placeholder="e.g. Vitamin C 500mg"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Drug
+                            Classification</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>OTC (Over-the-Counter)</option>
+                            <option>Herbal / Traditional</option>
+                            <option>Dietary Supplement</option>
+                            <option>Vitamin / Mineral</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dosage
+                            Form</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>Tablet</option>
+                            <option>Capsule</option>
+                            <option>Syrup</option>
+                            <option>Drops</option>
+                            <option>Powder</option>
+                            <option>Lozenges</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Lot
+                            Number</label>
+                        <input type="text" placeholder="e.g. LOT-2025-002"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expiry
+                            Date</label>
+                        <input type="date"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Registration
+                            No. (FDA)</label>
+                        <input type="text" placeholder="e.g. FR-12345"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                </div>
+            </div>
+
+            {{-- ─── Non-Pharma · Sub 1: Equipment / Devices ──────────────────────── --}}
+            <div x-show="category === 'Non-Pharma' && subCategory === 'Sub 1'" x-transition.duration.200ms
+                class="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                    <h4 class="text-xs font-semibold text-orange-700 dark:text-orange-300">Non-Pharma — Sub 1:
+                        Equipment / Devices</h4>
+                    <span
+                        class="px-1.5 py-0.5 text-[10px] font-medium text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300 rounded">Sample
+                        UI Only</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Brand</label>
+                        <input type="text" placeholder="e.g. Samsung"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Model</label>
+                        <input type="text" placeholder="e.g. Galaxy S24"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Serial
+                            Number</label>
+                        <input type="text" placeholder="e.g. SN-2025-0001"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit of
+                            Measure</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>PC</option>
+                            <option>SET</option>
+                            <option>UNIT</option>
+                            <option>PAIR</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Warranty
+                            Period</label>
+                        <input type="text" placeholder="e.g. 1 Year"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Condition</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>Brand New</option>
+                            <option>Refurbished</option>
+                            <option>Reconditioned</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ─── Non-Pharma · Sub 2: Office Supplies / Consumables ───────────────── --}}
+            <div x-show="category === 'Non-Pharma' && subCategory === 'Sub 2'" x-transition.duration.200ms
+                class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <h4 class="text-xs font-semibold text-amber-700 dark:text-amber-300">Non-Pharma — Sub 2: Office
+                        Supplies / Consumables</h4>
+                    <span
+                        class="px-1.5 py-0.5 text-[10px] font-medium text-amber-600 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-300 rounded">Sample
+                        UI Only</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Item
+                            Code</label>
+                        <input type="text" placeholder="e.g. OFF-001"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit of
+                            Measure</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>REAM</option>
+                            <option>BOX</option>
+                            <option>ROLL</option>
+                            <option>BOTTLE</option>
+                            <option>PACK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Color /
+                            Specification</label>
+                        <input type="text" placeholder="e.g. White, A4, 80gsm"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity per
+                            Pack</label>
+                        <input type="number" min="1" placeholder="e.g. 500"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shelf
+                            Life</label>
+                        <input type="text" placeholder="e.g. 2 Years"
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Storage
+                            Requirement</label>
+                        <select
+                            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-neutral-700 dark:text-white dark:border-neutral-600">
+                            <option value="">Select...</option>
+                            <option>Room Temperature</option>
+                            <option>Cool &amp; Dry Place</option>
+                            <option>Away from Sunlight</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {{-- Footer --}}

@@ -18,7 +18,6 @@ class SupplyPo extends Model
         'date_of_acceptance',
         'delivery_completion',
         'date_received_from_end_user',
-        'soa_amount',
         'date_forwarded_to_budget',
     ];
 
@@ -29,7 +28,6 @@ class SupplyPo extends Model
         'delivery_completion' => 'date',
         'date_received_from_end_user' => 'datetime',
         'date_forwarded_to_budget' => 'datetime',
-        'soa_amount' => 'decimal:2',
     ];
 
     public function supply(): BelongsTo
