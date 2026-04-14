@@ -1,6 +1,6 @@
 <div class="fixed top-0 inset-x-0 z-60 pt-20 ">
-    <header
-        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-gray-200 text-sm py-2.5 lg:ps-55 dark:bg-emerald-600 ">
+    <header id="app-topbar"
+        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-gray-200 text-sm py-2.5 dark:bg-emerald-600 ">
         <nav class="px-4 sm:px-6 flex basis-full items-center w-full mx-auto">
             <div class="me-5 lg:me-0 lg:hidden">
                 <!-- Logo -->
@@ -11,7 +11,15 @@
                 <!-- End Logo -->
 
                 <div class="lg:hidden ms-1">
-
+                    <!-- Hamburger Toggle -->
+                    <button type="button"
+                        class="size-9 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-white hover:bg-emerald-700 focus:outline-hidden"
+                        data-hs-overlay="#app-sidebar" aria-controls="app-sidebar" aria-label="Toggle navigation">
+                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -97,8 +105,8 @@
     @endphp
 
     <div class="h-8">
-        <div
-            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 lg:pl-55 dark:bg-neutral-700 dark:border-neutral-700">
+        <div id="app-breadcrumb"
+            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 dark:bg-neutral-700 dark:border-neutral-700">
             <div class="flex items-center py-1">
                 <ol class="ms-3 flex items-center whitespace-nowrap">
                     @foreach ($segments as $index => $segment)

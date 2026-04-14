@@ -1,8 +1,7 @@
 <!-- Sidebar -->
-<div id="navbar-collapse-with-animation"
+<div id="app-sidebar"
     class="hs-overlay [--auto-close:lg] hs-overlay-open:translate-x-0
-            transition-all duration-100 transform
-            w-48 h-full
+            h-full
             hidden
             fixed inset-y-0 start-0 z-70
             bg-white
@@ -12,20 +11,50 @@
 
     <div class="flex flex-col h-full">
         <!-- Logo -->
-        <div class="bg-emerald-600 flex justify-center items-center text-center" style="height:124px;">
-            <a href="#" aria-label="BACPMIS" class="block focus:outline-hidden focus:opacity-80">
+        <div class="bg-emerald-600 flex justify-center items-center text-center relative" style="height:124px;">
+            <!-- Full logo -->
+            <a href="#" aria-label="BACPMIS" class="sidebar-logo-full block focus:outline-hidden focus:opacity-80">
                 <h1 class="text-white font-bold leading-snug text-center">
                     <span class="text-3xl md:text-4xl">WVCHD</span><br>
-                    <span class="text-s md:text-xs">Procurement Monitoring</span><br>
-                    <span class="text-s md:text-xs">Information System</span>
+                    <span class="text-xs">Procurement Monitoring</span><br>
+                    <span class="text-xs">Information System</span>
                 </h1>
+            </a>
+            <!-- Collapsed logo -->
+            <a href="#" aria-label="PMIS" class="sidebar-logo-collapsed focus:outline-hidden focus:opacity-80">
+                <div class="flex flex-col items-center gap-[2px]">
+                    <span class="text-white font-black text-[15px] leading-none">P</span>
+                    <span class="text-white/70 text-[6px] leading-none tracking-[0.15em] uppercase">·</span>
+                    <span class="text-white font-black text-[15px] leading-none">M</span>
+                    <span class="text-white/70 text-[6px] leading-none tracking-[0.15em] uppercase">·</span>
+                    <span class="text-white font-black text-[15px] leading-none">I</span>
+                    <span class="text-white/70 text-[6px] leading-none tracking-[0.15em] uppercase">·</span>
+                    <span class="text-white font-black text-[15px] leading-none">S</span>
+                </div>
             </a>
         </div>
 
+        <!-- Collapse Toggle (desktop only) -->
+        <button onclick="toggleSidebar()" id="sidebar-collapse-btn"
+            class="hidden lg:flex items-center justify-between w-full px-4 py-1.5
+                   bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-900
+                   text-gray-400 dark:text-neutral-500 text-[9px] font-semibold tracking-widest uppercase
+                   border-b border-gray-200 dark:border-neutral-600
+                   transition-colors duration-200
+                   focus:outline-none"
+            title="Toggle Sidebar">
+            <span class="sidebar-label opacity-70">Menu</span>
+            <svg id="sidebar-toggle-icon" class="size-3 flex-shrink-0 transition-transform duration-300"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+            </svg>
+        </button>
+
         <!-- Scrollable Menu -->
         <div
-            class="flex-1 overflow-y-auto
-           [&::-webkit-scrollbar]:w-2
+            class="flex-1 overflow-y-auto overflow-x-hidden
+           [&::-webkit-scrollbar]:w-1
            [&::-webkit-scrollbar-thumb]:rounded-full
            [&::-webkit-scrollbar-track]:bg-gray-100
            [&::-webkit-scrollbar-thumb]:bg-gray-300
@@ -195,7 +224,7 @@
                     @can('view_reports')
                         <li class="pt-4 mt-4 border-t border-gray-200 dark:border-neutral-600">
                             <div
-                                class="px-3 py-2 flex items-center gap-x-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                class="sidebar-section-header px-3 py-2 flex items-center gap-x-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                     class="size-4">
                                     <path
@@ -226,7 +255,7 @@
                                             clip-rule="evenodd" />
                                     </svg>
                                     <span class="flex-1 text-left">BAC</span>
-                                    <svg class="hs-accordion-active:rotate-180 size-4 transition-transform duration-200"
+                                    <svg class="sidebar-accordion-chevron hs-accordion-active:rotate-180 size-4 transition-transform duration-200"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -285,9 +314,9 @@
 
         <!-- Fixed Admin Button -->
         @can('view_any_administrator')
-            <div class=" p-4 bg-white border-t border-gray-200 dark:bg-neutral-700 dark:border-neutral-800">
-                <a href="{{ url('/administrator') }}" target="_blank" rel="noopener noreferrer"
-                    class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg mt-4 mb-4
+            <div class="sidebar-bottom px-4 py-0.5 bg-white">
+                <a href="{{ url('/administrator') }}" target="_blank" rel="noopener noreferrer" title="Administrator"
+                    class="sidebar-nav-item flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg mt-4 mb-4
                             transition-all duration-200 border-l-4
                             {{ request()->is('administrator*')
                                 ? 'bg-indigo-50 text-indigo-700 border-l-indigo-600 dark:bg-indigo-900/30 dark:text-white dark:border-l-indigo-400'
