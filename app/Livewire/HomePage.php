@@ -4,12 +4,14 @@ namespace App\Livewire;
 
 use App\Models\Procurement;
 use App\Models\Division;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 
 #[Title('WVCHD PMIS')]
+#[Lazy]
 class HomePage extends Component
 {
     use WithPagination;
@@ -427,6 +429,11 @@ class HomePage extends Component
             ->orderByDesc('count')
             ->get();
     }
+    public function placeholder()
+    {
+        return view('livewire.home-page-skeleton');
+    }
+
     public function render()
     {
         return view('livewire.home-page', [

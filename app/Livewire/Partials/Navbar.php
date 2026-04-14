@@ -14,12 +14,14 @@ class Navbar extends Component
     {
         $this->user = session('user');
 
-        // Fetch user photo from ApiService
-        $apiService = new ApiService();
-        $this->userPhoto = $apiService->fetchUserPhoto($this->user)
-            ?? asset('storage/employees/default.png');
+        if (is_array($this->user)) {
+            $apiService = new ApiService();
+            $this->userPhoto = $apiService->fetchUserPhoto($this->user)
+                ?? asset('storage/employees/default.png');
+        } else {
+            $this->userPhoto = asset('storage/employees/default.png');
+        }
 
-        // Optional: store in session if you want to reuse elsewhere
         session(['user_photo' => $this->userPhoto]);
     }
 

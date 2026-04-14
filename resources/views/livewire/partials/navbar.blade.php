@@ -1,6 +1,6 @@
 <div class="fixed top-0 inset-x-0 z-60 pt-20 ">
-    <header
-        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-gray-200 text-sm py-2.5 lg:ps-55 dark:bg-emerald-600 ">
+    <header id="app-topbar"
+        class=" top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full h-11 bg-emerald-600 border-gray-200 text-sm py-2.5 dark:bg-emerald-600 ">
         <nav class="px-4 sm:px-6 flex basis-full items-center w-full mx-auto">
             <div class="me-5 lg:me-0 lg:hidden">
                 <!-- Logo -->
@@ -11,7 +11,15 @@
                 <!-- End Logo -->
 
                 <div class="lg:hidden ms-1">
-
+                    <!-- Hamburger Toggle -->
+                    <button type="button"
+                        class="size-9 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-white hover:bg-emerald-700 focus:outline-hidden"
+                        data-hs-overlay="#app-sidebar" aria-controls="app-sidebar" aria-label="Toggle navigation">
+                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -46,7 +54,8 @@
                         <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open.toString()"
                             class="size-9.5 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 focus:outline-hidden disabled:opacity-50 disabled:pointer-events-none dark:text-white"
                             aria-haspopup="menu" aria-label="Dropdown">
-                            <img class="shrink-0 w-8 h-8 rounded-full" src="{{ $userPhoto }}" alt="Avatar">
+                            <img class="shrink-0 w-8 h-8 rounded-full" src="{{ $userPhoto }}" alt="Avatar"
+                                onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23ffffff\'%3E%3Cpath d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/%3E%3C/svg%3E';">
                         </button>
 
                         <div class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60 bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full"
@@ -96,8 +105,8 @@
     @endphp
 
     <div class="h-8">
-        <div
-            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 lg:pl-55 dark:bg-neutral-700 dark:border-neutral-700">
+        <div id="app-breadcrumb"
+            class=" top-0 inset-x-0 z-10 bg-white border-y border-gray-200 px-2 sm:px-2 lg:px-4 dark:bg-neutral-700 dark:border-neutral-700">
             <div class="flex items-center py-1">
                 <ol class="ms-3 flex items-center whitespace-nowrap">
                     @foreach ($segments as $index => $segment)
