@@ -1201,6 +1201,44 @@
                                             @endif
                                         </span>
                                     </button>
+                                @else
+                                    {{-- Disabled button: visible so users know the action exists, hover tooltip explains what's needed --}}
+                                    <div x-data="{ showTip: false, tipX: 0, tipY: 0 }"
+                                        @mouseenter="
+                                            const r = $el.getBoundingClientRect();
+                                            tipX = r.right;
+                                            tipY = r.bottom + 6;
+                                            showTip = true
+                                        "
+                                        @mouseleave="showTip = false">
+                                        <button type="button" disabled
+                                            class="px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-gray-100 dark:bg-neutral-700 text-gray-400 dark:text-neutral-400 border border-gray-300 dark:border-neutral-600 cursor-not-allowed select-none">
+                                            <span class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                                Forward to PMU
+                                            </span>
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="showTip" x-cloak
+                                                :style="`position:fixed; top:${tipY}px; left:${tipX}px; transform: translateX(-100%);`"
+                                                class="z-[9999] w-72 rounded-lg bg-gray-800 dark:bg-neutral-900 text-white text-xs px-3 py-2 shadow-xl pointer-events-none leading-relaxed">
+                                                <p class="font-semibold mb-1">Select items and complete all required
+                                                    fields to forward:</p>
+                                                <ul class="list-disc list-inside space-y-0.5 text-gray-300">
+                                                    <li>Resolution Award Number</li>
+                                                    <li>Resolution Award Date</li>
+                                                    <li>Notice of Award Number</li>
+                                                    <li>Awarded Amount</li>
+                                                    <li>Supplier</li>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -2209,7 +2247,8 @@
 
                                     {{-- Returned of Canvass --}}
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="bulkEditData.date_returned_of_canvass"
+                                        <input type="date"
+                                            wire:model.defer="bulkEditData.date_returned_of_canvass"
                                             class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
                                             {{ $errors->has('bulkEditData.date_returned_of_canvass') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                             @disabled($this->disableBulkInputs)>
@@ -2217,7 +2256,8 @@
 
                                     {{-- Abstract of Canvass --}}
                                     <td class="px-2 py-2">
-                                        <input type="date" wire:model.defer="bulkEditData.abstract_of_canvass_date"
+                                        <input type="date"
+                                            wire:model.defer="bulkEditData.abstract_of_canvass_date"
                                             class="w-full px-2 py-1 text-xs border rounded focus:ring-2 dark:bg-neutral-800 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed
                                             {{ $errors->has('bulkEditData.abstract_of_canvass_date') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-neutral-600 focus:ring-emerald-500' }}"
                                             @disabled($this->disableBulkInputs)>
