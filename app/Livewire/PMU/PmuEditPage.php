@@ -632,7 +632,6 @@ class PmuEditPage extends Component
             && !empty($pmuPo->po_contract_number)
             && !empty($pmuPo->contract_amount)
             && !empty($pmuPo->contract_signing_date)
-            && !empty($pmuPo->notice_to_proceed_date)
             && !empty($pmuPo->po_contract_number_link)
             && !empty($pmuPo->date_po_receipt_by_supplier)
             && !empty($pmuPo->date_coa_stamped_received);
