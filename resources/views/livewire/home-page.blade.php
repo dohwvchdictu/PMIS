@@ -205,9 +205,9 @@
         </div>
     @endif
 
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" wire:ignore>
-        <!-- Category Chart -->
+    <!-- Category & Fund Source Charts -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <!-- Procurement by Category -->
         <div
             class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-6">
@@ -220,11 +220,64 @@
                             d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Procurement by Categories</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Procurement by Category</h3>
             </div>
             @if ($categoryCounts->isNotEmpty())
-                <div class="h-80">
-                    <canvas id="categoryChart"></canvas>
+                <div class="h-80" wire:ignore x-data="{
+                    chart: null,
+                    data: @js($categoryCounts),
+                    colors: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#EF4444', '#14B8A6', '#F43F5E', '#6366F1', '#A855F7', '#22D3EE', '#FACC15']
+                }" x-init="$nextTick(() => {
+                    if (!window.Chart || !data.length) return;
+                    const isDark = document.documentElement.classList.contains('dark');
+                    chart = new window.Chart($refs.cCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.map(d => d.name),
+                            datasets: [{
+                                data: data.map(d => d.count),
+                                backgroundColor: colors,
+                                borderColor: isDark ? '#1F2937' : '#fff',
+                                borderWidth: 3,
+                                hoverOffset: 15
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '65%',
+                            plugins: {
+                                legend: {
+                                    position: window.innerWidth < 640 ? 'bottom' : 'right',
+                                    labels: {
+                                        color: isDark ? '#F3F4F6' : '#374151',
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 14,
+                                        font: { size: 11, weight: '600' },
+                                        generateLabels(c) {
+                                            return c.data.labels.map((l, i) => ({
+                                                text: l + ': ' + c.data.datasets[0].data[i],
+                                                fillStyle: c.data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i
+                                            }));
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label(ctx) {
+                                                const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                                return ctx.label + ': ' + ctx.parsed + ' (' + (ctx.parsed / t * 100).toFixed(1) + '%)';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })">
+                    <canvas x-ref="cCanvas"></canvas>
                 </div>
             @else
                 <div class="h-80 flex items-center justify-center">
@@ -233,106 +286,79 @@
             @endif
         </div>
 
-        <!-- Stage & Remarks Combined -->
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-6">
-            <!-- Procurement Stage Chart -->
-            <div
-                class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="bg-blue-500/10 p-3 rounded-xl">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">By Stage</h3>
-                </div>
-                @if ($procurementStagePerLotCounts->isNotEmpty() || $procurementStagePerItemCounts->isNotEmpty())
-                    <div class="h-80">
-                        <canvas id="procurementStageChart"></canvas>
-                    </div>
-                @else
-                    <div class="h-80 flex items-center justify-center">
-                        <p class="text-gray-400 dark:text-gray-500">No stage data available</p>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Remarks Chart -->
-            <div
-                class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="bg-pink-500/10 p-3 rounded-xl">
-                        <svg class="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">By Remarks</h3>
-                </div>
-                @if ($remarksPerLotCounts->isNotEmpty() || $remarksPerItemCounts->isNotEmpty())
-                    <div class="h-80">
-                        <canvas id="remarksChart"></canvas>
-                    </div>
-                @else
-                    <div class="h-80 flex items-center justify-center">
-                        <p class="text-gray-400 dark:text-gray-500">No remarks data available</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <!-- Venue Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" wire:ignore>
-        <!-- Venue Specific Chart -->
+        <!-- Procurement by Fund Source -->
         <div
             class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
             <div class="flex items-center gap-3 mb-6">
-                <div class="bg-cyan-500/10 p-3 rounded-xl">
-                    <svg class="w-6 h-6 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor"
+                <div class="bg-violet-500/10 p-3 rounded-xl">
+                    <svg class="w-6 h-6 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Procurement by Venue Specific</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Procurement by Fund Source</h3>
             </div>
-            @if ($venueSpecificCounts->isNotEmpty())
-                <div class="h-80">
-                    <canvas id="venueSpecificChart"></canvas>
+            @if ($fundSourceCounts->isNotEmpty())
+                <div class="h-80" wire:ignore x-data="{
+                    chart: null,
+                    data: @js($fundSourceCounts),
+                    colors: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#7C3AED', '#6D28D9', '#DDD6FE', '#5B21B6', '#4C1D95', '#EDE9FE', '#F5F3FF']
+                }" x-init="$nextTick(() => {
+                    if (!window.Chart || !data.length) return;
+                    const isDark = document.documentElement.classList.contains('dark');
+                    chart = new window.Chart($refs.fCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.map(d => d.name),
+                            datasets: [{
+                                data: data.map(d => d.count),
+                                backgroundColor: colors,
+                                borderColor: isDark ? '#1F2937' : '#fff',
+                                borderWidth: 3,
+                                hoverOffset: 15
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '65%',
+                            plugins: {
+                                legend: {
+                                    position: window.innerWidth < 640 ? 'bottom' : 'right',
+                                    labels: {
+                                        color: isDark ? '#F3F4F6' : '#374151',
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 14,
+                                        font: { size: 11, weight: '600' },
+                                        generateLabels(c) {
+                                            return c.data.labels.map((l, i) => ({
+                                                text: l + ': ' + c.data.datasets[0].data[i],
+                                                fillStyle: c.data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i
+                                            }));
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label(ctx) {
+                                                const t = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                                return ctx.label + ': ' + ctx.parsed + ' (' + (ctx.parsed / t * 100).toFixed(1) + '%)';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })">
+                    <canvas x-ref="fCanvas"></canvas>
                 </div>
             @else
                 <div class="h-80 flex items-center justify-center">
-                    <p class="text-gray-400 dark:text-gray-500">No venue specific data available</p>
-                </div>
-            @endif
-        </div>
-
-        <!-- Venue Province/HUC Chart -->
-        <div
-            class="bg-white dark:bg-neutral-700 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-neutral-700">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="bg-teal-500/10 p-3 rounded-xl">
-                    <svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Procurement by Province/HUC</h3>
-            </div>
-            @if ($venueProvinceHucCounts->isNotEmpty())
-                <div class="h-80">
-                    <canvas id="venueProvinceHucChart"></canvas>
-                </div>
-            @else
-                <div class="h-80 flex items-center justify-center">
-                    <p class="text-gray-400 dark:text-gray-500">No province/HUC data available</p>
+                    <p class="text-gray-400 dark:text-gray-500">No fund source data available</p>
                 </div>
             @endif
         </div>
@@ -394,400 +420,5 @@
             }
         }
     </style>
-
-    <script>
-        let categoryChart = null;
-        let procurementStageChart = null;
-        let remarksChart = null;
-        let venueSpecificChart = null;
-        let venueProvinceHucChart = null;
-
-        function initializeCharts() {
-            if (typeof Chart === 'undefined') {
-                console.error('Chart.js not loaded!');
-                return;
-            }
-
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            const isMobile = window.innerWidth < 640;
-
-            // Chart.js defaults - Updated for better dark mode support
-            Chart.defaults.color = isDarkMode ? '#E5E7EB' : '#6B7280';
-            Chart.defaults.plugins.legend.labels.color = isDarkMode ? '#F3F4F6' : '#374151';
-            Chart.defaults.plugins.legend.labels.font = {
-                size: isMobile ? 10 : 11,
-                weight: '600'
-            };
-            Chart.defaults.plugins.legend.labels.padding = isMobile ? 12 : 15;
-            Chart.defaults.plugins.tooltip.backgroundColor = isDarkMode ? 'rgba(31, 41, 55, 0.95)' :
-                'rgba(255, 255, 255, 0.95)';
-            Chart.defaults.plugins.tooltip.titleColor = isDarkMode ? '#F9FAFB' : '#111827';
-            Chart.defaults.plugins.tooltip.bodyColor = isDarkMode ? '#F3F4F6' : '#374151';
-            Chart.defaults.plugins.tooltip.borderColor = isDarkMode ? '#6B7280' : '#E5E7EB';
-            Chart.defaults.plugins.tooltip.borderWidth = 1;
-            Chart.defaults.plugins.tooltip.padding = 12;
-            Chart.defaults.plugins.tooltip.cornerRadius = 8;
-
-            // Destroy existing charts
-            [categoryChart, procurementStageChart, remarksChart, venueSpecificChart, venueProvinceHucChart].forEach(
-                chart => {
-                    if (chart) chart.destroy();
-                });
-
-            // Modern color palettes
-            const vibrantColors = [
-                '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899',
-                '#06B6D4', '#84CC16', '#F97316', '#EF4444', '#14B8A6',
-                '#F43F5E', '#6366F1', '#A855F7', '#22D3EE', '#FACC15'
-            ];
-
-            const blueShades = ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#2563EB', '#1D4ED8'];
-            const greenShades = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#059669', '#047857'];
-            const purpleShades = ['#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE', '#7C3AED', '#6D28D9'];
-            const pinkShades = ['#EC4899', '#F472B6', '#F9A8D4', '#FBCFE8', '#DB2777', '#BE185D'];
-
-            // Helper function for doughnut charts
-            function createDoughnutChart(canvasId, perLotData, perItemData, lotColors, itemColors) {
-                const ctx = document.getElementById(canvasId);
-                if (!ctx) return null;
-
-                const labels = [];
-                const data = [];
-                const colors = [];
-
-                if (perLotData && perLotData.length > 0) {
-                    perLotData.forEach((item, idx) => {
-                        labels.push(`${item.name} (Lot)`);
-                        data.push(item.count);
-                        colors.push(lotColors[idx % lotColors.length]);
-                    });
-                }
-
-                if (perItemData && perItemData.length > 0) {
-                    perItemData.forEach((item, idx) => {
-                        labels.push(`${item.name} (Item)`);
-                        data.push(item.count);
-                        colors.push(itemColors[idx % itemColors.length]);
-                    });
-                }
-
-                if (data.length === 0) return null;
-
-                return new Chart(ctx.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors,
-                            borderColor: isDarkMode ? '#1F2937' : '#ffffff',
-                            borderWidth: 3,
-                            hoverOffset: 15,
-                            hoverBorderWidth: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: isMobile ? 'bottom' : 'right',
-                                labels: {
-                                    color: isDarkMode ? '#F3F4F6' : '#374151',
-                                    usePointStyle: true,
-                                    pointStyle: 'circle',
-                                    padding: isMobile ? 12 : 15,
-                                    font: {
-                                        size: isMobile ? 10 : 11,
-                                        weight: '600'
-                                    },
-                                    generateLabels: function(chart) {
-                                        const data = chart.data;
-                                        return data.labels.map((label, i) => ({
-                                            text: `${label}: ${data.datasets[0].data[i]}`,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            fontColor: isDarkMode ? '#F3F4F6' : '#374151',
-                                            hidden: false,
-                                            index: i
-                                        }));
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.parsed || 0;
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((value / total) * 100).toFixed(1);
-                                        return `${label}: ${value} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '65%'
-                    }
-                });
-            }
-
-            // Category Chart
-            const categoryData = @json($categoryCounts);
-            if (categoryData && categoryData.length > 0) {
-                const categoryCtx = document.getElementById('categoryChart');
-                if (categoryCtx) {
-                    categoryChart = new Chart(categoryCtx.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: categoryData.map(item => item.name),
-                            datasets: [{
-                                data: categoryData.map(item => item.count),
-                                backgroundColor: vibrantColors,
-                                borderColor: isDarkMode ? '#1F2937' : '#ffffff',
-                                borderWidth: 3,
-                                hoverOffset: 15,
-                                hoverBorderWidth: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: isMobile ? 'bottom' : 'right',
-                                    labels: {
-                                        color: isDarkMode ? '#F3F4F6' : '#374151',
-                                        usePointStyle: true,
-                                        pointStyle: 'circle',
-                                        padding: isMobile ? 12 : 15,
-                                        font: {
-                                            size: isMobile ? 10 : 11,
-                                            weight: '600'
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.label || '';
-                                            const value = context.parsed || 0;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = ((value / total) * 100).toFixed(1);
-                                            return `${label}: ${value} (${percentage}%)`;
-                                        }
-                                    }
-                                }
-                            },
-                            cutout: '65%'
-                        }
-                    });
-                }
-            }
-
-            // Procurement Stage Chart
-            procurementStageChart = createDoughnutChart(
-                'procurementStageChart',
-                @json($procurementStagePerLotCounts ?? []),
-                @json($procurementStagePerItemCounts ?? []),
-                blueShades,
-                greenShades
-            );
-
-            // Remarks Chart
-            remarksChart = createDoughnutChart(
-                'remarksChart',
-                @json($remarksPerLotCounts ?? []),
-                @json($remarksPerItemCounts ?? []),
-                purpleShades,
-                pinkShades
-            );
-
-            // Venue Specific Chart
-            const venueSpecificData = @json($venueSpecificCounts);
-            if (venueSpecificData && venueSpecificData.length > 0) {
-                const venueSpecificCtx = document.getElementById('venueSpecificChart');
-                if (venueSpecificCtx) {
-                    venueSpecificChart = new Chart(venueSpecificCtx.getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: venueSpecificData.map(item => item.name),
-                            datasets: [{
-                                label: 'Count',
-                                data: venueSpecificData.map(item => item.count),
-                                backgroundColor: '#06B6D4',
-                                borderRadius: 8,
-                                borderSkipped: false,
-                                hoverBackgroundColor: '#0891B2'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return `Count: ${context.parsed.y}`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
-                                    },
-                                    ticks: {
-                                        maxRotation: 45,
-                                        minRotation: 45,
-                                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                                        font: {
-                                            size: isMobile ? 9 : 10
-                                        }
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                                        font: {
-                                            size: isMobile ? 9 : 10
-                                        }
-                                    },
-                                    grid: {
-                                        color: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-
-            // Venue Province/HUC Chart
-            const venueProvinceHucData = @json($venueProvinceHucCounts);
-            if (venueProvinceHucData && venueProvinceHucData.length > 0) {
-                const venueProvinceHucCtx = document.getElementById('venueProvinceHucChart');
-                if (venueProvinceHucCtx) {
-                    venueProvinceHucChart = new Chart(venueProvinceHucCtx.getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: venueProvinceHucData.map(item => item.name),
-                            datasets: [{
-                                label: 'Count',
-                                data: venueProvinceHucData.map(item => item.count),
-                                backgroundColor: '#14B8A6',
-                                borderRadius: 8,
-                                borderSkipped: false,
-                                hoverBackgroundColor: '#0D9488'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return `Count: ${context.parsed.y}`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
-                                    },
-                                    ticks: {
-                                        maxRotation: 45,
-                                        minRotation: 45,
-                                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                                        font: {
-                                            size: isMobile ? 9 : 10
-                                        }
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        color: isDarkMode ? '#9CA3AF' : '#6B7280',
-                                        font: {
-                                            size: isMobile ? 9 : 10
-                                        }
-                                    },
-                                    grid: {
-                                        color: isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-
-            console.log('Charts initialized successfully');
-        }
-
-        // Debounce helper
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        // Initialize charts
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => setTimeout(initializeCharts, 100));
-        } else {
-            setTimeout(initializeCharts, 100);
-        }
-
-        // Handle resize
-        window.addEventListener('resize', debounce(initializeCharts, 300));
-
-        // Livewire integration
-        document.addEventListener('livewire:load', () => {
-            Livewire.hook('message.processed', () => setTimeout(initializeCharts, 100));
-        });
-
-        // Dark mode observer
-        const themeObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    setTimeout(initializeCharts, 100);
-                }
-            });
-        });
-
-        themeObserver.observe(document.documentElement, {
-            attributes: true
-        });
-
-        // System theme changes
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                setTimeout(initializeCharts, 100);
-            });
-        }
-
-        // Cleanup
-        document.addEventListener('livewire:shutdown', () => {
-            themeObserver.disconnect();
-            [categoryChart, procurementStageChart, remarksChart, venueSpecificChart, venueProvinceHucChart].forEach(
-                chart => {
-                    if (chart) chart.destroy();
-                });
-        });
-    </script>
 
 </div>

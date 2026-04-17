@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Procurement;
 use App\Models\Division;
+use App\Models\FundSource;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -429,6 +430,27 @@ class HomePage extends Component
             ->orderByDesc('count')
             ->get();
     }
+    public function getFundSourceCountsProperty()
+    {
+        $baseQuery = Procurement::query()
+            ->whereNotNull('procurements.fund_source_id');
+
+        $baseQuery = $this->getDivisionFilter($baseQuery);
+
+        return (clone $baseQuery)
+            ->join('fund_sources', 'procurements.fund_source_id', '=', 'fund_sources.id')
+            ->select('fund_sources.fundsources as name', DB::raw('count(*) as count'))
+            ->groupBy('fund_sources.id', 'fund_sources.fundsources')
+            ->orderByDesc('count')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'count' => $item->count,
+                ];
+            });
+    }
+
     public function placeholder()
     {
         return view('livewire.home-page-skeleton');
@@ -449,6 +471,7 @@ class HomePage extends Component
             'procurementStagePerItemCounts' => $this->procurementStagePerItemCounts,
             'remarksPerLotCounts' => $this->remarksPerLotCounts,
             'remarksPerItemCounts' => $this->remarksPerItemCounts,
+            'fundSourceCounts' => $this->fundSourceCounts,
             'divisions' => Division::where('is_active', true)->get(),
         ]);
     }
