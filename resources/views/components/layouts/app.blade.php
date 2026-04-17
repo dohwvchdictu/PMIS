@@ -424,14 +424,15 @@
                     var label = (span && span.textContent.trim()) || el.title || '';
                     if (label) el.dataset.tooltip = label;
                 }
-                // Remove old listeners by cloning
-                var clone = el.cloneNode(true);
-                el.parentNode.replaceChild(clone, el);
-                if (clone.dataset.tooltip) {
-                    clone.addEventListener('mouseenter', function() {
-                        showTip(clone, clone.dataset.tooltip);
+                // Skip already-initialized elements to avoid duplicate listeners
+                // (do NOT clone — cloning would strip Preline accordion event listeners)
+                if (el.dataset.tooltipInit) return;
+                if (el.dataset.tooltip) {
+                    el.dataset.tooltipInit = '1';
+                    el.addEventListener('mouseenter', function() {
+                        showTip(el, el.dataset.tooltip);
                     });
-                    clone.addEventListener('mouseleave', hideTip);
+                    el.addEventListener('mouseleave', hideTip);
                 }
             });
         }
