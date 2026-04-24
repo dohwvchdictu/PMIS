@@ -25,6 +25,7 @@ class ProcurementStatusPage extends Component
     public bool $showAdvancedFilters = false;
     public string $pmoEndUserFilter = '';
     public string $sourceOfFundsFilter = '';
+    public string $categoryFilter = '';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -35,6 +36,7 @@ class ProcurementStatusPage extends Component
         'showAdvancedFilters' => ['except' => false],
         'pmoEndUserFilter' => ['except' => ''],
         'sourceOfFundsFilter' => ['except' => ''],
+        'categoryFilter' => ['except' => ''],
     ];
 
     protected $paginationTheme = 'tailwind';
@@ -124,6 +126,12 @@ class ProcurementStatusPage extends Component
         $this->resetPage('ongoingPage');
     }
 
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+        $this->resetPage('ongoingPage');
+    }
+
     // -------------------------------------------------------------------------
     // Export
     // -------------------------------------------------------------------------
@@ -155,6 +163,7 @@ class ProcurementStatusPage extends Component
 
         $query = Procurement::query()
             ->with([
+                'category',
                 'clusterCommittee',
                 'fundSource',
                 'currentPrStage',
@@ -193,6 +202,12 @@ class ProcurementStatusPage extends Component
         if (!empty($this->sourceOfFundsFilter)) {
             $query->whereHas('fundSource', function ($q) {
                 $q->where('fundsources', $this->sourceOfFundsFilter);
+            });
+        }
+
+        if (!empty($this->categoryFilter)) {
+            $query->whereHas('category', function ($q) {
+                $q->where('category', $this->categoryFilter);
             });
         }
 
@@ -274,6 +289,7 @@ class ProcurementStatusPage extends Component
         // Filters: NEVER reached stage 7 in entire history + date range + search
         $ongoingQuery = Procurement::query()
             ->with([
+                'category',
                 'clusterCommittee',
                 'fundSource',
                 'currentPrStage',
@@ -313,6 +329,12 @@ class ProcurementStatusPage extends Component
         if (!empty($this->sourceOfFundsFilter)) {
             $ongoingQuery->whereHas('fundSource', function ($q) {
                 $q->where('fundsources', $this->sourceOfFundsFilter);
+            });
+        }
+
+        if (!empty($this->categoryFilter)) {
+            $ongoingQuery->whereHas('category', function ($q) {
+                $q->where('category', $this->categoryFilter);
             });
         }
 
@@ -378,6 +400,7 @@ class ProcurementStatusPage extends Component
             'ongoingProcurements' => $ongoingProcurements,
             'pmoEndUserOptions' => \App\Models\ClusterCommittee::distinct()->pluck('clustercommittee')->filter()->sort()->values(),
             'sourceOfFundsOptions' => \App\Models\FundSource::distinct()->pluck('fundsources')->filter()->sort()->values(),
+            'categoryOptions' => \App\Models\Category::where('is_active', true)->orderBy('category')->pluck('category')->filter()->values(),
         ]);
     }
 
@@ -444,22 +467,30 @@ class ProcurementStatusPage extends Component
             : ($procurement->abc ?? '');
 
         $contractTotal = $post?->awarded_amount ?? '';
-
-        // ── Determine ABC MOOE vs CO split ─────────────────────────────────────
         $endUser = $procurement->clusterCommittee?->clustercommittee ?? '';
+        $fundSource = $procurement->fundSource?->fundsources ?? '';
+        // ── Determine ABC MOOE vs CO split ─────────────────────────────────────
         $abcMooe = '';
         $abcCo = '';
 
-        if ($abcTotal) {
-            if ($abcTotal >= 50000 && stripos($endUser, 'HFEP') !== false) {
-                // Criteria met: CO gets the full amount
-                $abcCo = $abcTotal;
-                $abcMooe = 0;
-            } else {
-                // Criteria NOT met: MOOE gets the full amount
-                $abcMooe = $abcTotal;
-                $abcCo = 0;
-            }
+        $category = $procurement->category?->category ?? '';
+
+        $coCategories = ['IT Peripherals/Equipment', 'Medical Equipment', 'Medical Devices'];
+        $isCo = $abcTotal >= 50000 && collect($coCategories)->contains(
+            fn($kw) => stripos($category, $kw) !== false
+        );
+
+        if ($abcTotal !== '') {
+            $abcCo = $isCo ? $abcTotal : 0;
+            $abcMooe = $isCo ? 0 : $abcTotal;
+        }
+
+        $contractMooe = '';
+        $contractCo = '';
+
+        if ($contractTotal !== '' && $contractTotal !== null) {
+            $contractCo = $isCo ? $contractTotal : 0;
+            $contractMooe = $isCo ? 0 : $contractTotal;
         }
 
         return [
@@ -484,8 +515,8 @@ class ProcurementStatusPage extends Component
             'abc_mooe' => $abcMooe,
             'abc_co' => $abcCo,
             'contract_total' => $contractTotal,
-            'contract_mooe' => '',
-            'contract_co' => '',
+            'contract_mooe' => $contractMooe,
+            'contract_co' => $contractCo,
         ];
     }
 }
