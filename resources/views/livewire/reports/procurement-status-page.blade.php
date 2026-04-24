@@ -97,7 +97,58 @@
                         </select>
                     </div>
 
+                    <!-- Toggle Advanced Filters -->
+                    <div class="shrink-0">
+                        <button type="button" wire:click="$toggle('showAdvancedFilters')"
+                            class="inline-flex items-center justify-center w-10 h-10 text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 border border-emerald-300 dark:border-emerald-600 rounded-lg bg-white hover:bg-emerald-50 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors duration-150"
+                            title="{{ $showAdvancedFilters ? 'Hide Filters' : 'Show Filters' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                        </button>
+                    </div>
+
                 </div>
+
+                <!-- Advanced Filters (hidden by default) -->
+                @if ($showAdvancedFilters)
+                    <div
+                        class="flex items-end gap-2 flex-wrap mt-3 pt-3 border-t border-gray-200 dark:border-neutral-700">
+
+                        <!-- PMO/End-User Filter -->
+                        <div class="relative flex-1 min-w-[180px]">
+                            <span
+                                class="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">PMO/End-User</span>
+                            <div class="relative">
+                                <select wire:model.live="pmoEndUserFilter"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    <option value="">All PMO/End-Users</option>
+                                    @foreach ($pmoEndUserOptions as $option)
+                                        <option value="{{ $option }}">{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Source of Funds Filter -->
+                        <div class="relative flex-1 min-w-[180px]">
+                            <span
+                                class="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide block mb-1">Source
+                                of Funds</span>
+                            <div class="relative">
+                                <select wire:model.live="sourceOfFundsFilter"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                                    <option value="">All Sources</option>
+                                    @foreach ($sourceOfFundsOptions as $option)
+                                        <option value="{{ $option }}">{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -183,7 +234,8 @@
                                 class="px-2 py-2 text-center font-semibold border border-emerald-900 whitespace-nowrap min-w-[110px]">
                                 Inspection &amp; Acceptance</th>
                             <!-- ABC sub-headers -->
-                            <th class="px-2 py-2 text-center font-semibold border border-emerald-900 min-w-[90px]">Total
+                            <th class="px-2 py-2 text-center font-semibold border border-emerald-900 min-w-[90px]">
+                                Total
                             </th>
                             <th class="px-2 py-2 text-center font-semibold border border-emerald-900 min-w-[90px]">MOOE
                             </th>

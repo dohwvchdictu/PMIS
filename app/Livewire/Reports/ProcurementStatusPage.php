@@ -22,6 +22,9 @@ class ProcurementStatusPage extends Component
     public string $search = '';
     public int $perPage = 5;
     public int $ongoingPerPage = 5;
+    public bool $showAdvancedFilters = false;
+    public string $pmoEndUserFilter = '';
+    public string $sourceOfFundsFilter = '';
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -29,6 +32,9 @@ class ProcurementStatusPage extends Component
         'quarter' => ['except' => ''],
         'perPage' => ['except' => 5],
         'ongoingPerPage' => ['except' => 5],
+        'showAdvancedFilters' => ['except' => false],
+        'pmoEndUserFilter' => ['except' => ''],
+        'sourceOfFundsFilter' => ['except' => ''],
     ];
 
     protected $paginationTheme = 'tailwind';
@@ -106,6 +112,18 @@ class ProcurementStatusPage extends Component
         $this->resetPage('ongoingPage');
     }
 
+    public function updatingPmoEndUserFilter(): void
+    {
+        $this->resetPage();
+        $this->resetPage('ongoingPage');
+    }
+
+    public function updatingSourceOfFundsFilter(): void
+    {
+        $this->resetPage();
+        $this->resetPage('ongoingPage');
+    }
+
     // -------------------------------------------------------------------------
     // Export
     // -------------------------------------------------------------------------
@@ -163,6 +181,18 @@ class ProcurementStatusPage extends Component
             $query->where(function ($q) use ($term) {
                 $q->where('pr_number', 'like', $term)
                     ->orWhere('procurement_program_project', 'like', $term);
+            });
+        }
+
+        if (!empty($this->pmoEndUserFilter)) {
+            $query->whereHas('clusterCommittee', function ($q) {
+                $q->where('clustercommittee', $this->pmoEndUserFilter);
+            });
+        }
+
+        if (!empty($this->sourceOfFundsFilter)) {
+            $query->whereHas('fundSource', function ($q) {
+                $q->where('fundsources', $this->sourceOfFundsFilter);
             });
         }
 
@@ -274,6 +304,18 @@ class ProcurementStatusPage extends Component
             });
         }
 
+        if (!empty($this->pmoEndUserFilter)) {
+            $ongoingQuery->whereHas('clusterCommittee', function ($q) {
+                $q->where('clustercommittee', $this->pmoEndUserFilter);
+            });
+        }
+
+        if (!empty($this->sourceOfFundsFilter)) {
+            $ongoingQuery->whereHas('fundSource', function ($q) {
+                $q->where('fundsources', $this->sourceOfFundsFilter);
+            });
+        }
+
         $ongoingProcurements = $ongoingQuery->latest('date_receipt')->paginate($this->ongoingPerPage, ['*'], 'ongoingPage');
 
         // Batch-load for ongoing
@@ -334,6 +376,8 @@ class ProcurementStatusPage extends Component
             'rows' => $rows,
             'ongoingRows' => $ongoingRows,
             'ongoingProcurements' => $ongoingProcurements,
+            'pmoEndUserOptions' => \App\Models\ClusterCommittee::distinct()->pluck('clustercommittee')->filter()->sort()->values(),
+            'sourceOfFundsOptions' => \App\Models\FundSource::distinct()->pluck('fundsources')->filter()->sort()->values(),
         ]);
     }
 
