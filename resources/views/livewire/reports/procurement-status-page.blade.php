@@ -28,7 +28,7 @@
                         </p>
                     </div>
 
-                    {{-- <!-- Export -->
+                    <!-- Export -->
                     <button type="button" wire:click="exportToExcel"
                         class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                         wire:loading.attr="disabled">
@@ -46,7 +46,7 @@
                             </path>
                         </svg>
                         Export
-                    </button> --}}
+                    </button>
                 </div>
             </div>
 
@@ -719,7 +719,7 @@
     @endphp
 
     <div
-        class="mt-6 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
+        class="mt-6 mb-6 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
 
         {{-- Header --}}
         <div class="px-5 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center gap-2">

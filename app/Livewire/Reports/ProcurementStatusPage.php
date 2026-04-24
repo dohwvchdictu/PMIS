@@ -147,7 +147,10 @@ class ProcurementStatusPage extends Component
                 $startDate,
                 $endDate,
                 $this->year,
-                $this->quarter
+                $this->quarter,
+                $this->pmoEndUserFilter,
+                $this->sourceOfFundsFilter,
+                $this->categoryFilter
             ),
             $fileName
         );
