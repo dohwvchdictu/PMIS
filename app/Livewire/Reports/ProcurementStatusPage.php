@@ -494,6 +494,7 @@ class ProcurementStatusPage extends Component
         }
 
         return [
+            'proc_id' => $procurement->procID,
             'code_pap' => $procurement->pr_number,
             'project' => $item ? ($item->description ?? '') : ($procurement->procurement_program_project ?? ''),
             'end_user' => $endUser,

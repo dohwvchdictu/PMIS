@@ -278,7 +278,18 @@
                                 <tr class="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors">
                                     <td
                                         class="px-2 py-2 text-center font-mono text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700 whitespace-nowrap">
-                                        {{ $row['code_pap'] }}
+                                        @can('view_procurement')
+                                            <a href="{{ route('procurements.view', ['procurement' => $row['proc_id']]) }}"
+                                                target="_blank"
+                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors text-emerald-700 dark:text-emerald-300">
+                                                {{ $row['code_pap'] }}
+                                            </a>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                                                {{ $row['code_pap'] }}
+                                            </span>
+                                        @endcan
                                     </td>
                                     <td
                                         class="px-2 py-2 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700">
@@ -540,7 +551,18 @@
                             <tr class="hover:bg-amber-50/40 dark:hover:bg-amber-900/10 transition-colors">
                                 <td
                                     class="px-2 py-2 text-center font-mono text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700 whitespace-nowrap">
-                                    {{ $row['code_pap'] }}
+                                    @can('view_procurement')
+                                        <a href="{{ route('procurements.view', ['procurement' => $row['proc_id']]) }}"
+                                            target="_blank"
+                                            class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-400 transition-colors text-emerald-700 dark:text-emerald-300">
+                                            {{ $row['code_pap'] }}
+                                        </a>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-md font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                                            {{ $row['code_pap'] }}
+                                        </span>
+                                    @endcan
                                 </td>
                                 <td
                                     class="px-2 py-2 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700">
