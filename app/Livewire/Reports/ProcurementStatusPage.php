@@ -133,6 +133,112 @@ class ProcurementStatusPage extends Component
     }
 
     // -------------------------------------------------------------------------
+    // Shared filter helper
+    // -------------------------------------------------------------------------
+
+    private function applyCommonFilters($query): void
+    {
+        if (!empty($this->search)) {
+            $term = '%' . $this->search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('pr_number', 'like', $term)
+                    ->orWhere('procurement_program_project', 'like', $term);
+            });
+        }
+        if (!empty($this->pmoEndUserFilter)) {
+            $query->whereHas('clusterCommittee', fn($q) => $q->where('clustercommittee', $this->pmoEndUserFilter));
+        }
+        if (!empty($this->sourceOfFundsFilter)) {
+            $query->whereHas('fundSource', fn($q) => $q->where('fundsources', $this->sourceOfFundsFilter));
+        }
+        if (!empty($this->categoryFilter)) {
+            $query->whereHas('category', fn($q) => $q->where('category', $this->categoryFilter));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Aggregate totals across ALL records (not just current page)
+    // -------------------------------------------------------------------------
+
+    private function computeTotals(string $startDate, string $endDate): array
+    {
+        $completedAll = Procurement::query()
+            ->with(['pr_items.prstage', 'pr_items.postProcurement', 'postProcurement'])
+            ->whereBetween('date_receipt', [$startDate, $endDate])
+            ->where('pr_number', 'like', $this->year . '-%')
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('procurement_type', 'perLot')
+                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                })->orWhere(function ($sub) {
+                    $sub->where('procurement_type', '!=', 'perLot')
+                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                });
+            });
+        $this->applyCommonFilters($completedAll);
+
+        $completedAbc      = 0.0;
+        $completedContract = 0.0;
+        $ongoingAbc        = 0.0;
+        $completedRowCount = 0;
+        $ongoingRowCount   = 0;
+
+        foreach ($completedAll->get() as $p) {
+            if ($p->procurement_type === 'perLot') {
+                $completedAbc      += (float) ($p->abc ?? 0);
+                $completedContract += (float) ($p->postProcurement?->awarded_amount ?? 0);
+                $completedRowCount++;
+            } else {
+                foreach ($p->pr_items as $item) {
+                    if ($item->prstage?->pr_stage_id == 7) {
+                        $completedAbc      += (float) ($item->amount ?? 0);
+                        $completedContract += (float) ($item->postProcurement?->awarded_amount ?? 0);
+                        $completedRowCount++;
+                    } else {
+                        $ongoingAbc += (float) ($item->amount ?? 0);
+                        $ongoingRowCount++;
+                    }
+                }
+            }
+        }
+
+        $ongoingAll = Procurement::query()
+            ->with(['pr_items'])
+            ->whereBetween('date_receipt', [$startDate, $endDate])
+            ->where('pr_number', 'like', $this->year . '-%')
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('procurement_type', 'perLot')
+                        ->whereDoesntHave('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                })->orWhere(function ($sub) {
+                    $sub->where('procurement_type', '!=', 'perLot')
+                        ->whereDoesntHave('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                });
+            });
+        $this->applyCommonFilters($ongoingAll);
+
+        foreach ($ongoingAll->get() as $p) {
+            if ($p->procurement_type === 'perLot') {
+                $ongoingAbc += (float) ($p->abc ?? 0);
+                $ongoingRowCount++;
+            } else {
+                foreach ($p->pr_items as $item) {
+                    $ongoingAbc += (float) ($item->amount ?? 0);
+                    $ongoingRowCount++;
+                }
+            }
+        }
+
+        return [
+            'completedAbc'      => $completedAbc,
+            'completedContract' => $completedContract,
+            'ongoingAbc'        => $ongoingAbc,
+            'completedRowCount' => $completedRowCount,
+            'ongoingRowCount'   => $ongoingRowCount,
+        ];
+    }
+
+    // -------------------------------------------------------------------------
     // Export
     // -------------------------------------------------------------------------
 
@@ -147,7 +253,10 @@ class ProcurementStatusPage extends Component
                 $startDate,
                 $endDate,
                 $this->year,
-                $this->quarter
+                $this->quarter,
+                $this->pmoEndUserFilter,
+                $this->sourceOfFundsFilter,
+                $this->categoryFilter
             ),
             $fileName
         );
@@ -185,43 +294,20 @@ class ProcurementStatusPage extends Component
                 });
             });
 
-        if (!empty($this->search)) {
-            $term = '%' . $this->search . '%';
-            $query->where(function ($q) use ($term) {
-                $q->where('pr_number', 'like', $term)
-                    ->orWhere('procurement_program_project', 'like', $term);
-            });
-        }
-
-        if (!empty($this->pmoEndUserFilter)) {
-            $query->whereHas('clusterCommittee', function ($q) {
-                $q->where('clustercommittee', $this->pmoEndUserFilter);
-            });
-        }
-
-        if (!empty($this->sourceOfFundsFilter)) {
-            $query->whereHas('fundSource', function ($q) {
-                $q->where('fundsources', $this->sourceOfFundsFilter);
-            });
-        }
-
-        if (!empty($this->categoryFilter)) {
-            $query->whereHas('category', function ($q) {
-                $q->where('category', $this->categoryFilter);
-            });
-        }
+        $this->applyCommonFilters($query);
 
         $procurements = $query->latest('date_receipt')->paginate($this->perPage);
 
         // Batch-load BidSchedule and PrSvp (per-lot only)
         $allUids = [];
-        $allProcIds = collect($procurements->items())->pluck('procID')->filter()->toArray();
-
         foreach ($procurements as $p) {
             if ($p->procurement_type === 'perLot') {
                 $uid = $p->mopLots->sortByDesc('mode_order')->first()?->uid;
-                if ($uid) {
-                    $allUids[] = $uid;
+                if ($uid) $allUids[] = $uid;
+            } else {
+                foreach ($p->pr_items as $item) {
+                    $uid = $item->mopItems->sortByDesc('mode_order')->first()?->uid;
+                    if ($uid) $allUids[] = $uid;
                 }
             }
         }
@@ -229,14 +315,12 @@ class ProcurementStatusPage extends Component
         $bidScheduleMap = collect();
         $prSvpMap = collect();
 
-        if (!empty($allUids) && !empty($allProcIds)) {
+        if (!empty($allUids)) {
             $bidScheduleMap = BidSchedule::whereIn('mop_uid', $allUids)
-                ->whereIn('ref_id', $allProcIds)
                 ->get()
                 ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
 
             $prSvpMap = PrSvp::whereIn('mop_uid', $allUids)
-                ->whereIn('ref_id', $allProcIds)
                 ->get()
                 ->keyBy(fn($s) => $s->ref_id . '_' . $s->mop_uid);
         }
@@ -311,56 +395,32 @@ class ProcurementStatusPage extends Component
                 });
             });
 
-        // Apply search filter to on-going
-        if (!empty($this->search)) {
-            $term = '%' . $this->search . '%';
-            $ongoingQuery->where(function ($q) use ($term) {
-                $q->where('pr_number', 'like', $term)
-                    ->orWhere('procurement_program_project', 'like', $term);
-            });
-        }
-
-        if (!empty($this->pmoEndUserFilter)) {
-            $ongoingQuery->whereHas('clusterCommittee', function ($q) {
-                $q->where('clustercommittee', $this->pmoEndUserFilter);
-            });
-        }
-
-        if (!empty($this->sourceOfFundsFilter)) {
-            $ongoingQuery->whereHas('fundSource', function ($q) {
-                $q->where('fundsources', $this->sourceOfFundsFilter);
-            });
-        }
-
-        if (!empty($this->categoryFilter)) {
-            $ongoingQuery->whereHas('category', function ($q) {
-                $q->where('category', $this->categoryFilter);
-            });
-        }
+        $this->applyCommonFilters($ongoingQuery);
 
         $ongoingProcurements = $ongoingQuery->latest('date_receipt')->paginate($this->ongoingPerPage, ['*'], 'ongoingPage');
 
         // Batch-load for ongoing
         $ogUids = [];
-        $ogProcIds = collect($ongoingProcurements->items())->pluck('procID')->filter()->toArray();
         foreach ($ongoingProcurements->items() as $p) {
             if ($p->procurement_type === 'perLot') {
                 $uid = $p->mopLots->sortByDesc('mode_order')->first()?->uid;
-                if ($uid)
-                    $ogUids[] = $uid;
+                if ($uid) $ogUids[] = $uid;
+            } else {
+                foreach ($p->pr_items as $item) {
+                    $uid = $item->mopItems->sortByDesc('mode_order')->first()?->uid;
+                    if ($uid) $ogUids[] = $uid;
+                }
             }
         }
 
         $ogBidScheduleMap = collect();
         $ogPrSvpMap = collect();
-        if (!empty($ogUids) && !empty($ogProcIds)) {
+        if (!empty($ogUids)) {
             $ogBidScheduleMap = BidSchedule::whereIn('mop_uid', $ogUids)
-                ->whereIn('ref_id', $ogProcIds)
                 ->get()
                 ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
 
             $ogPrSvpMap = PrSvp::whereIn('mop_uid', $ogUids)
-                ->whereIn('ref_id', $ogProcIds)
                 ->get()
                 ->keyBy(fn($s) => $s->ref_id . '_' . $s->mop_uid);
         }
@@ -393,14 +453,57 @@ class ProcurementStatusPage extends Component
             }
         }
 
+        // Append non-stage-7 items from completed non-perLot PRs — they belong in ongoing display
+        $partialQuery = Procurement::query()
+            ->with([
+                'category', 'clusterCommittee', 'fundSource', 'currentPrStage',
+                'pr_items.prstage', 'pr_items.mopItems.modeOfProcurement',
+                'pr_items.postProcurement.pmu.pmuPos',
+            ])
+            ->whereBetween('date_receipt', [$startDate, $endDate])
+            ->where('pr_number', 'like', $this->year . '-%')
+            ->where('procurement_type', '!=', 'perLot')
+            ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+        $this->applyCommonFilters($partialQuery);
+
+        foreach ($partialQuery->get() as $p) {
+            foreach ($p->pr_items->filter(fn($i) => ($i->prstage?->pr_stage_id ?? 0) != 7) as $item) {
+                $ongoingRows[] = $this->buildRow($p, $item, collect(), collect(), collect());
+            }
+        }
+
+        $totals = $this->computeTotals($startDate, $endDate);
+
+        $completedAbcTotal      = $totals['completedAbc'];
+        $completedContractTotal = $totals['completedContract'];
+        $completedSavingsTotal  = $completedAbcTotal - $completedContractTotal;
+        $ongoingAbcTotal        = $totals['ongoingAbc'];
+        $completedRowCount      = $totals['completedRowCount'];
+        $ongoingRowCount        = $totals['ongoingRowCount'];
+        $summaryAbcTotal        = $completedAbcTotal + $ongoingAbcTotal;
+        $summaryPctCompleted    = $summaryAbcTotal > 0 ? ($completedAbcTotal / $summaryAbcTotal) * 100 : 0;
+        $summaryPctOngoing      = $summaryAbcTotal > 0 ? ($ongoingAbcTotal   / $summaryAbcTotal) * 100 : 0;
+
         return view('livewire.reports.procurement-status-page', [
-            'procurements' => $procurements,
-            'rows' => $rows,
-            'ongoingRows' => $ongoingRows,
-            'ongoingProcurements' => $ongoingProcurements,
-            'pmoEndUserOptions' => \App\Models\ClusterCommittee::distinct()->pluck('clustercommittee')->filter()->sort()->values(),
-            'sourceOfFundsOptions' => \App\Models\FundSource::distinct()->pluck('fundsources')->filter()->sort()->values(),
-            'categoryOptions' => \App\Models\Category::where('is_active', true)->orderBy('category')->pluck('category')->filter()->values(),
+            'procurements'          => $procurements,
+            'rows'                  => $rows,
+            'ongoingRows'           => $ongoingRows,
+            'ongoingProcurements'   => $ongoingProcurements,
+            'completedAbcTotal'     => $completedAbcTotal,
+            'completedContractTotal'=> $completedContractTotal,
+            'completedSavingsTotal' => $completedSavingsTotal,
+            'ongoingAbcTotal'       => $ongoingAbcTotal,
+            'completedRowCount'     => $completedRowCount,
+            'ongoingRowCount'       => $ongoingRowCount,
+            'summaryAbcCompleted'   => $completedAbcTotal,
+            'summaryAbcOngoing'     => $ongoingAbcTotal,
+            'summaryAbcTotal'       => $summaryAbcTotal,
+            'summaryPctCompleted'   => $summaryPctCompleted,
+            'summaryPctOngoing'     => $summaryPctOngoing,
+            'summaryPctTotal'       => $summaryPctCompleted + $summaryPctOngoing,
+            'pmoEndUserOptions'     => \App\Models\ClusterCommittee::distinct()->pluck('clustercommittee')->filter()->sort()->values(),
+            'sourceOfFundsOptions'  => \App\Models\FundSource::distinct()->pluck('fundsources')->filter()->sort()->values(),
+            'categoryOptions'       => \App\Models\Category::where('is_active', true)->orderBy('category')->pluck('category')->filter()->values(),
         ]);
     }
 
@@ -438,7 +541,24 @@ class ProcurementStatusPage extends Component
             $postQual = $fmt($bidSched?->post_qualification_date);
         } else {
             $latestMop = $item?->mopItems->sortByDesc('mode_order')->first();
-            $modeName = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
+            $modeName  = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
+            $modeId    = $latestMop?->mode_of_procurement_id;
+            $key       = ($item?->prItemID ?? '') . '_' . ($latestMop?->uid ?? '');
+
+            $bidSched = in_array($modeId, [2, 3, 4, 5, 6])
+                ? $bidScheduleMap->get($key)
+                : null;
+            $prSvp = in_array($modeId, range(7, 24))
+                ? $prSvpMap->get($key)
+                : null;
+
+            $preProcConf = $fmt($bidSched?->pre_proc_conference);
+            $adsPostIb   = $bidSched ? $fmt($bidSched->ads_post_ib) : $fmt($prSvp?->ads_post_ib);
+            $preBidConf  = $fmt($bidSched?->pre_bid_conf);
+            $eligibility = $fmt($bidSched?->eligibility_check);
+            $subOpen     = $fmt($bidSched?->sub_open_bids);
+            $bidEval     = $fmt($bidSched?->bid_evaluation_date);
+            $postQual    = $fmt($bidSched?->post_qualification_date);
         }
 
         // ── Post-procurement & PMU dates ──────────────────────────────────────

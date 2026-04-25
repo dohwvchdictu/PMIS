@@ -28,7 +28,7 @@
                         </p>
                     </div>
 
-                    {{-- <!-- Export -->
+                    <!-- Export -->
                     <button type="button" wire:click="exportToExcel"
                         class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                         wire:loading.attr="disabled">
@@ -46,7 +46,7 @@
                             </path>
                         </svg>
                         Export
-                    </button> --}}
+                    </button>
                 </div>
             </div>
 
@@ -413,7 +413,7 @@
                         class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $procurements->lastItem() ?? 0 }}</span>
                     of
                     <span
-                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $procurements->total() }}</span>
+                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $completedRowCount }}</span>
                     items
                 </div>
                 <div class="flex justify-center">
@@ -421,31 +421,26 @@
                 </div>
             </div>
         </div>
+
+        {{-- ===== Completed Totals Strip ===== --}}
+        <div class="border-t border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/60 to-white dark:from-emerald-900/10 dark:to-neutral-800 px-5 py-3 flex flex-wrap items-center justify-end gap-x-6 gap-y-1.5">
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+                Total Allotted Budget:
+                <strong class="font-mono text-emerald-700 dark:text-emerald-300 ml-1">₱ {{ number_format($completedAbcTotal, 2) }}</strong>
+            </span>
+            <span class="w-px h-4 bg-gray-200 dark:bg-neutral-600 hidden sm:block"></span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+                Contract Price:
+                <strong class="font-mono text-blue-700 dark:text-blue-300 ml-1">₱ {{ number_format($completedContractTotal, 2) }}</strong>
+            </span>
+            <span class="w-px h-4 bg-gray-200 dark:bg-neutral-600 hidden sm:block"></span>
+            <span class="text-xs {{ $completedSavingsTotal >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">
+                Total Savings:
+                <strong class="font-mono ml-1 {{ $completedSavingsTotal >= 0 ? 'text-teal-700 dark:text-teal-300' : 'text-red-600 dark:text-red-400' }}">₱ {{ number_format($completedSavingsTotal, 2) }}</strong>
+            </span>
+        </div>
+
     </div>{{-- end completed card --}}
-
-    {{-- ===== Summary Totals ===== --}}
-    @php
-        $abcTotal = collect($rows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-        $contractTotal = collect($rows)
-            ->filter(
-                fn($r) => !isset($r['_section_header']) && $r['contract_total'] !== '' && $r['contract_total'] !== null,
-            )
-            ->sum(fn($r) => (float) $r['contract_total']);
-        $savingsTotal = $abcTotal - $contractTotal;
-    @endphp
-
-    <div class="flex flex-col items-end gap-0.5 px-2 py-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
-        <span>Total Allotted Budget of Procurement Activities: <strong
-                class="text-gray-700 dark:text-gray-300">{{ number_format($abcTotal, 2) }}</strong></span>
-        <span>Contract Price of Procurement Activities Conducted: <strong
-                class="text-gray-700 dark:text-gray-300">{{ number_format($contractTotal, 2) }}</strong></span>
-        <span
-            class="{{ $savingsTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">Total
-            Savings: <strong>{{ number_format($savingsTotal, 2) }}</strong></span>
-    </div>
-    {{-- ===== End Summary ===== --}}
 
 
     <!-- ===== On-Going Procurement Activities Card ===== -->
@@ -685,7 +680,7 @@
                         class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingProcurements->lastItem() ?? 0 }}</span>
                     of
                     <span
-                        class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingProcurements->total() }}</span>
+                        class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingRowCount }}</span>
                     items
                 </div>
                 <div class="flex justify-center">
@@ -693,33 +688,19 @@
                 </div>
             </div>
         </div>
+
+        {{-- ===== On-Going Totals Strip ===== --}}
+        <div class="border-t border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/60 to-white dark:from-amber-900/10 dark:to-neutral-800 px-5 py-3 flex items-center justify-end">
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+                Total Allotted Budget of On-Going Procurement Activities:
+                <strong class="font-mono text-amber-700 dark:text-amber-300 ml-1">₱ {{ number_format($ongoingAbcTotal, 2) }}</strong>
+            </span>
+        </div>
+
     </div>{{-- end on-going card --}}
-    {{-- ===== On-Going Budget Summary ===== --}}
-    @php
-        $ongoingAbcTotal = collect($ongoingRows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-    @endphp
-    <div class="flex flex-col items-end gap-0.5 px-2 py-2 text-xs text-gray-500 dark:text-gray-400">
-        <span>Total Allotted Budget of On-Going Procurement Activities: <strong
-                class="text-gray-700 dark:text-gray-300">{{ number_format($ongoingAbcTotal, 2) }}</strong></span>
-    </div>
 
-    {{-- ===== Summary Table ===== --}}
-    @php
-        $summaryAbcCompleted = collect($rows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-        $summaryAbcOngoing = $ongoingAbcTotal;
-        $summaryAbcTotal = $summaryAbcCompleted + $summaryAbcOngoing;
-
-        $summaryPctCompleted = $summaryAbcTotal > 0 ? ($summaryAbcCompleted / $summaryAbcTotal) * 100 : 0;
-        $summaryPctOngoing = $summaryAbcTotal > 0 ? ($summaryAbcOngoing / $summaryAbcTotal) * 100 : 0;
-        $summaryPctTotal = $summaryPctCompleted + $summaryPctOngoing;
-    @endphp
-
-    <div
-        class="mt-6 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
+    {{-- ===== Summary Card ===== --}}
+    <div class="mt-6 mb-6 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
 
         {{-- Header --}}
         <div class="px-5 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center gap-2">
@@ -733,96 +714,69 @@
             <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">— ABC breakdown by status</span>
         </div>
 
-        {{-- Table --}}
-        <div class="overflow-x-auto">
-            <table class="w-full text-xs border-collapse">
-                <thead>
-                    <tr class="bg-emerald-700 text-white">
-                        <th class="px-5 py-2.5 text-left font-semibold border border-emerald-900 min-w-[160px]">Status
-                        </th>
-                        <th class="px-5 py-2.5 text-right font-semibold border border-emerald-900 min-w-[180px]">ABC
-                            (PhP)</th>
-                        <th class="px-5 py-2.5 text-right font-semibold border border-emerald-900 min-w-[120px]">
-                            Percentage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{-- Completed --}}
-                    <tr class="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors">
-                        <td
-                            class="px-5 py-2.5 border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-700/50">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                <span class="text-gray-700 dark:text-gray-300 font-medium">Completed</span>
-                            </div>
-                        </td>
-                        <td
-                            class="px-5 py-2.5 text-right font-mono text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700">
-                            {{ number_format($summaryAbcCompleted, 2) }}
-                        </td>
-                        <td class="px-5 py-2.5 text-right border border-gray-200 dark:border-neutral-700">
-                            <div class="flex items-center justify-end gap-2">
-                                <div class="w-20 bg-gray-200 dark:bg-neutral-600 rounded-full h-1.5 overflow-hidden">
-                                    <div class="bg-emerald-500 h-1.5 rounded-full"
-                                        style="width: {{ number_format($summaryPctCompleted, 2) }}%"></div>
-                                </div>
-                                <span
-                                    class="font-mono text-gray-700 dark:text-gray-300 w-12 text-right">{{ number_format($summaryPctCompleted, 2) }}%</span>
-                            </div>
-                        </td>
-                    </tr>
-
-                    {{-- On-Going --}}
-                    <tr class="hover:bg-amber-50/40 dark:hover:bg-amber-900/10 transition-colors">
-                        <td
-                            class="px-5 py-2.5 border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-700/50">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
-                                <span class="text-gray-700 dark:text-gray-300 font-medium">On-Going</span>
-                            </div>
-                        </td>
-                        <td
-                            class="px-5 py-2.5 text-right font-mono text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-neutral-700">
-                            {{ number_format($summaryAbcOngoing, 2) }}
-                        </td>
-                        <td class="px-5 py-2.5 text-right border border-gray-200 dark:border-neutral-700">
-                            <div class="flex items-center justify-end gap-2">
-                                <div class="w-20 bg-gray-200 dark:bg-neutral-600 rounded-full h-1.5 overflow-hidden">
-                                    <div class="bg-amber-400 h-1.5 rounded-full"
-                                        style="width: {{ number_format($summaryPctOngoing, 2) }}%"></div>
-                                </div>
-                                <span
-                                    class="font-mono text-gray-700 dark:text-gray-300 w-12 text-right">{{ number_format($summaryPctOngoing, 2) }}%</span>
-                            </div>
-                        </td>
-                    </tr>
-
-                    {{-- Total --}}
-                    <tr
-                        class="bg-emerald-50 dark:bg-emerald-900/20 font-bold border-t-2 border-emerald-300 dark:border-emerald-700">
-                        <td
-                            class="px-5 py-2.5 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-neutral-700 bg-emerald-100 dark:bg-emerald-900/40">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="size-3.5 text-emerald-600 dark:text-emerald-400">
-                                    <path
-                                        d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                                </svg>
-                                <span>Total</span>
-                            </div>
-                        </td>
-                        <td
-                            class="px-5 py-2.5 text-right font-mono text-emerald-700 dark:text-emerald-300 border border-gray-200 dark:border-neutral-700">
-                            {{ number_format($summaryAbcTotal, 2) }}
-                        </td>
-                        <td
-                            class="px-5 py-2.5 text-right font-mono text-emerald-700 dark:text-emerald-400 border border-gray-200 dark:border-neutral-700">
-                            {{ number_format($summaryPctTotal, 2) }}%
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        {{-- Stacked proportion bar --}}
+        <div class="flex w-full h-2.5 overflow-hidden">
+            <div class="bg-emerald-500 h-full transition-all duration-500"
+                style="width: {{ number_format($summaryPctCompleted, 2) }}%"></div>
+            <div class="bg-amber-400 h-full transition-all duration-500"
+                style="width: {{ number_format($summaryPctOngoing, 2) }}%"></div>
         </div>
+
+        {{-- Completed row --}}
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-neutral-700">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Completed</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">({{ $completedRowCount }} items)</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-gray-600 dark:text-gray-300">₱ {{ number_format($summaryAbcCompleted, 2) }}</span>
+                    <span class="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400 w-14 text-right">{{ number_format($summaryPctCompleted, 2) }}%</span>
+                </div>
+            </div>
+            <div class="w-full bg-gray-100 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                    style="width: {{ number_format($summaryPctCompleted, 2) }}%"></div>
+            </div>
+        </div>
+
+        {{-- On-Going row --}}
+        <div class="px-5 py-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">On-Going</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">({{ $ongoingRowCount }} items)</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-gray-600 dark:text-gray-300">₱ {{ number_format($summaryAbcOngoing, 2) }}</span>
+                    <span class="text-xs font-bold font-mono text-amber-500 dark:text-amber-400 w-14 text-right">{{ number_format($summaryPctOngoing, 2) }}%</span>
+                </div>
+            </div>
+            <div class="w-full bg-gray-100 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
+                <div class="bg-amber-400 h-2 rounded-full transition-all duration-500"
+                    style="width: {{ number_format($summaryPctOngoing, 2) }}%"></div>
+            </div>
+        </div>
+
+        {{-- Total footer --}}
+        <div class="border-t-2 border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-5 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                    class="size-4 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <path fill-rule="evenodd" d="M2.25 13.5a8.25 8.25 0 0 1 8.25-8.25.75.75 0 0 1 .75.75v6.75H18a.75.75 0 0 1 .75.75 8.25 8.25 0 0 1-16.5 0Z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M12.75 3a.75.75 0 0 1 .75-.75 8.25 8.25 0 0 1 8.25 8.25.75.75 0 0 1-.75.75h-7.5a.75.75 0 0 1-.75-.75V3Z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">Total ABC (PhP)</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">({{ $completedRowCount + $ongoingRowCount }} items)</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300">₱ {{ number_format($summaryAbcTotal, 2) }}</span>
+                <span class="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400 w-14 text-right">{{ number_format($summaryPctTotal, 2) }}%</span>
+            </div>
+        </div>
+
     </div>
 
 </div>{{-- end wrapper --}}
