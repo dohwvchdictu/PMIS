@@ -413,7 +413,7 @@
                         class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $procurements->lastItem() ?? 0 }}</span>
                     of
                     <span
-                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $procurements->total() }}</span>
+                        class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $completedRowCount }}</span>
                     items
                 </div>
                 <div class="flex justify-center">
@@ -424,26 +424,14 @@
     </div>{{-- end completed card --}}
 
     {{-- ===== Summary Totals ===== --}}
-    @php
-        $abcTotal = collect($rows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-        $contractTotal = collect($rows)
-            ->filter(
-                fn($r) => !isset($r['_section_header']) && $r['contract_total'] !== '' && $r['contract_total'] !== null,
-            )
-            ->sum(fn($r) => (float) $r['contract_total']);
-        $savingsTotal = $abcTotal - $contractTotal;
-    @endphp
-
     <div class="flex flex-col items-end gap-0.5 px-2 py-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
         <span>Total Allotted Budget of Procurement Activities: <strong
-                class="text-gray-700 dark:text-gray-300">{{ number_format($abcTotal, 2) }}</strong></span>
+                class="text-gray-700 dark:text-gray-300">{{ number_format($completedAbcTotal, 2) }}</strong></span>
         <span>Contract Price of Procurement Activities Conducted: <strong
-                class="text-gray-700 dark:text-gray-300">{{ number_format($contractTotal, 2) }}</strong></span>
+                class="text-gray-700 dark:text-gray-300">{{ number_format($completedContractTotal, 2) }}</strong></span>
         <span
-            class="{{ $savingsTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">Total
-            Savings: <strong>{{ number_format($savingsTotal, 2) }}</strong></span>
+            class="{{ $completedSavingsTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">Total
+            Savings: <strong>{{ number_format($completedSavingsTotal, 2) }}</strong></span>
     </div>
     {{-- ===== End Summary ===== --}}
 
@@ -685,7 +673,7 @@
                         class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingProcurements->lastItem() ?? 0 }}</span>
                     of
                     <span
-                        class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingProcurements->total() }}</span>
+                        class="text-amber-600 dark:text-amber-400 font-semibold">{{ $ongoingRowCount }}</span>
                     items
                 </div>
                 <div class="flex justify-center">
@@ -695,29 +683,12 @@
         </div>
     </div>{{-- end on-going card --}}
     {{-- ===== On-Going Budget Summary ===== --}}
-    @php
-        $ongoingAbcTotal = collect($ongoingRows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-    @endphp
     <div class="flex flex-col items-end gap-0.5 px-2 py-2 text-xs text-gray-500 dark:text-gray-400">
         <span>Total Allotted Budget of On-Going Procurement Activities: <strong
                 class="text-gray-700 dark:text-gray-300">{{ number_format($ongoingAbcTotal, 2) }}</strong></span>
     </div>
 
     {{-- ===== Summary Table ===== --}}
-    @php
-        $summaryAbcCompleted = collect($rows)
-            ->filter(fn($r) => !isset($r['_section_header']) && $r['abc_total'] !== '')
-            ->sum(fn($r) => (float) $r['abc_total']);
-        $summaryAbcOngoing = $ongoingAbcTotal;
-        $summaryAbcTotal = $summaryAbcCompleted + $summaryAbcOngoing;
-
-        $summaryPctCompleted = $summaryAbcTotal > 0 ? ($summaryAbcCompleted / $summaryAbcTotal) * 100 : 0;
-        $summaryPctOngoing = $summaryAbcTotal > 0 ? ($summaryAbcOngoing / $summaryAbcTotal) * 100 : 0;
-        $summaryPctTotal = $summaryPctCompleted + $summaryPctOngoing;
-    @endphp
-
     <div
         class="mt-6 mb-6 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
 

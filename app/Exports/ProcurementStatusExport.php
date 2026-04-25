@@ -21,45 +21,48 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
     protected string $search;
     protected string $startDate;
     protected string $endDate;
-    protected int    $year;
-    protected int    $quarter;
+    protected int $year;
+    protected int $quarter;
     protected string $pmoEndUserFilter;
     protected string $sourceOfFundsFilter;
     protected string $categoryFilter;
 
-    private const LAST_COL     = 'W';
+    private const LAST_COL = 'W';
     private const LAST_COL_IDX = 23;
-    private const NUM_FMT      = '#,##0.00';
+    private const NUM_FMT = '#,##0.00';
 
-    private int   $currentRow        = 6;
+    private int $currentRow = 6;
     private array $sectionHeaderRows = [];
-    private array $totalRows         = [];
+    private array $totalRows = [];
 
-    private float $completedAbcTotal      = 0.0;
+    private float $completedAbcTotal = 0.0;
     private float $completedContractTotal = 0.0;
-    private float $ongoingAbcTotal        = 0.0;
+    private float $ongoingAbcTotal = 0.0;
 
     public function __construct(
         string $search,
         string $startDate,
         string $endDate,
-        int    $year,
-        int    $quarter,
-        string $pmoEndUserFilter    = '',
+        int $year,
+        int $quarter,
+        string $pmoEndUserFilter = '',
         string $sourceOfFundsFilter = '',
-        string $categoryFilter      = ''
+        string $categoryFilter = ''
     ) {
-        $this->search              = $search;
-        $this->startDate           = $startDate;
-        $this->endDate             = $endDate;
-        $this->year                = $year;
-        $this->quarter             = $quarter;
-        $this->pmoEndUserFilter    = $pmoEndUserFilter;
+        $this->search = $search;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+        $this->year = $year;
+        $this->quarter = $quarter;
+        $this->pmoEndUserFilter = $pmoEndUserFilter;
         $this->sourceOfFundsFilter = $sourceOfFundsFilter;
-        $this->categoryFilter      = $categoryFilter;
+        $this->categoryFilter = $categoryFilter;
     }
 
-    public function startCell(): string { return 'A6'; }
+    public function startCell(): string
+    {
+        return 'A6';
+    }
 
     // -------------------------------------------------------------------------
     // Collection
@@ -68,9 +71,13 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
     public function collection()
     {
         $baseWith = [
-            'category', 'clusterCommittee', 'fundSource', 'currentPrStage',
+            'category',
+            'clusterCommittee',
+            'fundSource',
+            'currentPrStage',
             'mopLots.modeOfProcurement',
-            'pr_items.prstage', 'pr_items.mopItems.modeOfProcurement',
+            'pr_items.prstage',
+            'pr_items.mopItems.modeOfProcurement',
             'pr_items.postProcurement.pmu.pmuPos',
             'postProcurement.pmu.pmuPos',
         ];
@@ -80,8 +87,8 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
             ->where('pr_number', 'like', $this->year . '-%')
             ->where(function ($q) {
                 $q->where(fn($s) => $s->where('procurement_type', 'perLot')
-                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7)))
-                  ->orWhere(fn($s) => $s->where('procurement_type', '!=', 'perLot')
+                    ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7)))
+                    ->orWhere(fn($s) => $s->where('procurement_type', '!=', 'perLot')
                         ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7)));
             })->latest('date_receipt');
         $this->applyFilters($completedQuery);
@@ -92,8 +99,8 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
             ->where('pr_number', 'like', $this->year . '-%')
             ->where(function ($q) {
                 $q->where(fn($s) => $s->where('procurement_type', 'perLot')
-                        ->whereDoesntHave('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7)))
-                  ->orWhere(fn($s) => $s->where('procurement_type', '!=', 'perLot')
+                    ->whereDoesntHave('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7)))
+                    ->orWhere(fn($s) => $s->where('procurement_type', '!=', 'perLot')
                         ->whereDoesntHave('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7)));
             })->latest('date_receipt');
         $this->applyFilters($ongoingQuery);
@@ -104,18 +111,26 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
 
         // Pass 1: build rows and accumulate totals
         $completedDataRows = collect();
+        $partialOngoingRows = collect(); // non-stage-7 items from completed non-perLot PRs
+
         foreach ($completed as $p) {
             if ($p->procurement_type === 'perLot') {
                 $row = $this->buildRow($p, null, $cBid, $cSvp, $cSupply);
-                $this->completedAbcTotal      += ($row[17] !== '' ? (float)$row[17] : 0);
-                $this->completedContractTotal += ($row[20] !== '' && $row[20] !== null ? (float)$row[20] : 0);
+                $this->completedAbcTotal += ($row[17] !== '' ? (float) $row[17] : 0);
+                $this->completedContractTotal += ($row[20] !== '' && $row[20] !== null ? (float) $row[20] : 0);
                 $completedDataRows->push($row);
             } else {
-                foreach ($p->pr_items->filter(fn($i) => $i->prstage?->pr_stage_id == 7) as $item) {
+                foreach ($p->pr_items as $item) {
                     $row = $this->buildRow($p, $item, $cBid, $cSvp, $cSupply);
-                    $this->completedAbcTotal      += ($row[17] !== '' ? (float)$row[17] : 0);
-                    $this->completedContractTotal += ($row[20] !== '' && $row[20] !== null ? (float)$row[20] : 0);
-                    $completedDataRows->push($row);
+                    if ($item->prstage?->pr_stage_id == 7) {
+                        $this->completedAbcTotal += ($row[17] !== '' ? (float) $row[17] : 0);
+                        $this->completedContractTotal += ($row[20] !== '' && $row[20] !== null ? (float) $row[20] : 0);
+                        $completedDataRows->push($row);
+                    } else {
+                        // Not yet at stage 7 → belongs in ongoing
+                        $this->ongoingAbcTotal += ($row[17] !== '' ? (float) $row[17] : 0);
+                        $partialOngoingRows->push($row);
+                    }
                 }
             }
         }
@@ -124,16 +139,19 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         foreach ($ongoing as $p) {
             if ($p->procurement_type === 'perLot') {
                 $row = $this->buildRow($p, null, $oBid, $oSvp, $oSupply);
-                $this->ongoingAbcTotal += ($row[17] !== '' ? (float)$row[17] : 0);
+                $this->ongoingAbcTotal += ($row[17] !== '' ? (float) $row[17] : 0);
                 $ongoingDataRows->push($row);
             } else {
                 foreach ($p->pr_items as $item) {
                     $row = $this->buildRow($p, $item, $oBid, $oSvp, $oSupply);
-                    $this->ongoingAbcTotal += ($row[17] !== '' ? (float)$row[17] : 0);
+                    $this->ongoingAbcTotal += ($row[17] !== '' ? (float) $row[17] : 0);
                     $ongoingDataRows->push($row);
                 }
             }
         }
+
+        // Merge non-stage-7 items from completed PRs into the ongoing section
+        $ongoingDataRows = $ongoingDataRows->merge($partialOngoingRows);
 
         $savings = $this->completedAbcTotal - $this->completedContractTotal;
 
@@ -141,14 +159,16 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         $rows = collect();
 
         $rows->push(['__section_header' => 'COMPLETED PROCUREMENT ACTIVITIES']);
-        foreach ($completedDataRows as $r) $rows->push($r);
-        $rows->push(['__total' => ['subtype' => 'abc',         'label' => 'Total Allotted Budget of Procurement Activities',                      'value' => $this->completedAbcTotal]]);
-        $rows->push(['__total' => ['subtype' => 'contract',    'label' => 'Contract Price of Procurement Activities Conducted',                   'value' => $this->completedContractTotal]]);
-        $rows->push(['__total' => ['subtype' => 'savings',     'label' => 'Total Savings (Total Allotted Budget - Total Contract Price)',         'value' => $savings]]);
+        foreach ($completedDataRows as $r)
+            $rows->push($r);
+        $rows->push(['__total' => ['subtype' => 'abc', 'label' => 'Total Allotted Budget of Procurement Activities', 'value' => $this->completedAbcTotal]]);
+        $rows->push(['__total' => ['subtype' => 'contract', 'label' => 'Contract Price of Procurement Activities Conducted', 'value' => $this->completedContractTotal]]);
+        $rows->push(['__total' => ['subtype' => 'savings', 'label' => 'Total Savings (Total Allotted Budget - Total Contract Price)', 'value' => $savings]]);
 
         $rows->push(['__section_header' => 'ON-GOING PROCUREMENT ACTIVITIES']);
-        foreach ($ongoingDataRows as $r) $rows->push($r);
-        $rows->push(['__total' => ['subtype' => 'ongoing_abc', 'label' => 'Total Allotted Budget of On-Going Procurement Activities',             'value' => $this->ongoingAbcTotal]]);
+        foreach ($ongoingDataRows as $r)
+            $rows->push($r);
+        $rows->push(['__total' => ['subtype' => 'ongoing_abc', 'label' => 'Total Allotted Budget of On-Going Procurement Activities', 'value' => $this->ongoingAbcTotal]]);
 
         return $rows;
     }
@@ -158,7 +178,7 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         if (!empty($this->search)) {
             $term = '%' . $this->search . '%';
             $query->where(fn($q) => $q->where('pr_number', 'like', $term)
-                                       ->orWhere('procurement_program_project', 'like', $term));
+                ->orWhere('procurement_program_project', 'like', $term));
         }
         if (!empty($this->pmoEndUserFilter))
             $query->whereHas('clusterCommittee', fn($q) => $q->where('clustercommittee', $this->pmoEndUserFilter));
@@ -170,22 +190,28 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
 
     private function loadMaps($procurements, bool $isCompleted): array
     {
-        $allUids    = [];
-        $allProcIds = $procurements->pluck('procID')->filter()->toArray();
+        $allUids = [];
 
         foreach ($procurements as $p) {
             if ($p->procurement_type === 'perLot') {
                 $uid = $p->mopLots->sortByDesc('mode_order')->first()?->uid;
-                if ($uid) $allUids[] = $uid;
+                if ($uid)
+                    $allUids[] = $uid;
+            } else {
+                foreach ($p->pr_items as $item) {
+                    $uid = $item->mopItems->sortByDesc('mode_order')->first()?->uid;
+                    if ($uid)
+                        $allUids[] = $uid;
+                }
             }
         }
 
         $bidMap = collect();
         $svpMap = collect();
-        if (!empty($allUids) && !empty($allProcIds)) {
-            $bidMap = BidSchedule::whereIn('mop_uid', $allUids)->whereIn('ref_id', $allProcIds)
+        if (!empty($allUids)) {
+            $bidMap = BidSchedule::whereIn('mop_uid', $allUids)
                 ->get()->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
-            $svpMap = PrSvp::whereIn('mop_uid', $allUids)->whereIn('ref_id', $allProcIds)
+            $svpMap = PrSvp::whereIn('mop_uid', $allUids)
                 ->get()->keyBy(fn($s) => $s->ref_id . '_' . $s->mop_uid);
         }
 
@@ -193,11 +219,13 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         foreach ($procurements as $p) {
             if ($p->procurement_type === 'perLot') {
                 foreach ($p->postProcurement?->pmu?->pmuPos ?? [] as $pp)
-                    if ($pp->po_contract_number) $poNos[] = $pp->po_contract_number;
+                    if ($pp->po_contract_number)
+                        $poNos[] = $pp->po_contract_number;
             } elseif ($isCompleted) {
                 foreach ($p->pr_items->filter(fn($i) => $i->prstage?->pr_stage_id == 7) as $item)
                     foreach ($item->postProcurement?->pmu?->pmuPos ?? [] as $pp)
-                        if ($pp->po_contract_number) $poNos[] = $pp->po_contract_number;
+                        if ($pp->po_contract_number)
+                            $poNos[] = $pp->po_contract_number;
             }
         }
 
@@ -225,15 +253,15 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         if (isset($row['__total'])) {
             $d = $row['__total'];
             $this->totalRows[$rowNum] = $d;
-            $arr    = array_fill(0, self::LAST_COL_IDX, '');
+            $arr = array_fill(0, self::LAST_COL_IDX, '');
             $arr[0] = $d['label'];
             // abc / ongoing_abc → col R (17); contract → col U (20); savings → col R (17, will span R:W)
             if (in_array($d['subtype'], ['abc', 'ongoing_abc'])) {
-                $arr[17] = (float)$d['value'];
+                $arr[17] = (float) $d['value'];
             } elseif ($d['subtype'] === 'contract') {
-                $arr[20] = (float)$d['value'];
+                $arr[20] = (float) $d['value'];
             } elseif ($d['subtype'] === 'savings') {
-                $arr[17] = (float)$d['value'];
+                $arr[17] = (float) $d['value'];
             }
             return $arr;
         }
@@ -255,58 +283,71 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
 
         if ($procurement->procurement_type === 'perLot') {
             $latestMop = $procurement->mopLots->sortByDesc('mode_order')->first();
-            $modeName  = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
-            $modeId    = $latestMop?->mode_of_procurement_id;
-            $key       = $procurement->procID . '_' . ($latestMop?->uid ?? '');
+            $modeName = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
+            $modeId = $latestMop?->mode_of_procurement_id;
+            $key = $procurement->procID . '_' . ($latestMop?->uid ?? '');
 
             $bidSched = in_array($modeId, [2, 3, 4, 5, 6]) ? $bidScheduleMap->get($key) : null;
-            $prSvp    = in_array($modeId, range(7, 24))   ? $prSvpMap->get($key)        : null;
+            $prSvp = in_array($modeId, range(7, 24)) ? $prSvpMap->get($key) : null;
 
             $preProcConf = $fmt($bidSched?->pre_proc_conference);
-            $adsPostIb   = $bidSched ? $fmt($bidSched->ads_post_ib) : $fmt($prSvp?->ads_post_ib);
-            $preBidConf  = $fmt($bidSched?->pre_bid_conf);
+            $adsPostIb = $bidSched ? $fmt($bidSched->ads_post_ib) : $fmt($prSvp?->ads_post_ib);
+            $preBidConf = $fmt($bidSched?->pre_bid_conf);
             $eligibility = $fmt($bidSched?->eligibility_check);
-            $subOpen     = $fmt($bidSched?->sub_open_bids);
-            $bidEval     = $fmt($bidSched?->bid_evaluation_date);
-            $postQual    = $fmt($bidSched?->post_qualification_date);
+            $subOpen = $fmt($bidSched?->sub_open_bids);
+            $bidEval = $fmt($bidSched?->bid_evaluation_date);
+            $postQual = $fmt($bidSched?->post_qualification_date);
         } else {
             $latestMop = $item?->mopItems->sortByDesc('mode_order')->first();
-            $modeName  = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
+            $modeName = $latestMop?->modeOfProcurement?->modeofprocurements ?? '';
+            $modeId = $latestMop?->mode_of_procurement_id;
+            $key = ($item?->prItemID ?? '') . '_' . ($latestMop?->uid ?? '');
+
+            $bidSched = in_array($modeId, [2, 3, 4, 5, 6]) ? $bidScheduleMap->get($key) : null;
+            $prSvp = in_array($modeId, range(7, 24)) ? $prSvpMap->get($key) : null;
+
+            $preProcConf = $fmt($bidSched?->pre_proc_conference);
+            $adsPostIb = $bidSched ? $fmt($bidSched->ads_post_ib) : $fmt($prSvp?->ads_post_ib);
+            $preBidConf = $fmt($bidSched?->pre_bid_conf);
+            $eligibility = $fmt($bidSched?->eligibility_check);
+            $subOpen = $fmt($bidSched?->sub_open_bids);
+            $bidEval = $fmt($bidSched?->bid_evaluation_date);
+            $postQual = $fmt($bidSched?->post_qualification_date);
         }
 
-        $post  = ($item !== null) ? $item->postProcurement : $procurement->postProcurement;
+        $post = ($item !== null) ? $item->postProcurement : $procurement->postProcurement;
         $pmuPo = $post?->pmu?->pmuPos->first();
 
-        $noticeOfAward   = $fmt($post?->notice_of_award);
+        $noticeOfAward = $fmt($post?->notice_of_award);
         $contractSigning = $fmt($pmuPo?->contract_signing_date);
         $noticeToProceed = $fmt($pmuPo?->notice_to_proceed_date);
 
         $deliveryCompletion = $inspectionAcceptance = '';
         if ($pmuPo?->po_contract_number) {
             $supply = $supplyMap->get($pmuPo->po_contract_number);
-            $spo    = $supply?->supplyPos->first();
-            $deliveryCompletion   = $fmt($spo?->delivery_completion);
+            $spo = $supply?->supplyPos->first();
+            $deliveryCompletion = $fmt($spo?->delivery_completion);
             $inspectionAcceptance = $fmt($spo?->date_of_acceptance);
         }
 
-        $abcTotal      = $item ? ($item->amount ?? '') : ($procurement->abc ?? '');
+        $abcTotal = $item ? ($item->amount ?? '') : ($procurement->abc ?? '');
         $contractTotal = $post?->awarded_amount ?? '';
 
-        $category     = $procurement->category?->category ?? '';
+        $category = $procurement->category?->category ?? '';
         $coCategories = ['IT Peripherals/Equipment', 'Medical Equipment', 'Medical Devices'];
-        $isCo = $abcTotal !== '' && (float)$abcTotal >= 50000
+        $isCo = $abcTotal !== '' && (float) $abcTotal >= 50000
             && collect($coCategories)->contains(fn($kw) => stripos($category, $kw) !== false);
 
         $abcMooe = $abcCo = '';
         if ($abcTotal !== '') {
-            $abcCo   = $isCo ? (float)$abcTotal : 0.0;
-            $abcMooe = $isCo ? 0.0 : (float)$abcTotal;
+            $abcCo = $isCo ? (float) $abcTotal : 0.0;
+            $abcMooe = $isCo ? 0.0 : (float) $abcTotal;
         }
 
         $contractMooe = $contractCo = '';
         if ($contractTotal !== '' && $contractTotal !== null) {
-            $contractCo   = $isCo ? (float)$contractTotal : 0.0;
-            $contractMooe = $isCo ? 0.0 : (float)$contractTotal;
+            $contractCo = $isCo ? (float) $contractTotal : 0.0;
+            $contractMooe = $isCo ? 0.0 : (float) $contractTotal;
         }
 
         return [
@@ -314,13 +355,23 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
             $item ? ($item->description ?? '') : ($procurement->procurement_program_project ?? ''),
             $procurement->clusterCommittee?->clustercommittee ?? '',
             $modeName,
-            $preProcConf, $adsPostIb, $preBidConf, $eligibility, $subOpen, $bidEval, $postQual,
-            $noticeOfAward, $contractSigning, $noticeToProceed, $deliveryCompletion, $inspectionAcceptance,
+            $preProcConf,
+            $adsPostIb,
+            $preBidConf,
+            $eligibility,
+            $subOpen,
+            $bidEval,
+            $postQual,
+            $noticeOfAward,
+            $contractSigning,
+            $noticeToProceed,
+            $deliveryCompletion,
+            $inspectionAcceptance,
             $procurement->fundSource?->fundsources ?? '',
-            $abcTotal !== '' ? (float)$abcTotal : '',
+            $abcTotal !== '' ? (float) $abcTotal : '',
             $abcMooe,
             $abcCo,
-            $contractTotal !== '' && $contractTotal !== null ? (float)$contractTotal : '',
+            $contractTotal !== '' && $contractTotal !== null ? (float) $contractTotal : '',
             $contractMooe,
             $contractCo,
         ];
@@ -334,22 +385,22 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet       = $event->sheet->getDelegate();
+                $sheet = $event->sheet->getDelegate();
                 $quarterName = ['1st', '2nd', '3rd', '4th'][$this->quarter - 1] ?? '';
-                $grandTotal  = $this->completedAbcTotal + $this->ongoingAbcTotal;
+                $grandTotal = $this->completedAbcTotal + $this->ongoingAbcTotal;
                 $pctCompleted = $grandTotal > 0 ? ($this->completedAbcTotal / $grandTotal) * 100 : 0;
-                $pctOngoing   = $grandTotal > 0 ? ($this->ongoingAbcTotal   / $grandTotal) * 100 : 0;
+                $pctOngoing = $grandTotal > 0 ? ($this->ongoingAbcTotal / $grandTotal) * 100 : 0;
 
-                $thin    = ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']];
-                $numFmt  = ['numberFormat' => ['formatCode' => self::NUM_FMT]];
-                $center  = ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER];
-                $right   = ['horizontal' => Alignment::HORIZONTAL_RIGHT,  'vertical' => Alignment::VERTICAL_CENTER];
+                $thin = ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']];
+                $numFmt = ['numberFormat' => ['formatCode' => self::NUM_FMT]];
+                $center = ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER];
+                $right = ['horizontal' => Alignment::HORIZONTAL_RIGHT, 'vertical' => Alignment::VERTICAL_CENTER];
 
                 // ── Rows 1-3: Title / Year-Quarter / Region ───────────────────
                 $sheet->mergeCells('A1:' . self::LAST_COL . '1');
                 $sheet->setCellValue('A1', 'Procurement Status Report');
                 $sheet->getStyle('A1')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 14],
+                    'font' => ['bold' => true, 'size' => 14],
                     'alignment' => $center,
                 ]);
                 $sheet->getRowDimension(1)->setRowHeight(24);
@@ -357,16 +408,16 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->mergeCells('A2:' . self::LAST_COL . '2');
                 $sheet->setCellValue('A2', 'Year: ' . $this->year . '    Quarter: ' . $quarterName);
                 $sheet->getStyle('A2')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 11],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 2],
+                    'font' => ['bold' => true, 'size' => 11],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 2],
                 ]);
                 $sheet->getRowDimension(2)->setRowHeight(18);
 
                 $sheet->mergeCells('A3:' . self::LAST_COL . '3');
                 $sheet->setCellValue('A3', 'Region/Hospital:    DEPARTMENT OF HEALTH - WESTERN VISAYAS CENTER FOR HEALTH DEVELOPMENT');
                 $sheet->getStyle('A3')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 11],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 2],
+                    'font' => ['bold' => true, 'size' => 11],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 2],
                 ]);
                 $sheet->getRowDimension(3)->setRowHeight(18);
 
@@ -388,20 +439,30 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->setCellValue('U4', 'Contract Cost (PhP)');
 
                 foreach ([
-                    'E5' => 'Pre-Proc Conference',   'F5' => 'Ads/Post of IB',
-                    'G5' => 'Pre-bid Conf',           'H5' => 'Eligibility Check',
-                    'I5' => 'Sub/Open of Bids',       'J5' => 'Bid Evaluation',
-                    'K5' => 'Post Qual',              'L5' => 'Notice of Award',
-                    'M5' => 'Contract Signing',       'N5' => 'Notice to Proceed',
-                    'O5' => 'Delivery/Completion',    'P5' => 'Inspection & Acceptance',
-                    'R5' => 'Total', 'S5' => 'MOOE',  'T5' => 'CO',
-                    'U5' => 'Total', 'V5' => 'MOOE',  'W5' => 'CO',
+                    'E5' => 'Pre-Proc Conference',
+                    'F5' => 'Ads/Post of IB',
+                    'G5' => 'Pre-bid Conf',
+                    'H5' => 'Eligibility Check',
+                    'I5' => 'Sub/Open of Bids',
+                    'J5' => 'Bid Evaluation',
+                    'K5' => 'Post Qual',
+                    'L5' => 'Notice of Award',
+                    'M5' => 'Contract Signing',
+                    'N5' => 'Notice to Proceed',
+                    'O5' => 'Delivery/Completion',
+                    'P5' => 'Inspection & Acceptance',
+                    'R5' => 'Total',
+                    'S5' => 'MOOE',
+                    'T5' => 'CO',
+                    'U5' => 'Total',
+                    'V5' => 'MOOE',
+                    'W5' => 'CO',
                 ] as $cell => $value) {
                     $sheet->setCellValue($cell, $value);
                 }
 
                 $sheet->getStyle('A4:' . self::LAST_COL . '5')->applyFromArray([
-                    'font'      => ['bold' => true, 'size' => 10],
+                    'font' => ['bold' => true, 'size' => 10],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
                 ]);
                 $sheet->getRowDimension(4)->setRowHeight(30);
@@ -431,7 +492,7 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                     $sheet->mergeCells('A' . $r . ':' . self::LAST_COL . $r);
                     $sheet->setCellValue('A' . $r, $text);
                     $sheet->getStyle('A' . $r)->applyFromArray([
-                        'font'      => ['bold' => true, 'size' => 10],
+                        'font' => ['bold' => true, 'size' => 10],
                         'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => false, 'indent' => 2],
                     ]);
                     $sheet->getRowDimension($r)->setRowHeight(20);
@@ -449,18 +510,18 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
 
                     if ($d['subtype'] === 'abc' || $d['subtype'] === 'ongoing_abc') {
                         $sheet->mergeCells('R' . $r . ':T' . $r);
-                        $sheet->setCellValue('R' . $r, (float)$d['value']);
+                        $sheet->setCellValue('R' . $r, (float) $d['value']);
                         $sheet->getStyle('R' . $r . ':T' . $r)->applyFromArray($valueStyle);
                         $sheet->mergeCells('U' . $r . ':' . self::LAST_COL . $r);
                     } elseif ($d['subtype'] === 'contract') {
                         $sheet->mergeCells('R' . $r . ':T' . $r);
                         $sheet->mergeCells('U' . $r . ':' . self::LAST_COL . $r);
-                        $sheet->setCellValue('U' . $r, (float)$d['value']);
+                        $sheet->setCellValue('U' . $r, (float) $d['value']);
                         $sheet->getStyle('U' . $r . ':' . self::LAST_COL . $r)->applyFromArray($valueStyle);
                     } elseif ($d['subtype'] === 'savings') {
                         // Centered across both ABC + Contract Cost columns
                         $sheet->mergeCells('R' . $r . ':' . self::LAST_COL . $r);
-                        $sheet->setCellValue('R' . $r, (float)$d['value']);
+                        $sheet->setCellValue('R' . $r, (float) $d['value']);
                         $sheet->getStyle('R' . $r . ':' . self::LAST_COL . $r)->applyFromArray($valueStyle);
                     }
                 }
@@ -470,9 +531,9 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->getStyle('A6:' . self::LAST_COL . $lastRow)->applyFromArray(['borders' => ['allBorders' => $thin]]);
 
                 // ── SUMMARY TABLE ─────────────────────────────────────────────
-                $f            = $lastRow + 2;
+                $f = $lastRow + 2;
                 $summaryStart = $f;
-                $shStyle      = ['font' => ['bold' => true, 'size' => 10], 'alignment' => $center];
+                $shStyle = ['font' => ['bold' => true, 'size' => 10], 'alignment' => $center];
 
                 $sheet->mergeCells('A' . $f . ':J' . $f);
                 $sheet->setCellValue('A' . $f, 'SUMMARY');
@@ -490,14 +551,14 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
 
                 foreach ([
                     ['Completed', $this->completedAbcTotal, $pctCompleted],
-                    ['On-Going',  $this->ongoingAbcTotal,   $pctOngoing],
+                    ['On-Going', $this->ongoingAbcTotal, $pctOngoing],
                 ] as [$label, $amount, $pct]) {
                     $sheet->mergeCells('A' . $f . ':J' . $f);
                     $sheet->setCellValue('A' . $f, $label);
                     $sheet->getStyle('A' . $f . ':J' . $f)->applyFromArray(['font' => ['size' => 9], 'alignment' => $center]);
 
                     $sheet->mergeCells('K' . $f . ':Q' . $f);
-                    $sheet->setCellValue('K' . $f, (float)$amount);
+                    $sheet->setCellValue('K' . $f, (float) $amount);
                     $sheet->getStyle('K' . $f . ':Q' . $f)->applyFromArray(array_merge(['font' => ['size' => 9], 'alignment' => $right], $numFmt));
 
                     $sheet->mergeCells('R' . $f . ':' . self::LAST_COL . $f);
@@ -512,7 +573,7 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->getStyle('A' . $f . ':J' . $f)->applyFromArray(['font' => ['bold' => true, 'size' => 9], 'alignment' => $center]);
 
                 $sheet->mergeCells('K' . $f . ':Q' . $f);
-                $sheet->setCellValue('K' . $f, (float)$grandTotal);
+                $sheet->setCellValue('K' . $f, (float) $grandTotal);
                 $sheet->getStyle('K' . $f . ':Q' . $f)->applyFromArray(array_merge(['font' => ['bold' => true, 'size' => 9], 'alignment' => $right], $numFmt));
 
                 $sheet->mergeCells('R' . $f . ':' . self::LAST_COL . $f);
@@ -536,7 +597,7 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->getRowDimension($f)->setRowHeight(16);
 
                 $f += 3; // blank rows for signature space
-
+    
                 // Signature lines: top border only, no text
                 $sheet->mergeCells('A' . $f . ':F' . $f);
                 $sheet->getStyle('A' . $f . ':F' . $f)->applyFromArray(['borders' => ['top' => $thin]]);
@@ -549,12 +610,29 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
                 $sheet->freezePane('A6');
 
                 foreach ([
-                    'A' => 16, 'B' => 36, 'C' => 20, 'D' => 22,
-                    'E' => 14, 'F' => 14, 'G' => 12, 'H' => 14,
-                    'I' => 14, 'J' => 14, 'K' => 12, 'L' => 14,
-                    'M' => 14, 'N' => 14, 'O' => 16, 'P' => 18,
-                    'Q' => 18, 'R' => 14, 'S' => 14, 'T' => 12,
-                    'U' => 14, 'V' => 14, 'W' => 12,
+                    'A' => 16,
+                    'B' => 36,
+                    'C' => 20,
+                    'D' => 22,
+                    'E' => 14,
+                    'F' => 14,
+                    'G' => 12,
+                    'H' => 14,
+                    'I' => 14,
+                    'J' => 14,
+                    'K' => 12,
+                    'L' => 14,
+                    'M' => 14,
+                    'N' => 14,
+                    'O' => 16,
+                    'P' => 18,
+                    'Q' => 18,
+                    'R' => 14,
+                    'S' => 14,
+                    'T' => 12,
+                    'U' => 14,
+                    'V' => 14,
+                    'W' => 12,
                 ] as $col => $width) {
                     $sheet->getColumnDimension($col)->setWidth($width)->setAutoSize(false);
                 }
@@ -562,5 +640,8 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
         ];
     }
 
-    public function styles(Worksheet $sheet) { return []; }
+    public function styles(Worksheet $sheet)
+    {
+        return [];
+    }
 }
