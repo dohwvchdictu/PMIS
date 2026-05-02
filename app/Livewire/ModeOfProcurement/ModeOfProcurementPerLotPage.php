@@ -1783,7 +1783,11 @@ class ModeOfProcurementPerLotPage extends Component
         }
 
         // Determine target stage from the new mode
-        if ($this->isCompetitiveBidding($latestModeId)) {
+        if ($latestModeId === 2) {
+            $targetStageId = 3;  // Competitive Bidding → For Pre-Procurement
+        } elseif (\in_array($latestModeId, [7, 19])) {
+            $targetStageId = 29; // Direct Contracting / Lease of Real Property and Venue → Canvass
+        } elseif ($this->isCompetitiveBidding($latestModeId)) {
             $targetStageId = 31;
         } elseif ($this->isSvpMode($latestModeId)) {
             $targetStageId = 32;
