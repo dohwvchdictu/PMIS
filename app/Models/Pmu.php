@@ -48,6 +48,6 @@ class Pmu extends Model implements Auditable
 
     public function pmuPos()
     {
-        return $this->hasMany(PmuPo::class, 'ref_id');
+        return $this->hasMany(PmuPo::class, 'pmu_id');
     }
 }
