@@ -1007,6 +1007,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         $this->autoUpdateStageForModeFromPendingPerItem();
         $this->autoUpdateStageForSvpModePerItem();
+        $this->autoUpdateStageForCompetitiveBiddingModePerItem();
         $this->mount($this->procurement);
     }
 
@@ -1221,11 +1222,6 @@ class ModeOfProcurementPerItemPage extends Component
             $latestModeId = (int) ($items[0]['mode_of_procurement_id'] ?? 0);
             $previousModeId = (int) ($items[1]['mode_of_procurement_id'] ?? 0);
 
-            // Only trigger when the immediately preceding mode was 1 (pending)
-            if ($previousModeId !== 1) {
-                continue;
-            }
-
             // Determine target stage from the new mode
             if ($latestModeId === 2) {
                 $targetStageId = 3;  // Competitive Bidding → For Pre-Procurement
@@ -1252,8 +1248,9 @@ class ModeOfProcurementPerItemPage extends Component
 
             $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
-            // Only fire while still at the initial pending stage (1)
-            if ($currentStageId !== null && $currentStageId !== 1) {
+            // Only fire if the stage is still at the previous mode's initial stage (no field-based advancement yet)
+            $previousModeInitialStage = $this->getInitialStageForMode($previousModeId);
+            if ($currentStageId !== null && $currentStageId !== $previousModeInitialStage) {
                 continue;
             }
 
@@ -1377,6 +1374,88 @@ class ModeOfProcurementPerItemPage extends Component
             $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
             // Only write to DB if the stage actually changed
+            if ($targetStageId === $currentStageId) {
+                continue;
+            }
+
+            DB::transaction(function () use ($prItemID, $targetStageId, $currentStageId) {
+                PrItemPrstage::create([
+                    'procID' => $this->procID,
+                    'prItemID' => $prItemID,
+                    'pr_stage_id' => $targetStageId,
+                    'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                ]);
+
+                PrItemRemark::create([
+                    'procID' => $this->procID,
+                    'prItemID' => $prItemID,
+                    'remarks_id' => 3, // Ongoing
+                    'notes' => null,
+                    'remark_history' => now(),
+                ]);
+            });
+        }
+    }
+
+    private function getInitialStageForMode(int $modeId): ?int
+    {
+        if ($modeId === 0 || $modeId === 1) return 1;
+        if ($modeId === 2) return 3;
+        if (\in_array($modeId, [7, 19])) return 29;
+        if ($this->isCompetitiveBidding($modeId)) return 31;
+        if ($this->isSvpMode($modeId)) return 32;
+        return null;
+    }
+
+    private function autoUpdateStageForCompetitiveBiddingModePerItem(): void
+    {
+        // Group form items by prItemID, keep the one with the highest mode_order per item
+        $currentItemsByPrItemID = [];
+        foreach ($this->form['items'] as $item) {
+            $prItemID = $item['prItemID'] ?? null;
+            if (!$prItemID) {
+                continue;
+            }
+            $existingOrder = $currentItemsByPrItemID[$prItemID]['mode_order'] ?? -1;
+            if (($item['mode_order'] ?? 0) > $existingOrder) {
+                $currentItemsByPrItemID[$prItemID] = $item;
+            }
+        }
+
+        foreach ($currentItemsByPrItemID as $prItemID => $item) {
+            if (!$this->isCompetitiveBidding((int) ($item['mode_of_procurement_id'] ?? 0))) {
+                continue;
+            }
+
+            $latestStage = PrItemPrstage::where('procID', $this->procID)
+                ->where('prItemID', $prItemID)
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            // Never override Stage 7 (Forwarded to PMU)
+            if ($latestStage && $latestStage->pr_stage_id == 7) {
+                continue;
+            }
+
+            $targetStageId = null;
+
+            // Stage 4 – For Pre-Bid Conference
+            if ($this->hasValue($item['pre_bid_conf'] ?? null)) {
+                $targetStageId = 4;
+            }
+
+            if ($targetStageId === null) {
+                continue;
+            }
+
+            $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+            // Don't downgrade an already-higher stage
+            if ($currentStageId !== null && $currentStageId > $targetStageId) {
+                continue;
+            }
+
             if ($targetStageId === $currentStageId) {
                 continue;
             }
@@ -1615,6 +1694,7 @@ class ModeOfProcurementPerItemPage extends Component
 
         // Reload data to refresh postItems
         $this->autoUpdateStageForSvpModePerItem();
+        $this->autoUpdateStageForCompetitiveBiddingModePerItem();
         $this->mount($this->procurement);
     }
     public function getHistoryItemsProperty()

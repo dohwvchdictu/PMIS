@@ -1328,6 +1328,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
         // Reload data to reflect changes
         $this->autoUpdateStageForModeFromPendingForProcIDs($this->selectedItems);
         $this->autoUpdateStageForSvpModeForProcIDs($this->selectedItems);
+        $this->autoUpdateStageForCbModeForProcIDs($this->selectedItems);
         $this->loadProcurementData();
         $this->populateBulkEditData();
         $this->loadPostProcurementData();
@@ -2079,13 +2080,11 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
                 continue;
             }
 
-            $firstModeId = (int) ($mopLots->first()->mode_of_procurement_id ?? 0);
-            $latestModeId = (int) ($mopLots->last()->mode_of_procurement_id ?? 0);
-
-            // Only trigger when the first lot (mode_order=1) is still mode 1 (pending)
-            if ($firstModeId !== 1) {
-                continue;
-            }
+            $sortedLots = $mopLots->values();
+            $latestModeId = (int) ($sortedLots->last()->mode_of_procurement_id ?? 0);
+            $previousModeId = $sortedLots->count() >= 2
+                ? (int) ($sortedLots[$sortedLots->count() - 2]->mode_of_procurement_id ?? 0)
+                : 0;
 
             // Determine target stage from the current (highest mode_order) lot
             if ($latestModeId === 2) {
@@ -2112,8 +2111,9 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
 
             $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
-            // Only fire while still at the initial pending stage (1)
-            if ($currentStageId !== null && $currentStageId !== 1) {
+            // Only fire if the stage is still at the previous mode's initial stage (no field-based advancement yet)
+            $previousModeInitialStage = $this->getInitialStageForMode($previousModeId);
+            if ($currentStageId !== null && $currentStageId !== $previousModeInitialStage) {
                 continue;
             }
 
@@ -2229,6 +2229,85 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
             // Only write to DB if the stage actually changed
+            if ($targetStageId === $currentStageId) {
+                continue;
+            }
+
+            DB::transaction(function () use ($procID, $targetStageId, $currentStageId) {
+                PrLotPrstage::create([
+                    'procID' => $procID,
+                    'pr_stage_id' => $targetStageId,
+                    'stage_history' => $currentStageId ? (string) $currentStageId : null,
+                ]);
+
+                PrLotRemark::create([
+                    'procID' => $procID,
+                    'remarks_id' => 3, // Ongoing
+                    'notes' => null,
+                    'remark_history' => now(),
+                ]);
+            });
+        }
+    }
+
+    private function getInitialStageForMode(int $modeId): ?int
+    {
+        if ($modeId === 0 || $modeId === 1) return 1;
+        if ($modeId === 2) return 3;
+        if (\in_array($modeId, [7, 19])) return 29;
+        if ($this->isCompetitiveBidding($modeId)) return 31;
+        if ($this->isSvpMode($modeId)) return 32;
+        return null;
+    }
+
+    private function autoUpdateStageForCbModeForProcIDs(array $procIDs): void
+    {
+        if (empty($procIDs)) {
+            return;
+        }
+
+        foreach ($procIDs as $procID) {
+            // Only apply to procurements whose current mode is Competitive Bidding (modes 2-6)
+            $latestMopLot = MopLot::where('procID', $procID)
+                ->orderBy('mode_order', 'desc')
+                ->first();
+
+            if (!$latestMopLot || !$this->isCompetitiveBidding((int) $latestMopLot->mode_of_procurement_id)) {
+                continue;
+            }
+
+            $latestStage = PrLotPrstage::where('procID', $procID)
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            // Never override Stage 7 (Forwarded to PMU)
+            if ($latestStage && $latestStage->pr_stage_id == 7) {
+                continue;
+            }
+
+            $bidSchedule = BidSchedule::where('ref_id', $procID)
+                ->where('mop_uid', $latestMopLot->uid)
+                ->first();
+
+            $targetStageId = null;
+
+            // Stage 4 – For Pre-Bid Conference
+            if ($bidSchedule && $this->hasValue($bidSchedule->pre_bid_conf)) {
+                $targetStageId = 4;
+            }
+
+            if ($targetStageId === null) {
+                continue;
+            }
+
+            $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+            // Don't downgrade an already-higher stage
+            if ($currentStageId !== null && $currentStageId > $targetStageId) {
+                continue;
+            }
+
             if ($targetStageId === $currentStageId) {
                 continue;
             }

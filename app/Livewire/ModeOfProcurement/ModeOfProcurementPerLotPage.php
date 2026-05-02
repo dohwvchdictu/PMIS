@@ -631,6 +631,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         $this->autoUpdateStageForModeFromPending();
         $this->autoUpdateStageForSvpMode();
+        $this->autoUpdateStageForCompetitiveBiddingMode();
         $this->mount($this->procurement);
     }
 
@@ -1291,6 +1292,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         // Reload data to reflect changes from database
         $this->autoUpdateStageForSvpMode();
+        $this->autoUpdateStageForCompetitiveBiddingMode();
         $this->mount($this->procurement);
     }
 
@@ -1777,11 +1779,6 @@ class ModeOfProcurementPerLotPage extends Component
         $latestModeId = (int) ($sortedItems[0]['mode_of_procurement_id'] ?? 0);
         $previousModeId = (int) ($sortedItems[1]['mode_of_procurement_id'] ?? 0);
 
-        // Only trigger when the immediately preceding mode was 1 (pending)
-        if ($previousModeId !== 1) {
-            return;
-        }
-
         // Determine target stage from the new mode
         if ($latestModeId === 2) {
             $targetStageId = 3;  // Competitive Bidding → For Pre-Procurement
@@ -1807,9 +1804,11 @@ class ModeOfProcurementPerLotPage extends Component
 
         $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
-        // Only fire while the procurement is still at the initial pending stage (1).
-        // This prevents re-triggering on every subsequent save once the mode is set.
-        if ($currentStageId !== null && $currentStageId !== 1) {
+        // Only fire if the stage is still at the previous mode's initial stage (i.e., no
+        // field-based advancement has happened yet). This prevents overwriting a higher stage
+        // on subsequent saves, while still allowing stage updates on any mode change.
+        $previousModeInitialStage = $this->getInitialStageForMode($previousModeId);
+        if ($currentStageId !== null && $currentStageId !== $previousModeInitialStage) {
             return;
         }
 
@@ -1909,6 +1908,78 @@ class ModeOfProcurementPerLotPage extends Component
         $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
         // Only write to DB if the stage actually changed
+        if ($targetStageId === $currentStageId) {
+            return;
+        }
+
+        DB::transaction(function () use ($targetStageId, $currentStageId) {
+            PrLotPrstage::create([
+                'procID' => $this->procID,
+                'pr_stage_id' => $targetStageId,
+                'stage_history' => $currentStageId ? (string) $currentStageId : null,
+            ]);
+
+            PrLotRemark::create([
+                'procID' => $this->procID,
+                'remarks_id' => 3, // Ongoing
+                'notes' => null,
+                'remark_history' => now(),
+            ]);
+        });
+    }
+
+    private function getInitialStageForMode(int $modeId): ?int
+    {
+        if ($modeId === 0 || $modeId === 1) return 1;
+        if ($modeId === 2) return 3;
+        if (\in_array($modeId, [7, 19])) return 29;
+        if ($this->isCompetitiveBidding($modeId)) return 31;
+        if ($this->isSvpMode($modeId)) return 32;
+        return null;
+    }
+
+    private function autoUpdateStageForCompetitiveBiddingMode(): void
+    {
+        // Find the latest Competitive Bidding (modes 2-6) item
+        $currentItem = null;
+        foreach ($this->form['items'] as $item) {
+            if ($this->isCompetitiveBidding((int) ($item['mode_of_procurement_id'] ?? 0))) {
+                $currentItem = $item;
+            }
+        }
+
+        if (!$currentItem) {
+            return;
+        }
+
+        $latestStage = PrLotPrstage::where('procID', $this->procID)
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // Never override Stage 7 (Forwarded to PMU)
+        if ($latestStage && $latestStage->pr_stage_id == 7) {
+            return;
+        }
+
+        $targetStageId = null;
+
+        // Stage 4 – For Pre-Bid Conference
+        if ($this->hasValue($currentItem['pre_bid_conf'] ?? null)) {
+            $targetStageId = 4;
+        }
+
+        if ($targetStageId === null) {
+            return;
+        }
+
+        $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
+
+        // Don't downgrade an already-higher stage
+        if ($currentStageId !== null && $currentStageId > $targetStageId) {
+            return;
+        }
+
         if ($targetStageId === $currentStageId) {
             return;
         }
