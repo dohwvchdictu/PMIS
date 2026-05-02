@@ -1767,29 +1767,27 @@ class ModeOfProcurementPerLotPage extends Component
      */
     private function autoUpdateStageForModeFromPending(): void
     {
-        // Sort form items by mode_order descending (highest = current)
+        // Get the current item — highest mode_order
         $sortedItems = $this->form['items'];
         usort($sortedItems, fn($a, $b) => ($b['mode_order'] ?? 0) <=> ($a['mode_order'] ?? 0));
 
-        // Need at least 2 items: the default mode-1 record + a newly selected mode
-        if (count($sortedItems) < 2) {
+        if (empty($sortedItems)) {
             return;
         }
 
         $latestModeId = (int) ($sortedItems[0]['mode_of_procurement_id'] ?? 0);
-        $previousModeId = (int) ($sortedItems[1]['mode_of_procurement_id'] ?? 0);
 
-        // Determine target stage from the new mode
+        // Determine target stage from the current mode
         if ($latestModeId === 2) {
-            $targetStageId = 3;  // Competitive Bidding → For Pre-Procurement
+            $targetStageId = 3;
         } elseif (\in_array($latestModeId, [7, 19])) {
-            $targetStageId = 29; // Direct Contracting / Lease of Real Property and Venue → Canvass
+            $targetStageId = 29;
         } elseif ($this->isCompetitiveBidding($latestModeId)) {
             $targetStageId = 31;
         } elseif ($this->isSvpMode($latestModeId)) {
             $targetStageId = 32;
         } else {
-            return; // New mode is still 1 or unrecognised
+            return; // Mode is still pending (1) or unrecognised
         }
 
         $latestStage = PrLotPrstage::where('procID', $this->procID)
@@ -1804,11 +1802,10 @@ class ModeOfProcurementPerLotPage extends Component
 
         $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
-        // Only fire if the stage is still at the previous mode's initial stage (i.e., no
-        // field-based advancement has happened yet). This prevents overwriting a higher stage
-        // on subsequent saves, while still allowing stage updates on any mode change.
-        $previousModeInitialStage = $this->getInitialStageForMode($previousModeId);
-        if ($currentStageId !== null && $currentStageId !== $previousModeInitialStage) {
+        // Only update if no field-based advancement has happened yet.
+        // Mode-initial stages are the only ones this function should set or overwrite.
+        $modeInitialStages = [1, 3, 29, 31, 32];
+        if ($currentStageId !== null && !\in_array($currentStageId, $modeInitialStages)) {
             return;
         }
 
@@ -1928,15 +1925,6 @@ class ModeOfProcurementPerLotPage extends Component
         });
     }
 
-    private function getInitialStageForMode(int $modeId): ?int
-    {
-        if ($modeId === 0 || $modeId === 1) return 1;
-        if ($modeId === 2) return 3;
-        if (\in_array($modeId, [7, 19])) return 29;
-        if ($this->isCompetitiveBidding($modeId)) return 31;
-        if ($this->isSvpMode($modeId)) return 32;
-        return null;
-    }
 
     private function autoUpdateStageForCompetitiveBiddingMode(): void
     {

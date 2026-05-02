@@ -1200,39 +1200,35 @@ class ModeOfProcurementPerItemPage extends Component
      */
     private function autoUpdateStageForModeFromPendingPerItem(): void
     {
-        // Group all form items by prItemID
-        $groupedByPrItemID = [];
+        // Group all form items by prItemID, keep only the highest mode_order per group
+        $latestByPrItemID = [];
         foreach ($this->form['items'] as $item) {
             $prItemID = $item['prItemID'] ?? null;
             if (!$prItemID) {
                 continue;
             }
-            $groupedByPrItemID[$prItemID][] = $item;
+            $existing = $latestByPrItemID[$prItemID] ?? null;
+            if (!$existing || ($item['mode_order'] ?? 0) > ($existing['mode_order'] ?? 0)) {
+                $latestByPrItemID[$prItemID] = $item;
+            }
         }
 
-        foreach ($groupedByPrItemID as $prItemID => $items) {
-            // Need at least 2 items: default mode-1 + newly selected mode
-            if (count($items) < 2) {
-                continue;
-            }
+        $modeInitialStages = [1, 3, 29, 31, 32];
 
-            // Sort by mode_order descending (highest = current)
-            usort($items, fn($a, $b) => ($b['mode_order'] ?? 0) <=> ($a['mode_order'] ?? 0));
+        foreach ($latestByPrItemID as $prItemID => $currentItem) {
+            $latestModeId = (int) ($currentItem['mode_of_procurement_id'] ?? 0);
 
-            $latestModeId = (int) ($items[0]['mode_of_procurement_id'] ?? 0);
-            $previousModeId = (int) ($items[1]['mode_of_procurement_id'] ?? 0);
-
-            // Determine target stage from the new mode
+            // Determine target stage from the current mode
             if ($latestModeId === 2) {
-                $targetStageId = 3;  // Competitive Bidding → For Pre-Procurement
+                $targetStageId = 3;
             } elseif (\in_array($latestModeId, [7, 19])) {
-                $targetStageId = 29; // Direct Contracting / Lease of Real Property and Venue → Canvass
+                $targetStageId = 29;
             } elseif ($this->isCompetitiveBidding($latestModeId)) {
                 $targetStageId = 31;
             } elseif ($this->isSvpMode($latestModeId)) {
                 $targetStageId = 32;
             } else {
-                continue; // New mode is still 1 or unrecognised
+                continue; // Mode is still pending (1) or unrecognised
             }
 
             $latestStage = PrItemPrstage::where('procID', $this->procID)
@@ -1248,9 +1244,8 @@ class ModeOfProcurementPerItemPage extends Component
 
             $currentStageId = $latestStage ? $latestStage->pr_stage_id : null;
 
-            // Only fire if the stage is still at the previous mode's initial stage (no field-based advancement yet)
-            $previousModeInitialStage = $this->getInitialStageForMode($previousModeId);
-            if ($currentStageId !== null && $currentStageId !== $previousModeInitialStage) {
+            // Only update if no field-based advancement has happened yet
+            if ($currentStageId !== null && !\in_array($currentStageId, $modeInitialStages)) {
                 continue;
             }
 
@@ -1397,15 +1392,6 @@ class ModeOfProcurementPerItemPage extends Component
         }
     }
 
-    private function getInitialStageForMode(int $modeId): ?int
-    {
-        if ($modeId === 0 || $modeId === 1) return 1;
-        if ($modeId === 2) return 3;
-        if (\in_array($modeId, [7, 19])) return 29;
-        if ($this->isCompetitiveBidding($modeId)) return 31;
-        if ($this->isSvpMode($modeId)) return 32;
-        return null;
-    }
 
     private function autoUpdateStageForCompetitiveBiddingModePerItem(): void
     {
