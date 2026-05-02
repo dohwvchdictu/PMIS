@@ -87,9 +87,11 @@ class ProcurementStatusExport implements FromCollection, WithCustomStartCell, Wi
             ->where('pr_number', 'like', $this->year . '-%')
             ->where(function ($q) {
                 $q->where(fn($s) => $s->where('procurement_type', 'perLot')
-                    ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7)))
+                    ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                    ->whereHas('postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $this->endDate)))
                     ->orWhere(fn($s) => $s->where('procurement_type', '!=', 'perLot')
-                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7)));
+                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                        ->whereHas('pr_items.postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $this->endDate)));
             })->latest('date_receipt');
         $this->applyFilters($completedQuery);
         $completed = $completedQuery->get();

@@ -166,13 +166,15 @@ class ProcurementStatusPage extends Component
             ->with(['pr_items.prstage', 'pr_items.postProcurement', 'postProcurement'])
             ->whereBetween('date_receipt', [$startDate, $endDate])
             ->where('pr_number', 'like', $this->year . '-%')
-            ->where(function ($q) {
-                $q->where(function ($sub) {
+            ->where(function ($q) use ($endDate) {
+                $q->where(function ($sub) use ($endDate) {
                     $sub->where('procurement_type', 'perLot')
-                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
-                })->orWhere(function ($sub) {
+                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                        ->whereHas('postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $endDate));
+                })->orWhere(function ($sub) use ($endDate) {
                     $sub->where('procurement_type', '!=', 'perLot')
-                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                        ->whereHas('pr_items.postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $endDate));
                 });
             });
         $this->applyCommonFilters($completedAll);
@@ -284,13 +286,15 @@ class ProcurementStatusPage extends Component
             ])
             ->whereBetween('date_receipt', [$startDate, $endDate])
             ->where('pr_number', 'like', $this->year . '-%')
-            ->where(function ($q) {
-                $q->where(function ($sub) {
+            ->where(function ($q) use ($endDate) {
+                $q->where(function ($sub) use ($endDate) {
                     $sub->where('procurement_type', 'perLot')
-                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
-                })->orWhere(function ($sub) {
+                        ->whereHas('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                        ->whereHas('postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $endDate));
+                })->orWhere(function ($sub) use ($endDate) {
                     $sub->where('procurement_type', '!=', 'perLot')
-                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                        ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7))
+                        ->whereHas('pr_items.postProcurement', fn($sq) => $sq->where('notice_of_award', '<=', $endDate));
                 });
             });
 
