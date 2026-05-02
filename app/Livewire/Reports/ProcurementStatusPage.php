@@ -390,8 +390,10 @@ class ProcurementStatusPage extends Component
                     $sub->where('procurement_type', 'perLot')
                         ->whereDoesntHave('prLotPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
                 })->orWhere(function ($sub) {
+                    // Include any non-perLot PR that has at least one item
+                    // whose latest stage is not 7 (covers pure-ongoing and mixed PRs)
                     $sub->where('procurement_type', '!=', 'perLot')
-                        ->whereDoesntHave('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
+                        ->whereHas('pr_items', fn($sq) => $sq->whereDoesntHave('prstage', fn($s) => $s->where('pr_stage_id', 7)));
                 });
             });
 
@@ -447,28 +449,9 @@ class ProcurementStatusPage extends Component
             if ($p->procurement_type === 'perLot') {
                 $ongoingRows[] = $this->buildRow($p, null, $ogBidScheduleMap, $ogPrSvpMap, $ogSupplyMap);
             } else {
-                foreach ($p->pr_items as $item) {
+                foreach ($p->pr_items->filter(fn($i) => ($i->prstage?->pr_stage_id ?? 0) != 7) as $item) {
                     $ongoingRows[] = $this->buildRow($p, $item, $ogBidScheduleMap, $ogPrSvpMap, $ogSupplyMap);
                 }
-            }
-        }
-
-        // Append non-stage-7 items from completed non-perLot PRs — they belong in ongoing display
-        $partialQuery = Procurement::query()
-            ->with([
-                'category', 'clusterCommittee', 'fundSource', 'currentPrStage',
-                'pr_items.prstage', 'pr_items.mopItems.modeOfProcurement',
-                'pr_items.postProcurement.pmu.pmuPos',
-            ])
-            ->whereBetween('date_receipt', [$startDate, $endDate])
-            ->where('pr_number', 'like', $this->year . '-%')
-            ->where('procurement_type', '!=', 'perLot')
-            ->whereHas('prItemPrstages', fn($sq) => $sq->where('pr_stage_id', 7));
-        $this->applyCommonFilters($partialQuery);
-
-        foreach ($partialQuery->get() as $p) {
-            foreach ($p->pr_items->filter(fn($i) => ($i->prstage?->pr_stage_id ?? 0) != 7) as $item) {
-                $ongoingRows[] = $this->buildRow($p, $item, collect(), collect(), collect());
             }
         }
 

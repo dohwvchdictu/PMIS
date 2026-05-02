@@ -11,7 +11,7 @@
                 <span class="sr-only">Previous</span>
             </button>
         @else
-            <button wire:click="previousPage" aria-label="Previous"
+            <button wire:click="previousPage('{{ $paginator->getPageName() }}')" aria-label="Previous"
                 class="min-h-6 min-w-6 p-1 inline-flex justify-center items-center gap-x-2 text-sm rounded-lg text-gray-800 hover:bg-gray-100 focus:bg-gray-100 dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10">
                 <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
                             {{ $page }}
                         </button>
                     @else
-                        <button wire:click="gotoPage({{ $page }})"
+                        <button wire:click="gotoPage({{ $page }}, '{{ $paginator->getPageName() }}')"
                             class="min-h-6 min-w-6 p-1 inline-flex justify-center items-center text-sm rounded-lg text-gray-800 hover:bg-gray-100 focus:bg-gray-100 dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10">
                             {{ $page }}
                         </button>
@@ -51,7 +51,7 @@
 
         {{-- Next Page Link --}}
         @if ($paginator->hasMorePages())
-            <button wire:click="nextPage" aria-label="Next"
+            <button wire:click="nextPage('{{ $paginator->getPageName() }}')" aria-label="Next"
                 class="min-h-6 min-w-6 p-1 inline-flex justify-center items-center gap-x-2 text-sm rounded-lg text-gray-800 hover:bg-gray-100 focus:bg-gray-100 dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10">
                 <span class="sr-only">Next</span>
                 <svg class="shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
