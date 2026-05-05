@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Models\Procurement;
 use App\Models\BidSchedule;
 use App\Models\PrSvp;
+use App\Models\PmuPo;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -28,6 +29,8 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
     protected $fundSourceGroupFilter;
     protected $remarksFilter;
     protected $bacTypeId;
+    protected $pmuPoMap;
+    protected $itemPmuPoMap;
 
     public function __construct(
         $search,
@@ -201,6 +204,14 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
                 ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
         }
 
+        $this->pmuPoMap = !empty($allLotProcIds)
+            ? PmuPo::whereIn('ref_id', $allLotProcIds)->get()->keyBy('ref_id')
+            : collect();
+
+        $this->itemPmuPoMap = !empty($allItemIds)
+            ? PmuPo::whereIn('ref_id', $allItemIds)->get()->keyBy('ref_id')
+            : collect();
+
         $rows = collect();
 
         foreach ($procurements as $procurement) {
@@ -242,6 +253,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'Awarded Amount',
             'Supplier',
             'Date Forwarded to PMU',
+            'PO Date',
+            'Contract Signing',
+            'NTP',
+            'Date Forwarded to Supply',
         ];
     }
 
@@ -304,6 +319,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $procurement->postProcurement?->pmu?->date_forwarded
             ? $formatDate($procurement->postProcurement->pmu->date_forwarded)
             : 'N/A',
+            $formatDate($this->pmuPoMap->get($procurement->procID)?->po_date),
+            $formatDate($this->pmuPoMap->get($procurement->procID)?->contract_signing_date),
+            $formatDate($this->pmuPoMap->get($procurement->procID)?->notice_to_proceed_date),
+            $formatDate($this->pmuPoMap->get($procurement->procID)?->forwarded_to_supply_at),
         ];
     }
 
@@ -361,6 +380,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             $item->postProcurement?->pmu?->date_forwarded
             ? $formatDate($item->postProcurement->pmu->date_forwarded)
             : 'N/A',
+            $formatDate($this->itemPmuPoMap->get($item->prItemID)?->po_date),
+            $formatDate($this->itemPmuPoMap->get($item->prItemID)?->contract_signing_date),
+            $formatDate($this->itemPmuPoMap->get($item->prItemID)?->notice_to_proceed_date),
+            $formatDate($this->itemPmuPoMap->get($item->prItemID)?->forwarded_to_supply_at),
         ];
     }
 
@@ -369,7 +392,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         $highestRow = $sheet->getHighestRow();
 
         // Style the header row
-        $sheet->getStyle('A1:W1')->applyFromArray([
+        $sheet->getStyle('A1:AA1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -393,7 +416,7 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
         ]);
 
         // Center align all data cells
-        $sheet->getStyle('A2:W' . $highestRow)->applyFromArray([
+        $sheet->getStyle('A2:AA' . $highestRow)->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -523,6 +546,10 @@ class BacPrsReceivedBExport implements FromCollection, WithHeadings, WithMapping
             'U' => 18, // Awarded Amount
             'V' => 30, // Supplier
             'W' => 22, // Date Forwarded to PMU
+            'X' => 18, // PO Date
+            'Y' => 20, // Contract Signing
+            'Z' => 18, // NTP
+            'AA' => 22, // Date Forwarded to Supply
         ];
     }
 }

@@ -17,6 +17,7 @@ use App\Models\ClusterCommittee;
 use App\Models\ProcurementStage;
 use App\Models\FundSource;
 use App\Models\FundSourceGroup;
+use App\Models\PmuPo;
 use Livewire\Attributes\Title;
 
 #[Title("PR's Received (A) | PMIS")]
@@ -291,6 +292,12 @@ class BacPrsReceivedPage extends Component
                 ->keyBy(fn($s) => $s->ref_id . '_' . $s->mop_uid);
         }
 
+        // Load pmu_po records directly by ref_id (procID), mirroring how PmuEditPage accesses them.
+        // This avoids the unreliable postProcurement→pmu→pmuPos chain.
+        $pmuPoMap = !empty($allProcIds)
+            ? PmuPo::whereIn('ref_id', $allProcIds)->get()->keyBy('ref_id')
+            : collect();
+
         // Add current mode, status and IB No to each procurement
         foreach ($procurements as $procurement) {
             $modeStatus = $this->getCurrentModeAndStatus($procurement, $bidScheduleMap, $prSvpMap);
@@ -301,6 +308,7 @@ class BacPrsReceivedPage extends Component
 
         return view('livewire.reports.bac-prs-received-page', [
             'procurements' => $procurements,
+            'pmuPoMap' => $pmuPoMap,
             'modes' => $this->modes,
             'clusterOptions' => $this->clusterOptions,
             'procurementStages' => $this->procurementStages,
