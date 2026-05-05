@@ -207,7 +207,7 @@
     </div>
     <!-- Enhanced Table Section -->
     <div class="overflow-auto flex-1">
-        <table class="table-auto w-full min-w-[5400px] divide-y divide-gray-200 dark:divide-neutral-700">
+        <table class="table-auto w-full min-w-[6200px] divide-y divide-gray-200 dark:divide-neutral-700">
             <thead
                 class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-900 dark:to-neutral-800 sticky top-0 z-30">
                 <tr>
@@ -303,10 +303,27 @@
                         class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-40">
                         Date Forwarded to PMU
                     </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        PO Date
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        Contract Signing
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">
+                        NTP
+                    </th>
+                    <th
+                        class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-40">
+                        Date Forwarded to Supply
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-neutral-800">
                 @forelse ($procurements as $procurement)
+                    @php $pmuPo = $pmuPoMap->get($procurement->procID); @endphp
                     <tr
                         class="border-b border-gray-100 dark:border-neutral-700 {{ $loop->even ? 'bg-gray-50/50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-800' }} hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 transition-all duration-200">
                         <!-- PR Number -->
@@ -601,10 +618,54 @@
                                 <span class="text-gray-400 italic text-xs">N/A</span>
                             @endif
                         </td>
+
+                        <!-- PO Date -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($pmuPo?->po_date)
+                                <span class="text-xs">
+                                    {{ \Carbon\Carbon::parse($pmuPo->po_date)->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
+
+                        <!-- Contract Signing -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($pmuPo?->contract_signing_date)
+                                <span class="text-xs">
+                                    {{ \Carbon\Carbon::parse($pmuPo->contract_signing_date)->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
+
+                        <!-- NTP -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($pmuPo?->notice_to_proceed_date)
+                                <span class="text-xs">
+                                    {{ \Carbon\Carbon::parse($pmuPo->notice_to_proceed_date)->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
+
+                        <!-- Date Forwarded to Supply -->
+                        <td class="px-3 py-4 text-center text-sm text-gray-700 dark:text-gray-200">
+                            @if ($pmuPo?->forwarded_to_supply_at)
+                                <span class="text-xs">
+                                    {{ \Carbon\Carbon::parse($pmuPo->forwarded_to_supply_at)->format('M d, Y') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 italic text-xs">N/A</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="22" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="27" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">

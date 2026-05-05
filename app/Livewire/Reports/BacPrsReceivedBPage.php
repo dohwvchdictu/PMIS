@@ -17,6 +17,7 @@ use App\Models\ClusterCommittee;
 use App\Models\ProcurementStage;
 use App\Models\FundSource;
 use App\Models\FundSourceGroup;
+use App\Models\PmuPo;
 use Livewire\Attributes\Title;
 
 #[Title("PR's Received (B) | PMIS")]
@@ -312,12 +313,15 @@ class BacPrsReceivedBPage extends Component
         });
 
         // Batch-load BidSchedules for perItem procurements (to resolve IB No per item)
+        $allLotProcIds = [];
         $allItemIds = [];
         foreach ($procurements->items() as $procurement) {
             if ($procurement->procurement_type === 'perItem') {
                 foreach ($procurement->pr_items as $item) {
                     $allItemIds[] = $item->prItemID;
                 }
+            } else {
+                $allLotProcIds[] = $procurement->procID;
             }
         }
         $itemBidScheduleMap = collect();
@@ -326,6 +330,15 @@ class BacPrsReceivedBPage extends Component
                 ->get()
                 ->keyBy(fn($b) => $b->ref_id . '_' . $b->mop_uid);
         }
+
+        // Load pmu_po records directly by ref_id, mirroring how PmuEditPage accesses them.
+        // perLot: ref_id = procID | perItem: ref_id = prItemID
+        $pmuPoMap = !empty($allLotProcIds)
+            ? PmuPo::whereIn('ref_id', $allLotProcIds)->get()->keyBy('ref_id')
+            : collect();
+        $itemPmuPoMap = !empty($allItemIds)
+            ? PmuPo::whereIn('ref_id', $allItemIds)->get()->keyBy('ref_id')
+            : collect();
 
         // Add current mode, status and IB No to each procurement
         foreach ($procurements as $procurement) {
@@ -354,6 +367,8 @@ class BacPrsReceivedBPage extends Component
 
         return view('livewire.reports.bac-prs-received-b-page', [
             'procurements' => $procurements,
+            'pmuPoMap' => $pmuPoMap,
+            'itemPmuPoMap' => $itemPmuPoMap,
             'modes' => $this->modes,
             'clusterOptions' => $this->clusterOptions,
             'procurementStages' => $this->procurementStages,
