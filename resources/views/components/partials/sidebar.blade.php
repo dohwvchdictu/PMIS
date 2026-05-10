@@ -236,17 +236,53 @@
                             </div>
                         </li>
 
+                        <!-- PMR Reports -->
+                        @can('view_reports')
+                            <li>
+                                <a wire:navigate href="{{ route('reports.pmr-cat-a') }}"
+                                    class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
+                                    transition-all duration-200 border-l-4
+                                    {{ request()->routeIs('reports.pmr-cat-a')
+                                        ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                        : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                        fill="currentColor" class="size-5 flex-shrink-0">
+                                        <path fill-rule="evenodd"
+                                            d="M1.5 5.625c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v12.75c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 18.375V5.625ZM21 9.375A.375.375 0 0 0 20.625 9h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5A.375.375 0 0 0 21 10.875v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5ZM10.875 18.75a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5ZM3.375 15h7.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375Zm0-3.75h7.5a.375.375 0 0 0 .375-.375v-1.5A.375.375 0 0 0 10.875 9h-7.5A.375.375 0 0 0 3 9.375v1.5c0 .207.168.375.375.375Z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    <span>PMR (CAT A)</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a wire:navigate href="{{ route('reports.pmr-cat-b') }}"
+                                    class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
+                                    transition-all duration-200 border-l-4
+                                    {{ request()->routeIs('reports.pmr-cat-b')
+                                        ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
+                                        : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                        fill="currentColor" class="size-5 flex-shrink-0">
+                                        <path fill-rule="evenodd"
+                                            d="M1.5 5.625c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v12.75c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 18.375V5.625ZM21 9.375A.375.375 0 0 0 20.625 9h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5A.375.375 0 0 0 21 10.875v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5ZM10.875 18.75a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5ZM3.375 15h7.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375Zm0-3.75h7.5a.375.375 0 0 0 .375-.375v-1.5A.375.375 0 0 0 10.875 9h-7.5A.375.375 0 0 0 3 9.375v1.5c0 .207.168.375.375.375Z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    <span>PMR (CAT B)</span>
+                                </a>
+                            </li>
+                        @endcan
+
                         <!-- BAC Reports -->
                         @can('view_bac_reports')
-                            <li class="hs-accordion {{ request()->routeIs('reports.bac.*') ? 'active' : '' }}"
+                            <li class="hs-accordion {{ request()->routeIs(['reports.bac.prs-received', 'reports.bac.prs-received-b', 'reports.bac.procurement-status']) ? 'active' : '' }}"
                                 id="reports-bac-accordion">
                                 <button type="button"
                                     class="hs-accordion-toggle w-full flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
                             transition-all duration-200 border-l-4
-                            {{ request()->routeIs('reports.bac.*')
+                            {{ request()->routeIs(['reports.bac.prs-received', 'reports.bac.prs-received-b', 'reports.bac.procurement-status'])
                                 ? 'bg-emerald-50 text-emerald-600 border-l-emerald-600 dark:bg-emerald-600/30 dark:text-white dark:border-l-emerald-600'
                                 : 'bg-transparent text-gray-700 border-l-transparent hover:bg-gray-100 dark:text-white dark:hover:bg-emerald-600/50' }}"
-                                    aria-expanded="{{ request()->routeIs('reports.bac.*') ? 'true' : 'false' }}"
+                                    aria-expanded="{{ request()->routeIs(['reports.bac.prs-received', 'reports.bac.prs-received-b', 'reports.bac.procurement-status']) ? 'true' : 'false' }}"
                                     aria-controls="reports-bac-accordion-child">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                         class="size-5 flex-shrink-0">
@@ -264,7 +300,7 @@
                                 </button>
 
                                 <div id="reports-bac-accordion-child"
-                                    class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 {{ request()->routeIs('reports.bac.*') ? '' : 'hidden' }}"
+                                    class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300 {{ request()->routeIs(['reports.bac.prs-received', 'reports.bac.prs-received-b', 'reports.bac.procurement-status']) ? '' : 'hidden' }}"
                                     role="region" aria-labelledby="reports-bac-accordion">
                                     <ul class="ps-1 pt-1 space-y-1">
                                         <li>
@@ -319,42 +355,11 @@
                                                 <span>Procurement Status</span>
                                             </a>
                                         </li>
-                                        <li>
-                                            <a wire:navigate href="{{ route('reports.bac.pmr-cat-a') }}"
-                                                class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
-                                        transition-all duration-200
-                                        {{ request()->routeIs('reports.bac.pmr-cat-a')
-                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
-                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-emerald-600/20' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                    fill="currentColor" class="size-5 flex-shrink-0">
-                                                    <path fill-rule="evenodd"
-                                                        d="M1.5 5.625c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v12.75c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 18.375V5.625ZM21 9.375A.375.375 0 0 0 20.625 9h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5A.375.375 0 0 0 21 10.875v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5ZM10.875 18.75a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5ZM3.375 15h7.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375Zm0-3.75h7.5a.375.375 0 0 0 .375-.375v-1.5A.375.375 0 0 0 10.875 9h-7.5A.375.375 0 0 0 3 9.375v1.5c0 .207.168.375.375.375Z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                <span>PMR (CAT A)</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a wire:navigate href="{{ route('reports.bac.pmr-cat-b') }}"
-                                                class="flex items-center gap-x-3 py-2 px-3 text-xs font-medium rounded-lg
-                                        transition-all duration-200
-                                        {{ request()->routeIs('reports.bac.pmr-cat-b')
-                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
-                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-emerald-600/20' }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                                    fill="currentColor" class="size-5 flex-shrink-0">
-                                                    <path fill-rule="evenodd"
-                                                        d="M1.5 5.625c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v12.75c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 18.375V5.625ZM21 9.375A.375.375 0 0 0 20.625 9h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5A.375.375 0 0 0 21 10.875v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5Zm0 3.75a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 0 0 .375-.375v-1.5ZM10.875 18.75a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h7.5ZM3.375 15h7.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375Zm0-3.75h7.5a.375.375 0 0 0 .375-.375v-1.5A.375.375 0 0 0 10.875 9h-7.5A.375.375 0 0 0 3 9.375v1.5c0 .207.168.375.375.375Z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                <span>PMR (CAT B)</span>
-                                            </a>
-                                        </li>
                                     </ul>
                                 </div>
                             </li>
                         @endcan
+
                     @endcan
                 </ul>
             </nav>

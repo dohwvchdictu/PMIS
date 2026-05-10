@@ -163,6 +163,11 @@ Route::middleware(['jwt'])->group(function () {
 
     // Reports routes
     Route::prefix('reports')->name('reports.')->middleware('can:view_reports')->group(function () {
+        Route::get('/pmr-cat-a', PmrCatAPage::class)
+            ->name('pmr-cat-a');
+        Route::get('/pmr-cat-b', PmrCatBPage::class)
+            ->name('pmr-cat-b');
+
         Route::prefix('bac')->name('bac.')->middleware('can:view_bac_reports')->group(function () {
             Route::get('/prs-received', BacPrsReceivedPage::class)
                 ->name('prs-received');
@@ -170,10 +175,6 @@ Route::middleware(['jwt'])->group(function () {
                 ->name('prs-received-b');
             Route::get('/procurement-status', ProcurementStatusPage::class)
                 ->name('procurement-status');
-            Route::get('/pmr-cat-a', PmrCatAPage::class)
-                ->name('pmr-cat-a');
-            Route::get('/pmr-cat-b', PmrCatBPage::class)
-                ->name('pmr-cat-b');
         });
     });
 

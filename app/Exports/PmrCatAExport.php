@@ -59,7 +59,7 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
             ])
             ->whereHas('category', fn($q) => $q->where('bac_type_id', 1))
             ->where('pr_number', 'like', $this->year . '-%')
-            ->latest('date_receipt');
+            ->orderBy('pr_number', 'asc');
 
         if (!empty($this->search)) {
             $term = '%' . $this->search . '%';
