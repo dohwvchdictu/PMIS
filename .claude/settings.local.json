@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"c:\\\\Users\\\\DOH\\\\AppData\\\\Local\\\\Temp\\\\\" | grep -i \"\\\\.png\\\\|\\\\.jpg\\\\|\\\\.webp\\\\|screenshot\" | head -10 2>/dev/null || echo \"checking elsewhere\")",
+      "Read(//c/Users/DOH/AppData/Local/Temp\" | grep -i .png|.jpg|.webp|screenshot | head -10 2>/dev/**)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\DOH\\\\Herd\\\\BACPMIS\\\\database\\\\migrations\" -File)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\DOH\\\\Herd\\\\BACPMIS\\\\database\\\\migrations\" -Filter \"*bid_schedule*\")",
+      "Bash(Select-Object FullName)"
+    ]
+  }
+}
