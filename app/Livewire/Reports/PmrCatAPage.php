@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Reports;
 
+use App\Exports\PmrCatAExport;
 use App\Models\BidSchedule;
 use App\Models\ClusterCommittee;
 use App\Models\FundSource;
@@ -13,6 +14,7 @@ use App\Models\Supply;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 #[Title("PMR (CAT A) | PMIS")]
 class PmrCatAPage extends Component
@@ -59,6 +61,22 @@ class PmrCatAPage extends Component
         $this->resetPage();
     }
 
+    public function exportToExcel()
+    {
+        $fileName = 'PMR_CAT_A_' . $this->year . '_' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(
+            new PmrCatAExport(
+                $this->search,
+                $this->year,
+                $this->clusterFilter,
+                $this->fundSourceFilter,
+                $this->currentModeFilter
+            ),
+            $fileName
+        );
+    }
+
     public function render()
     {
         $query = Procurement::query()
@@ -78,7 +96,7 @@ class PmrCatAPage extends Component
             ])
             ->whereHas('category', fn($q) => $q->where('bac_type_id', 1))
             ->where('pr_number', 'like', $this->year . '-%')
-            ->latest('date_receipt');
+            ->orderBy('pr_number', 'asc');
 
         if (!empty($this->search)) {
             $term = '%' . $this->search . '%';

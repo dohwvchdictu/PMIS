@@ -14,6 +14,21 @@
                     </svg>
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white">Procurement Monitoring Report (CAT A)</h2>
                 </div>
+                <!-- Export to Excel -->
+                <button type="button" wire:click="exportToExcel"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-150 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    wire:loading.attr="disabled">
+                    <svg wire:loading.remove wire:target="exportToExcel" class="w-4 h-4" viewBox="0 0 24 24"
+                        fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM10.5 15.5L9 14L7.5 15.5L6.5 14.5L8 13L6.5 11.5L7.5 10.5L9 12L10.5 10.5L11.5 11.5L10 13L11.5 14.5L10.5 15.5ZM13 13.5H17V15H13V13.5ZM13 11H17V12.5H13V11Z" />
+                    </svg>
+                    <svg wire:loading wire:target="exportToExcel" class="animate-spin w-4 h-4"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Export
+                </button>
             </div>
         </div>
 
@@ -429,28 +444,28 @@
                         {{-- 62 Inspection & Acceptance --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($supplyPo?->date_of_acceptance) }}</td>
                         {{-- 63 List of Invited Observers --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->list_invited_observers ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->list_invited_observers ?? '') : '' }}</div>
                         </td>
                         {{-- 64 Observers (Pre-bid Conf) --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->obsrvr_prebid_conf ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_prebid_conf ?? '') : '' }}</div>
                         </td>
                         {{-- 65 Observers (Eligibility) --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->obsrvr_eligibility ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_eligibility ?? '') : '' }}</div>
                         </td>
                         {{-- 66 Observers (Sub/Open) --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->obsrvr_sub_open_of_bid ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_sub_open_of_bid ?? '') : '' }}</div>
                         </td>
                         {{-- 67 Observers (Bid Eval) --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->obsrvr_bid ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_bid ?? '') : '' }}</div>
                         </td>
                         {{-- 68 Observers (Post Qual) --}}
-                        <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
-                            <div class="break-words whitespace-normal line-clamp-2">{{ $isBidding ? ($mainBid?->obsrvr_post_qual ?? '') : '' }}</div>
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
+                            <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_post_qual ?? '') : '' }}</div>
                         </td>
                         {{-- 69 Delivery/Completion/Acceptance (future) --}}
                         <td class="px-3 py-2 text-xs text-gray-300 dark:text-gray-600"></td>
