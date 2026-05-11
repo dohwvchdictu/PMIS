@@ -437,6 +437,28 @@
             });
         }
 
+        function restoreThemeState() {
+            const html = document.documentElement;
+            // Restore dark mode
+            if (localStorage.getItem('darkMode') === 'dark' ||
+                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+            // Restore sidebar collapsed state
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                html.classList.add('sidebar-collapsed');
+            } else {
+                html.classList.remove('sidebar-collapsed');
+            }
+            // Sync sidebar toggle icon
+            const icon = document.getElementById('sidebar-toggle-icon');
+            if (icon) {
+                icon.style.transform = html.classList.contains('sidebar-collapsed') ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const icon = document.getElementById('sidebar-toggle-icon');
             if (icon && document.documentElement.classList.contains('sidebar-collapsed')) {
@@ -444,7 +466,10 @@
             }
             initSidebarTooltips();
         });
-        document.addEventListener('livewire:navigated', initSidebarTooltips);
+        document.addEventListener('livewire:navigated', function() {
+            restoreThemeState();
+            initSidebarTooltips();
+        });
     </script>
 </body>
 
