@@ -4,7 +4,7 @@
     <!-- Enhanced Header with Expandable Filters -->
     <div class="sticky top-0 z-40 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 w-full"
         x-data="{ showFilters: false }">
-        <!-- Single Row: Search and Add Button -->
+        <!-- Single Row: Search, Filter Toggle, and Add Button -->
         <div class="px-6 py-4 flex items-center justify-between gap-4">
             <!-- Search Bar -->
             <div class="relative flex-1 max-w-md">
@@ -17,8 +17,18 @@
                 </svg>
             </div>
 
-            <!-- Add Button -->
+            <!-- Filter Toggle & Add Button -->
             <div class="flex items-center gap-2">
+                <button @click="showFilters = !showFilters"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200"
+                    :class="showFilters ?
+                        'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300' :
+                        'bg-gray-100 dark:bg-neutral-700 border-gray-200 dark:border-neutral-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                </button>
                 @can('create_b::a::c::approved::p::r')
                     <a href="{{ route('bac-approved-pr.create') }}"
                         class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all duration-200 shadow-sm hover:shadow">
@@ -27,6 +37,58 @@
                         </svg>
                     </a>
                 @endcan
+            </div>
+        </div>
+
+        <!-- Expandable Filters Section -->
+        <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-96"
+            x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 max-h-96"
+            x-transition:leave-end="opacity-0 max-h-0"
+            class="relative z-40 overflow-visible border-t border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900/50">
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Division</label>
+                        <x-forms.searchable-select wire:model.live="divisionFilter" :options="$divisions"
+                            labelKey="abbreviation" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Cluster</label>
+                        <x-forms.searchable-select wire:model.live="clusterCommitteeFilter" :options="$clusterCommittees"
+                            labelKey="clustercommittee" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">End User</label>
+                        <x-forms.searchable-select wire:model.live="endUserFilter" :options="$endUsers"
+                            labelKey="endusers" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Fund Source</label>
+                        <x-forms.searchable-select wire:model.live="fundSourceFilter" :options="$fundSources"
+                            labelKey="fundsources" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Remarks</label>
+                        <x-forms.searchable-select wire:model.live="remarkFilter" :options="$remarks"
+                            labelKey="remarks" valueKey="id" placeholder="All" />
+                    </div>
+                    <div class="relative z-50">
+                        <label class="text-xs font-semibold text-gray-700 dark:text-gray-400 block mb-2">Early Procurement</label>
+                        <select wire:model.live="earlyProcurementFilter"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:bg-neutral-800 dark:text-white dark:border-neutral-600">
+                            <option value="">All</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button wire:click="clearFilters"
+                        class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                        Clear all filters
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -48,11 +110,11 @@
                         Procurement Program / Project
                     </th>
                     <th
-                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider bg-gray-100 dark:bg-neutral-900 w-32">
                         Cluster / Committee
                     </th>
                     <th
-                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider bg-gray-100 dark:bg-neutral-900 w-32">
                         ABC Amount
                     </th>
                 </tr>
