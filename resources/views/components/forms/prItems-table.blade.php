@@ -49,6 +49,10 @@
                             class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                             Remark
                         </th>
+                        <th style="min-width: 130px;"
+                            class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Last Updated
+                        </th>
                     @endif
                     @unless ($viewOnly)
                         <th style="min-width: 60px;" class="px-4 py-3"></th>
@@ -162,6 +166,16 @@
                                     <div class="text-center text-gray-400 dark:text-gray-500 text-sm">—</div>
                                 @endif
                             </td>
+
+                            <td class="px-4 py-3">
+                                @if (!empty($item['last_updated_at']))
+                                    <div class="text-center text-gray-600 dark:text-gray-300 text-xs font-medium">
+                                        {{ $item['last_updated_at'] }}
+                                    </div>
+                                @else
+                                    <div class="text-center text-gray-400 dark:text-gray-500 text-sm">—</div>
+                                @endif
+                            </td>
                         @endif
 
                         @unless ($viewOnly)
@@ -180,7 +194,7 @@
                 @endforeach
                 @if (count($items) === 0)
                     <tr>
-                        <td colspan="{{ $viewOnly ? 5 : 4 }}" class="px-4 py-12 text-center">
+                        <td colspan="{{ $viewOnly ? 6 : 4 }}" class="px-4 py-12 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">

@@ -141,6 +141,9 @@
                     <th
                         class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
                         ABC Amount</th>
+                    <th
+                        class="px-1 py-1 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-32">
+                        Last Updated</th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-neutral-800">
@@ -400,6 +403,14 @@
                                 <span
                                     class="text-emerald-700 dark:text-emerald-400">{{ number_format($procurement->abc ?? 0, 2) }}</span>
                             </div>
+                        </td>
+                        <td
+                            class="px-3 py-4 text-center text-xs {{ $loop->even ? 'bg-gray-50 dark:bg-neutral-900' : 'bg-white dark:bg-neutral-800' }} group-hover:bg-gradient-to-r group-hover:from-emerald-50 group-hover:to-teal-50 dark:group-hover:from-emerald-900/20 dark:group-hover:to-teal-900/20 text-gray-600 dark:text-gray-300">
+                            @if ($procurement->last_updated_at && $procurement->last_updated_at !== '1970-01-01 00:00:00')
+                                <span class="font-medium">{{ \Carbon\Carbon::parse($procurement->last_updated_at)->format('M j, Y') }}</span>
+                            @else
+                                <span class="text-gray-400 dark:text-gray-500 italic">—</span>
+                            @endif
                         </td>
                     </tr>
 
