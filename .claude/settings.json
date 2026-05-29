@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Find \"c:\\\\Users\\\\DOH\\\\Herd\\\\BACPMIS\\\\database\\\\migrations\" -type f -name \"*prstage*\")"
+    ]
+  }
+}

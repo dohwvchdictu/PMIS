@@ -62,6 +62,19 @@
                 @endif
             </div>
 
+            <!-- Last Updated Badge (right side) -->
+            @if ($lastUpdatedAt)
+                <div class="absolute top-1.5 right-0 z-10">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-bl-lg text-sm font-semibold bg-gray-500 text-white shadow-sm">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Updated {{ $lastUpdatedAt }}</span>
+                    </span>
+                </div>
+            @endif
+
             <div class="p-6 pt-8">
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex-1 min-w-0">
@@ -74,7 +87,7 @@
                         @if (!empty($procurement->bacApprovedPr?->filepath))
                             <a href="{{ $procurement->bacApprovedPr->filepath }}" target="_blank" rel="noopener noreferrer"
                                 title="View PR"
-                                class="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 transition-colors group">
+                                class="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 mt-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 transition-colors group">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                                     stroke="currentColor" class="h-5 w-5 group-hover:scale-110 transition-transform">
                                     <path stroke-linecap="round" stroke-linejoin="round"

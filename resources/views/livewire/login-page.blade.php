@@ -106,7 +106,14 @@
                         </div>
                         <div class="mt-5">
                             <!-- Form -->
-                            <form wire:submit.prevent="authenticate">
+                            <form wire:submit.prevent="authenticate"
+                                x-data="{
+                                    init() {
+                                        const last = localStorage.getItem('last_login_email');
+                                        if (last) $wire.set('email', last);
+                                    }
+                                }"
+                                @submit="localStorage.setItem('last_login_email', $wire.email)">
                                 <!-- Session Status -->
                                 <div>
                                     @if (session('errorMessage'))
@@ -122,6 +129,7 @@
                                             class="block text-sm mb-2 text-gray-700 dark:text-gray-200">Email</label>
                                         <div class="relative">
                                             <input type="email" id="email" wire:model="email"
+                                                autocomplete="off"
                                                 class="py-3 px-4 block w-full bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:placeholder-neutral-500 dark:focus:ring-neutral-500 dark:focus:border-blue-500"
                                                 required aria-describedby="email-error">
                                         </div>
@@ -136,6 +144,8 @@
                                         <div class="relative" x-data="{ show: false }">
                                             <input :type="show ? 'text' : 'password'" id="password"
                                                 wire:model="password"
+                                                autocomplete="new-password" readonly
+                                                onfocus="this.removeAttribute('readonly')"
                                                 class="py-3 px-4 block w-full bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:placeholder-neutral-500 dark:focus:ring-neutral-500 dark:focus:border-blue-500"
                                                 required aria-describedby="password-error">
                                             <div class="absolute inset-y-0 right-0 flex items-center pr-3">

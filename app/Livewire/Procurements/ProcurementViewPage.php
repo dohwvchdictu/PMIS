@@ -76,6 +76,9 @@ class ProcurementViewPage extends Component
     public ?array $pmuRecord = null;
     public array $pmuItems = [];
 
+    // Last updated across all related tables
+    public ?string $lastUpdatedAt = null;
+
     public function mount(Procurement $procurement): void
     {
         $procurement->load([
@@ -164,6 +167,20 @@ class ProcurementViewPage extends Component
 
         // Load reference data
         $this->loadReferenceData();
+
+        // Compute last updated across all related tables
+        $this->lastUpdatedAt = $this->computeLastUpdatedAt($procurement);
+
+        // For perItem, attach per-item last_updated_at to each item
+        if ($this->form['procurement_type'] === 'perItem') {
+            $prItemIds = collect($this->form['items'] ?? [])
+                ->pluck('prItemID')->filter()->unique()->toArray();
+            $itemDates = $this->computeItemLastUpdatedAt($prItemIds);
+            foreach ($this->form['items'] as &$item) {
+                $item['last_updated_at'] = $itemDates[$item['prItemID'] ?? ''] ?? null;
+            }
+            unset($item);
+        }
 
         // Calculate textarea rows
         $this->calculateTextareaRows($procurement->procurement_program_project ?? '');
@@ -818,6 +835,60 @@ class ProcurementViewPage extends Component
         } catch (\Exception $e) {
             return $date;
         }
+    }
+
+    protected function computeLastUpdatedAt(Procurement $procurement): ?string
+    {
+        $dates = array_filter([
+            $procurement->updated_at?->toDateTimeString(),
+            $procurement->prLotPrstages()->max('created_at'),
+            $procurement->prItemPrstages()->max('created_at'),
+            $procurement->prLotRemarks()->max('updated_at'),
+            \App\Models\PrItemRemark::where('procID', $procurement->procID)->max('updated_at'),
+            \App\Models\PostProcurement::where('ref_id', $procurement->procID)->whereNull('deleted_at')->max('updated_at'),
+        ]);
+
+        if (empty($dates)) return null;
+
+        return \Carbon\Carbon::parse(max($dates))->format('M j, Y');
+    }
+
+    protected function computeItemLastUpdatedAt(array $prItemIds): array
+    {
+        if (empty($prItemIds)) return [];
+
+        $stageDates = \App\Models\PrItemPrstage::whereIn('prItemID', $prItemIds)
+            ->selectRaw('prItemID, MAX(created_at) as max_date')
+            ->groupBy('prItemID')
+            ->pluck('max_date', 'prItemID')
+            ->toArray();
+
+        $remarkDates = \App\Models\PrItemRemark::whereIn('prItemID', $prItemIds)
+            ->selectRaw('prItemID, MAX(updated_at) as max_date')
+            ->groupBy('prItemID')
+            ->pluck('max_date', 'prItemID')
+            ->toArray();
+
+        $postDates = \App\Models\PostProcurement::whereIn('ref_id', $prItemIds)
+            ->whereNull('deleted_at')
+            ->selectRaw('ref_id, MAX(updated_at) as max_date')
+            ->groupBy('ref_id')
+            ->pluck('max_date', 'ref_id')
+            ->toArray();
+
+        $result = [];
+        foreach ($prItemIds as $prItemID) {
+            $dates = array_filter([
+                $stageDates[$prItemID] ?? null,
+                $remarkDates[$prItemID] ?? null,
+                $postDates[$prItemID] ?? null,
+            ]);
+            $result[$prItemID] = !empty($dates)
+                ? \Carbon\Carbon::parse(max($dates))->format('M j, Y')
+                : null;
+        }
+
+        return $result;
     }
 
     public function render()

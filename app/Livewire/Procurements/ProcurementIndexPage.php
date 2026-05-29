@@ -363,6 +363,14 @@ class ProcurementIndexPage extends Component
     public function render()
     {
         $query = Procurement::query()
+            ->selectRaw("procurements.*, GREATEST(
+                COALESCE(procurements.updated_at, '1970-01-01 00:00:00'),
+                COALESCE((SELECT MAX(created_at) FROM pr_lot_prstage WHERE pr_lot_prstage.procID = procurements.procID), '1970-01-01 00:00:00'),
+                COALESCE((SELECT MAX(created_at) FROM pr_item_prstage WHERE pr_item_prstage.procID = procurements.procID), '1970-01-01 00:00:00'),
+                COALESCE((SELECT MAX(updated_at) FROM pr_lot_remark WHERE pr_lot_remark.procID = procurements.procID), '1970-01-01 00:00:00'),
+                COALESCE((SELECT MAX(updated_at) FROM pr_item_remark WHERE pr_item_remark.procID = procurements.procID), '1970-01-01 00:00:00'),
+                COALESCE((SELECT MAX(updated_at) FROM post_procurements WHERE post_procurements.ref_id = procurements.procID AND post_procurements.deleted_at IS NULL), '1970-01-01 00:00:00')
+            ) as last_updated_at")
             ->with([
                 'currentPrStage.procurementStage',
                 'division',
