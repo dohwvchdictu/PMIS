@@ -7,7 +7,11 @@
       "Bash(Select-Object -ExpandProperty Name)",
       "Bash(Sort-Object)",
       "Bash(Get-ChildItem \"c:\\\\Users\\\\DOH\\\\Herd\\\\BACPMIS\\\\database\\\\migrations\" -Filter \"*bid_schedule*\")",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(php artisan tinker '--execute= *)",
+      "Bash(findstr -i \"DB_\")",
+      "Bash(mysql -h 127.0.0.1 -P 3308 -u root -proot pmis_db -e ' *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysql.exe\" -h 127.0.0.1 -P 3308 -u root -proot pmis_db -e \"SELECT procID, pr_number, abc FROM procurements WHERE pr_number = '2026-0940';\" 2>$null)"
     ]
   }
 }

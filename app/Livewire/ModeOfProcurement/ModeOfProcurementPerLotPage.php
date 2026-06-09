@@ -1804,7 +1804,7 @@ class ModeOfProcurementPerLotPage extends Component
 
         // Only update if no field-based advancement has happened yet.
         // Mode-initial stages are the only ones this function should set or overwrite.
-        $modeInitialStages = [1, 3, 29, 31, 32];
+        $modeInitialStages = [1, 3, 31, 32];
         if ($currentStageId !== null && !\in_array($currentStageId, $modeInitialStages)) {
             return;
         }

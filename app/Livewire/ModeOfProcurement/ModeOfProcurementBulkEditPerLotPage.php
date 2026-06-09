@@ -2071,7 +2071,7 @@ class ModeOfProcurementBulkEditPerLotPage extends Component
             return;
         }
 
-        $modeInitialStages = [1, 3, 29, 31, 32];
+        $modeInitialStages = [1, 3, 31, 32];
 
         foreach ($procIDs as $procID) {
             $latestLot = MopLot::where('procID', $procID)
