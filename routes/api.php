@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProcurementController;
+use App\Http\Controllers\Api\PerLotContractController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,6 +18,8 @@ use App\Http\Controllers\Api\ProcurementController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::get('spr-per-lot-prs', PerLotContractController::class)->name('api.spr-per-lot-prs');
 
 Route::apiResource('procurements', ProcurementController::class)->names([
     'index' => 'api.procurements.index',
