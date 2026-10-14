@@ -169,30 +169,31 @@
                     {{-- 44 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Abstract of Canvass Date</th>
                     {{-- 45 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date of BAC Resolution (Award)</th>
                     {{-- 46 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Notice of Award Date</th>
-                    {{-- 47 --}} <th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Awarded Amount</th>
-                    {{-- 48 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">Award Notice Number</th>
-                    {{-- 49 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date of Posting of Award (PhilGEPS)</th>
-                    {{-- 50 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Supplier</th>
-                    {{-- 51 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Procurement Stage</th>
-                    {{-- 52 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Remarks (Status)</th>
-                    {{-- 53 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Remarks (Notes)</th>
-                    {{-- 54 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">Reschedule / Cancellation Letter</th>
-                    {{-- 55 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date Forwarded to PMU</th>
-                    {{-- 56 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">PhilGEPS Posting Ref No.</th>
-                    {{-- 57 --}} <th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Contract Amount</th>
-                    {{-- 58 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">PO / Contract Number</th>
-                    {{-- 59 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Contract Signing / PO</th>
-                    {{-- 60 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Notice to Proceed</th>
-                    {{-- 61 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Delivery / Completion</th>
-                    {{-- 62 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Inspection &amp; Acceptance</th>
-                    {{-- 63 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">List of Invited Observers</th>
-                    {{-- 64 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Pre-bid Conf)</th>
-                    {{-- 65 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Eligibility)</th>
-                    {{-- 66 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Sub/Open)</th>
-                    {{-- 67 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Bid Eval)</th>
-                    {{-- 68 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Post Qual)</th>
-                    {{-- 69 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">Delivery/Completion/Acceptance (if applicable)</th>
-                    {{-- 70 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Remarks (Changes from APP)</th>
+                    {{-- 47 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date Receipt of Supplier (NOA)</th>
+                    {{-- 48 --}} <th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Awarded Amount</th>
+                    {{-- 49 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">Award Notice Number</th>
+                    {{-- 50 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date of Posting of Award (PhilGEPS)</th>
+                    {{-- 51 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Supplier</th>
+                    {{-- 52 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Procurement Stage</th>
+                    {{-- 53 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Remarks (Status)</th>
+                    {{-- 54 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Remarks (Notes)</th>
+                    {{-- 55 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">Reschedule / Cancellation Letter</th>
+                    {{-- 56 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Date Forwarded to PMU</th>
+                    {{-- 57 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">PhilGEPS Posting Ref No.</th>
+                    {{-- 58 --}} <th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Contract Amount</th>
+                    {{-- 59 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-36">PO / Contract Number</th>
+                    {{-- 60 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Contract Signing / PO</th>
+                    {{-- 61 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Notice to Proceed</th>
+                    {{-- 62 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-28">Delivery / Completion</th>
+                    {{-- 63 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap w-32">Inspection &amp; Acceptance</th>
+                    {{-- 64 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">List of Invited Observers</th>
+                    {{-- 65 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Pre-bid Conf)</th>
+                    {{-- 66 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Eligibility)</th>
+                    {{-- 67 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Sub/Open)</th>
+                    {{-- 68 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Bid Eval)</th>
+                    {{-- 69 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-40">Observers (Post Qual)</th>
+                    {{-- 70 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-36">Delivery/Completion/Acceptance (if applicable)</th>
+                    {{-- 71 --}} <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider w-48">Remarks (Changes from APP)</th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-neutral-800">
@@ -381,7 +382,9 @@
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($post?->resolution_award_date) }}</td>
                         {{-- 46 Notice of Award Date --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($post?->notice_of_award) }}</td>
-                        {{-- 47 Awarded Amount --}}
+                        {{-- 47 Date Receipt of Supplier (NOA) --}}
+                        <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($post?->date_receipt_of_supplier_noa) }}</td>
+                        {{-- 48 Awarded Amount --}}
                         <td class="px-3 py-2 text-xs text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">
                             @if ($post?->awarded_amount !== null)
                                 <div class="inline-flex items-baseline gap-0.5">
@@ -390,15 +393,15 @@
                                 </div>
                             @endif
                         </td>
-                        {{-- 48 Award Notice Number --}}
+                        {{-- 49 Award Notice Number --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">{{ $post?->notice_of_award_number ?? '' }}</td>
-                        {{-- 49 Date of Posting of Award (PhilGEPS) --}}
+                        {{-- 50 Date of Posting of Award (PhilGEPS) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($post?->philgeps_posting_of_award) }}</td>
-                        {{-- 50 Supplier --}}
+                        {{-- 51 Supplier --}}
                         <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2">{{ $post?->supplier?->name ?? '' }}</div>
                         </td>
-                        {{-- 51 Procurement Stage --}}
+                        {{-- 52 Procurement Stage --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             @if ($procurement->currentPrStage?->procurementStage?->procurementstage)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 dark:from-blue-900/40 dark:to-blue-800/40 dark:text-blue-200 dark:border-blue-700 break-words whitespace-normal text-center">
@@ -406,7 +409,7 @@
                                 </span>
                             @endif
                         </td>
-                        {{-- 52 Remarks (Status) --}}
+                        {{-- 53 Remarks (Status) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             @if ($remarkText)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border break-words whitespace-normal text-center {{ $remarkBadge }}" title="{{ $remarkText }}">
@@ -414,17 +417,17 @@
                                 </span>
                             @endif
                         </td>
-                        {{-- 53 Remarks (Notes) --}}
+                        {{-- 54 Remarks (Notes) --}}
                         <td class="px-3 py-2 text-xs text-left text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2">{{ $procurement->currentLotRemark?->notes ?? '' }}</div>
                         </td>
-                        {{-- 54 Reschedule/Cancellation Letter (future) --}}
+                        {{-- 55 Reschedule/Cancellation Letter (future) --}}
                         <td class="px-3 py-2 text-xs text-gray-300 dark:text-gray-600"></td>
-                        {{-- 55 Date Forwarded to PMU --}}
+                        {{-- 56 Date Forwarded to PMU --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($pmu?->date_forwarded) }}</td>
-                        {{-- 56 PhilGEPS Posting Ref No. --}}
+                        {{-- 57 PhilGEPS Posting Ref No. --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">{{ $isBidding ? ($mainBid?->philgeps_posting_ref_no ?? '') : ($isSvp ? ($prSvp?->philgeps_posting_ref_no ?? '') : '') }}</td>
-                        {{-- 57 Contract Amount --}}
+                        {{-- 58 Contract Amount --}}
                         <td class="px-3 py-2 text-xs text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">
                             @if ($pmuPo?->contract_amount !== null)
                                 <div class="inline-flex items-baseline gap-0.5">
@@ -433,48 +436,48 @@
                                 </div>
                             @endif
                         </td>
-                        {{-- 58 PO/Contract Number --}}
+                        {{-- 59 PO/Contract Number --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">{{ $pmuPo?->po_contract_number ?? '' }}</td>
-                        {{-- 59 Contract Signing/PO --}}
+                        {{-- 60 Contract Signing/PO --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($pmuPo?->contract_signing_date) }}</td>
-                        {{-- 60 Notice to Proceed --}}
+                        {{-- 61 Notice to Proceed --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($pmuPo?->notice_to_proceed_date) }}</td>
-                        {{-- 61 Delivery/Completion --}}
+                        {{-- 62 Delivery/Completion --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($supplyPo?->delivery_completion) }}</td>
-                        {{-- 62 Inspection & Acceptance --}}
+                        {{-- 63 Inspection & Acceptance --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $fmt($supplyPo?->date_of_acceptance) }}</td>
-                        {{-- 63 List of Invited Observers --}}
+                        {{-- 64 List of Invited Observers --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->list_invited_observers ?? '') : '' }}</div>
                         </td>
-                        {{-- 64 Observers (Pre-bid Conf) --}}
+                        {{-- 65 Observers (Pre-bid Conf) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_prebid_conf ?? '') : '' }}</div>
                         </td>
-                        {{-- 65 Observers (Eligibility) --}}
+                        {{-- 66 Observers (Eligibility) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_eligibility ?? '') : '' }}</div>
                         </td>
-                        {{-- 66 Observers (Sub/Open) --}}
+                        {{-- 67 Observers (Sub/Open) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_sub_open_of_bid ?? '') : '' }}</div>
                         </td>
-                        {{-- 67 Observers (Bid Eval) --}}
+                        {{-- 68 Observers (Bid Eval) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_bid ?? '') : '' }}</div>
                         </td>
-                        {{-- 68 Observers (Post Qual) --}}
+                        {{-- 69 Observers (Post Qual) --}}
                         <td class="px-3 py-2 text-xs text-center text-gray-700 dark:text-gray-300">
                             <div class="break-words whitespace-normal line-clamp-2 text-center">{{ $isBidding ? ($mainBid?->obsrvr_post_qual ?? '') : '' }}</div>
                         </td>
-                        {{-- 69 Delivery/Completion/Acceptance (future) --}}
+                        {{-- 70 Delivery/Completion/Acceptance (future) --}}
                         <td class="px-3 py-2 text-xs text-gray-300 dark:text-gray-600"></td>
-                        {{-- 70 Remarks (Changes from APP, future) --}}
+                        {{-- 71 Remarks (Changes from APP, future) --}}
                         <td class="px-3 py-2 text-xs text-gray-300 dark:text-gray-600"></td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="70" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="71" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
