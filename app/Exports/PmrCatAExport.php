@@ -171,6 +171,7 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'Abstract of Canvass Date',
             'Date of BAC Resolution (Award)',
             'Notice of Award Date',
+            'Date Receipt of Supplier (NOA)',
             'Awarded Amount',
             'Award Notice Number',
             'Date of Posting of Award (PhilGEPS)',
@@ -271,6 +272,7 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $isSvp ? $fmt($prSvp?->abstract_of_canvass_date) : '',
             $fmt($post?->resolution_award_date),
             $fmt($post?->notice_of_award),
+            $fmt($post?->date_receipt_of_supplier_noa),
             $post?->awarded_amount !== null ? (float) $post->awarded_amount : '',
             $post?->notice_of_award_number ?? '',
             $fmt($post?->philgeps_posting_of_award),
@@ -300,7 +302,7 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
     public function styles(Worksheet $sheet): array
     {
-        $lastCol    = 'BR'; // 70 columns
+        $lastCol    = 'BS'; // 71 columns
         $highestRow = $sheet->getHighestRow();
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
@@ -339,13 +341,13 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
             ->getNumberFormat()
             ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
 
-        // Awarded Amount (col 47 = AU)
-        $sheet->getStyle("AU2:AU{$highestRow}")
+        // Awarded Amount (col 48 = AV)
+        $sheet->getStyle("AV2:AV{$highestRow}")
             ->getNumberFormat()
             ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
 
-        // Contract Amount (col 57 = BE)
-        $sheet->getStyle("BE2:BE{$highestRow}")
+        // Contract Amount (col 58 = BF)
+        $sheet->getStyle("BF2:BF{$highestRow}")
             ->getNumberFormat()
             ->setFormatCode('_("₱"* #,##0.00_);_("₱"* (#,##0.00);_("₱"* "-"??_);_(@_)');
 
@@ -403,30 +405,31 @@ class PmrCatAExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'AR' => 22, // Abstract of Canvass Date
             'AS' => 24, // Date of BAC Resolution (Award)
             'AT' => 20, // Notice of Award Date
-            'AU' => 18, // Awarded Amount
-            'AV' => 22, // Award Notice Number
-            'AW' => 24, // Date of Posting of Award (PhilGEPS)
-            'AX' => 35, // Supplier                        ← wrap
-            'AY' => 30, // Procurement Stage               ← wrap
-            'AZ' => 25, // Remarks (Status)                ← wrap
-            'BA' => 35, // Remarks (Notes)                 ← wrap
-            'BB' => 25, // Reschedule / Cancellation Letter
-            'BC' => 20, // Date Forwarded to PMU
-            'BD' => 24, // PhilGEPS Posting Ref No.
-            'BE' => 18, // Contract Amount
-            'BF' => 22, // PO / Contract Number
-            'BG' => 20, // Contract Signing / PO
-            'BH' => 18, // Notice to Proceed
-            'BI' => 18, // Delivery / Completion
-            'BJ' => 22, // Inspection & Acceptance
-            'BK' => 35, // List of Invited Observers        ← wrap
-            'BL' => 30, // Observers (Pre-bid Conf)         ← wrap
-            'BM' => 30, // Observers (Eligibility)          ← wrap
-            'BN' => 30, // Observers (Sub/Open)             ← wrap
-            'BO' => 30, // Observers (Bid Eval)             ← wrap
-            'BP' => 30, // Observers (Post Qual)            ← wrap
-            'BQ' => 22, // Delivery/Completion/Acceptance
-            'BR' => 30, // Remarks (Changes from APP)       ← wrap
+            'AU' => 24, // Date Receipt of Supplier (NOA)
+            'AV' => 18, // Awarded Amount
+            'AW' => 22, // Award Notice Number
+            'AX' => 24, // Date of Posting of Award (PhilGEPS)
+            'AY' => 35, // Supplier                        ← wrap
+            'AZ' => 30, // Procurement Stage               ← wrap
+            'BA' => 25, // Remarks (Status)                ← wrap
+            'BB' => 35, // Remarks (Notes)                 ← wrap
+            'BC' => 25, // Reschedule / Cancellation Letter
+            'BD' => 20, // Date Forwarded to PMU
+            'BE' => 24, // PhilGEPS Posting Ref No.
+            'BF' => 18, // Contract Amount
+            'BG' => 22, // PO / Contract Number
+            'BH' => 20, // Contract Signing / PO
+            'BI' => 18, // Notice to Proceed
+            'BJ' => 18, // Delivery / Completion
+            'BK' => 22, // Inspection & Acceptance
+            'BL' => 35, // List of Invited Observers        ← wrap
+            'BM' => 30, // Observers (Pre-bid Conf)         ← wrap
+            'BN' => 30, // Observers (Eligibility)          ← wrap
+            'BO' => 30, // Observers (Sub/Open)             ← wrap
+            'BP' => 30, // Observers (Bid Eval)             ← wrap
+            'BQ' => 30, // Observers (Post Qual)            ← wrap
+            'BR' => 22, // Delivery/Completion/Acceptance
+            'BS' => 30, // Remarks (Changes from APP)       ← wrap
         ];
     }
 }
